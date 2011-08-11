@@ -1,0 +1,17 @@
+let A = 
+event client_send(payload);
+let msg1 = len(payload)<8>|i2|payload in
+let hash1 = HMAC(sha1, msg1, key)<20> in
+let msg2 = len(payload)<8>|i1|payload|hash1 in
+out(c, msg2);
+
+let B = 
+in(c, msg1<20>);
+in(c, msg2<8>);
+let var1 = (msg2 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
+in(c, msg3<var1>);
+let msg4 = msg2|i2|msg3 in
+let hash1 = HMAC(sha1, msg4, key)<20> in
+if hash1 = msg1 then 
+event server_recv(msg3);
+

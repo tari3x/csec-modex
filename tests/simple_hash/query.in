@@ -1,0 +1,2 @@
+query ev:server_recv(x) ==> ev:client_send(x).
+query ev:server_recv(x).

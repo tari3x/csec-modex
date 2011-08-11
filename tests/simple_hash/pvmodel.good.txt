@@ -1,0 +1,29 @@
+free c.
+fun HMAC_sha1/2.
+
+data conc1/2.
+
+data conc4/1.
+
+
+query ev:server_recv(x) ==> ev:client_send(x).
+query ev:server_recv(x).
+
+let A = 
+event client_send(payload);
+let var1 = conc1(payload, HMAC_sha1(conc4(payload), key)) in
+out(c, var1); 0.
+
+let B = 
+in(c, msg1);
+in(c, msg2);
+in(c, var7);
+let var8 = HMAC_sha1(conc4(var7), key) in
+if var8 = msg1 then 
+event server_recv(var7); 0.
+
+process !
+  new key;
+  in(c, payload);
+  (!A | !B)
+ 

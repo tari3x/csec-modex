@@ -1,0 +1,86 @@
+free c.
+fun ek/1.
+fun dk/1.
+fun E/3.
+reduc
+  D(dk(a), E(ek(a), x, r)) = x.
+reduc
+  isek(ek(a)) = ek(a).
+  
+
+data conc2/2.
+
+data conc6/1.
+
+data conc5/3.
+
+reduc 
+  parse2(conc5(x0, x1, x2)) = x0.
+reduc 
+  parse3(conc5(x0, x1, x2)) = x2.
+reduc 
+  parse4(conc5(x0, x1, x2)) = x1.
+reduc 
+  parse6(conc2(x0, x1)) = x1.
+reduc 
+  parse7(conc2(x0, x1)) = x0.
+
+query
+  ev:endB() ==> ev:beginA() | ev:notA().
+
+query 
+  ev:endB() ==> ev:notA().
+
+let A = 
+new nonce1;
+new nonce2;
+let var1 = conc6(E(isek(pkX), conc2(nonce1, pkA), nonce2)) in
+out(c, var1);
+in(c, msg1);
+in(c, var2);
+let var3 = parse2(D(skA, var2)) in
+if var3 = nonce1 then 
+let var4 = parse3(D(skA, var2)) in
+if var4 = pkX then 
+new nonce3;
+let var5 = conc6(E(isek(pkX), parse4(D(skA, var2)), nonce3)) in
+out(c, var5); 0.
+
+let B = 
+in(c, msg2);
+in(c, var27);
+let var28 = parse6(D(skB, var27)) in
+if var28 = pkX then 
+new nonce4;
+new nonce5;
+let var29 = conc6(E(isek(pkX), conc5(parse7(D(skB, var27)), nonce4, pkB), nonce5)) in
+out(c, var29);
+in(c, msg3);
+in(c, var30);
+let var31 = D(skB, var30) in
+if var31 = nonce4 then 
+event endB(); 0.
+
+
+let A' =
+  in(c, pkX);
+
+  if pkX = pkB then
+  event beginA(); A
+  else A.
+ 
+let B' = 
+  in(c, pkX);
+
+  if pkX = pkA then B else 
+  event notA(); B.
+
+process
+  !
+  new A; new B;
+  let pkA = ek(A) in
+  let skA = dk(A) in
+  let pkB = ek(B) in
+  let skB = dk(B) in
+  out(c, pkA); out(c, pkB);
+  (!A' | !B')

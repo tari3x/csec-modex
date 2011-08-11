@@ -1,0 +1,6 @@
+
+This is a raw preview release. So far the configuration has not been automated - please
+refer to Makefiles in individual folders and adjust as necessary.
+
+Unfortunately, we are not able to distribute the source code of the metering protocol,
+due to licensing restrictions.

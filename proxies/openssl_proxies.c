@@ -1,0 +1,1927 @@
+
+// Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
+// This file is distributed as part of csec-tools under a BSD license.
+// See LICENSE file for copyright notice.
+
+
+/*
+ * Attributes:
+ * =============
+ *
+ * EVP_CIPHER: type
+ *
+ * EVP_CIPHER_CTX: type, key, use (encrypt or decrypt), enc_in, enc_out, dec_in, dec_out, seed
+ *
+ * EVP_MD_CTX: type, msg, key, use
+ *
+ * EVP_MD: type
+ *
+ * EVP_PKEY: id, key (set in EVP_PKEY_new_mac_key)
+ *
+ * EVP_PKEY_CTX: key, peerkey
+ *
+ * HMAC_CTX: type, key, msg
+ *
+ * X509: id
+ *
+ * RSA: id
+ *
+ * BIO: mem
+ *
+ * BIGNUM: val (no length - can't keep track of it)
+ *
+ * SHA256_CTX: msg
+ *
+ * DSA: pkey, skey
+ *
+ * DSA_SIG: sig
+ *
+ * Hints:
+ * ======
+ *
+ * plain, enc, dec, penc, pdec, hash, key, rsa_key, sig, cert,
+ * partial_plain, partial_enc
+ * plus those I formerly called symbol parameters
+ *
+ */
+
+#include "openssl_proxies.h"
+
+// for undefining the BN_num_bytes
+#include "common.h"
+#include "interface.h"
+
+/************************************
+ * Proxy Functions
+ ************************************/
+
+
+int EVP_Cipher_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl)
+{
+  load_ctx(ctx, "type", "type");
+  load_buf(in, inl, "plain");
+  load_ctx(ctx, "key", "key");
+  // FIXME: output the IV as well!
+  symL("EVP_Cipher", "enc", inl, FALSE);
+
+  int ret = EVP_Cipher(ctx, out, in, inl);
+
+  // for both stream and block ciphers the ciphertext is as long as the plaintext
+  // FIXME: what about the IV? It's generated from the master secret on both sides?
+  store_buf(out);
+
+  return ret;
+}
+
+int BIO_write_proxy(BIO *b, const void *in, int inl)
+{
+  int ret = BIO_write(b, in, inl);
+
+  int cond = 0;
+
+  mute();
+  cond = BIO_find_type(b, BIO_TYPE_MEM) != NULL;
+  unmute();
+
+  // FIXME: assuming we have written all out, not always true
+  // In fact this can lead to a crash on the concrete level, so do something about it.
+  ret = inl;
+
+  // are we writing to memory?
+  // FIXME: this is still very crude
+  if(cond)
+  {
+    // FIXME: this doesn't work, because the buffer is set in some deeper BIO
+    // set_attr_buf(b, "mem", in, inl);
+    return ret;
+  }
+  else
+  {
+    load_buf((unsigned char*) in, inl, "msg");
+    symL("write", NULL, 0, TRUE);
+    event();
+
+    return ret;
+  }
+}
+
+int BIO_read_proxy(BIO *b, void *out, int outl)
+{
+  int ret = BIO_read(b, out, outl);
+
+  // FIXME: should check: are we reading from memory?
+
+  // FIXME: making the assumption that read always returns as much as requested, not true of course
+  ret = outl;
+
+  // FIXME: switch to this when going over to multiple paths:
+  // symL("net_len");
+  // store_buf((void*) &ret, sizeof(ret), "read_len");
+  // if(ret < 0) error("BIO_read: ret is negative");
+  // if(ret > outl) error("BIO_read: ret > outl");
+  // if((int) *len != *len) error("make_sym: len doesn't fit into int: %s", s);
+
+  // if(outl < 0) error("BIO_read: outl < 0");
+
+  symL("read", "msg", ret, FALSE);
+  store_buf((unsigned char*) out);
+
+  return ret;
+}
+
+//extern long BIO_ctrl_proxy(BIO *bp , int cmd , long larg , void *parg )
+//{
+//  long ret = BIO_ctrl(bp, cmd, larg, parg);
+//
+//  // FIXME: trying to recognize whether it is BIO_get_mem_data
+//  if((cmd == BIO_CTRL_INFO) && (larg == 0))
+//  {
+//    load_ctx(bp, "mem", "");
+//    store_buf(parg, ret, "");
+//  }
+//
+//  return ret;
+//}
+
+int EVP_DigestInit_proxy(EVP_MD_CTX *ctx , EVP_MD const   *type )
+{
+  copy_attr(ctx, type, "type");
+  set_attr_str(ctx, "msg", "");
+
+  return EVP_DigestInit(ctx , type);
+}
+
+int EVP_DigestInit_ex_proxy(EVP_MD_CTX *ctx , EVP_MD const   *type ,
+                             ENGINE *impl )
+{
+  copy_attr(ctx, type, "type");
+  set_attr_str(ctx, "msg", "");
+
+  return EVP_DigestInit_ex(ctx , type, impl);
+}
+
+int EVP_DigestUpdate_proxy(EVP_MD_CTX *ctx , void const   *d , size_t cnt )
+{
+  add_to_attr(ctx, "msg", (unsigned char *) d, cnt);
+
+  int ret = EVP_DigestUpdate(ctx, d, cnt);
+
+  return ret;
+}
+
+/*
+ * EVP_VerifyFinal() verifies the data in ctx using the public key pkey
+ * and against the siglen bytes at sigbuf.
+ */
+int EVP_VerifyFinal_proxy(EVP_MD_CTX *ctx , unsigned char const   *sigbuf ,
+                           unsigned int siglen , EVP_PKEY *pkey )
+{
+  load_ctx(ctx, "msg", "msg");
+  load_ctx(pkey, "id", "pkey");
+
+  int ret = EVP_VerifyFinal(ctx, sigbuf, siglen, pkey);
+
+  symL("EVP_VerifyFinal", "sig", siglen, TRUE);
+
+  store_buf(sigbuf);
+
+  return ret;
+}
+
+/*
+ * EVP_SignFinal() signs the data in ctx using the private key pkey and places the signature in sig.
+ * The number of bytes of data written (i.e. the length of the signature) will be written to the integer at s,
+ * at most EVP_PKEY_size(pkey) bytes will be written.
+ */
+int EVP_SignFinal_proxy(EVP_MD_CTX *ctx , unsigned char *md , unsigned int *s ,
+                         EVP_PKEY *pkey )
+{
+  load_ctx(ctx, "msg", "msg");
+  load_ctx(pkey, "id", "pkey");
+
+  int ret = EVP_SignFinal(ctx, md, s, pkey);
+
+  // FIXME: relying on concrete value of s?
+  symL("EVP_SignFinal", "sig", *s, FALSE);
+
+  store_buf(md);
+
+  return ret;
+}
+
+int EVP_DigestFinal_ex_proxy(EVP_MD_CTX *ctx , unsigned char *md ,
+                              unsigned int *s )
+{
+  load_ctx(ctx, "type", "type");
+  load_ctx(ctx, "msg", "msg");
+
+  int ret = EVP_DigestFinal_ex(ctx, md, s);
+
+  // FIXME: relying on concrete value of s?
+  symL("EVP_DigestFinal_ex", "hash", *s, FALSE);
+  store_buf(md);
+
+  return ret;
+}
+
+/*
+ * EVP_MD_CTX_copy_ex() can be used to copy the message digest state from in to out.
+ */
+int EVP_MD_CTX_copy_proxy(EVP_MD_CTX *out , EVP_MD_CTX const   *in )
+{
+  copy_ctx(out, in);
+
+  return EVP_MD_CTX_copy(out, in);
+}
+
+int EVP_MD_CTX_copy_ex_proxy(EVP_MD_CTX *out , EVP_MD_CTX const   *in )
+{
+  copy_ctx(out, in);
+
+  return EVP_MD_CTX_copy(out, in);
+}
+
+
+EVP_MD const *EVP_MD_CTX_md_proxy(EVP_MD_CTX const   *ctx )
+{
+  EVP_MD const * ret = EVP_MD_CTX_md(ctx);
+
+  copy_attr(ret, ctx, "type");
+
+  return ret;
+}
+
+#if OPENSSL_MAJOR == 0
+  void EVP_MD_CTX_set_flags_proxy(EVP_MD_CTX *ctx , int flags )
+  {
+    EVP_MD_CTX_set_flags(ctx, flags);
+  }
+
+#endif
+
+#if OPENSSL_MAJOR == 1
+  int EVP_DigestSignFinal_proxy(EVP_MD_CTX *ctx , unsigned char *sigret,
+                                 size_t *siglen )
+  {
+    int ret = EVP_DigestSignFinal(ctx, sigret, siglen);
+
+    load_ctx(ctx, "type", "type");
+    load_ctx(ctx, "msg", "msg");
+    load_ctx(ctx, "key", "key");
+    symL("EVP_DigestSign", "sig", *siglen, FALSE);
+    store_buf(sigret);
+
+    return ret;
+  }
+#endif
+
+/*
+   i2d_X509() encodes the structure pointed to by x into DER format.
+   If out is not NULL is writes the DER encoded data to the buffer at *out,
+   and increments it to point after the data just written.
+   If the return value is negative an error occurred,
+   otherwise it returns the length of the encoded data.
+   For OpenSSL 0.9.7 and later if *out is NULL memory will be allocated
+   for a buffer and the encoded data written to it.
+   In this case *out is not incremented and it points to the start of the data just written.
+*/
+extern int i2d_X509_proxy(X509 *a , unsigned char **out )
+{
+  // FIXME: do as in DSA
+  int notnull = (out != NULL) && (*out != NULL);
+
+  int ret = i2d_X509(a, out);
+
+  if(out != NULL)
+  {
+    load_ctx(a, "id", "cert");
+
+    symL("i2d_X509", "DER", ret, TRUE);
+
+    if(notnull)
+      store_buf(*out - ret);
+    else
+      store_buf(*out);
+
+  }
+
+  return ret;
+}
+
+/*
+ * d2i_X509() attempts to decode len bytes at *in.
+ * If successful a pointer to the X509 structure is returned.
+ * If an error occurred then NULL is returned.
+ * If px is not NULL then the returned structure is written to *px.
+ * If *px is not NULL then it is assumed that *px contains a valid X509 structure
+ * and an attempt is made to reuse it.
+ * If the call is successful *in is incremented to the byte following the parsed data.
+ */
+extern X509 *d2i_X509_proxy(X509 **a , unsigned char const   **in , long len )
+{
+  unsigned char const * oldin = *in;
+
+  X509 * ret = d2i_X509(a, in, len);
+
+  if(ret != NULL)
+  {
+    load_buf(oldin, len, "DER");
+    symN("d2i_X509", "cert", NULL, TRUE);
+    store_ctx(ret, "id");
+  }
+
+  return ret;
+}
+
+// undocumented
+extern EVP_PKEY *X509_get_pubkey_proxy(X509 *x )
+{
+  EVP_PKEY * ret = X509_get_pubkey(x);
+
+  load_ctx(x, "id", "X509");
+  symN("X509_get_pubkey", "pkey", NULL, TRUE);
+  store_ctx(ret, "id");
+
+  // fight the abstraction breaking in ssl lib:
+  copy_ctx(ret->pkey.ptr, ret);
+
+  return ret;
+}
+
+#if OPENSSL_MAJOR == 0
+  extern X509_NAME *X509_get_issuer_name_proxy(X509 *a )
+  {
+    return X509_get_issuer_name(a);
+  }
+#endif
+
+/*
+ * EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
+ * return an EVP_MD structure when passed a digest name,
+ * a digest NID or an ASN1_OBJECT structure respectively.
+ * The digest table must be initialized using, for example, OpenSSL_add_all_digests() for these functions to work.
+ */
+EVP_MD const   *EVP_get_digestbyname_proxy(char const   *name )
+{
+  EVP_MD const * ret = EVP_get_digestbyname(name);
+
+  set_attr_str(ret, "type", name);
+
+  return ret;
+}
+
+
+/*
+ * EVP_md2(), EVP_md5(), EVP_sha(), EVP_sha1(), EVP_mdc2() and EVP_ripemd160()
+ * return EVP_MD structures for the MD2, MD5, SHA, SHA1, MDC2 and RIPEMD160
+ * digest algorithms respectively. The associated signature algorithm is RSA in each case.
+ */
+extern EVP_MD const   *EVP_md5_proxy(void)
+{
+  EVP_MD const * ret = EVP_md5();
+
+  set_attr_str(ret, "type", "md5");
+
+  return ret;
+}
+
+#if OPENSSL_MAJOR == 0
+extern EVP_MD const   *EVP_md2_proxy(void)
+{
+  EVP_MD const * ret = EVP_md2();
+
+  set_attr_str(ret, "type", "md2");
+
+  return ret;
+}
+#endif
+
+extern EVP_MD const   *EVP_sha1_proxy(void)
+{
+  EVP_MD const * ret;
+
+  ret = EVP_sha1();
+
+  set_attr_str(ret, "type", "sha1");
+
+  return ret;
+}
+
+/*
+ * EVP_dss() and EVP_dss1() return EVP_MD structures for
+ * SHA and SHA1 digest algorithms but using DSS (DSA) for the signature algorithm.
+ */
+extern EVP_MD const   *EVP_dss1_proxy(void)
+{
+  EVP_MD const * ret = EVP_dss1();
+
+  set_attr_str(ret, "type", "dss1");
+
+  return ret;
+}
+
+// undocumented
+extern EVP_MD const   *EVP_ecdsa_proxy(void)
+{
+  EVP_MD const * ret = EVP_ecdsa();
+
+  set_attr_str(ret, "type", "ecdsa");
+
+  return ret;
+}
+
+/*
+ * EVP_EncryptInit_ex() sets up cipher context ctx for encryption with cipher type from ENGINE impl.
+ * ctx must be initialized before calling this function.
+ * type is normally supplied by a function such as EVP_des_cbc().
+ * If impl is NULL then the default implementation is used.
+ * key is the symmetric key to use and iv is the IV to use (if necessary),
+ * the actual number of bytes used for the key and IV depends on the cipher.
+ * It is possible to set all parameters to NULL except type in an initial call
+ * and supply the remaining parameters in subsequent calls, all of which have type set to NULL.
+ * This is done when the default cipher parameters are not appropriate.
+ */
+extern int EVP_EncryptInit_ex_proxy(EVP_CIPHER_CTX *ctx , EVP_CIPHER const   *cipher ,
+                                    ENGINE *impl , unsigned char const   *key , unsigned char const   *iv )
+{
+  if(cipher != NULL)
+    copy_attr(ctx, cipher, "type");
+  if(key != NULL)
+    set_attr_buf(ctx, "key", key, EVP_CIPHER_CTX_key_length(ctx));
+
+  if(iv != NULL)
+    set_attr_buf(ctx, "seed", iv, EVP_CIPHER_CTX_iv_length(ctx));
+  else
+    // Where is the randomness coming from if there's no IV?
+    // Is it just the key that then cannot be reused twice?
+    proxy_fail("Ciphers without IV not modeled yet.");
+    // FIXME: how about this:
+    // set_attr(ctx, "seed", key, EVP_CIPHER_CTX_key_length(ctx));
+
+  // Set the encryption position associated with the current seed to 0
+  set_attr_int(ctx, "pos", 0);
+  set_attr_str(ctx, "use", "encrypt");
+  return EVP_EncryptInit_ex(ctx, cipher, impl, key, iv);
+}
+
+/*
+ * EVP_DecryptInit_ex(), EVP_DecryptUpdate() and EVP_DecryptFinal_ex()
+ * are the corresponding decryption operations.
+ */
+extern int EVP_DecryptInit_ex_proxy(EVP_CIPHER_CTX *ctx , EVP_CIPHER const   *cipher ,
+                                    ENGINE *impl , unsigned char const   *key , unsigned char const   *iv )
+{
+  if(cipher != NULL)
+    copy_attr(ctx, cipher, "type");
+  if(key != NULL)
+    set_attr_buf(ctx, "key", key, EVP_CIPHER_CTX_key_length(ctx));
+
+  if(iv != NULL)
+    set_attr_buf(ctx, "seed", iv, EVP_CIPHER_CTX_iv_length(ctx));
+  else
+    // FIXME: see EncryptInit
+    proxy_fail("Ciphers without IV not modeled yet.");
+
+  // Set the encryption position associated with the current seed to 0
+  set_attr_int(ctx, "pos", 0);
+
+  set_attr_str(ctx, "use", "decrypt");
+
+  return EVP_DecryptInit_ex(ctx, cipher, impl, key, iv);
+}
+
+/*
+ * EVP_CipherInit_ex(), EVP_CipherUpdate() and EVP_CipherFinal_ex() are functions that can be used
+ * for decryption or encryption. The operation performed depends on the value of the enc parameter.
+ * It should be set to 1 for encryption, 0 for decryption and -1 to leave the value unchanged
+ * (the actual value of 'enc' being supplied in a previous call).
+ */
+extern int EVP_CipherInit_ex_proxy(EVP_CIPHER_CTX *ctx , EVP_CIPHER const   *cipher ,
+                                   ENGINE *impl , unsigned char const   *key , unsigned char const   *iv ,
+                                   int enc )
+{
+  int ret = EVP_CipherInit_ex(ctx, cipher, impl, key, iv, enc);
+
+  copy_attr(ctx, cipher, "type");
+
+  set_attr_buf(ctx, "key", key, EVP_CIPHER_CTX_key_length(ctx));
+
+  if(enc == 1)
+    set_attr_str(ctx, "use", "enc");
+  else if(enc == 0)
+    set_attr_str(ctx, "use", "dec");
+
+  return ret;
+}
+
+
+
+// TODO, undocumented
+extern int X509_certificate_type_proxy(X509 *x , EVP_PKEY *pubkey )
+{
+  return X509_certificate_type(x, pubkey);
+}
+
+
+// undocumented
+extern EVP_CIPHER const   *EVP_aes_128_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_aes_128_cbc();
+
+  set_attr_str(ret, "type", "aes_128_cbc");
+
+  return ret;
+}
+
+// almost undocumented
+extern EVP_MD const   *EVP_sha256_proxy(void)
+{
+  EVP_MD const * ret = EVP_sha256();
+
+  set_attr_str(ret, "type", "sha256");
+
+  return ret;
+}
+
+#if OPENSSL_MAJOR == 0
+  #define HMAC_RET_TYPE void
+#else
+  #define HMAC_RET_TYPE int
+#endif
+
+/*
+ * HMAC_Init_ex() initializes or reuses a HMAC_CTX structure to use the function evp_md and key key.
+ * Either can be NULL, in which case the existing one will be reused.
+ * HMAC_CTX_init() must have been called before the first use of an HMAC_CTX in this function.
+ *
+ * N.B. HMAC_Init() had this undocumented behaviour in previous versions of OpenSSL -
+ * failure to switch to HMAC_Init_ex() in programs that expect it will cause them to stop working.
+ *
+ * Looking at the code of tls1_P_hash it seems that this function also clears the collected
+ * message.
+ */
+extern HMAC_RET_TYPE HMAC_Init_ex_proxy(HMAC_CTX *ctx , void const   *key , int len , EVP_MD const   *md ,
+                              ENGINE *impl )
+{
+  if(md != NULL)
+    copy_attr(ctx, md, "type");
+
+  // TODO: questionable
+  if(key != NULL)
+    set_attr_buf(ctx, "key", (const unsigned char *) key, len);
+
+  clear_attr(ctx, "msg");
+
+  #if OPENSSL_MAJOR == 0
+    HMAC_Init_ex(ctx, key, len, md, impl);
+  #else
+    return HMAC_Init_ex(ctx, key, len, md, impl);
+  #endif
+}
+
+extern HMAC_RET_TYPE HMAC_Update_proxy(HMAC_CTX *ctx , unsigned char const   *data , size_t len )
+{
+  add_to_attr(ctx, "msg", data, len);
+
+  #if OPENSSL_MAJOR == 0
+    HMAC_Update(ctx, data, len);
+  #else
+    return HMAC_Update(ctx, data, len);
+  #endif
+
+}
+
+extern HMAC_RET_TYPE HMAC_Final_proxy(HMAC_CTX *ctx , unsigned char *md , unsigned int *len )
+{
+
+  #if OPENSSL_MAJOR == 0
+    HMAC_Final(ctx, md, len);
+  #else
+    int ret = HMAC_Final(ctx, md, len);
+  #endif
+
+  load_ctx(ctx, "type", "type");
+  load_ctx(ctx, "msg", "msg");
+  load_ctx(ctx, "key", "key");
+  symL("HMAC", "hash", *len, TRUE);
+  store_buf(md);
+
+  #if OPENSSL_MAJOR == 1
+    return ret;
+  #endif
+}
+
+/*
+   HMAC() computes the message authentication code of the n  bytes at d using the hash function evp_md
+   and the key key which is key_len bytes long.
+
+   It places the result in md (which must have space for the output of the hash function,
+   which is no more than EVP_MAX_MD_SIZE bytes). If md is NULL, the digest is placed in a static array.
+   The size of the output is placed in md_len, unless it is NULL.
+
+   HMAC() returns a pointer to the message authentication code.
+ */
+extern unsigned char *HMAC_proxy(EVP_MD const   *evp_md , void const   *key ,
+                                 int key_len , unsigned char const   *d ,
+                                 size_t n , unsigned char *md ,
+                                 unsigned int *md_len )
+{
+  // FIXME: this thing crashes if md_len is NULL, do the right thing
+  if(md_len != NULL) *md_len = 0; // just making sure it's initialised.
+
+  unsigned char * ret = HMAC(evp_md, key, key_len, d, n, md, md_len);
+
+  if(md != NULL)
+    ret = md;
+
+  if(md_len != NULL)
+    *md_len = concrete_val(*md_len);
+
+  load_ctx(evp_md, "type", "type");
+  load_buf(d, n, "msg");
+  load_buf((unsigned char *) key, key_len, "key");
+  symL("HMAC", "hash", *md_len, TRUE);
+  store_buf(ret);
+
+  return ret;
+}
+
+#if OPENSSL_MAJOR == 0
+  extern void HMAC_CTX_set_flags_proxy(HMAC_CTX *ctx , unsigned long flags )
+  {
+    HMAC_CTX_set_flags(ctx, flags);
+  }
+#endif
+
+int SHA256_Init_proxy(SHA256_CTX *c)
+{
+  clear_attr(c, "msg");
+
+  return SHA256_Init(c);
+}
+
+int SHA256_Update_proxy(SHA256_CTX *c, const void *data, size_t len)
+{
+  add_to_attr(c, "msg", data, len);
+
+  return SHA256_Update(c, data, len);
+}
+
+int SHA256_Final_proxy(unsigned char *md, SHA256_CTX *c)
+{
+  int ret = SHA256_Final(md, c);
+
+  load_ctx(c, "msg", "msg");
+  symL("SHA256", "hash", 32, TRUE);
+  store_buf(md);
+
+  return ret;
+}
+
+/*
+ * EVP_EncryptUpdate() encrypts inl bytes from the buffer in and writes the encrypted version to out.
+ * This function can be called multiple times to encrypt successive blocks of data.
+ * The amount of data written depends on the block alignment of the encrypted data:
+ * as a result the amount of data written may be anything from zero bytes to (inl + cipher_block_size - 1)
+ * so outl should contain sufficient room. The actual number of bytes written is placed in outl.
+ */
+extern int EVP_EncryptUpdate_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+                                   unsigned char const *in, int inl)
+{
+  int ret = EVP_EncryptUpdate(ctx, out, outl, in, inl);
+
+  add_to_attr(ctx, "enc_in", in, inl);
+
+  int pos = get_attr_int(ctx, "pos");
+
+  load_ctx(ctx, "enc_in", "partial_plain");
+  load_ctx(ctx, "key", "key");
+  load_ctx(ctx, "iv", "iv");
+  load_int(pos, "pos");
+  load_ctx(ctx, "type", "type");
+  symL("encPart", "partial_enc", *outl, FALSE);
+  store_buf(out);
+
+  pos += *outl;
+  set_attr_int(ctx, "pos", pos);
+  // add_to_attr(ctx, "enc_out", out, *outl);
+
+  return ret;
+}
+
+/*
+ * If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts the "final" data,
+ * that is any data that remains in a partial block. It uses standard block padding (aka PKCS padding).
+ * The encrypted final data is written to out which should have sufficient space for one cipher block.
+ * The number of bytes written is placed in outl.
+ * After this function is called the encryption operation is finished and no further calls to
+ * EVP_EncryptUpdate() should be made.
+ */
+extern int EVP_EncryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , int *outl )
+{
+  int ret = EVP_EncryptFinal(ctx, out, outl);
+
+  // add_to_attr(ctx, "enc_out", out, *outl);
+
+  // FIXME: outl treatment is broken
+
+  int pos = get_attr_int(ctx, "pos");
+
+  load_ctx(ctx, "enc_in", "partial_plain");
+  load_ctx(ctx, "key", "key");
+  load_ctx(ctx, "iv", "iv");
+  load_int(pos, "pos");
+  load_ctx(ctx, "type", "type");
+  symL("encFin", "partial_enc", *outl, FALSE);
+  store_buf(out);
+
+  // lhs(ctx, "enc_out", "enc");
+
+  clear_attr(ctx, "enc_in");
+  clear_attr(ctx, "pos");
+  clear_attr(ctx, "iv");
+
+  return ret;
+}
+
+/*
+ * EVP_DecryptInit_ex(), EVP_DecryptUpdate() and EVP_DecryptFinal_ex()
+ * are the corresponding decryption operations.
+ */
+extern int EVP_DecryptUpdate_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , int *outl ,
+                                   unsigned char const   *in , int inl )
+{
+  int ret = EVP_DecryptUpdate(ctx, out, outl, in, inl);
+
+  add_to_attr(ctx, "dec_in", in, inl);
+
+  int pos = get_attr_int(ctx, "pos");
+
+  load_ctx(ctx, "dec_in", "partial_enc");
+  load_ctx(ctx, "key", "key");
+  load_ctx(ctx, "iv", "iv");
+  load_int(pos, "pos");
+  load_ctx(ctx, "type", "type");
+  symL("decPart", "partial_dec", *outl, FALSE);
+  store_buf(out);
+
+  pos += *outl;
+  set_attr_int(ctx, "pos", pos);
+
+  return ret;
+}
+
+extern int EVP_DecryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *outm , int *outl )
+{
+  int ret = EVP_DecryptFinal(ctx, outm, outl);
+
+  int pos = get_attr_int(ctx, "pos");
+
+  load_ctx(ctx, "dec_in", "partial_enc");
+  load_ctx(ctx, "key", "key");
+  load_ctx(ctx, "iv", "iv");
+  load_int(pos, "pos");
+  load_ctx(ctx, "type", "type");
+  symL("decFin", "partial_dec", *outl, FALSE);
+  store_buf(outm);
+
+  clear_attr(ctx, "dec_in");
+  clear_attr(ctx, "pos");
+  clear_attr(ctx, "iv");
+
+  return ret;
+}
+
+
+// stack_st_X509 was just STACK before 1.0.0
+#if OPENSSL_MAJOR == 0
+
+  // undocumented
+  extern int X509_STORE_CTX_init_proxy(X509_STORE_CTX *ctx , X509_STORE *store , X509 *x509 ,
+                                       STACK *chain )
+  {
+    return X509_STORE_CTX_init(ctx, store, x509, chain);
+  }
+
+  extern int ENGINE_load_ssl_client_cert_proxy(ENGINE *e , SSL *s , STACK *ca_dn , X509 **pcert ,
+                                               EVP_PKEY **ppkey , STACK **pother , UI_METHOD *ui_method ,
+                                               void *callback_data )
+  {
+    return ENGINE_load_ssl_client_cert(e, s, ca_dn, pcert, ppkey, pother, ui_method, callback_data);
+  }
+
+
+#else
+
+  // TODO, undocumented
+  extern int X509_STORE_CTX_init_proxy(X509_STORE_CTX *ctx , X509_STORE *store , X509 *x509 ,
+                                       struct stack_st_X509 *chain )
+  {
+    return X509_STORE_CTX_init(ctx, store, x509, chain);
+  }
+
+  // TODO, undocumented
+  extern int ENGINE_load_ssl_client_cert_proxy(ENGINE *e , SSL *s , struct stack_st_X509_NAME *ca_dn ,
+                                               X509 **pcert , EVP_PKEY **ppkey , struct stack_st_X509 **pother ,
+                                               UI_METHOD *ui_method , void *callback_data )
+  {
+    return ENGINE_load_ssl_client_cert(e, s, ca_dn, pcert, ppkey, pother, ui_method, callback_data);
+  }
+
+#endif
+
+#if OPENSSL_MAJOR == 1
+  // undocumented
+  extern EVP_PKEY *EVP_PKEY_new_mac_key_proxy(int type , ENGINE *e , unsigned char *key ,
+                                              int keylen )
+  {
+    EVP_PKEY * ret = EVP_PKEY_new_mac_key(type, e, key, keylen);
+
+    load_buf(key, keylen, "keybits");
+    symN("EVP_PKEY_new_mac_key", "key", NULL, FALSE);
+    store_ctx(ret, "id");
+
+    // fighting abstraction breaking in ssl lib:
+    copy_ctx(ret->pkey.ptr, ret);
+
+    return ret;
+  }
+#endif
+
+// Read a certificate in PEM format from a BIO:
+extern X509 *PEM_read_bio_X509_proxy(BIO *bp , X509 **x , pem_password_cb *cb , void *u )
+{
+  X509 * ret = PEM_read_bio_X509(bp, x, cb, u);
+
+  symN("PEM_read_bio_X509", "cert", NULL, FALSE);
+  store_ctx(ret, "id");
+
+  return ret;
+}
+
+
+extern EVP_CIPHER const   *EVP_get_cipherbyname_proxy(char const   *name )
+{
+  EVP_CIPHER const * ret = EVP_get_cipherbyname(name);
+
+  set_attr_str(ret, "type", name);
+
+  return ret;
+}
+
+
+extern EVP_CIPHER const   *EVP_enc_null_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_enc_null();
+
+  set_attr_str(ret, "type", "null");
+
+  return ret;
+}
+
+// d2i_X509_bio() is similar to d2i_X509() except it attempts to parse data from BIO bp.
+extern X509 *d2i_X509_bio_proxy(BIO *bp , X509 **x509 )
+{
+  X509 * ret = d2i_X509_bio(bp, x509);
+
+  symN("d2i_X509_bio", "cert", NULL, FALSE);
+  store_ctx(ret, "id");
+
+  return ret;
+}
+
+
+// undocumented
+#if OPENSSL_MAJOR == 0
+  extern int EVP_PKEY_assign_proxy(EVP_PKEY *pkey , int type , char *key )
+#else
+  extern int EVP_PKEY_assign_proxy(EVP_PKEY *pkey , int type , void *key )
+#endif
+{
+  // TODO
+  return EVP_PKEY_assign(pkey, type, key);
+}
+
+// The main purpose of the functions EVP_PKEY_missing_parameters() and EVP_PKEY_copy_parameters()
+// is to handle public keys in certificates where the parameters are sometimes omitted from a public key
+// if they are inherited from the CA that signed it.
+extern int EVP_PKEY_copy_parameters_proxy(EVP_PKEY *to , EVP_PKEY const   *from )
+{
+  // TODO: this function doesn't copy the whole contents!
+  return EVP_PKEY_copy_parameters(to, from);
+}
+
+
+extern EVP_PKEY *PEM_read_bio_PrivateKey_proxy(BIO *bp , EVP_PKEY **x , pem_password_cb *cb ,
+                                               void *u )
+{
+  EVP_PKEY * ret = PEM_read_bio_PrivateKey(bp, x, cb, u);
+
+  symN("PEM_read_bio_PrivateKey", "pkey", NULL, FALSE);
+  store_ctx(ret, "key");
+
+  copy_ctx(ret->pkey.ptr, ret);
+
+  return ret;
+}
+
+// undocumented
+extern EVP_PKEY *d2i_PrivateKey_bio_proxy(BIO *bp , EVP_PKEY **a )
+{
+  EVP_PKEY * ret = d2i_PrivateKey_bio(bp, a);
+
+  symN("d2i_PrivateKey_bio", "pkey", NULL, FALSE);
+  store_ctx(ret, "id");
+
+  copy_ctx(ret->pkey.ptr, ret);
+
+  return ret;
+}
+
+// undocumented
+extern EVP_PKEY *d2i_PrivateKey_proxy(int type , EVP_PKEY **a , unsigned char const   **pp ,
+                                      long length )
+{
+  EVP_PKEY * ret = d2i_PrivateKey(type, a, pp, length);
+
+  // TODO: is this right?
+  load_buf(*pp, length, "keystring");
+  symN("d2i_PrivateKey", "pkey", NULL, FALSE);
+  store_ctx(ret, "id");
+
+  copy_ctx(ret->pkey.ptr, ret);
+
+  return ret;
+}
+
+
+extern EVP_CIPHER const   *EVP_des_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_des_cbc();
+
+  set_attr_str(ret, "type", "des_cbc");
+
+  return ret;
+}
+
+extern EVP_CIPHER const   *EVP_des_ede3_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_des_ede3_cbc();
+
+  set_attr_str(ret, "type", "des_ede3_cbc");
+
+  return ret;
+}
+
+extern EVP_CIPHER const   *EVP_idea_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_idea_cbc();
+
+  set_attr_str(ret, "type", "idea_cbc");
+
+  return ret;
+}
+
+
+extern EVP_CIPHER const   *EVP_rc4_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_rc4();
+
+  set_attr_str(ret, "type", "rc4");
+
+  return ret;
+}
+
+extern EVP_CIPHER const   *EVP_rc2_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_rc2_cbc();
+
+  set_attr_str(ret, "type", "rc2_cbc");
+
+  return ret;
+}
+
+extern EVP_CIPHER const   *EVP_rc2_40_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_rc2_40_cbc();
+
+  set_attr_str(ret, "type", "rc2_40_cbc");
+
+  return ret;
+}
+
+
+extern EVP_CIPHER const   *EVP_aes_192_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_aes_192_cbc();
+
+  set_attr_str(ret, "type", "aes_192_cbc");
+
+  return ret;
+}
+
+extern EVP_CIPHER const   *EVP_aes_256_cbc_proxy(void)
+{
+  EVP_CIPHER const * ret = EVP_aes_256_cbc();
+
+  set_attr_str(ret, "type", "aes_256_cbc");
+
+  return ret;
+}
+
+#if OPENSSL_MAJOR == 1
+
+  extern EVP_CIPHER const   *EVP_camellia_128_cbc_proxy(void)
+  {
+    EVP_CIPHER const * ret = EVP_camellia_128_cbc();
+
+    set_attr_str(ret, "type", "camellia_128_cbc");
+
+    return ret;
+  }
+
+  extern EVP_CIPHER const   *EVP_camellia_256_cbc_proxy(void)
+  {
+    EVP_CIPHER const * ret = EVP_camellia_256_cbc();
+
+    set_attr_str(ret, "type", "camellia_256_cbc");
+
+    return ret;
+  }
+
+  extern EVP_CIPHER const   *EVP_seed_cbc_proxy(void)
+  {
+    EVP_CIPHER const * ret = EVP_seed_cbc();
+
+    set_attr_str(ret, "type", "seed_cbc");
+
+    return ret;
+  }
+
+#endif
+
+/*
+ * RAND_bytes() puts num cryptographically strong pseudo-random bytes into buf.
+ * An error occurs if the PRNG has not been seeded with enough randomness to ensure an unpredictable byte sequence.
+ *
+ * The contents of buf is mixed into the entropy pool before retrieving the new pseudo-random bytes
+ * unless disabled at compile time (see FAQ).
+ *
+ * RAND_bytes() returns 1 on success, 0 otherwise. The error code can be obtained by ERR_get_error.
+ */
+extern int RAND_bytes_proxy(unsigned char *buf , int num )
+{
+  int ret = RAND_bytes(buf, num);
+
+  symL("RAND_bytes", "nonce", num, FALSE);
+  store_buf(buf);
+
+  return ret;
+}
+
+/*
+ * RAND_pseudo_bytes() puts num pseudo-random bytes into buf. Pseudo-random byte sequences generated by RAND_pseudo_bytes()
+ * will be unique if they are of sufficient length, but are not necessarily unpredictable.
+ * They can be used for non-cryptographic purposes and for certain purposes in cryptographic protocols,
+ * but usually not for key generation etc.
+ *
+ * RAND_pseudo_bytes() returns 1 if the bytes generated are cryptographically strong, 0 otherwise.
+ * Both functions return -1 if they are not supported by the current RAND method.
+ */
+extern int RAND_pseudo_bytes_proxy(unsigned char *buf , int num )
+{
+  int ret = RAND_pseudo_bytes(buf, num);
+
+  symL("RAND_pseudo_bytes", "nonce", num, FALSE);
+  store_buf(buf);
+
+  return ret;
+}
+
+extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa )
+{
+  RSA * ret = RSAPrivateKey_dup(rsa);
+
+  copy_ctx(ret, rsa);
+
+  return ret;
+}
+
+/*
+ * RSA_verify() verifies that the signature sigbuf of size siglen matches a given message digest m
+ * of size m_len. type denotes the message digest algorithm that was used to generate the signature.
+ * rsa is the signer's public key.
+ *
+ * RSA_verify() returns 1 on successful verification, 0 otherwise.
+ */
+#if OPENSSL_MAJOR == 0
+  extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                              unsigned char *sigbuf , unsigned int siglen , RSA *rsa )
+#else
+  extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                              unsigned char const   *sigbuf , unsigned int siglen , RSA *rsa )
+#endif
+{
+  int ret = RSA_verify(type, m, m_length, sigbuf, siglen, rsa);
+
+  // FIXME: Change this for symbolic tracing
+  if(ret == 1)
+  {
+    load_buf(m, m_length, "msg");
+    load_ctx(rsa, "id", "pkey");
+    symL("RSA_verify", "sig", siglen, TRUE);
+    store_buf(sigbuf);
+  }
+
+  return ret;
+}
+
+
+
+/*
+ * RSA_public_encrypt() encrypts the flen bytes at from (usually a session key)
+ * using the public key rsa and stores the ciphertext in to. to must point to RSA_size(rsa) bytes of memory.
+ *
+ * RSA_public_encrypt() returns the size of the encrypted data (i.e., RSA_size(rsa)).
+ */
+extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
+                                    RSA *rsa , int padding )
+{
+  int ret = RSA_public_encrypt(flen, from, to, rsa, padding);
+
+  load_buf(from, flen, "plain");
+  load_ctx(rsa, "id", "pkey");
+  symL("RSA_public_encrypt", "enc", ret, FALSE);
+  store_buf(to);
+
+  return ret;
+}
+
+/*
+ * RSA_private_decrypt() decrypts the flen bytes at from using the private key rsa
+ * and stores the plaintext in to.
+ * to must point to a memory section large enough to hold the decrypted data
+ * (which is smaller than RSA_size(rsa)). padding is the padding mode that was used to encrypt the data.
+ *
+ * RSA_private_decrypt() returns the size of the recovered plaintext.
+ */
+extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
+                                     RSA *rsa , int padding )
+{
+  // NB: it is possible that from and to is the same pointer
+  load_buf(from, flen, "enc");
+  load_ctx(rsa, "id", "pkey");
+
+  int ret = RSA_private_decrypt(flen, from, to, rsa, padding);
+
+  // FIXME: relying on concrete value?
+  symL("RSA_private_decrypt", "dec", ret, TRUE);
+  store_buf(to);
+
+  return ret;
+}
+
+/*
+ * RSA_sign() signs the message digest m of size m_len using the private key rsa
+ * as specified in PKCS #1 v2.0. It stores the signature in sigret and the signature size in siglen.
+ * sigret must point to RSA_size(rsa) bytes of memory.
+ *
+ * type denotes the message digest algorithm that was used to generate m.
+ * It usually is one of NID_sha1, NID_ripemd160 and NID_md5; see objects for details.
+ * If type is NID_md5_sha1, an SSL signature (MD5 and SHA1 message digests with PKCS #1 padding
+ * and no algorithm identifier) is created.
+ */
+extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                          unsigned char *sigret , unsigned int *siglen , RSA *rsa )
+{
+  int ret = RSA_sign(type, m, m_length, sigret, siglen, rsa);
+
+  load_buf(m, m_length, "msg");
+  load_ctx(rsa, "id", "pkey");
+  symL("RSA_sign", "sig", *siglen, FALSE);
+  store_buf(sigret);
+
+  return ret;
+}
+
+extern RSA *d2i_RSAPrivateKey_bio_proxy(BIO *bp , RSA **rsa )
+{
+  RSA * ret = d2i_RSAPrivateKey_bio(bp, rsa);
+
+  symN("d2i_RSAPrivateKey_bio", "rsa_key", NULL, FALSE);
+  store_ctx(ret, "id");
+
+  return ret;
+}
+
+extern RSA *PEM_read_bio_RSAPrivateKey_proxy(BIO *bp , RSA **x , pem_password_cb *cb ,
+                                             void *u )
+{
+  RSA * ret = PEM_read_bio_RSAPrivateKey(bp, x, cb, u);
+
+  symN("PEM_read_bio_RSAPrivateKey", "rsa_key", NULL, FALSE);
+  store_ctx(ret, "id");
+
+  return ret;
+}
+
+extern RSA *d2i_RSAPrivateKey_proxy(RSA **a , unsigned char const   **in , long len )
+{
+  // FIXME: do as in DSA
+  RSA * ret = d2i_RSAPrivateKey(a, in, len);
+
+  symN("d2i_RSAPrivateKey", "rsa_key", NULL, FALSE);
+  store_ctx(ret, "id");
+
+  return ret;
+}
+
+#if OPENSSL_MAJOR == 0
+
+  extern int ssl3_handshake_mac(SSL *s , EVP_MD_CTX *in_ctx , char const   *sender ,
+                                    int len , unsigned char *p ) ;
+
+  extern int ssl3_handshake_mac_proxy(SSL *s , EVP_MD_CTX *in_ctx , char const   *sender ,
+                                    int len , unsigned char *p )
+  {
+    // FIXME: this looks like something that should be properly modeled
+    return ssl3_handshake_mac(s, in_ctx, sender, len, p);
+  }
+
+  extern int ssl3_final_finish_mac(SSL *s , EVP_MD_CTX *ctx1 , EVP_MD_CTX *ctx2 ,
+                                           char const   *sender , int slen , unsigned char *p );
+
+  extern int ssl3_final_finish_mac_proxy(SSL *s , EVP_MD_CTX *ctx1 , EVP_MD_CTX *ctx2 ,
+                                         char const   *sender , int slen , unsigned char *p )
+  {
+    // FIXME:
+    return ssl3_final_finish_mac(s, ctx1, ctx2, sender, slen, p);
+  }
+
+  extern int ssl3_cert_verify_mac(SSL *s , EVP_MD_CTX *in , unsigned char *p );
+
+  extern int ssl3_cert_verify_mac_proxy(SSL *s , EVP_MD_CTX *in , unsigned char *p )
+  {
+    // FIXME:
+    return ssl3_cert_verify_mac(s, in, p);
+  }
+
+  extern int tls1_final_finish_mac(SSL *s , EVP_MD_CTX *in1_ctx , EVP_MD_CTX *in2_ctx ,
+                                           char const   *str , int slen , unsigned char *p );
+
+  extern int tls1_final_finish_mac_proxy(SSL *s , EVP_MD_CTX *in1_ctx , EVP_MD_CTX *in2_ctx ,
+                                         char const   *str , int slen , unsigned char *p )
+  {
+    return tls1_final_finish_mac(s, in1_ctx, in2_ctx, str, slen, p);
+  }
+
+  extern int tls1_cert_verify_mac(SSL *s , EVP_MD_CTX *in , unsigned char *p );
+
+  extern int tls1_cert_verify_mac_proxy(SSL *s , EVP_MD_CTX *in , unsigned char *p )
+  {
+    return tls1_cert_verify_mac(s, in, p);
+  }
+
+
+  extern void tls1_PRF(EVP_MD const   *md5 , EVP_MD const   *sha1 , unsigned char *label ,
+                           int label_len , unsigned char const   *sec , int slen ,
+                           unsigned char *out1 , unsigned char *out2 , int olen );
+
+  extern void tls1_PRF_proxy(EVP_MD const   *md5 , EVP_MD const   *sha1 , unsigned char *label ,
+                             int label_len , unsigned char const   *sec , int slen ,
+                             unsigned char *out1 , unsigned char *out2 , int olen )
+  {
+    tls1_PRF(md5, sha1, label, label_len, sec, slen, out1, out2, olen);
+
+    load_buf(label, label_len, "label");
+    load_buf(sec, slen, "secret");
+    symL("tls1_PRF");
+    store_buf(out1, olen, "prf_result");
+  }
+
+  extern void tls1_P_hash(EVP_MD const   *md , unsigned char const   *sec , int sec_len ,
+                                unsigned char *seed , int seed_len , unsigned char *out ,
+                                int olen );
+
+  extern void tls1_P_hash_proxy(EVP_MD const   *md , unsigned char const   *sec , int sec_len ,
+                                unsigned char *seed , int seed_len , unsigned char *out ,
+                                int olen )
+  {
+    tls1_P_hash(md, sec, sec_len, seed, seed_len, out, olen);
+
+    load_buf(seed, seed_len, "seed");
+    if(sec != NULL) load_buf(sec, sec_len, "secret");
+    symL("tls1_P_hash");
+    store_buf(out, olen, "P_hash_result");
+  }
+
+
+
+#else
+  extern void tls1_PRF_proxy(long digest_mask,
+                       const void *seed1, int seed1_len,
+                       const void *seed2, int seed2_len,
+                       const void *seed3, int seed3_len,
+                       const void *seed4, int seed4_len,
+                       const void *seed5, int seed5_len,
+                       const unsigned char *sec, int slen,
+                       unsigned char *out1,
+                       unsigned char *out2, int olen)
+  {
+    tls1_PRF(digest_mask,
+             seed1, seed1_len, seed2, seed2_len,
+             seed3, seed3_len, seed4, seed4_len,
+             seed5, seed5_len, sec, slen, out1, out2, olen);
+
+    if(seed1 != NULL)
+      load_buf((unsigned char*) seed1, seed1_len, "seed");
+    if(seed2 != NULL)
+      load_buf((unsigned char*) seed2, seed2_len, "seed");
+    if(seed3 != NULL)
+      load_buf((unsigned char*) seed3, seed3_len, "seed");
+    if(seed4 != NULL)
+      load_buf((unsigned char*) seed4, seed4_len, "seed");
+    if(seed5 != NULL)
+      load_buf((unsigned char*) seed5, seed5_len, "seed");
+    if(sec != NULL)
+      load_buf((unsigned char*) sec, slen, "secret");
+    symL("tls1_PRF", "prf_result", olen, FALSE);
+    store_buf(out1);
+  }
+
+  void tls1_P_hash_proxy(const EVP_MD *md, const unsigned char *sec,
+                          int sec_len,
+                          const void *seed1, int seed1_len,
+                          const void *seed2, int seed2_len,
+                          const void *seed3, int seed3_len,
+                          const void *seed4, int seed4_len,
+                          const void *seed5, int seed5_len,
+                          unsigned char *out, int olen)
+  {
+    tls1_P_hash(md, sec, sec_len,
+                seed1, seed1_len, seed2, seed2_len,
+                seed3, seed3_len, seed4, seed4_len,
+                seed5, seed5_len, out, olen);
+
+    load_buf((unsigned char*) seed1, seed1_len, "seed1");
+    load_buf((unsigned char*) seed2, seed2_len, "seed2");
+    load_buf((unsigned char*) seed3, seed3_len, "seed3");
+    load_buf((unsigned char*) seed4, seed4_len, "seed4");
+    load_buf((unsigned char*) seed5, seed5_len, "seed5");
+    if(sec != NULL) load_buf((unsigned char*) sec, sec_len, "secret");
+    symL("tls1_P_hash", "P_hash_result", olen, FALSE);
+    store_buf(out);
+  }
+#endif
+
+#if OPENSSL_MAJOR == 1
+int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char *p,
+	     int len)
+{
+  // FIXME: what's going on here?
+  //load_buf(p, len, "premaster_secret");
+  //symL("tls1_generate_master_secret");
+  //store_buf(NULL, 0, "");
+  int ret = tls1_generate_master_secret(s, out, p, len);
+  return ret;
+}
+#endif
+
+#if OPENSSL_MAJOR == 0
+  extern int check_srvr_ecc_cert_and_alg(X509 *x , SSL_CIPHER *cs );
+  int check_srvr_ecc_cert_and_alg_proxy(X509 *x , SSL_CIPHER *cs )
+  {
+    return check_srvr_ecc_cert_and_alg(x, cs);
+  }
+#endif
+
+
+#if OPENSSL_MAJOR == 1
+
+  ////////////////////////////////////////////
+  // EVP_PKEY_CTX was only introduced in 1.0.0
+  ////////////////////////////////////////////
+
+  /*
+   * The EVP_PKEY_CTX_new() function allocates public key algorithm context
+   * using the algorithm specified in pkey and ENGINE e.
+   */
+  extern EVP_PKEY_CTX *EVP_PKEY_CTX_new_proxy(EVP_PKEY *pkey , ENGINE *e )
+  {
+    EVP_PKEY_CTX * ret = EVP_PKEY_CTX_new(pkey, e);
+
+    copy_attr_ex(ret, "key", pkey, "id");
+
+    return ret;
+  }
+
+
+  // The EVP_PKEY_derive_set_peer() function sets the peer key: this will normally be a public key.
+  extern int EVP_PKEY_derive_set_peer_proxy(EVP_PKEY_CTX *ctx , EVP_PKEY *peer )
+  {
+    int ret = EVP_PKEY_derive_set_peer(ctx, peer);
+
+    copy_attr_ex(ctx, "peerkey", peer, "id");
+
+    return ret;
+  }
+
+  /*
+   * The EVP_PKEY_decrypt() function performs a public key decryption operation using ctx.
+   * The data to be decrypted is specified using the in and inlen parameters.
+   * If out is NULL then the maximum size of the output buffer is written to the outlen parameter.
+   * If out is not NULL then before the call the outlen parameter should contain the length of the out buffer,
+   * if the call is successful the decrypted data is written to out and the amount of data written to outlen.
+   */
+  extern int EVP_PKEY_decrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_t *outlen ,
+                                    unsigned char const   *in , size_t inlen )
+  {
+    int ret = EVP_PKEY_decrypt(ctx, out, outlen, in, inlen);
+
+    if(out != NULL)
+    {
+      load_buf(in, inlen, "enc");
+      load_ctx(ctx, "key", "pkey");
+      symL("EVP_PKEY_decrypt", "dec", *outlen, TRUE);
+
+      store_buf(out);
+    }
+
+    return ret;
+  }
+
+  // TODO
+  extern int EVP_PKEY_CTX_ctrl_proxy(EVP_PKEY_CTX *ctx , int keytype , int optype ,
+                                     int cmd , int p1 , void *p2 )
+  {
+    return EVP_PKEY_CTX_ctrl(ctx, keytype, optype, cmd, p1, p2);
+  }
+
+
+  /*
+   * EVP_DigestSignInit() sets up signing context ctx to use digest type from ENGINE impl and private key pkey.
+   * ctx must be initialized with EVP_MD_CTX_init() before calling this function.
+   * If pctx is not NULL the EVP_PKEY_CTX of the signing operation will be written to *pctx:
+   * this can be used to set alternative signing options.
+   */
+  int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx ,
+                                EVP_MD const   *type , ENGINE *e , EVP_PKEY *pkey )
+  {
+    int ret = EVP_DigestSignInit(ctx, pctx, type, e, pkey);
+
+    copy_attr_ex(ctx, "key", pkey, "id");
+    copy_attr(ctx, type, "type");
+    set_attr_str(ctx, "use", "DigestSign");
+    set_attr_str(ctx, "msg", "");
+
+    if(pctx != NULL)
+      copy_attr_ex(*pctx, "key", pkey, "id");
+
+    return ret;
+  }
+
+  /*
+   * The EVP_PKEY_verify() function performs a public key verification operation using ctx.
+   * The signature is specified using the sig and siglen parameters.
+   * The verified data (i.e. the data believed originally signed) is specified
+   * using the tbs and tbslen parameters.
+   *
+   * EVP_PKEY_verify_init() and EVP_PKEY_verify() return 1 if the verification was successful
+   * and 0 if it failed.
+   */
+  extern int EVP_PKEY_verify_proxy(EVP_PKEY_CTX *ctx , unsigned char const   *sig ,
+                                   size_t siglen , unsigned char const   *tbs , size_t tbslen )
+  {
+    int ret = EVP_PKEY_verify(ctx, sig, siglen, tbs, tbslen);
+
+    // TODO: this is wrong for symbolic tracing
+    // I would take the position that in binary tracing verify doesn't make
+    // sense at all, so we just do the correct symbolic equation
+    if(ret == 1)
+    {
+      load_buf(tbs, tbslen, "msg");
+      load_ctx(ctx, "key", "pkey");
+      symL("EVP_PKEY_verify", "sig", siglen, TRUE);
+
+      store_buf(sig);
+    }
+
+    /* rhs(tbs, tbslen, "msg");
+    rhs(sig, siglen, "sig");
+    rhs(ctx, "key", "pkey");
+    symL("EVP_PKEY_verify"); */
+
+    return ret;
+  }
+
+  /*
+   * The EVP_PKEY_encrypt() function performs a public key encryption operation using ctx.
+   * The data to be encrypted is specified using the in and inlen parameters.
+   * If out is NULL then the maximum size of the output buffer is written to the outlen parameter.
+   * If out is not NULL then before the call the outlen parameter should contain the length of the out buffer,
+   * if the call is successful the encrypted data is written to out and the amount of data written to outlen.
+   */
+  extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_t *outlen ,
+                                    unsigned char const   *in , size_t inlen )
+  {
+    int ret = EVP_PKEY_encrypt(ctx, out, outlen, in, inlen);
+
+    if(out != NULL)
+    {
+      symL("lenvar", "enc_len", sizeof(*outlen), FALSE);
+      store_buf((unsigned char *) outlen);
+
+      load_buf(in, inlen, "plain");
+      load_ctx(ctx, "key", "pkey");
+      symL("EVP_PKEY_encrypt", "penc", *outlen, FALSE);
+
+      store_buf(out);
+    }
+
+    return ret;
+  }
+
+  /*
+   * The EVP_PKEY_sign() function performs a public key signing operation using ctx.
+   * The data to be signed is specified using the tbs and tbslen parameters.
+   * If sig is NULL then the maximum size of the output buffer is written to the siglen parameter.
+   * If sig is not NULL then before the call the siglen parameter should contain the length of the sig buffer,
+   * if the call is successful the signature is written to sig and the amount of data written to siglen.
+   *
+   */
+  extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *siglen ,
+                                 unsigned char const   *tbs , size_t tbslen )
+  {
+    int ret = EVP_PKEY_sign(ctx, sig, siglen, tbs, tbslen);
+
+    if(sig != NULL)
+    {
+      symL("lenvar", "sig_len", sizeof(*siglen), FALSE);
+      store_buf((unsigned char *) siglen);
+
+      load_buf(tbs, tbslen, "msg");
+      load_ctx(ctx, "key", "pkey");
+      symL("EVP_PKEY_sign", "sig", *siglen, FALSE);
+      store_buf(sig);
+    }
+
+    return ret;
+  }
+
+
+#endif
+
+
+/*
+  BN_num_bytes() returns the size of a BIGNUM in bytes.
+
+  BN_num_bits_word() returns the number of significant bits in a word. If we take 0x00000432 as an example,
+  it returns 11, not 16, not 32. Basically, except for a zero, it returns floor(log2(w))+1.
+
+  BN_num_bits() returns the number of significant bits in a BIGNUM, following the same principle as BN_num_bits_word().
+
+  BN_num_bytes() is a macro.
+ */
+int BN_num_bytes_proxy(const BIGNUM *a)
+{
+  int ret = (BN_num_bits(a)+7)/8;
+
+  load_ctx(a, "val", "bignum");
+  symL("len", "len", sizeof(ret), TRUE);
+  store_buf((void*) &ret);
+
+  return ret;
+}
+
+
+/*
+ * BN_bin2bn() converts the positive integer in big-endian form of length len at s into a BIGNUM  and places it in ret.
+ * If ret is NULL, a new BIGNUM is created.
+ *
+ * BN_bin2bn() returns the BIGNUM, NULL on error.
+ */
+extern BIGNUM *BN_bin2bn_proxy(unsigned char const *s , int len , BIGNUM *ret )
+{
+  BIGNUM * ret2 = BN_bin2bn(s, len, ret);
+
+  BIGNUM * result;
+  if(ret == NULL) result = ret2; else result = ret;
+
+  load_buf(s, len, "val");
+  store_ctx(result, "val");
+
+  return result;
+}
+
+/*
+ * BN_bn2bin() converts the absolute value of a into big-endian form and stores it at to.
+ * to must point to BN_num_bytes(a) bytes of memory.
+ *
+ * BN_bn2bin() returns the length of the big-endian number placed at to.
+ */
+extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
+{
+  size_t ret = BN_bn2bin(a, to);
+
+  load_ctx(a, "val", "val");
+  symL("len", "len", sizeof(ret), TRUE);
+  store_buf((void *)&ret);
+
+  load_ctx(a, "val", "val");
+  store_buf(to);
+
+  return ret;
+}
+
+/*
+ * BN_mod_exp() computes a to the p-th power modulo m (r=a^p % m). This function uses less time and space than BN_exp().
+ *
+ * For all functions, 1 is returned for success, 0 on error.
+ */
+extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , BIGNUM const   *m , BN_CTX *ctx )
+{
+  int ret = BN_mod_exp(r, a, p, m, ctx);
+
+  load_ctx(a, "val", "bignum");
+  load_ctx(p, "val", "bignum");
+  load_ctx(m, "val", "bignum");
+  symN("mod_exp", "bignum", NULL, TRUE);
+  store_ctx(r, "val");
+
+  return ret;
+}
+
+/*
+ * BN_hex2bn() converts the string str containing a hexadecimal number to a BIGNUM and stores it in **a.
+ * If *a  is NULL, a new BIGNUM is created. If a is NULL, it only computes the number's length in hexadecimal digits.
+ * If the string starts with '-', the number is negative. BN_dec2bn() is the same using the decimal system.
+ *
+ * BN_hex2bn() and BN_dec2bn() return the number's length in hexadecimal or decimal digits, and 0 on error.
+ */
+extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
+{
+  BIGNUM dummy;
+
+  int create_new = (a != NULL) && (*a == NULL);
+
+  int ret = BN_hex2bn(a, str);
+
+  load_all(str, "hex");
+  symN("ztp", "ztp", NULL, TRUE);
+  symN("BN_hex2bn", "bignum", NULL, TRUE);
+  store_ctx(&dummy, "val");
+
+  load_ctx(&dummy, "val", "");
+  symL("len", "len", sizeof(ret), TRUE);
+  store_buf((void *) &ret);
+
+  if(a != NULL)
+  {
+    if(create_new)
+    {
+      fresh_ptr(sizeof(**a));
+      store_buf((unsigned char *) a);
+    }
+    // *a = fresh_ptr((void *) *a, sizeof(**a));
+
+    load_ctx(&dummy, "val", "bignum");
+    store_ctx(*a, "val");
+  }
+
+  return ret;
+}
+
+/*
+ * BN_bn2hex() and BN_bn2dec() return printable strings containing the hexadecimal and decimal encoding of a respectively.
+ * For negative numbers, the string is prefaced with a leading '-'.
+ * The string must be freed later using OPENSSL_free().
+ *
+ * BN_bn2hex() and BN_bn2dec() return a null-terminated string, or NULL on error.
+ */
+extern char *BN_bn2hex_proxy(BIGNUM const   *a )
+{
+  char * ret = BN_bn2hex(a);
+
+  load_ctx(a, "val", "");
+  symN("BN_bn2hex", "hex", NULL, TRUE);
+  store_all(ret);
+
+  return ret;
+}
+
+/*
+ * BN_zero(), BN_one() and BN_set_word() return 1 on success, 0 otherwise. BN_value_one() returns the constant.
+ */
+int BN_set_word_proxy(BIGNUM *a, unsigned long w)
+{
+  int ret = BN_set_word(a, w);
+
+  load_buf((unsigned char *)&w, sizeof(w), "wordval");
+  store_ctx(a, "val");
+
+  return ret;
+}
+
+int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
+                                  BIGNUM const   *p1 , BIGNUM const   *a2 ,
+                                  BIGNUM const   *p2 , BIGNUM const   *m ,
+                                  BN_CTX *ctx , BN_MONT_CTX *in_mont )
+{
+  int ret = BN_mod_exp2_mont(rr, a1, p1, a2, p2, m, ctx, in_mont);
+
+  load_ctx(a1, "val", "a1");
+  load_ctx(p1, "val", "p1");
+  load_ctx(a2, "val", "a1");
+  load_ctx(p2, "val", "p1");
+  load_ctx(m, "val", "bignum");
+  symN("mod_exp2_mont", "rr", NULL, TRUE);
+  store_ctx(rr, "val");
+
+  return ret;
+}
+
+int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
+                                 BIGNUM const   *p , BIGNUM const   *m ,
+                                 BN_CTX *ctx , BN_MONT_CTX *in_mont )
+{
+  int ret = BN_mod_exp_mont(rr, a, p, m, ctx, in_mont);
+
+  load_ctx(a, "val", "a");
+  load_ctx(p, "val", "p");
+  load_ctx(m, "val", "bignum");
+  symN("mod_exp_mont", "rr", NULL, TRUE);
+  store_ctx(rr, "val");
+
+  return ret;
+}
+
+/*
+ * DSA_generate_key() expects a to contain DSA parameters. It generates a new key pair and stores it in a->pub_key and a->priv_key.
+
+   The PRNG must be seeded prior to calling DSA_generate_key().
+ */
+int DSA_generate_key_proxy(DSA *a)
+{
+  symN("new", "keyseed", NULL, FALSE);
+  store_ctx(a, "keyseed");
+
+  load_ctx(a, "keyseed", "keyseed");
+  symN("sk", "skey", NULL, TRUE);
+  store_ctx(a, "skey");
+
+  load_ctx(a, "keyseed", "keyseed");
+  symN("pk", "pkey", NULL, TRUE);
+  store_ctx(a, "pkey");
+
+  return DSA_generate_key(a);
+}
+
+/*
+ * DSA_new_method() allocates and initializes a DSA structure so that engine will be used for the DSA operations.
+ * If engine is NULL, the default engine for DSA operations is used, and if no default ENGINE is set,
+ * the DSA_METHOD controlled by DSA_set_default_method() is used.
+ */
+DSA *DSA_new_method_proxy(ENGINE *engine)
+{
+  // show symex the very first execution of DSA_get_default_method that initialises the method structure
+  DSA_get_default_method();
+
+  DSA * ret = DSA_new_method(engine);
+  return ret;
+}
+
+DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
+{
+  DSA_SIG * ret = dsa_do_sign(dgst, dlen, dsa);
+
+//  symL("dsa_sign_new_bn");
+//  store_buf((unsigned char *) &(ret->r), sizeof(ret->r), "r");
+//  symL("dsa_sign_new_bn");
+//  store_buf((unsigned char *) &(ret->s), sizeof(ret->s), "s");
+
+  fresh_ptr(sizeof(BIGNUM));
+  store_buf((unsigned char *) &(ret->r));
+  fresh_ptr(sizeof(BIGNUM));
+  store_buf((unsigned char *) &(ret->s));
+
+  load_ctx(dsa, "skey", "skey");
+  load_buf(dgst, dlen, "dgst");
+  symN("dsa_sig_r", "dsa_sig_r", NULL, FALSE);
+  store_ctx(ret->r, "val");
+
+  load_ctx(dsa, "skey", "skey");
+  load_buf(dgst, dlen, "dgst");
+  symN("dsa_sig_s", "dsa_sig_s", NULL, FALSE);
+  store_ctx(ret->s, "val");
+
+  return ret;
+}
+
+
+int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *sig ,
+                               DSA *dsa )
+{
+  int ret = dsa_do_verify(dgst, dgst_len, sig, dsa);
+
+  load_ctx(dsa, "pkey", "pkey");
+  load_buf(dgst, dgst_len, "dgst");
+  load_ctx(sig->r, "val", "dsa_sig_r");
+  load_ctx(sig->s, "val", "dsa_sig_s");
+  symL("dsa_verify", "sig_verification", sizeof(ret), TRUE);
+  store_buf((unsigned char *) &ret);
+
+  return ret;
+}
+
+/**
+ * d2i_DSA_PUBKEY() and i2d_DSA_PUBKEY() decode and encode an DSA public key using a SubjectPublicKeyInfo
+ * (certificate public key) structure.
+ *
+ * Behaves as follows, with out = pp:
+ *
+ * i2d_X509() encodes the structure pointed to by x into DER format.
+ * If out is not NULL is writes the DER encoded data to the buffer at *out, and increments it to point after the data just written.
+ * If the return value is negative an error occurred, otherwise it returns the length of the encoded data.
+ */
+int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
+{
+  unsigned char *p = *pp;
+
+  size_t ret = i2d_DSA_PUBKEY(a, pp);
+
+  symL("lenvar", "len", sizeof(ret), FALSE);
+  store_buf((unsigned char  *) &ret);
+
+  if(p == NULL)
+  {
+    fresh_ptr(sizeof(DSA));
+    store_buf(pp);
+    p = *pp;
+  }
+  else
+    *pp = p + ret;
+
+  load_ctx(a, "pkey", "dsa_pkey");
+  symL("i2d_DSA_PUBKEY", "DER", ret, TRUE);
+  store_buf(p);
+
+  return ret;
+}
+
+/**
+ * This behaves in the similar fashion with a = px, pp = in
+ *
+ * d2i_X509() attempts to decode len bytes at *in. If successful a pointer to the X509 structure is returned.
+ * If an error occurred then NULL is returned. If px is not NULL then the returned structure is written to *px.
+ * If *px is not NULL then it is assumed that *px contains a valid X509 structure and an attempt is made to reuse it.
+ * If the call is successful *in is incremented to the byte following the parsed data.
+ */
+DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
+{
+  unsigned char *p = *pp;
+
+  DSA * ret = d2i_DSA_PUBKEY(a, pp, length);
+
+  if(*a != NULL)
+    ret = *a;
+  else
+  {
+    fresh_ptr(sizeof(ret));
+    store_buf(ret);
+    // really?
+    *a = ret;
+  }
+
+  load_buf(*pp, length, "DER");
+  symN("d2i_DSA_PUBKEY", "dsa_pkey", NULL, FALSE);
+  store_ctx(ret, "pkey");
+
+  *pp = p + length;
+
+  return ret;
+}
+
+
+//int DSA_sign_proxy(int type , unsigned char const   *dgst , int dlen , unsigned char *sig ,
+//                    unsigned int *siglen , DSA *dsa )
+//{
+//
+//}
+//
+//int DSA_verify_proxy(int type , unsigned char const   *dgst , int dgst_len , unsigned char const   *sigbuf ,
+//                      int siglen , DSA *dsa )
+//{
+//
+//}
+
+
+unsigned long lh_strhash_proxy(char const   *c )
+{
+  unsigned long ret = lh_strhash(c);
+
+  load_all(c, "str");
+  symL("lh_strhash", "strhash", sizeof(ret), TRUE);
+  store_buf((void *) &ret);
+
+  return ret;
+}
