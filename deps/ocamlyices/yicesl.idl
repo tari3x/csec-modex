@@ -1,0 +1,60 @@
+// Copyright (c) SRI International 2006.
+// Author: Leonardo de Moura
+// Camlidl: Mickaël Delahaye
+
+quote(mli, "(**\n\
+  Type represeting a context\n\
+*)")
+typedef [abstract, errorcheck(check_yicesl_context)] void * yicesl_context;
+typedef [abstract, errorcode, errorcheck(check_yicesl_error)] int yicesl_error;
+
+quote(mli, "(**\n\
+  Set the verbosity level\n\
+*)")
+void yicesl_set_verbosity(int l);
+
+quote(mli, "(**\n\
+  Return the yices version number\n\
+*)")
+[string]
+char * yicesl_version();
+
+quote(mli, "(**\n\
+  Force Yices to type check expressions when they are asserted (default = false)\n\
+*)")
+void yicesl_enable_type_checker(boolean flag);
+
+quote(mli,"(**\n\
+  Enable a log file that will store the assertions, checks, decls, etc.\n\
+  If the log file is already open, then nothing happens.\n\
+*)")
+void yicesl_enable_log_file([string] char * file_name);
+
+quote(mli,"(**\n\
+  Create a logical context.\n\
+*)")
+yicesl_context yicesl_mk_context();
+
+quote(mli,"(**\n\
+  Delete the given logical context.\n\
+*)")
+void yicesl_del_context(yicesl_context ctx);
+
+quote(mli,"(**\n\
+  Process the given command in the given logical context. The command must\n\
+  use Yices input language.\n\
+\n\
+  @raise Failure if the command failed. The message is provided by Yices \n\
+  (C API Lite [yicesl_get_last_error_message]).\n\
+*)")
+[blocking]
+yicesl_error yicesl_read(yicesl_context ctx,[string] const char * cmd) ;
+
+quote(mli, "(** Return true if the given logical context is inconsistent. *)")
+boolean yicesl_inconsistent(yicesl_context ctx);
+
+quote(mli,"(**\n\
+  Set the file that will store the output produced by yices\n\
+  (e.g., models). The default behavior is to send the output to standard output.\n\
+*)")
+void yicesl_set_output_file([string] char * file_name);

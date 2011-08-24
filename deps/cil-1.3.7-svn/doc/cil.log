@@ -1,0 +1,2667 @@
+This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2011.4.8)  13 APR 2011 00:02
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**cil.tex
+(./cil.tex
+LaTeX2e <2009/09/24>
+Babel <v3.8l> and hyphenation patterns for english, dumylang, nohyphenation, ge
+rman-x-2009-06-19, ngerman-x-2009-06-19, ancientgreek, ibycus, arabic, armenian
+, basque, bulgarian, catalan, pinyin, coptic, croatian, czech, danish, dutch, u
+kenglish, usenglishmax, esperanto, estonian, farsi, finnish, french, galician, 
+german, ngerman, swissgerman, monogreek, greek, hungarian, icelandic, assamese,
+ bengali, gujarati, hindi, kannada, malayalam, marathi, oriya, panjabi, tamil, 
+telugu, indonesian, interlingua, irish, italian, kurmanji, lao, latin, latvian,
+ lithuanian, mongolian, mongolianlmc, bokmal, nynorsk, polish, portuguese, roma
+nian, russian, sanskrit, serbian, slovak, slovenian, spanish, swedish, turkish,
+ turkmen, ukrainian, uppersorbian, welsh, loaded.
+(/usr/share/texmf/tex/latex/base/article.cls
+Document Class: article 2007/10/19 v1.4h Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 2007/10/19 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+) (./hevea.sty
+Package: hevea 1999/08/11
+ (./comment.sty
+\CommentStream=\write3
+
+Excluding comment 'comment')
+\c@cuttingdepth=\count87
+ Excluding comment 'rawhtml'
+Excluding comment 'htmlonly') (./fullpage.sty
+Style Option FULLPAGE Version 2 as of 15 Dec 1988
+) (/usr/share/texmf/tex/latex/tools/longtable.sty
+Package: longtable 2004/02/01 v4.11 Multi-page Table package (DPC)
+\LTleft=\skip43
+\LTright=\skip44
+\LTpre=\skip45
+\LTpost=\skip46
+\LTchunksize=\count88
+\LTcapwidth=\dimen103
+\LT@head=\box26
+\LT@firsthead=\box27
+\LT@foot=\box28
+\LT@lastfoot=\box29
+\LT@cols=\count89
+\LT@rows=\count90
+\c@LT@tables=\count91
+\c@LT@chunks=\count92
+\LT@p@ftn=\toks14
+)
+\@input{cil.version.aux}
+\openout2 = `cil.version.aux'.
+
+No file cil.version.tex.
+No file cil.aux.
+\openout1 = `cil.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 82.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 82.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 82.
+
+LaTeX Warning: No \author given.
+
+
+LaTeX Warning: Reference `sec-simplec' on page 1 undefined on input line 106.
+
+
+LaTeX Warning: Reference `sec-cabs2cil' on page 1 undefined on input line 114.
+
+
+LaTeX Warning: Reference `sec-Extension' on page 1 undefined on input line 128.
+
+
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 133.
+
+(/usr/share/texmf/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 133.
+
+
+LaTeX Warning: Reference `sec-ugly-gcc' on page 1 undefined on input line 150.
+
+[1
+
+
+
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+
+LaTeX Warning: Reference `sec-Extension' on page 2 undefined on input line 175.
+
+
+! Undefined control sequence.
+<argument> distrib/cil-\cilversion 
+                                   .tar.gz
+l.208 \ahrefurl{distrib/cil-\cilversion.tar.gz}
+                                               ). See the \secref{changes} f...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+LaTeX Warning: Reference `sec-changes' on page 2 undefined on input line 208.
+
+! Undefined control sequence.
+<argument> ~~~~tar xvfz cil-\cilversion 
+                                        .tar.gz
+l.211 ...  \t{~~~~tar xvfz cil-\cilversion.tar.gz}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+[2]
+Underfull \hbox (badness 10000) in paragraph at lines 229--236
+
+ []
+
+[3]
+! Undefined control sequence.
+<argument> distrib/cil-\cilversion 
+                                   .tar.gz
+l.321 ...\ahrefurl{distrib/cil-\cilversion.tar.gz}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+LaTeX Warning: Reference `sec-cil' on page 4 undefined on input line 394.
+
+[4]
+
+Package longtable Warning: Column widths have changed
+(longtable)                in table 1 on input line 400.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.422 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.429 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.432 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.434 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.439 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.450 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[5]
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.456 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.467 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.473 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.481 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.485 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.488 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.491 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.502 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.506 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.509 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.515 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.523 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.527 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.529 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.533 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.535 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.542 \begin{cilcode}
+                     [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.545 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.551 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.561 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.564 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.574 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.581 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.585 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.590 \begin{cilcode}
+                     [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.593 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.601 \begin{cilcode}
+                     [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Misplaced alignment tab character &.
+l.606   if(x &
+              & y) { return 0; } else { return 1; }
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.606   if(x &&
+                y) { return 0; } else { return 1; }
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.609   if(x &
+              & y || z) { x ++; y ++; z ++; x ++; y ++; return z; }
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.609   if(x &&
+                y || z) { x ++; y ++; z ++; x ++; y ++; return z; }
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.610 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.614 \begin{cilcode}
+                     [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.617 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[6]
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.623 \begin{cilcode}
+                     [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.634 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.639 \begin{cilcode}
+                     [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.643 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.651 \begin{cilcode}
+                     [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Misplaced alignment tab character &.
+l.653    return &
+                 (x ? y : z) - & (x ++, x);
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.653    return &(x ? y : z) - &
+                                 (x ++, x);
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.654 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.672 \begin{cilcode}
+                     [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! You can't use `macro parameter character #' in horizontal mode.
+l.673 #
+       include <stdio.h>
+Sorry, but I'm not programmed to handle this case;
+I'll just pretend that you didn't ask for it.
+If you're in the wrong mode, you might be able to
+return to the right one by typing `I}' or `I$' or `I\par'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.675 typedef int unused_
+                         type;
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 675.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 675.
+! Missing $ inserted.
+<inserted text> 
+                $
+l.676 
+      
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.676 
+      
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Extra }, or forgotten \endgroup.
+\par ...m \@noitemerr {\@@par }\fi \else {\@@par }
+                                                  \fi 
+l.676 
+      
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.677 static char unused_
+                         static (void) { return 0; }
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.678 
+      
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.678 
+      
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Extra }, or forgotten \endgroup.
+\par ...m \@noitemerr {\@@par }\fi \else {\@@par }
+                                                  \fi 
+l.678 
+      
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.680   int unused_
+                   local;
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+l.681   printf("Hello world\n
+                             "); // Only printf will be kept from stdio.h
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Extra }, or forgotten $.
+l.682 }
+       
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+
+! LaTeX Error: \begin{enumerate} on input line 416 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.683 \end{cilcode}
+                   
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.683 \end{cilcode}
+                   
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.683 \end{cilcode}
+                   
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+LaTeX Warning: Reference `sec-Extension' on page 7 undefined on input line 706.
+
+
+[7]
+
+LaTeX Warning: Reference `sec-merger' on page 8 undefined on input line 737.
+
+[8]
+
+LaTeX Warning: Reference `sec-driver' on page 9 undefined on input line 808.
+
+
+Overfull \hbox (18.31773pt too wide) in paragraph at lines 816--822
+\OT1/cmr/m/n/10 CIL can also be built as a li-brary that is called from your st
+and-alone ap-pli-ca-tion. Add \OT1/cmtt/m/n/10 cil/src\OT1/cmr/m/n/10 , \OT1/cm
+tt/m/n/10 cil/src/frontc\OT1/cmr/m/n/10 ,
+ []
+
+
+Overfull \hbox (0.28816pt too wide) in paragraph at lines 823--833
+\OT1/cmr/m/n/10 tain-ing the out-put of the C pre-pro-ces-sor. The \OT1/cmtt/m/
+n/10 Mergecil.merge: Cil.file list -> string -> Cil.file
+ []
+
+
+Overfull \hbox (13.26088pt too wide) in paragraph at lines 823--833
+\OT1/cmtt/m/n/10 Cil.file -> unit \OT1/cmr/m/n/10 to print the file to a given 
+out-put chan-nel. A good \OT1/cmtt/m/n/10 cilPrinter \OT1/cmr/m/n/10 to use is 
+\OT1/cmtt/m/n/10 defaultCilPrinter\OT1/cmr/m/n/10 . 
+ []
+
+[9] [10] [11] [12] [13] [14] [15] [16] [17]
+Overfull \hbox (38.69044pt too wide) in paragraph at lines 1435--1438
+[]\OT1/cmr/m/n/10 section, con-struc-tor, de-struc-tor, un-used, weak, no[]inst
+rument[]function, nore-turn, alias, no[]check[]memory[]usage,
+ []
+
+[18] [19]
+
+LaTeX Warning: Reference `sec-merger' on page 20 undefined on input line 1604.
+
+
+LaTeX Warning: Reference `sec-patcher' on page 20 undefined on input line 1627.
+
+
+[20]
+
+LaTeX Warning: Reference `sec-merger' on page 21 undefined on input line 1658.
+
+
+LaTeX Warning: Reference `sec-patcher' on page 21 undefined on input line 1665.
+
+
+[21]
+
+LaTeX Warning: Reference `sec-cilmachine' on page 22 undefined on input line 17
+33.
+
+
+LaTeX Warning: Reference `sec-Extension' on page 22 undefined on input line 175
+9.
+
+
+Overfull \hbox (42.61479pt too wide) in paragraph at lines 1771--1773
+[]\OT1/cmtt/m/n/10 --dopartial\OT1/cmr/m/n/10 . Do in-ter-pro-ce-du-ral par-tia
+l eval-u-a-tion and con-stant fold-ing. Im-ple-mented in \OT1/cmtt/m/n/10 src/e
+xt/partial.ml\OT1/cmr/m/n/10 . 
+ []
+
+[22] [23]
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1920 \begin{cilcode}
+                      [global] --domakeCFG
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1932 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+LaTeX Warning: Reference `sec-cfg' on page 24 undefined on input line 1939.
+
+[24] [25]
+Overfull \hbox (0.68095pt too wide) in paragraph at lines 2020--2024
+[]\OT1/cmtt/m/n/10 Ptranal.conservative[]undefineds: bool ref\OT1/cmr/m/n/10 . 
+Make the most pes-simistic as-sump-tions about glob-
+ []
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2083 \begin{cilcode}
+                      [global] --dostackGuard
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2092 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2104 \begin{cilcode}
+                      [global] --doheapify
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2113 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[26]
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2124 \begin{cilcode}
+                      [global] --dooneRet
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2134 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+LaTeX Warning: Reference `enum:partial-empty-proc' on page 27 undefined on inpu
+t line 2154.
+
+
+LaTeX Warning: Reference `enum:partial-const-func' on page 27 undefined on inpu
+t line 2155.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2181 \begin{cilcode}
+                      [global] --domakeCFG --dopartial
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2203 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+LaTeX Warning: Reference `sec-cfg' on page 27 undefined on input line 2209.
+
+[27]
+
+LaTeX Warning: Reference `sec-cfg' on page 28 undefined on input line 2248.
+
+
+Overfull \hbox (15.966pt too wide) in paragraph at lines 2262--2265
+[]\OT1/cmtt/m/n/10 AvailableExps.stmtStartData \OT1/cmr/m/n/10 -- Con-tains ava
+il-able ex-pres-sions data for each state-ment af-ter \OT1/cmtt/m/n/10 computeA
+Es
+ []
+
+
+LaTeX Warning: Reference `sec-cfg' on page 28 undefined on input line 2282.
+
+[28]
+
+LaTeX Warning: Reference `sec-cfg' on page 29 undefined on input line 2319.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2335 \begin{cilcode}
+                      [global] --dosimpleMem
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2341 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2376 \begin{cilcode}
+                      [global] --dosimplify
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[29]
+! Misplaced alignment tab character &.
+l.2386     ptr = &
+                  local;
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2390 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[30]
+
+LaTeX Warning: Reference `sec-attrib' on page 31 undefined on input line 2478.
+
+[31] [32]
+Overfull \hbox (24.20659pt too wide) in paragraph at lines 2630--2640
+[]\OT1/cmr/m/n/10 By de-fault, CIL fol-lows the cur-rent gcc be-hav-ior for ex-
+tern in-line. How-ever, if you set \OT1/cmtt/m/n/10 oldstyleExternInline
+ []
+
+[33]
+Overfull \hbox (11.99518pt too wide) in paragraph at lines 2739--2744
+[]\OT1/cmr/m/n/10 File-scope names (\OT1/cmtt/m/n/10 static \OT1/cmr/m/n/10 glo
+b-als, names of types de-fined with \OT1/cmtt/m/n/10 typedef\OT1/cmr/m/n/10 , a
+nd struc-ture/union/enumeration
+ []
+
+[34] [35] [36] [37]
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3012 \begin{cilcode}
+                      [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Misplaced alignment tab character &.
+l.3014   return x == (1 &
+                         & x);
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.3014   return x == (1 &&
+                           x);
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3015 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3021 \begin{cilcode}
+                      [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3023 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3027 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3036 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3040 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Misplaced alignment tab character &.
+l.3044    pf = &
+                f; // This looks ok
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3050 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3057 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3064 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3068 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Misplaced alignment tab character &.
+l.3085     ((char *)&
+                     ((T3) {1, (char *) 1}))
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3092 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3098 \begin{cilcode}
+                      [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3100 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[38]
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3106 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3118 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3124 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3007 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3128 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Lonely \item--perhaps a missing list environment.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3136 \item A
+              n example with \t{typedef} wierdness. Example due to James Che...
+
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3137 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3138 typedef int int_
+                       t;
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3140 
+       
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+
+Overfull \hbox (4.00153pt too wide) in paragraph at lines 3136--3140
+[]\OT1/cmr/m/n/10 An ex-am-ple with \OT1/cmtt/m/n/10 typedef \OT1/cmr/m/n/10 wi
+erd-ness. Ex-am-ple due to James Ch-eney. [global] type-def int int$[]; \OML/cm
+m/m/it/10 typedefintint\OT1/cmr/m/n/10 2[];$ 
+ []
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3141 int_
+           t f(int2_t int2_t[]) {
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+
+! LaTeX Error: \begin{document} ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3148 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3148 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3157 \begin{cilcode}
+                      [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Misplaced alignment tab character &.
+l.3159   return &
+                 (x ? y : z) - & (x++, x);
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.3159   return &(x ? y : z) - &
+                                 (x++, x);
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3160 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3164 \begin{cilcode}
+                      [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3167 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3172 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3176   static int jtab_
+                         init = 0;
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Misplaced alignment tab character &.
+l.3178     jtab[0] = &
+                      &lbl1;
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.3178     jtab[0] = &&
+                       lbl1;
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.3179     jtab[1] = &
+                      &lbl2;
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.3179     jtab[1] = &&
+                       lbl2;
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Extra }, or forgotten $.
+l.3187 }
+        
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3188 
+       
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3188 
+       
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+Overfull \hbox (21.64987pt too wide) in paragraph at lines 3176--3188
+[]\OT1/cmr/m/n/10 static int jtab$[]\OML/cmm/m/it/10 nit \OT1/cmr/m/n/10 = 0; \
+OML/cmm/m/it/10 if\OT1/cmr/m/n/10 (!\OML/cmm/m/it/10 jtab[]nit\OT1/cmr/m/n/10 )
+[]\OML/cmm/m/it/10 goto \OMS/cmsy/m/n/10 ^^C
+ []
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3194 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3199 \begin{cilcode}
+                      [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Misplaced alignment tab character &.
+l.3200  return ({goto L; 0;}) &
+                               & ({L: 5;});
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+! Misplaced alignment tab character &.
+l.3200  return ({goto L; 0;}) &&
+                                 ({L: 5;});
+I can't figure out why you would want to use a tab mark
+here. If you just want an ampersand, the remedy is
+simple: Just type `I\&' now. But if some right brace
+up above has ended a previous alignment prematurely,
+you're probably due for more error messages, and you
+might try typing `S' now just to see what is salvageable.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3201 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3206 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3216 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3228 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3242 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3246 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3247 int _
+            _attribute__ ((__mode__ (  __QI__ ))) i8;
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3247 int __
+             attribute__ ((__mode__ (  __QI__ ))) i8;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3247 int __attribute__
+                         ((__mode__ (  __QI__ ))) i8;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3247 int __attribute__ ((__
+                             mode__ (  __QI__ ))) i8;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3247 int __attribute__ ((__mode__
+                                    (  __QI__ ))) i8;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Double subscript.
+l.3247 int __attribute__ ((__mode__ (  _
+                                        _QI__ ))) i8;
+I treat `x_1_2' essentially like `x_1{}_2'.
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3247 int __attribute__ ((__mode__ (  __
+                                         QI__ ))) i8;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3247 int __attribute__ ((__mode__ (  __QI__
+                                              ))) i8;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3248 int __
+             attribute__ ((__mode__ (  __HI__ ))) i16;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3248 int __attribute__
+                         ((__mode__ (  __HI__ ))) i16;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3248 int __attribute__ ((__
+                             mode__ (  __HI__ ))) i16;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3248 int __attribute__ ((__mode__
+                                    (  __HI__ ))) i16;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Double subscript.
+l.3248 int __attribute__ ((__mode__ (  _
+                                        _HI__ ))) i16;
+I treat `x_1_2' essentially like `x_1{}_2'.
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3248 int __attribute__ ((__mode__ (  __
+                                         HI__ ))) i16;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3248 int __attribute__ ((__mode__ (  __HI__
+                                              ))) i16;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3249 int __
+             attribute__ ((__mode__ (  __SI__ ))) i32;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3249 int __attribute__
+                         ((__mode__ (  __SI__ ))) i32;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3249 int __attribute__ ((__
+                             mode__ (  __SI__ ))) i32;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3249 int __attribute__ ((__mode__
+                                    (  __SI__ ))) i32;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Double subscript.
+l.3249 int __attribute__ ((__mode__ (  _
+                                        _SI__ ))) i32;
+I treat `x_1_2' essentially like `x_1{}_2'.
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3249 int __attribute__ ((__mode__ (  __
+                                         SI__ ))) i32;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3249 int __attribute__ ((__mode__ (  __SI__
+                                              ))) i32;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3250 int __
+             attribute__ ((__mode__ (  __DI__ ))) i64;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3250 int __attribute__
+                         ((__mode__ (  __DI__ ))) i64;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3250 int __attribute__ ((__
+                             mode__ (  __DI__ ))) i64;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3250 int __attribute__ ((__mode__
+                                    (  __DI__ ))) i64;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Double subscript.
+l.3250 int __attribute__ ((__mode__ (  _
+                                        _DI__ ))) i64;
+I treat `x_1_2' essentially like `x_1{}_2'.
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3250 int __attribute__ ((__mode__ (  __
+                                         DI__ ))) i64;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3250 int __attribute__ ((__mode__ (  __DI__
+                                              ))) i64;
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3251 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3251 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+Overfull \hbox (86.66568pt too wide) in paragraph at lines 3244--3252
+\OT1/cmtt/m/n/10 char\OT1/cmr/m/n/10 , \OT1/cmtt/m/n/10 short \OT1/cmr/m/n/10 a
+nd so on: [global] int $[]$ 
+ []
+
+[39]
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3257 \begin{cilcode}
+                      [global]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3263     int foo(int x, char y) _
+                                   _attribute__((alias("bar")));
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3263     int foo(int x, char y) __
+                                    attribute__((alias("bar")));
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+! Missing { inserted.
+<to be read again> 
+                   _
+l.3263     int foo(int x, char y) __attribute__
+                                               ((alias("bar")));
+A left brace was mandatory here, so I've put one in.
+You might want to delete and/or insert some corrections
+so that I will find a matching right brace soon.
+(If you're confused by all this, try typing `I}' now.)
+
+
+! LaTeX Error: \begin{enumerate} on input line 3152 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3264 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3264 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing } inserted.
+<inserted text> 
+                }
+l.3264 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.3264 \end{cilcode}
+                    
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+! LaTeX Error: Environment cilcode undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3286 \begin{cilcode}
+                      [local]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: \begin{enumerate} on input line 3272 ended by \end{cilcode}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3297 \end{cilcode}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+[40] [41]
+
+LaTeX Warning: Reference `sec-cilmachine' on page 42 undefined on input line 34
+46.
+
+[42]
+
+LaTeX Warning: Reference `sec-cilly-internal-options' on page 43 undefined on i
+nput line 3483.
+
+
+Overfull \hbox (6.51286pt too wide) in paragraph at lines 3479--3484
+\OT1/cmr/m/n/10 type, even if it means in-sert-ing a tem-po-rary. To get the ol
+d be-hav-ior, set \OT1/cmtt/m/n/10 Cabs2cil.doCollapseCallCast
+ []
+
+[43]
+Overfull \hbox (1.95573pt too wide) in paragraph at lines 3554--3556
+[]\OT1/cmr/bx/n/10 June 11, 2006\OT1/cmr/m/n/10 : Re-moved the func-tion \OT1/c
+mtt/m/n/10 Cil.foldLeftCompoundAll\OT1/cmr/m/n/10 . Use in-stead Cil.foldLeftCo
+mpound
+ []
+
+
+LaTeX Warning: Reference `sec-Extension' on page 44 undefined on input line 357
+8.
+
+
+LaTeX Warning: Reference `sec-cilly-asm-options' on page 44 undefined on input 
+line 3583.
+
+[44]
+
+LaTeX Warning: Reference `sec-ugly-gcc' on page 45 undefined on input line 3609
+.
+
+[45] [46] [47]
+Overfull \hbox (14.0411pt too wide) in paragraph at lines 3792--3794
+[]\OT1/cmr/bx/n/10 November 24, 2003\OT1/cmr/m/n/10 : Re-moved the \OT1/cmtt/m/
+n/10 --keep \OT1/cmr/m/n/10 op-tion of the \OT1/cmtt/m/n/10 cilly \OT1/cmr/m/n/
+10 driver and re-placed it with \OT1/cmtt/m/n/10 --save-temps\OT1/cmr/m/n/10 . 
+
+ []
+
+[48] [49] [50] [51]
+
+Package longtable Warning: Table widths have changed. Rerun LaTeX.
+
+[52] (./cil.aux)
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 505 strings out of 493746
+ 5483 string characters out of 3150858
+ 61159 words of memory out of 3500000
+ 3852 multiletter control sequences out of 15000+200000
+ 8746 words of font info for 32 fonts, out of 3000000 for 9000
+ 714 hyphenation exceptions out of 8191
+ 23i,25n,20p,174b,314s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/share/texmf/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf
+/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texmf/fonts/type1/public
+/amsfonts/cm/cmitt10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi1
+0.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/te
+xmf/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texmf/fonts/type1/publ
+ic/amsfonts/cm/cmr10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr12
+.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/tex
+mf/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/texmf/fonts/type1/public
+/amsfonts/cm/cmr7.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy10.p
+fb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texm
+f/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/share/texmf/fonts/type1/publi
+c/amsfonts/cm/cmtt12.pfb>
+Output written on cil.pdf (52 pages, 340844 bytes).
+PDF statistics:
+ 233 PDF objects out of 1000 (max. 8388607)
+ 162 compressed objects within 2 object streams
+ 0 named destinations out of 1000 (max. 500000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+
