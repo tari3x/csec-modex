@@ -439,7 +439,7 @@ Copyright (C) 2010 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/avatar/docs/verification/svn/csec-tools/deps/ocamlyices'
+ac_pwd='/home/avatar/tmp/csec-tools/deps/ocamlyices'
 srcdir='.'
 test -n "$AWK" || AWK=awk
 # The default lists apply if the user does not specify any file.
