@@ -140,7 +140,7 @@ set(HEADERS include/crest.h include/proxies/common.h include/proxies/interface.h
 # include/proxies/openssl-proxies-0.9.8o.h 
 
 set(HEADERS_ORIG 
-            ${PROXIES}/crest.h  ${PROXIES}/common.h  ${PROXIES}/interface.h
+            ${PROXIES}/crest.h ${PROXIES}/common.h ${PROXIES}/interface.h
             ${PROXIES}/openssl_proxies-1.0.0.h
             ${PROXIES}/openssl_proxies.h)
 
