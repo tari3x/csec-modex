@@ -4,7 +4,7 @@
 
 #include "interface.h"
 
-#include <crest.h>
+#include "crest.h"
 
 // Things implemented in crestify.cpp:
 // mute, unmute

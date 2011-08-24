@@ -1,4 +1,6 @@
 
+CSEC_ROOT = ../..
+
 P1 = server
 P2 = client
 

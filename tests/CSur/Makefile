@@ -1,4 +1,6 @@
 
+CSEC_ROOT = ../..
+
 P1 = bob
 P2 = alice
 

@@ -2,7 +2,7 @@
 // This file is distributed as part of csec-tools under a BSD license.
 // See LICENSE file for copyright notice.
 
-#include <net.h>
+#include "net.h"
 
 #include <stdlib.h>
 #include <stdio.h>

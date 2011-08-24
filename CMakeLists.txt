@@ -128,7 +128,7 @@ set(LIBSSL_PROXY_SYM ${PROXIES}/libssl_proxy_sym.a)
 add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
                     COMMAND make
                     WORKING_DIRECTORY ${PROXIES}
-                    DEPENDS ${CIL_LIB}
+                    DEPENDS ${CIL_LIB} include/crest.h
                     VERBATIM)
 
 ######## include ################################

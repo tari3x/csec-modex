@@ -2,7 +2,7 @@
 // This file is distributed as part of csec-tools under a BSD license.
 // See LICENSE file for copyright notice.
 
-#include <lib.h>
+#include "lib.h"
 
 #include <proxies/common.h>
 #include <proxies/interface.h>

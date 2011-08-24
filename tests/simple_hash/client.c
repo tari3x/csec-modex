@@ -4,7 +4,7 @@
 
 #include <openssl/hmac.h>
 
-#include <net.h>
+#include "net.h"
 
 #include <proxies/common.h>
 
