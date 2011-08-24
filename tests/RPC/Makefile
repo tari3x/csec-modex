@@ -1,4 +1,6 @@
 
+CSEC_ROOT = ../..
+
 # $(shell find -name "*.c" -not -name "*.cil.c")
 SRC := $(filter-out $(wildcard *.cil.c), $(wildcard *.c))
 

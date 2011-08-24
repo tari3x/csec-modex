@@ -1,6 +1,41 @@
 
-This is a raw preview release. So far the configuration has not been automated - please
-refer to Makefiles in individual folders and adjust as necessary.
+This is an implementation of the verification method described in 
+"Extracting and Verifying Cryptographic Models from C Protocol Code by Symbolic Execution" 
+by Mihhail Aizatulin, Andy Gordon, and Jan Jürjens.
 
-Unfortunately, we are not able to distribute the source code of the metering protocol,
-due to licensing restrictions.
+The distribution includes the source code of the protocols analysed in the paper: CSur,
+simple mac, RPC, and NSL. Unfortunately, we are not able to distribute the source code 
+of the metering protocol, due to licensing restrictions.
+
+How to use
+==========
+
+The distribution relies on cmake for building. 
+To build all the tools and run the verification experiments install cmake and run
+
+    cmake .
+    make
+
+To check that the IML and the pi calculus output correspond to the good output run 
+
+    make check
+
+This might fail, because the reference output was produced on a 64 bit machine and 
+this influences the format of the network messages. In future this shall be fixed by
+transition to an architecture-independent implementation.
+
+Dependencies
+============
+
+The distribution bundles and builds most of the dependencies. 
+External dependencies are gcc and ocaml as well as the Yices SMT solver, which we are not 
+allowed to redistribute due to licensing restrictions. The tools are known to work with 
+version 1.0.28 which you can obtain from
+
+    http://yices.csl.sri.com/cgi-bin/yices-newlicense.cgi?file=yices-1.0.28-x86_64-pc-linux-gnu.tar.gz
+    
+You can then use the script
+
+    deps/ocamlyices/install-yices.sh
+    
+to install yices.

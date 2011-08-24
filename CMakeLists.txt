@@ -24,11 +24,15 @@ set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.3.7-svn)
 if(NOT EXISTS ${CIL_ROOT}/config.mk)
   execute_process(COMMAND ./configure WORKING_DIRECTORY ${CIL_ROOT})
 endif(NOT EXISTS ${CIL_ROOT}/config.mk)
-configure_file (mk/archos.mk.in mk/archos.mk)
-# run sed/grep instead of make to check for ARCHOS
-execute_process(COMMAND make -sf mk/archos.mk
-                OUTPUT_VARIABLE ARCHOS 
+
+execute_process(COMMAND sed -n "s/.*ARCHOS=\\(.*\\)/\\1/p" ${CIL_ROOT}/config.mk
+                OUTPUT_VARIABLE ARCHOS
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
+                
+#configure_file (mk/archos.mk.in mk/archos.mk)
+# execute_process(COMMAND make -sf mk/archos.mk
+#                 OUTPUT_VARIABLE ARCHOS 
+#                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(CIL_OBJDIR ${CIL_ROOT}/obj/${ARCHOS})
 set(CIL_LIB ${CIL_OBJDIR}/cil.a)

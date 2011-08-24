@@ -1,4 +1,6 @@
 
+CSEC_ROOT = ../..
+
 include $(CSEC_ROOT)/mk/common.mk
 
 COMMON_SRC = types.ml utils.ml simplify.ml solver.mli solver_yices.ml solver.ml exp.ml execute.ml
@@ -6,15 +8,20 @@ COMMON_SRC = types.ml utils.ml simplify.ml solver.mli solver_yices.ml solver.ml 
 
 # use ocamlcp for profiling
 # or compile with ocamlopt -p to use gprof
-OCAMLC = ocamlfind ocamlopt
-OCAML_FLAGS = -g -package ocamlyices -package str -linkpkg 
+# OCAMLC = ocamlfind ocamlopt 
+# -verbose
+OCAMLC = ocamlopt
+#OCAML_FLAGS = -g -package ocamlyices -package str -linkpkg 
+# OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -package num ocamlyices.cmxa -package str -linkpkg 
+OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) nums.cmxa ocamlyices.cmxa str.cmxa
+
 # doesn't work:
 #$(addprefix -I $(CIL_ROOT), /src /src/frontc $(CIL_OBJDIR))
 
-all: symtrace pitrace
+all: imltrace pitrace
 htdoc: doc
 
-symtrace: $(COMMON_SRC) symtrace.ml
+imltrace: $(COMMON_SRC) imltrace.ml
 	$(OCAMLC) $(OCAML_FLAGS) -o $@ $^
 
 pitrace: $(COMMON_SRC) pitrace.ml
@@ -26,6 +33,4 @@ doc: $(COMMON_SRC) symtrace.ml pitrace.ml
 	ocamldoc -html -d $@ $^
   
 clean:
-	$(RM) symtrace pitrace *.cmi *.cmo *.cmx *.o
-
-
+	$(RM) imltrace pitrace *.cmi *.cmo *.cmx *.o

@@ -10,6 +10,8 @@
 
 #include <string.h>
 
+#include "lib.h"
+
 #define SHA1_LEN 20
 
 void server(unsigned char * key, ulong key_len)

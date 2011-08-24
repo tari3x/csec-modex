@@ -2,7 +2,7 @@
   Copyright (c) 2009-2011, 
     Mihhail Aizatulin  <avatar@hot.ee>
     
-  CIL/crestInstrument.ml, proxies/crest.h:
+  src/CIL/crestInstrument.ml, proxies/crest.h:
     Copyright (c) 2008, Jacob Burnim (jburnim@cs.berkeley.edu)
   tests/RPC/*.c:
     Copyright (c) 2009-2010, 

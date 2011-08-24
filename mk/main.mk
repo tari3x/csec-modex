@@ -1,24 +1,26 @@
 
 # vpath %.a $(PROXIES)
-# vpath %.a $(OPENSSL_ROOT)
+# vpath %.a $(OPENSSL)
 
 include $(CSEC_ROOT)/mk/common.mk
 
-#CPATH += $(PROXIES) $(OPENSSL_ROOT)/include
-#CFLAGS += -I$(OPENSSL_ROOT)/include
+#CPATH += $(PROXIES) $(OPENSSL)/include
+#CFLAGS += -I$(OPENSSL)/include
 
-CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label
+CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(OPENSSL)/include -I$(CSEC_ROOT)/include
 
 # need to use filename instead of -lcrypto because the linker tends to pick up the system version
 LDLIBS += $(BASE_LIB) $(PROXY_LIB) $(BASE_LIB) $(EXTRA_DEPS)
 LDLIBS += -lstdc++
 
-SSL_LIB =  $(OPENSSL_ROOT)/libssl.a
-BIN_SSL_LIB = $(OPENSSL_ROOT)/libssl_bin.a
-SYM_SSL_LIB = $(OPENSSL_ROOT)/libssl_sym.a
-CRYPTO_LIB = $(OPENSSL_ROOT)/libcrypto.a
-BIN_CRYPTO_LIB = $(OPENSSL_ROOT)/libcrypto_bin.a
-SYM_CRYPTO_LIB = $(OPENSSL_ROOT)/libcrypto_sym.a
+SSL_LIB =  $(OPENSSL)/libssl.a
+BIN_SSL_LIB = $(OPENSSL)/libssl_bin.a
+SYM_SSL_LIB = $(SSL_LIB)
+# $(OPENSSL_CRESTIFIED)/libssl_sym.a
+CRYPTO_LIB = $(OPENSSL)/libcrypto.a
+BIN_CRYPTO_LIB = $(OPENSSL)/libcrypto_bin.a
+SYM_CRYPTO_LIB = $(CRYPTO_LIB)
+# $(OPENSSL_CRESTIFIED)/libcrypto_sym.a
 BIN_PROXY_LIB += $(PROXIES)/libssl_proxy_bin.a
 SYM_PROXY_LIB += $(PROXIES)/libssl_proxy_sym.a
 
@@ -28,8 +30,8 @@ ifndef PROXY_CONF_SYM
 endif
 PROXY_OUT = $(PROXIES)/proxies.out
 
-BIN_CILLY = cilly --dofunreplace --csec-config=$(PROXY_CONF_BIN) --funreplaceoutput=$(PROXY_OUT) $(CILLY_FLAGS)
-SYM_CILLY = cilly --dofunreplace --csec-config=$(PROXY_CONF_SYM) --funreplaceoutput=$(PROXY_OUT) $(CILLY_FLAGS) --doCrestInstrument --save-temps --commPrintLn
+BIN_CILLY = $(CILLY) --dofunreplace --csec-config=$(PROXY_CONF_BIN) --funreplaceoutput=$(PROXY_OUT) $(CILLY_FLAGS)
+SYM_CILLY = $(CILLY) --dofunreplace --csec-config=$(PROXY_CONF_SYM) --funreplaceoutput=$(PROXY_OUT) $(CILLY_FLAGS) --doCrestInstrument --save-temps --commPrintLn
 
 BUILD_CMD = $(CC) $(CFLAGS) $(CPPFLAGS) $(BUILD_SRC) $(LDFLAGS) $(LDLIBS) -o $@
 
@@ -63,10 +65,10 @@ check: $(GOOD_OUTPUTS)
 %.good.txt: %.out
 	@if diff $@ $<; then\
 		echo "Test OK.";\
-    touch $@;\
 	else\
 		echo "Test not OK.";\
 	fi
+#    touch $@;\
 
 copy: $(IML:.out=.debug.copy.out)
 
@@ -84,10 +86,10 @@ replace_good: $(OUTPUTS)
 	rename out good.txt $^
 
 verify: pvmodel.out
-	proverif -in pi $^ | grep RESULT
+	$(PROVERIF) -in pi $^ | grep RESULT
 
 verify_full: pvmodel.out
-	proverif -in pi $^
+	$(PROVERIF) -in pi $^
 
 compile: orig sym
 
@@ -103,7 +105,7 @@ run: orig
 	wait
 
 pvmodel.out: $(CVM) query.in env.in crypto.in $(PITRACE)
-	{ pitrace $(filter-out $(PITRACE), $^) | tee $@; } > pvmodel.debug.out 2>&1
+	{ $(PITRACE) $(filter-out $(PITRACE), $^) | tee $@; } > pvmodel.debug.out 2>&1
 
 # FIXME: reverse P1, P2 order when going static
 iml.all.out: $(IML)
@@ -122,11 +124,11 @@ filegraph: sym
 	cat filegraph.out | sort -u | graph2dot > filegraph.dot
 	time dot -Tpdf filegraph.dot > filegraph.pdf
 
-callgraph.out: sym $(OPENSSL_ROOT)/openssl.callgraph.out
-	cat *.callgraph.out $(OPENSSL_ROOT)/openssl.callgraph.out > callgraph.out
+callgraph.out: sym $(OPENSSL_CRESTIFIED)/openssl.callgraph.out
+	cat *.callgraph.out $(OPENSSL_CRESTIFIED)/openssl.callgraph.out > callgraph.out
 
-globs.out: sym $(OPENSSL_ROOT)/openssl.globs.out
-	cat *.globs.out $(OPENSSL_ROOT)/openssl.globs.out > globs.out
+globs.out: sym $(OPENSSL_CRESTIFIEDD)/openssl.globs.out
+	cat *.globs.out $(OPENSSL_CRESTIFIED)/openssl.globs.out > globs.out
 
 funlist: callgraph.out globs.out
 	@echo "==== Reachable functions not proxied, opaque or crestified:"
@@ -142,8 +144,8 @@ funlist: callgraph.out globs.out
 #%.bin.res.txt: %.bin.out.txt $(BINTRACE)
 #	bintrace $< > $@
  
-iml.%.out: cvm.%.out $(SYMTRACE)
-	{ symtrace $< | tee $@; } > iml.$*.debug.out 2>&1
+iml.%.out: cvm.%.out $(IMLTRACE)
+	{ $(IMLTRACE) $< | tee $@; } > iml.$*.debug.out 2>&1
 
 $(CVM): $(SYM)
 	if [ -e "$(P1).sym" ]; then ./$(P1).sym $(P1_CMD) > cvm.P1.out; fi & \

@@ -39,7 +39,7 @@ struct timeval {
    __time_t tv_sec ;
    __suseconds_t tv_usec ;
 };
-//#line  66 "/home/avatar/docs/verification/openssl/openssl/include/openssl/stack.h"
+//#line  66 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/stack.h"
 struct stack_st {
    int num ;
    char **data ;
@@ -47,208 +47,208 @@ struct stack_st {
    int num_alloc ;
    int (*comp)(void const   * , void const   * ) ;
 };
-//#line  66 "/home/avatar/docs/verification/openssl/openssl/include/openssl/stack.h"
+//#line  66 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/stack.h"
 typedef struct stack_st _STACK;
-//#line  79 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  79 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 struct asn1_string_st;
-//#line  79 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  79 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_INTEGER;
-//#line  80 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  80 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_ENUMERATED;
-//#line  81 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  81 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_BIT_STRING;
-//#line  82 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  82 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_OCTET_STRING;
-//#line  83 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  83 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_PRINTABLESTRING;
-//#line  84 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  84 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_T61STRING;
-//#line  85 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  85 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_IA5STRING;
-//#line  86 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  86 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_GENERALSTRING;
-//#line  87 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  87 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_UNIVERSALSTRING;
-//#line  88 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  88 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_BMPSTRING;
-//#line  89 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  89 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_UTCTIME;
-//#line  90 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  90 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_TIME;
-//#line  91 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  91 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_GENERALIZEDTIME;
-//#line  92 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  92 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_VISIBLESTRING;
-//#line  93 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  93 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct asn1_string_st ASN1_UTF8STRING;
-//#line  94 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  94 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef int ASN1_BOOLEAN;
 //#line  112
 struct bignum_st;
-//#line  112 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  112 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct bignum_st BIGNUM;
 //#line  113
 struct bignum_ctx;
-//#line  113 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  113 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct bignum_ctx BN_CTX;
 //#line  114
 struct bn_blinding_st;
-//#line  114 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  114 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct bn_blinding_st BN_BLINDING;
 //#line  115
 struct bn_mont_ctx_st;
-//#line  115 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  115 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct bn_mont_ctx_st BN_MONT_CTX;
 //#line  117
 struct bn_gencb_st;
-//#line  117 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  117 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct bn_gencb_st BN_GENCB;
 //#line  119
 struct buf_mem_st;
-//#line  119 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  119 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct buf_mem_st BUF_MEM;
 //#line  121
 struct evp_cipher_st;
-//#line  121 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  121 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct evp_cipher_st EVP_CIPHER;
 //#line  122
 struct evp_cipher_ctx_st;
-//#line  122 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  122 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 //#line  123
 struct env_md_st;
-//#line  123 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  123 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct env_md_st EVP_MD;
 //#line  124
 struct env_md_ctx_st;
-//#line  124 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  124 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct env_md_ctx_st EVP_MD_CTX;
 //#line  125
 struct evp_pkey_st;
-//#line  125 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  125 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct evp_pkey_st EVP_PKEY;
 //#line  127
 struct evp_pkey_asn1_method_st;
-//#line  127 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  127 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
 //#line  130
 struct evp_pkey_ctx_st;
-//#line  130 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  130 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct evp_pkey_ctx_st EVP_PKEY_CTX;
 //#line  132
 struct dh_st;
-//#line  132 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  132 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct dh_st DH;
 //#line  133
 struct dh_method;
-//#line  133 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  133 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct dh_method DH_METHOD;
 //#line  135
 struct dsa_st;
-//#line  135 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  135 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct dsa_st DSA;
 //#line  136
 struct dsa_method;
-//#line  136 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  136 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct dsa_method DSA_METHOD;
 //#line  138
 struct rsa_st;
-//#line  138 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  138 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct rsa_st RSA;
 //#line  139
 struct rsa_meth_st;
-//#line  139 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  139 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct rsa_meth_st RSA_METHOD;
 //#line  146
 struct x509_st;
-//#line  146 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  146 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct x509_st X509;
 //#line  147
 struct X509_algor_st;
-//#line  147 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  147 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct X509_algor_st X509_ALGOR;
 //#line  148
 struct X509_crl_st;
-//#line  148 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  148 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct X509_crl_st X509_CRL;
 //#line  149
 struct x509_crl_method_st;
-//#line  149 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  149 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct x509_crl_method_st X509_CRL_METHOD;
 //#line  151
 struct X509_name_st;
-//#line  151 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  151 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct X509_name_st X509_NAME;
 //#line  152
 struct X509_pubkey_st;
-//#line  152 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  152 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct X509_pubkey_st X509_PUBKEY;
 //#line  153
 struct x509_store_st;
-//#line  153 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  153 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct x509_store_st X509_STORE;
 //#line  154
 struct x509_store_ctx_st;
-//#line  154 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  154 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct x509_store_ctx_st X509_STORE_CTX;
 //#line  165
 struct ui_method_st;
-//#line  165 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  165 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct ui_method_st UI_METHOD;
 //#line  169
 struct engine_st;
-//#line  169 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  169 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct engine_st ENGINE;
 //#line  170
 struct ssl_st;
-//#line  170 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  170 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct ssl_st SSL;
 //#line  171
 struct ssl_ctx_st;
-//#line  171 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  171 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct ssl_ctx_st SSL_CTX;
 //#line  175
 struct X509_POLICY_TREE_st;
-//#line  175 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  175 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct X509_POLICY_TREE_st X509_POLICY_TREE;
 //#line  176
 struct X509_POLICY_CACHE_st;
-//#line  176 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  176 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct X509_POLICY_CACHE_st X509_POLICY_CACHE;
 //#line  178
 struct AUTHORITY_KEYID_st;
-//#line  178 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  178 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct AUTHORITY_KEYID_st AUTHORITY_KEYID;
 //#line  180
 struct ISSUING_DIST_POINT_st;
-//#line  180 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  180 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct ISSUING_DIST_POINT_st ISSUING_DIST_POINT;
 //#line  181
 struct NAME_CONSTRAINTS_st;
-//#line  181 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  181 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct NAME_CONSTRAINTS_st NAME_CONSTRAINTS;
 //#line  187
 struct crypto_ex_data_st;
-//#line  187 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ossl_typ.h"
+//#line  187 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ossl_typ.h"
 typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
-//#line  283 "/home/avatar/docs/verification/openssl/openssl/include/openssl/crypto.h"
+//#line  283 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/crypto.h"
 struct bio_st;
 //#line  285
 struct stack_st_void;
-//#line  285 "/home/avatar/docs/verification/openssl/openssl/include/openssl/crypto.h"
+//#line  285 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/crypto.h"
 struct crypto_ex_data_st {
    struct stack_st_void *sk ;
    int dummy ;
 };
-//#line  290 "/home/avatar/docs/verification/openssl/openssl/include/openssl/crypto.h"
+//#line  290 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/crypto.h"
 struct stack_st_void {
    _STACK stack ;
 };
-//#line  11 "/home/avatar/docs/verification/openssl/openssl/include/openssl/comp.h"
+//#line  11 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/comp.h"
 struct comp_ctx_st;
-//#line  11 "/home/avatar/docs/verification/openssl/openssl/include/openssl/comp.h"
+//#line  11 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/comp.h"
 typedef struct comp_ctx_st COMP_CTX;
-//#line  13 "/home/avatar/docs/verification/openssl/openssl/include/openssl/comp.h"
+//#line  13 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/comp.h"
 struct comp_method_st {
    int type ;
    char const   *name ;
@@ -261,9 +261,9 @@ struct comp_method_st {
    long (*ctrl)(void) ;
    long (*callback_ctrl)(void) ;
 };
-//#line  13 "/home/avatar/docs/verification/openssl/openssl/include/openssl/comp.h"
+//#line  13 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/comp.h"
 typedef struct comp_method_st COMP_METHOD;
-//#line  30 "/home/avatar/docs/verification/openssl/openssl/include/openssl/comp.h"
+//#line  30 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/comp.h"
 struct comp_ctx_st {
    COMP_METHOD *meth ;
    unsigned long compress_in ;
@@ -272,12 +272,12 @@ struct comp_ctx_st {
    unsigned long expand_out ;
    CRYPTO_EX_DATA ex_data ;
 };
-//#line  204 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bio.h"
+//#line  204 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bio.h"
 typedef struct bio_st BIO;
-//#line  267 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bio.h"
+//#line  267 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bio.h"
 typedef void bio_info_cb(struct bio_st * , int  , char const   * , int  , long  ,
                          long  );
-//#line  269 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bio.h"
+//#line  269 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bio.h"
 struct bio_method_st {
    int type ;
    char const   *name ;
@@ -290,9 +290,9 @@ struct bio_method_st {
    int (*destroy)(BIO * ) ;
    long (*callback_ctrl)(BIO * , int  , bio_info_cb * ) ;
 };
-//#line  269 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bio.h"
+//#line  269 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bio.h"
 typedef struct bio_method_st BIO_METHOD;
-//#line  283 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bio.h"
+//#line  283 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bio.h"
 struct bio_st {
    BIO_METHOD *method ;
    long (*callback)(struct bio_st * , int  , char const   * , int  , long  , long  ) ;
@@ -310,47 +310,47 @@ struct bio_st {
    unsigned long num_write ;
    CRYPTO_EX_DATA ex_data ;
 };
-//#line  77 "/home/avatar/docs/verification/openssl/openssl/include/openssl/buffer.h"
+//#line  77 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/buffer.h"
 struct buf_mem_st {
    size_t length ;
    char *data ;
    size_t max ;
 };
-//#line  300 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bn.h"
+//#line  300 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bn.h"
 struct bignum_st {
-   unsigned long *d ;
+   unsigned int *d ;
    int top ;
    int dmax ;
    int neg ;
    int flags ;
 };
-//#line  311 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bn.h"
+//#line  311 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bn.h"
 struct bn_mont_ctx_st {
    int ri ;
    BIGNUM RR ;
    BIGNUM N ;
    BIGNUM Ni ;
-   unsigned long n0[2] ;
+   unsigned int n0[2] ;
    int flags ;
 };
-//#line  336 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bn.h"
+//#line  336 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bn.h"
 union __anonunion_cb_23 {
    void (*cb_1)(int  , int  , void * ) ;
    int (*cb_2)(int  , int  , BN_GENCB * ) ;
 };
-//#line  336 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bn.h"
+//#line  336 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bn.h"
 struct bn_gencb_st {
    unsigned int ver ;
    void *arg ;
    union __anonunion_cb_23 cb ;
 };
-//#line  165 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  165 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 struct X509_algor_st;
-//#line  166 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  166 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 struct stack_st_X509_ALGOR {
    _STACK stack ;
 };
-//#line  211 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  211 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 struct asn1_object_st {
    char const   *sn ;
    char const   *ln ;
@@ -359,30 +359,30 @@ struct asn1_object_st {
    unsigned char const   *data ;
    int flags ;
 };
-//#line  211 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  211 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 typedef struct asn1_object_st ASN1_OBJECT;
-//#line  238 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  238 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 struct asn1_string_st {
    int length ;
    int type ;
    unsigned char *data ;
    long flags ;
 };
-//#line  238 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  238 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 typedef struct asn1_string_st ASN1_STRING;
-//#line  255 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  255 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 struct ASN1_ENCODING_st {
    unsigned char *enc ;
    long len ;
    int modified ;
 };
-//#line  255 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  255 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 typedef struct ASN1_ENCODING_st ASN1_ENCODING;
 //#line  299
 struct ASN1_VALUE_st;
-//#line  299 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  299 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 typedef struct ASN1_VALUE_st ASN1_VALUE;
-//#line  522 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  522 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 union __anonunion_value_24 {
    char *ptr ;
    ASN1_BOOLEAN boolean ;
@@ -406,20 +406,20 @@ union __anonunion_value_24 {
    ASN1_STRING *sequence ;
    ASN1_VALUE *asn1_value ;
 };
-//#line  522 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  522 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 struct asn1_type_st {
    int type ;
    union __anonunion_value_24 value ;
 };
-//#line  522 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  522 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 typedef struct asn1_type_st ASN1_TYPE;
-//#line  792 "/home/avatar/docs/verification/openssl/openssl/include/openssl/asn1.h"
+//#line  792 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/asn1.h"
 struct stack_st_ASN1_OBJECT {
    _STACK stack ;
 };
-//#line  127 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  127 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 struct ec_key_st;
-//#line  127 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  127 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 union __anonunion_pkey_25 {
    char *ptr ;
    struct rsa_st *rsa ;
@@ -429,7 +429,7 @@ union __anonunion_pkey_25 {
 };
 //#line  127
 struct stack_st_X509_ATTRIBUTE;
-//#line  127 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  127 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 struct evp_pkey_st {
    int type ;
    int save_type ;
@@ -440,7 +440,7 @@ struct evp_pkey_st {
    int save_parameters ;
    struct stack_st_X509_ATTRIBUTE *attributes ;
 };
-//#line  159 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  159 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 struct env_md_st {
    int type ;
    int pkey_type ;
@@ -460,7 +460,7 @@ struct env_md_st {
    int ctx_size ;
    int (*md_ctrl)(EVP_MD_CTX *ctx , int cmd , int p1 , void *p2 ) ;
 };
-//#line  262 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  262 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 struct env_md_ctx_st {
    EVP_MD const   *digest ;
    ENGINE *engine ;
@@ -469,7 +469,7 @@ struct env_md_ctx_st {
    EVP_PKEY_CTX *pctx ;
    int (*update)(EVP_MD_CTX *ctx , void const   *data , size_t count ) ;
 };
-//#line  300 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  300 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 struct evp_cipher_st {
    int nid ;
    int block_size ;
@@ -487,7 +487,7 @@ struct evp_cipher_st {
    int (*ctrl)(EVP_CIPHER_CTX * , int type , int arg , void *ptr ) ;
    void *app_data ;
 };
-//#line  368 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  368 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 struct evp_cipher_ctx_st {
    EVP_CIPHER const   *cipher ;
    ENGINE *engine ;
@@ -513,9 +513,9 @@ struct dsa_st;
 struct dh_st;
 //#line  866
 struct ec_key_st;
-//#line  686 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ec.h"
+//#line  686 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ec.h"
 typedef struct ec_key_st EC_KEY;
-//#line  85 "/home/avatar/docs/verification/openssl/openssl/include/openssl/rsa.h"
+//#line  85 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/rsa.h"
 struct rsa_meth_st {
    char const   *name ;
    int (*rsa_pub_enc)(int flen , unsigned char const   *from , unsigned char *to ,
@@ -539,7 +539,7 @@ struct rsa_meth_st {
                      unsigned char const   *sigbuf , unsigned int siglen , RSA const   *rsa ) ;
    int (*rsa_keygen)(RSA *rsa , int bits , BIGNUM *e , BN_GENCB *cb ) ;
 };
-//#line  129 "/home/avatar/docs/verification/openssl/openssl/include/openssl/rsa.h"
+//#line  129 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/rsa.h"
 struct rsa_st {
    int pad ;
    long version ;
@@ -563,7 +563,7 @@ struct rsa_st {
    BN_BLINDING *blinding ;
    BN_BLINDING *mt_blinding ;
 };
-//#line  97 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dh.h"
+//#line  97 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dh.h"
 struct dh_method {
    char const   *name ;
    int (*generate_key)(DH *dh ) ;
@@ -576,7 +576,7 @@ struct dh_method {
    char *app_data ;
    int (*generate_params)(DH *dh , int prime_len , int generator , BN_GENCB *cb ) ;
 };
-//#line  115 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dh.h"
+//#line  115 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dh.h"
 struct dh_st {
    int pad ;
    int version ;
@@ -597,14 +597,14 @@ struct dh_st {
    DH_METHOD const   *meth ;
    ENGINE *engine ;
 };
-//#line  108 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dsa.h"
+//#line  108 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dsa.h"
 struct DSA_SIG_st {
    BIGNUM *r ;
    BIGNUM *s ;
 };
-//#line  108 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dsa.h"
+//#line  108 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dsa.h"
 typedef struct DSA_SIG_st DSA_SIG;
-//#line  114 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dsa.h"
+//#line  114 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dsa.h"
 struct dsa_method {
    char const   *name ;
    DSA_SIG *(*dsa_do_sign)(unsigned char const   *dgst , int dlen , DSA *dsa ) ;
@@ -623,7 +623,7 @@ struct dsa_method {
                        int *counter_ret , unsigned long *h_ret , BN_GENCB *cb ) ;
    int (*dsa_keygen)(DSA *dsa ) ;
 };
-//#line  141 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dsa.h"
+//#line  141 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dsa.h"
 struct dsa_st {
    int pad ;
    long version ;
@@ -642,7 +642,7 @@ struct dsa_st {
    DSA_METHOD const   *meth ;
    ENGINE *engine ;
 };
-//#line  129 "/home/avatar/docs/verification/openssl/openssl/include/openssl/sha.h"
+//#line  129 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/sha.h"
 struct SHA256state_st {
    unsigned int h[8] ;
    unsigned int Nl ;
@@ -651,31 +651,31 @@ struct SHA256state_st {
    unsigned int num ;
    unsigned int md_len ;
 };
-//#line  129 "/home/avatar/docs/verification/openssl/openssl/include/openssl/sha.h"
+//#line  129 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/sha.h"
 typedef struct SHA256state_st SHA256_CTX;
-//#line  144 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  144 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct X509_algor_st {
    ASN1_OBJECT *algorithm ;
    ASN1_TYPE *parameter ;
 };
-//#line  154 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  154 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct X509_val_st {
    ASN1_TIME *notBefore ;
    ASN1_TIME *notAfter ;
 };
-//#line  154 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  154 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 typedef struct X509_val_st X509_VAL;
-//#line  160 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  160 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct X509_pubkey_st {
    X509_ALGOR *algor ;
    ASN1_BIT_STRING *public_key ;
    EVP_PKEY *pkey ;
 };
-//#line  181 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  181 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct stack_st_X509_NAME_ENTRY {
    _STACK stack ;
 };
-//#line  185 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  185 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct X509_name_st {
    struct stack_st_X509_NAME_ENTRY *entries ;
    int modified ;
@@ -683,23 +683,23 @@ struct X509_name_st {
    unsigned char *canon_enc ;
    int canon_enclen ;
 };
-//#line  199 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  199 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct stack_st_X509_NAME {
    _STACK stack ;
 };
 //#line  210
 struct stack_st_X509_EXTENSION;
-//#line  210 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  210 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 typedef struct stack_st_X509_EXTENSION X509_EXTENSIONS;
-//#line  212 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  212 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct stack_st_X509_EXTENSION {
    _STACK stack ;
 };
-//#line  227 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  227 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct stack_st_X509_ATTRIBUTE {
    _STACK stack ;
 };
-//#line  249 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  249 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct x509_cinf_st {
    ASN1_INTEGER *version ;
    ASN1_INTEGER *serialNumber ;
@@ -713,9 +713,9 @@ struct x509_cinf_st {
    struct stack_st_X509_EXTENSION *extensions ;
    ASN1_ENCODING enc ;
 };
-//#line  249 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  249 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 typedef struct x509_cinf_st X509_CINF;
-//#line  270 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  270 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct x509_cert_aux_st {
    struct stack_st_ASN1_OBJECT *trust ;
    struct stack_st_ASN1_OBJECT *reject ;
@@ -723,13 +723,13 @@ struct x509_cert_aux_st {
    ASN1_OCTET_STRING *keyid ;
    struct stack_st_X509_ALGOR *other ;
 };
-//#line  270 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  270 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 typedef struct x509_cert_aux_st X509_CERT_AUX;
 //#line  279
 struct stack_st_DIST_POINT;
 //#line  279
 struct stack_st_GENERAL_NAME;
-//#line  279 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  279 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct x509_st {
    X509_CINF *cert_info ;
    X509_ALGOR *sig_alg ;
@@ -753,15 +753,15 @@ struct x509_st {
    unsigned char sha1_hash[20] ;
    X509_CERT_AUX *aux ;
 };
-//#line  311 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  311 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct stack_st_X509 {
    _STACK stack ;
 };
-//#line  446 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  446 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct stack_st_X509_REVOKED {
    _STACK stack ;
 };
-//#line  449 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  449 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct X509_crl_info_st {
    ASN1_INTEGER *version ;
    X509_ALGOR *sig_alg ;
@@ -772,11 +772,11 @@ struct X509_crl_info_st {
    struct stack_st_X509_EXTENSION *extensions ;
    ASN1_ENCODING enc ;
 };
-//#line  449 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  449 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 typedef struct X509_crl_info_st X509_CRL_INFO;
 //#line  461
 struct stack_st_GENERAL_NAMES;
-//#line  461 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  461 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct X509_crl_st {
    X509_CRL_INFO *crl ;
    X509_ALGOR *sig_alg ;
@@ -794,19 +794,19 @@ struct X509_crl_st {
    X509_CRL_METHOD const   *meth ;
    void *meth_data ;
 };
-//#line  486 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  486 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 struct stack_st_X509_CRL {
    _STACK stack ;
 };
-//#line  137 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509_vfy.h"
+//#line  137 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509_vfy.h"
 struct stack_st_X509_LOOKUP {
    _STACK stack ;
 };
-//#line  138 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509_vfy.h"
+//#line  138 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509_vfy.h"
 struct stack_st_X509_OBJECT {
    _STACK stack ;
 };
-//#line  166 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509_vfy.h"
+//#line  166 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509_vfy.h"
 struct X509_VERIFY_PARAM_st {
    char *name ;
    time_t check_time ;
@@ -817,9 +817,9 @@ struct X509_VERIFY_PARAM_st {
    int depth ;
    struct stack_st_ASN1_OBJECT *policies ;
 };
-//#line  166 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509_vfy.h"
+//#line  166 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509_vfy.h"
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
-//#line  183 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509_vfy.h"
+//#line  183 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509_vfy.h"
 struct x509_store_st {
    int cache ;
    struct stack_st_X509_OBJECT *objs ;
@@ -839,7 +839,7 @@ struct x509_store_st {
    CRYPTO_EX_DATA ex_data ;
    int references ;
 };
-//#line  230 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509_vfy.h"
+//#line  230 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509_vfy.h"
 struct x509_store_ctx_st {
    X509_STORE *ctx ;
    int current_method ;
@@ -875,9 +875,9 @@ struct x509_store_ctx_st {
    X509_STORE_CTX *parent ;
    CRYPTO_EX_DATA ex_data ;
 };
-//#line  400 "/home/avatar/docs/verification/openssl/openssl/include/openssl/pem.h"
+//#line  400 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/pem.h"
 typedef int pem_password_cb(char *buf , int size , int rwflag , void *userdata );
-//#line  75 "/home/avatar/docs/verification/openssl/openssl/include/openssl/hmac.h"
+//#line  75 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/hmac.h"
 struct hmac_ctx_st {
    EVP_MD const   *md ;
    EVP_MD_CTX md_ctx ;
@@ -886,13 +886,13 @@ struct hmac_ctx_st {
    unsigned int key_length ;
    unsigned char key[128] ;
 };
-//#line  75 "/home/avatar/docs/verification/openssl/openssl/include/openssl/hmac.h"
+//#line  75 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/hmac.h"
 typedef struct hmac_ctx_st HMAC_CTX;
-//#line  358 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  358 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct tls_session_ticket_ext_st;
-//#line  358 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  358 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
-//#line  361 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  361 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct ssl_cipher_st {
    int valid ;
    char const   *name ;
@@ -907,15 +907,15 @@ struct ssl_cipher_st {
    int strength_bits ;
    int alg_bits ;
 };
-//#line  361 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  361 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 typedef struct ssl_cipher_st SSL_CIPHER;
-//#line  380 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  380 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct stack_st_SSL_CIPHER {
    _STACK stack ;
 };
 //#line  386
 struct ssl3_enc_method;
-//#line  386 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  386 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct ssl_method_st {
    int version ;
    int (*ssl_new)(SSL *s ) ;
@@ -947,11 +947,11 @@ struct ssl_method_st {
    long (*ssl_callback_ctrl)(SSL *s , int cb_id , void (*fp)(void) ) ;
    long (*ssl_ctx_callback_ctrl)(SSL_CTX *s , int cb_id , void (*fp)(void) ) ;
 };
-//#line  386 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  386 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 typedef struct ssl_method_st SSL_METHOD;
 //#line  443
 struct sess_cert_st;
-//#line  443 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  443 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct ssl_session_st {
    int ssl_version ;
    unsigned int key_arg_length ;
@@ -987,25 +987,25 @@ struct ssl_session_st {
    size_t tlsext_ticklen ;
    long tlsext_tick_lifetime_hint ;
 };
-//#line  443 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  443 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 typedef struct ssl_session_st SSL_SESSION;
-//#line  671 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  671 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct ssl_comp_st {
    int id ;
    char const   *name ;
    COMP_METHOD *method ;
 };
-//#line  671 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  671 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 typedef struct ssl_comp_st SSL_COMP;
-//#line  682 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  682 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct stack_st_SSL_COMP {
    _STACK stack ;
 };
-//#line  683 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  683 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct lhash_st_SSL_SESSION {
    int dummy ;
 };
-//#line  685 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  685 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct __anonstruct_stats_34 {
    int sess_connect ;
    int sess_connect_renegotiate ;
@@ -1023,7 +1023,7 @@ struct __anonstruct_stats_34 {
 struct cert_st;
 //#line  685
 struct ssl3_buf_freelist_st;
-//#line  685 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  685 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct ssl_ctx_st {
    SSL_METHOD const   *method ;
    struct stack_st_SSL_CIPHER *cipher_list ;
@@ -1103,7 +1103,7 @@ struct ssl3_state_st;
 struct dtls1_state_st;
 //#line  964
 struct stack_st_OCSP_RESPID;
-//#line  964 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl.h"
+//#line  964 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl.h"
 struct ssl_st {
    int version ;
    int type ;
@@ -1198,7 +1198,7 @@ struct ssl_st {
    void *tls_session_secret_cb_arg ;
    SSL_CTX *initial_ctx ;
 };
-//#line  158 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl2.h"
+//#line  158 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl2.h"
 struct __anonstruct_tmp_35 {
    unsigned int conn_id_length ;
    unsigned int cert_type ;
@@ -1212,7 +1212,7 @@ struct __anonstruct_tmp_35 {
    unsigned int clen ;
    unsigned int rlen ;
 };
-//#line  158 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl2.h"
+//#line  158 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl2.h"
 struct ssl2_state_st {
    int three_byte_header ;
    int clear_text ;
@@ -1249,7 +1249,7 @@ struct ssl2_state_st {
    unsigned long write_sequence ;
    struct __anonstruct_tmp_35 tmp ;
 };
-//#line  342 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl3.h"
+//#line  342 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl3.h"
 struct ssl3_record_st {
    int type ;
    unsigned int length ;
@@ -1260,18 +1260,18 @@ struct ssl3_record_st {
    unsigned long epoch ;
    unsigned char seq_num[8] ;
 };
-//#line  342 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl3.h"
+//#line  342 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl3.h"
 typedef struct ssl3_record_st SSL3_RECORD;
-//#line  354 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl3.h"
+//#line  354 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl3.h"
 struct ssl3_buffer_st {
    unsigned char *buf ;
    size_t len ;
    int offset ;
    int left ;
 };
-//#line  354 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl3.h"
+//#line  354 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl3.h"
 typedef struct ssl3_buffer_st SSL3_BUFFER;
-//#line  383 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl3.h"
+//#line  383 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl3.h"
 struct __anonstruct_tmp_36 {
    unsigned char cert_verify_md[128] ;
    unsigned char finish_md[128] ;
@@ -1299,7 +1299,7 @@ struct __anonstruct_tmp_36 {
    SSL_COMP const   *new_compression ;
    int cert_request ;
 };
-//#line  383 "/home/avatar/docs/verification/openssl/openssl/include/openssl/ssl3.h"
+//#line  383 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/ssl3.h"
 struct ssl3_state_st {
    long flags ;
    int delay_buf_pop_ret ;
@@ -1349,23 +1349,23 @@ struct ssl3_state_st {
    unsigned char previous_server_finished_len ;
    int send_connection_binding ;
 };
-//#line  523 "/home/avatar/docs/verification/openssl/openssl/include/openssl/tls1.h"
+//#line  523 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/tls1.h"
 struct tls_session_ticket_ext_st {
    unsigned short length ;
    void *data ;
 };
-//#line  67 "/home/avatar/docs/verification/openssl/openssl/include/openssl/pqueue.h"
+//#line  67 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/pqueue.h"
 struct _pqueue;
-//#line  67 "/home/avatar/docs/verification/openssl/openssl/include/openssl/pqueue.h"
+//#line  67 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/pqueue.h"
 typedef struct _pqueue *pqueue;
-//#line  109 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  109 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 struct dtls1_bitmap_st {
    unsigned long map ;
    unsigned char max_seq_num[8] ;
 };
-//#line  109 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  109 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 typedef struct dtls1_bitmap_st DTLS1_BITMAP;
-//#line  118 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  118 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 struct dtls1_retransmit_state {
    EVP_CIPHER_CTX *enc_write_ctx ;
    EVP_MD_CTX *write_hash ;
@@ -1373,7 +1373,7 @@ struct dtls1_retransmit_state {
    SSL_SESSION *session ;
    unsigned short epoch ;
 };
-//#line  131 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  131 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 struct hm_header_st {
    unsigned char type ;
    unsigned long msg_len ;
@@ -1383,20 +1383,20 @@ struct hm_header_st {
    unsigned int is_ccs ;
    struct dtls1_retransmit_state saved_retransmit_state ;
 };
-//#line  148 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  148 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 struct dtls1_timeout_st {
    unsigned int read_timeouts ;
    unsigned int write_timeouts ;
    unsigned int num_alerts ;
 };
-//#line  160 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  160 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 struct record_pqueue_st {
    unsigned short epoch ;
    pqueue q ;
 };
-//#line  160 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  160 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 typedef struct record_pqueue_st record_pqueue;
-//#line  173 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dtls1.h"
+//#line  173 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dtls1.h"
 struct dtls1_state_st {
    unsigned int send_cookie ;
    unsigned char cookie[256] ;
@@ -1429,45 +1429,45 @@ struct dtls1_state_st {
    unsigned int retransmitting ;
    unsigned int change_cipher_spec_ok ;
 };
-//#line  207 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  207 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 typedef struct stack_st_GENERAL_NAME GENERAL_NAMES;
-//#line  218 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  218 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 struct stack_st_GENERAL_NAME {
    _STACK stack ;
 };
-//#line  224 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  224 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 union __anonunion_name_39 {
    GENERAL_NAMES *fullname ;
    struct stack_st_X509_NAME_ENTRY *relativename ;
 };
-//#line  224 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  224 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 struct DIST_POINT_NAME_st {
    int type ;
    union __anonunion_name_39 name ;
    X509_NAME *dpname ;
 };
-//#line  224 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  224 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 typedef struct DIST_POINT_NAME_st DIST_POINT_NAME;
-//#line  257 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  257 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 struct stack_st_DIST_POINT {
    _STACK stack ;
 };
-//#line  260 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  260 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 struct AUTHORITY_KEYID_st {
    ASN1_OCTET_STRING *keyid ;
    GENERAL_NAMES *issuer ;
    ASN1_INTEGER *serial ;
 };
-//#line  328 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  328 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 struct stack_st_GENERAL_SUBTREE {
    _STACK stack ;
 };
-//#line  330 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  330 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 struct NAME_CONSTRAINTS_st {
    struct stack_st_GENERAL_SUBTREE *permittedSubtrees ;
    struct stack_st_GENERAL_SUBTREE *excludedSubtrees ;
 };
-//#line  356 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509v3.h"
+//#line  356 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509v3.h"
 struct ISSUING_DIST_POINT_st {
    DIST_POINT_NAME *distpoint ;
    int onlyuser ;
@@ -1476,7 +1476,7 @@ struct ISSUING_DIST_POINT_st {
    int indirectCRL ;
    int onlyattr ;
 };
-//#line  577 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bio.h"
+//#line  577 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bio.h"
 extern int BIO_read(BIO *b , void *data , int len ) ;
 static int __crest_BIO_read_opaque(BIO *b , void *data , int len ) 
 { int __crest_ret ;
@@ -1510,7 +1510,7 @@ static int __crest_BIO_write_opaque(BIO *b , void const   *data , int len )
 }
 //#line  589
 extern BIO *BIO_find_type(BIO *b , int bio_type ) ;
-//#line  421 "/home/avatar/docs/verification/openssl/openssl/include/openssl/bn.h"
+//#line  421 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/bn.h"
 extern int BN_num_bits(BIGNUM const   *a ) ;
 static int __crest_BN_num_bits_opaque(BIGNUM const   *a ) 
 { int __crest_ret ;
@@ -1560,8 +1560,8 @@ static int __crest_BN_bn2bin_opaque(BIGNUM const   *a , unsigned char *to )
 }
 }
 //#line  470
-extern int BN_set_word(BIGNUM *a , unsigned long w ) ;
-static int __crest_BN_set_word_opaque(BIGNUM *a , unsigned long w ) 
+extern int BN_set_word(BIGNUM *a , unsigned int w ) ;
+static int __crest_BN_set_word_opaque(BIGNUM *a , unsigned int w ) 
 { int __crest_ret ;
 
   {
@@ -1664,7 +1664,7 @@ static int __crest_BN_hex2bn_opaque(BIGNUM **a , char const   *str )
   return (__crest_ret);
 }
 }
-//#line  441 "/home/avatar/docs/verification/openssl/openssl/include/openssl/evp.h"
+//#line  441 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/evp.h"
 extern EVP_MD const   *EVP_MD_CTX_md(EVP_MD_CTX const   *ctx ) ;
 static EVP_MD const   *__crest_EVP_MD_CTX_md_opaque(EVP_MD_CTX const   *ctx ) 
 { EVP_MD const   *__crest_ret ;
@@ -2535,7 +2535,7 @@ static int __crest_EVP_PKEY_derive_set_peer_opaque(EVP_PKEY_CTX *ctx , EVP_PKEY 
   return (__crest_ret);
 }
 }
-//#line  273 "/home/avatar/docs/verification/openssl/openssl/include/openssl/rsa.h"
+//#line  273 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/rsa.h"
 extern int RSA_public_encrypt(int flen , unsigned char const   *from , unsigned char *to ,
                               RSA *rsa , int padding ) ;
 static int __crest_RSA_public_encrypt_opaque(int flen , unsigned char const   *from ,
@@ -2644,7 +2644,7 @@ static RSA *__crest_RSAPrivateKey_dup_opaque(RSA *rsa )
   return (__crest_ret);
 }
 }
-//#line  189 "/home/avatar/docs/verification/openssl/openssl/include/openssl/dsa.h"
+//#line  189 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/dsa.h"
 extern DSA_METHOD const   *DSA_get_default_method(void) ;
 //#line  193
 extern DSA *DSA_new_method(ENGINE *engine ) ;
@@ -2679,7 +2679,7 @@ static int __crest_DSA_generate_key_opaque(DSA *a )
   return (__crest_ret);
 }
 }
-//#line  142 "/home/avatar/docs/verification/openssl/openssl/include/openssl/sha.h"
+//#line  142 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/sha.h"
 extern int SHA256_Init(SHA256_CTX *c ) ;
 static int __crest_SHA256_Init_opaque(SHA256_CTX *c ) 
 { int __crest_ret ;
@@ -2727,9 +2727,9 @@ static int __crest_SHA256_Final_opaque(unsigned char *md , SHA256_CTX *c )
   return (__crest_ret);
 }
 }
-//#line  182 "/home/avatar/docs/verification/openssl/openssl/include/openssl/lhash.h"
+//#line  182 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/lhash.h"
 extern unsigned long lh_strhash(char const   *c ) ;
-//#line  430 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509_vfy.h"
+//#line  430 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509_vfy.h"
 extern int X509_STORE_CTX_init(X509_STORE_CTX *ctx , X509_STORE *store , X509 *x509 ,
                                struct stack_st_X509 *chain ) ;
 static int __crest_X509_STORE_CTX_init_opaque(X509_STORE_CTX *ctx , X509_STORE *store ,
@@ -2747,7 +2747,7 @@ static int __crest_X509_STORE_CTX_init_opaque(X509_STORE_CTX *ctx , X509_STORE *
   return (__crest_ret);
 }
 }
-//#line  719 "/home/avatar/docs/verification/openssl/openssl/include/openssl/x509.h"
+//#line  719 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/x509.h"
 extern X509 *d2i_X509_bio(BIO *bp , X509 **x509 ) ;
 static X509 *__crest_d2i_X509_bio_opaque(BIO *bp , X509 **x509 ) 
 { X509 *__crest_ret ;
@@ -2897,7 +2897,7 @@ static int __crest_X509_certificate_type_opaque(X509 *x , EVP_PKEY *pubkey )
   return (__crest_ret);
 }
 }
-//#line  459 "/home/avatar/docs/verification/openssl/openssl/include/openssl/pem.h"
+//#line  459 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/pem.h"
 extern X509 *PEM_read_bio_X509(BIO *bp , X509 **x , pem_password_cb *cb , void *u ) ;
 static X509 *__crest_PEM_read_bio_X509_opaque(BIO *bp , X509 **x , pem_password_cb *cb ,
                                               void *u ) 
@@ -2952,7 +2952,7 @@ static EVP_PKEY *__crest_PEM_read_bio_PrivateKey_opaque(BIO *bp , EVP_PKEY **x ,
   return (__crest_ret);
 }
 }
-//#line  95 "/home/avatar/docs/verification/openssl/openssl/include/openssl/hmac.h"
+//#line  95 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/hmac.h"
 extern int HMAC_Init_ex(HMAC_CTX *ctx , void const   *key , int len , EVP_MD const   *md ,
                         ENGINE *impl ) ;
 static int __crest_HMAC_Init_ex_opaque(HMAC_CTX *ctx , void const   *key , int len ,
@@ -3024,7 +3024,7 @@ static unsigned char *__crest_HMAC_opaque(EVP_MD const   *evp_md , void const   
   return (__crest_ret);
 }
 }
-//#line  102 "/home/avatar/docs/verification/openssl/openssl/include/openssl/rand.h"
+//#line  102 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/rand.h"
 extern int RAND_bytes(unsigned char *buf , int num ) ;
 static int __crest_RAND_bytes_opaque(unsigned char *buf , int num ) 
 { int __crest_ret ;
@@ -3056,7 +3056,7 @@ static int __crest_RAND_pseudo_bytes_opaque(unsigned char *buf , int num )
   return (__crest_ret);
 }
 }
-//#line  564 "/home/avatar/docs/verification/openssl/openssl/include/openssl/engine.h"
+//#line  564 "/home/avatar/docs/verification/svn/csec-tools/deps/openssl-1.0.0d-crestified/include/openssl/engine.h"
 extern int ENGINE_load_ssl_client_cert(ENGINE *e , SSL *s , struct stack_st_X509_NAME *ca_dn ,
                                        X509 **pcert , EVP_PKEY **ppkey , struct stack_st_X509 **pother ,
                                        UI_METHOD *ui_method , void *callback_data ) ;
@@ -3354,27 +3354,6 @@ extern RSA *PEM_read_bio_RSAPrivateKey_proxy(BIO *bp , RSA **x , pem_password_cb
 extern RSA *d2i_RSAPrivateKey_proxy(RSA **a , unsigned char const   **in , long len ) ;
 //#line  336
 #pragma cilnoremove("d2i_RSAPrivateKey_proxy")
-//#line  338
-extern void tls1_PRF(long digest_mask , void const   *seed1 , int seed1_len , void const   *seed2 ,
-                     int seed2_len , void const   *seed3 , int seed3_len , void const   *seed4 ,
-                     int seed4_len , void const   *seed5 , int seed5_len , unsigned char const   *sec ,
-                     int slen , unsigned char *out1 , unsigned char *out2 , int olen ) ;
-static void __crest_tls1_PRF_opaque(long digest_mask , void const   *seed1 , int seed1_len ,
-                                    void const   *seed2 , int seed2_len , void const   *seed3 ,
-                                    int seed3_len , void const   *seed4 , int seed4_len ,
-                                    void const   *seed5 , int seed5_len , unsigned char const   *sec ,
-                                    int slen , unsigned char *out1 , unsigned char *out2 ,
-                                    int olen ) 
-{ 
-
-  {
-  __CrestClear(16);
-  __CrestMute();
-  tls1_PRF(digest_mask, seed1, seed1_len, seed2, seed2_len, seed3, seed3_len, seed4,
-           seed4_len, seed5, seed5_len, sec, slen, out1, out2, olen);
-  __CrestUnmute();
-}
-}
 //#line  348
 extern void tls1_PRF_proxy(long digest_mask , void const   *seed1 , int seed1_len ,
                            void const   *seed2 , int seed2_len , void const   *seed3 ,
@@ -3383,34 +3362,12 @@ extern void tls1_PRF_proxy(long digest_mask , void const   *seed1 , int seed1_le
                            unsigned char *out1 , unsigned char *out2 , int olen ) ;
 //#line  357
 #pragma cilnoremove("tls1_PRF_proxy")
-//#line  359
-extern void tls1_P_hash(EVP_MD const   *md , unsigned char const   *sec , int sec_len ,
-                        void const   *seed1 , int seed1_len , void const   *seed2 ,
-                        int seed2_len , void const   *seed3 , int seed3_len , void const   *seed4 ,
-                        int seed4_len , void const   *seed5 , int seed5_len , unsigned char *out ,
-                        int olen ) ;
-static void __crest_tls1_P_hash_opaque(EVP_MD const   *md , unsigned char const   *sec ,
-                                       int sec_len , void const   *seed1 , int seed1_len ,
-                                       void const   *seed2 , int seed2_len , void const   *seed3 ,
-                                       int seed3_len , void const   *seed4 , int seed4_len ,
-                                       void const   *seed5 , int seed5_len , unsigned char *out ,
-                                       int olen ) 
-{ 
-
-  {
-  __CrestClear(15);
-  __CrestMute();
-  tls1_P_hash(md, sec, sec_len, seed1, seed1_len, seed2, seed2_len, seed3, seed3_len,
-              seed4, seed4_len, seed5, seed5_len, out, olen);
-  __CrestUnmute();
-}
-}
 //#line  368
-void tls1_P_hash_proxy(EVP_MD const   *md , unsigned char const   *sec , int sec_len ,
-                       void const   *seed1 , int seed1_len , void const   *seed2 ,
-                       int seed2_len , void const   *seed3 , int seed3_len , void const   *seed4 ,
-                       int seed4_len , void const   *seed5 , int seed5_len , unsigned char *out ,
-                       int olen ) ;
+extern void tls1_P_hash_proxy(EVP_MD const   *md , unsigned char const   *sec , int sec_len ,
+                              void const   *seed1 , int seed1_len , void const   *seed2 ,
+                              int seed2_len , void const   *seed3 , int seed3_len ,
+                              void const   *seed4 , int seed4_len , void const   *seed5 ,
+                              int seed5_len , unsigned char *out , int olen ) ;
 //#line  376
 #pragma cilnoremove("tls1_P_hash_proxy")
 //#line  378
@@ -3471,47 +3428,6 @@ int SHA256_Init_proxy(SHA256_CTX *c ) ;
 int SHA256_Update_proxy(SHA256_CTX *c , void const   *data , size_t len ) ;
 //#line  466
 int SHA256_Final_proxy(unsigned char *md , SHA256_CTX *c ) ;
-//#line  468
-extern DSA_SIG *dsa_do_sign(unsigned char const   *dgst , int dlen , DSA *dsa ) ;
-static DSA_SIG *__crest_dsa_do_sign_opaque(unsigned char const   *dgst , int dlen ,
-                                           DSA *dsa ) 
-{ DSA_SIG *__crest_ret ;
-
-  {
-  __CrestClear(3);
-  __CrestLoadStackPtr("dsa_do_sign()");
-  __CrestNondet();
-  __CrestLoadInt((long long )16);
-  __CrestSetPtrStep();
-  __CrestMute();
-  __crest_ret = dsa_do_sign(dgst, dlen, dsa);
-  __CrestUnmute();
-  return (__crest_ret);
-}
-}
-//#line  470
-DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa ) ;
-//#line  472
-extern int dsa_do_verify(unsigned char const   *dgst , int dgst_len , DSA_SIG *sig ,
-                         DSA *dsa ) ;
-static int __crest_dsa_do_verify_opaque(unsigned char const   *dgst , int dgst_len ,
-                                        DSA_SIG *sig , DSA *dsa ) 
-{ int __crest_ret ;
-
-  {
-  __CrestApplyN("dsa_do_verify()", 4);
-  __CrestNondet();
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestMute();
-  __crest_ret = dsa_do_verify(dgst, dgst_len, sig, dsa);
-  __CrestUnmute();
-  return (__crest_ret);
-}
-}
-//#line  475
-int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *sig ,
-                        DSA *dsa ) ;
 //#line  478
 int DSA_generate_key_proxy(DSA *a ) ;
 //#line  480
@@ -3872,7 +3788,7 @@ int BIO_write_proxy(BIO *b , void const   *in , int inl )
     __CrestLoadInt((long long )4);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:__retres8[20596]");
+    __CrestLoadStackPtr("openssl_proxies.i:__retres8[20512]");
     __CrestLoadInt((long long )4);
     __CrestSetPtrStep();
     __CrestStore();
@@ -3941,7 +3857,7 @@ int BIO_write_proxy(BIO *b , void const   *in , int inl )
     __CrestLoadInt((long long )4);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:__retres8[20596]");
+    __CrestLoadStackPtr("openssl_proxies.i:__retres8[20512]");
     __CrestLoadInt((long long )4);
     __CrestSetPtrStep();
     __CrestStore();
@@ -3954,7 +3870,7 @@ int BIO_write_proxy(BIO *b , void const   *in , int inl )
   return_label: /* CIL Label */ 
   {
   __CrestLocation("openssl_proxies.c:76");
-  __CrestLoadStackPtr("openssl_proxies.i:__retres8[20596]");
+  __CrestLoadStackPtr("openssl_proxies.i:__retres8[20512]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -12040,1004 +11956,7 @@ extern RSA *d2i_RSAPrivateKey_proxy(RSA **a , unsigned char const   **in , long 
   }
 }
 }
-//#line  1321 "openssl_proxies.c"
-extern void tls1_PRF_proxy(long digest_mask , void const   *seed1 , int seed1_len ,
-                           void const   *seed2 , int seed2_len , void const   *seed3 ,
-                           int seed3_len , void const   *seed4 , int seed4_len , void const   *seed5 ,
-                           int seed5_len , unsigned char const   *sec , int slen ,
-                           unsigned char *out1 , unsigned char *out2 , int olen ) 
-{ 
-
-  {
-  __CrestCall("tls1_PRF_proxy", (void (*)())(& tls1_PRF_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:olen[20315]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:out2[20314]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:out1[20313]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:slen[20312]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:sec[20311]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5_len[20310]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5[20309]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4_len[20308]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4[20307]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3_len[20306]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3[20305]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2_len[20304]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2[20303]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1_len[20302]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1[20301]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:digest_mask[20300]");
-  __CrestLoadInt((long long )8);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLocation("openssl_proxies.c:1331");
-  __CrestLoadStackPtr("openssl_proxies.i:digest_mask[20300]");
-  __CrestLoadInt((long long )8);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1[20301]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1_len[20302]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2[20303]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2_len[20304]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3[20305]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3_len[20306]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4[20307]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4_len[20308]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5[20309]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5_len[20310]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:sec[20311]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:slen[20312]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:out1[20313]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:out2[20314]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:olen[20315]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-//#line  1331
-  __crest_tls1_PRF_opaque(digest_mask, seed1, seed1_len, seed2, seed2_len, seed3,
-                          seed3_len, seed4, seed4_len, seed5, seed5_len, sec, slen,
-                          out1, out2, olen);
-  {
-  __CrestLocation("openssl_proxies.c:1336");
-  __CrestLoadStackPtr("openssl_proxies.i:seed1[20301]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )seed1));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )((void *)0)));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestApplyN("!=", 2);
-  __CrestSimplify((long long )((unsigned long )seed1 != (unsigned long )((void *)0)));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1336
-  if ((unsigned long )seed1 != (unsigned long )((void *)0)) {
-    __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1337");
-    __CrestLoadStackPtr("openssl_proxies.i:seed1[20301]");
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )seed1));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )((unsigned char *)seed1)));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:seed1_len[20302]");
-    __CrestLoadInt((long long )4);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSBase(unsigned long )");
-    __CrestApplyN("castToInt", 2);
-    __CrestSimplify((long long )seed1_len);
-    __CrestLoadInt((long long )8);
-    __CrestSetLen();
-    __CrestDone();
-    __CrestLoadCString("seed");
-//#line  1337
-    load_buf((unsigned char const   *)((unsigned char *)seed1), (size_t )seed1_len,
-             "seed");
-  } else {
-    __CrestBranch(0);
-  }
-  }
-  {
-  __CrestLocation("openssl_proxies.c:1338");
-  __CrestLoadStackPtr("openssl_proxies.i:seed2[20303]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )seed2));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )((void *)0)));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestApplyN("!=", 2);
-  __CrestSimplify((long long )((unsigned long )seed2 != (unsigned long )((void *)0)));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1338
-  if ((unsigned long )seed2 != (unsigned long )((void *)0)) {
-    __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1339");
-    __CrestLoadStackPtr("openssl_proxies.i:seed2[20303]");
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )seed2));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )((unsigned char *)seed2)));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:seed2_len[20304]");
-    __CrestLoadInt((long long )4);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSBase(unsigned long )");
-    __CrestApplyN("castToInt", 2);
-    __CrestSimplify((long long )seed2_len);
-    __CrestLoadInt((long long )8);
-    __CrestSetLen();
-    __CrestDone();
-    __CrestLoadCString("seed");
-//#line  1339
-    load_buf((unsigned char const   *)((unsigned char *)seed2), (size_t )seed2_len,
-             "seed");
-  } else {
-    __CrestBranch(0);
-  }
-  }
-  {
-  __CrestLocation("openssl_proxies.c:1340");
-  __CrestLoadStackPtr("openssl_proxies.i:seed3[20305]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )seed3));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )((void *)0)));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestApplyN("!=", 2);
-  __CrestSimplify((long long )((unsigned long )seed3 != (unsigned long )((void *)0)));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1340
-  if ((unsigned long )seed3 != (unsigned long )((void *)0)) {
-    __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1341");
-    __CrestLoadStackPtr("openssl_proxies.i:seed3[20305]");
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )seed3));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )((unsigned char *)seed3)));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:seed3_len[20306]");
-    __CrestLoadInt((long long )4);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSBase(unsigned long )");
-    __CrestApplyN("castToInt", 2);
-    __CrestSimplify((long long )seed3_len);
-    __CrestLoadInt((long long )8);
-    __CrestSetLen();
-    __CrestDone();
-    __CrestLoadCString("seed");
-//#line  1341
-    load_buf((unsigned char const   *)((unsigned char *)seed3), (size_t )seed3_len,
-             "seed");
-  } else {
-    __CrestBranch(0);
-  }
-  }
-  {
-  __CrestLocation("openssl_proxies.c:1342");
-  __CrestLoadStackPtr("openssl_proxies.i:seed4[20307]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )seed4));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )((void *)0)));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestApplyN("!=", 2);
-  __CrestSimplify((long long )((unsigned long )seed4 != (unsigned long )((void *)0)));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1342
-  if ((unsigned long )seed4 != (unsigned long )((void *)0)) {
-    __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1343");
-    __CrestLoadStackPtr("openssl_proxies.i:seed4[20307]");
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )seed4));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )((unsigned char *)seed4)));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:seed4_len[20308]");
-    __CrestLoadInt((long long )4);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSBase(unsigned long )");
-    __CrestApplyN("castToInt", 2);
-    __CrestSimplify((long long )seed4_len);
-    __CrestLoadInt((long long )8);
-    __CrestSetLen();
-    __CrestDone();
-    __CrestLoadCString("seed");
-//#line  1343
-    load_buf((unsigned char const   *)((unsigned char *)seed4), (size_t )seed4_len,
-             "seed");
-  } else {
-    __CrestBranch(0);
-  }
-  }
-  {
-  __CrestLocation("openssl_proxies.c:1344");
-  __CrestLoadStackPtr("openssl_proxies.i:seed5[20309]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )seed5));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )((void *)0)));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestApplyN("!=", 2);
-  __CrestSimplify((long long )((unsigned long )seed5 != (unsigned long )((void *)0)));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1344
-  if ((unsigned long )seed5 != (unsigned long )((void *)0)) {
-    __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1345");
-    __CrestLoadStackPtr("openssl_proxies.i:seed5[20309]");
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )seed5));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )((unsigned char *)seed5)));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:seed5_len[20310]");
-    __CrestLoadInt((long long )4);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSBase(unsigned long )");
-    __CrestApplyN("castToInt", 2);
-    __CrestSimplify((long long )seed5_len);
-    __CrestLoadInt((long long )8);
-    __CrestSetLen();
-    __CrestDone();
-    __CrestLoadCString("seed");
-//#line  1345
-    load_buf((unsigned char const   *)((unsigned char *)seed5), (size_t )seed5_len,
-             "seed");
-  } else {
-    __CrestBranch(0);
-  }
-  }
-  {
-  __CrestLocation("openssl_proxies.c:1346");
-  __CrestLoadStackPtr("openssl_proxies.i:sec[20311]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )sec));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )((void *)0)));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestApplyN("!=", 2);
-  __CrestSimplify((long long )((unsigned long )sec != (unsigned long )((void *)0)));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1346
-  if ((unsigned long )sec != (unsigned long )((void *)0)) {
-    __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1347");
-    __CrestLoadStackPtr("openssl_proxies.i:sec[20311]");
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )sec));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )((unsigned char *)sec)));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:slen[20312]");
-    __CrestLoadInt((long long )4);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSBase(unsigned long )");
-    __CrestApplyN("castToInt", 2);
-    __CrestSimplify((long long )slen);
-    __CrestLoadInt((long long )8);
-    __CrestSetLen();
-    __CrestDone();
-    __CrestLoadCString("secret");
-//#line  1347
-    load_buf((unsigned char const   *)((unsigned char *)sec), (size_t )slen, "secret");
-  } else {
-    __CrestBranch(0);
-  }
-  }
-  __CrestLocation("openssl_proxies.c:1348");
-  __CrestLoadCString("tls1_PRF");
-  __CrestLoadCString("prf_result");
-  __CrestLoadStackPtr("openssl_proxies.i:olen[20315]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )olen);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadInt((long long )0);
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-//#line  1348
-  symL("tls1_PRF", "prf_result", (size_t )olen, 0);
-  __CrestLocation("openssl_proxies.c:1349");
-  __CrestLoadStackPtr("openssl_proxies.i:out1[20313]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )out1));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-//#line  1349
-  store_buf((unsigned char const   *)out1);
-
-  {
-  __CrestLocation("openssl_proxies.c:1321");
-  __CrestReturn(1);
-//#line  1321
-  return;
-  }
-}
-}
-//#line  1352 "openssl_proxies.c"
-void tls1_P_hash_proxy(EVP_MD const   *md , unsigned char const   *sec , int sec_len ,
-                       void const   *seed1 , int seed1_len , void const   *seed2 ,
-                       int seed2_len , void const   *seed3 , int seed3_len , void const   *seed4 ,
-                       int seed4_len , void const   *seed5 , int seed5_len , unsigned char *out ,
-                       int olen ) 
-{ 
-
-  {
-  __CrestCall("tls1_P_hash_proxy", (void (*)())(& tls1_P_hash_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:olen[20346]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20345]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5_len[20344]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5[20343]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4_len[20342]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4[20341]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3_len[20340]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3[20339]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2_len[20338]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2[20337]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1_len[20336]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1[20335]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:sec_len[20334]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:sec[20333]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:md[20332]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLocation("openssl_proxies.c:1361");
-  __CrestLoadStackPtr("openssl_proxies.i:md[20332]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:sec[20333]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:sec_len[20334]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1[20335]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1_len[20336]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2[20337]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2_len[20338]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3[20339]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3_len[20340]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4[20341]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4_len[20342]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5[20343]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5_len[20344]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20345]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:olen[20346]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-//#line  1361
-  __crest_tls1_P_hash_opaque(md, sec, sec_len, seed1, seed1_len, seed2, seed2_len,
-                             seed3, seed3_len, seed4, seed4_len, seed5, seed5_len,
-                             out, olen);
-  __CrestLocation("openssl_proxies.c:1366");
-  __CrestLoadStackPtr("openssl_proxies.i:seed1[20335]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )seed1));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)seed1)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:seed1_len[20336]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )seed1_len);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("seed1");
-//#line  1366
-  load_buf((unsigned char const   *)((unsigned char *)seed1), (size_t )seed1_len,
-           "seed1");
-  __CrestLocation("openssl_proxies.c:1367");
-  __CrestLoadStackPtr("openssl_proxies.i:seed2[20337]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )seed2));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)seed2)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:seed2_len[20338]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )seed2_len);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("seed2");
-//#line  1367
-  load_buf((unsigned char const   *)((unsigned char *)seed2), (size_t )seed2_len,
-           "seed2");
-  __CrestLocation("openssl_proxies.c:1368");
-  __CrestLoadStackPtr("openssl_proxies.i:seed3[20339]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )seed3));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)seed3)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:seed3_len[20340]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )seed3_len);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("seed3");
-//#line  1368
-  load_buf((unsigned char const   *)((unsigned char *)seed3), (size_t )seed3_len,
-           "seed3");
-  __CrestLocation("openssl_proxies.c:1369");
-  __CrestLoadStackPtr("openssl_proxies.i:seed4[20341]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )seed4));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)seed4)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:seed4_len[20342]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )seed4_len);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("seed4");
-//#line  1369
-  load_buf((unsigned char const   *)((unsigned char *)seed4), (size_t )seed4_len,
-           "seed4");
-  __CrestLocation("openssl_proxies.c:1370");
-  __CrestLoadStackPtr("openssl_proxies.i:seed5[20343]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )seed5));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)seed5)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:seed5_len[20344]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )seed5_len);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("seed5");
-//#line  1370
-  load_buf((unsigned char const   *)((unsigned char *)seed5), (size_t )seed5_len,
-           "seed5");
-  {
-  __CrestLocation("openssl_proxies.c:1371");
-  __CrestLoadStackPtr("openssl_proxies.i:sec[20333]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )sec));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )((unsigned long )((void *)0)));
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestApplyN("!=", 2);
-  __CrestSimplify((long long )((unsigned long )sec != (unsigned long )((void *)0)));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1371
-  if ((unsigned long )sec != (unsigned long )((void *)0)) {
-    __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1371");
-    __CrestLoadStackPtr("openssl_proxies.i:sec[20333]");
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )sec));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-    __CrestApplyN("castToPtr", 2);
-    __CrestSimplify((long long )((unsigned long )((unsigned char *)sec)));
-    __CrestApplyN("ptrLen", 0);
-    __CrestSetLen();
-    __CrestLoadInt((long long )1);
-    __CrestSetPtrStep();
-    __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:sec_len[20334]");
-    __CrestLoadInt((long long )4);
-    __CrestSetPtrStep();
-    __CrestLoadMem();
-    __CrestLoadString("TSBase(unsigned long )");
-    __CrestApplyN("castToInt", 2);
-    __CrestSimplify((long long )sec_len);
-    __CrestLoadInt((long long )8);
-    __CrestSetLen();
-    __CrestDone();
-    __CrestLoadCString("secret");
-//#line  1371
-    load_buf((unsigned char const   *)((unsigned char *)sec), (size_t )sec_len, "secret");
-  } else {
-    __CrestBranch(0);
-  }
-  }
-  __CrestLocation("openssl_proxies.c:1372");
-  __CrestLoadCString("tls1_P_hash");
-  __CrestLoadCString("P_hash_result");
-  __CrestLoadStackPtr("openssl_proxies.i:olen[20346]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )olen);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadInt((long long )0);
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-//#line  1372
-  symL("tls1_P_hash", "P_hash_result", (size_t )olen, 0);
-  __CrestLocation("openssl_proxies.c:1373");
-  __CrestLoadStackPtr("openssl_proxies.i:out[20345]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )out));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-//#line  1373
-  store_buf((unsigned char const   *)out);
-
-  {
-  __CrestLocation("openssl_proxies.c:1352");
-  __CrestReturn(1);
-//#line  1352
-  return;
-  }
-}
-}
-//#line  1378 "openssl_proxies.c"
+//#line  1288 "openssl_proxies.c"
 int tls1_generate_master_secret_proxy(SSL *s , unsigned char *out , unsigned char *p ,
                                       int len ) 
 { int ret ;
@@ -13045,113 +11964,113 @@ int tls1_generate_master_secret_proxy(SSL *s , unsigned char *out , unsigned cha
 
   {
   __CrestCall("tls1_generate_master_secret_proxy", (void (*)())(& tls1_generate_master_secret_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:len[20355]");
+  __CrestLoadStackPtr("openssl_proxies.i:len[20291]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20354]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20290]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20353]");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20289]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:s[20352]");
+  __CrestLoadStackPtr("openssl_proxies.i:s[20288]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1385");
-  __CrestLoadStackPtr("openssl_proxies.i:s[20352]");
+  __CrestLocation("openssl_proxies.c:1295");
+  __CrestLoadStackPtr("openssl_proxies.i:s[20288]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20353]");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20289]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20354]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20290]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:len[20355]");
+  __CrestLoadStackPtr("openssl_proxies.i:len[20291]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1385
+//#line  1295
   tmp = tls1_generate_master_secret(s, out, p, len);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20357]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20293]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1385");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20357]");
+  __CrestLocation("openssl_proxies.c:1295");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20293]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20356]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20292]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1385
+//#line  1295
   ret = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1386");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20356]");
+  __CrestLocation("openssl_proxies.c:1296");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20292]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1386
+//#line  1296
   return (ret);
   }
 }
 }
-//#line  1409 "openssl_proxies.c"
+//#line  1319 "openssl_proxies.c"
 extern EVP_PKEY_CTX *EVP_PKEY_CTX_new_proxy(EVP_PKEY *pkey , ENGINE *e ) 
 { EVP_PKEY_CTX *ret ;
   EVP_PKEY_CTX *tmp ;
 
   {
   __CrestCall("EVP_PKEY_CTX_new_proxy", (void (*)())(& EVP_PKEY_CTX_new_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:e[20362]");
+  __CrestLoadStackPtr("openssl_proxies.i:e[20298]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:pkey[20361]");
+  __CrestLoadStackPtr("openssl_proxies.i:pkey[20297]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1411");
-  __CrestLoadStackPtr("openssl_proxies.i:pkey[20361]");
+  __CrestLocation("openssl_proxies.c:1321");
+  __CrestLoadStackPtr("openssl_proxies.i:pkey[20297]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:e[20362]");
+  __CrestLoadStackPtr("openssl_proxies.i:e[20298]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1411
+//#line  1321
   tmp = __crest_EVP_PKEY_CTX_new_opaque(pkey, e);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20364]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20300]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1411");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20364]");
+  __CrestLocation("openssl_proxies.c:1321");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20300]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20363]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20299]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1411
+//#line  1321
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1413");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20363]");
+  __CrestLocation("openssl_proxies.c:1323");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20299]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13164,7 +12083,7 @@ extern EVP_PKEY_CTX *EVP_PKEY_CTX_new_proxy(EVP_PKEY *pkey , ENGINE *e )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("key");
-  __CrestLoadStackPtr("openssl_proxies.i:pkey[20361]");
+  __CrestLoadStackPtr("openssl_proxies.i:pkey[20297]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13177,65 +12096,65 @@ extern EVP_PKEY_CTX *EVP_PKEY_CTX_new_proxy(EVP_PKEY *pkey , ENGINE *e )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("id");
-//#line  1413
+//#line  1323
   copy_attr_ex((void const   *)ret, "key", (void const   *)pkey, "id");
   {
-  __CrestLocation("openssl_proxies.c:1415");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20363]");
+  __CrestLocation("openssl_proxies.c:1325");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20299]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestApplyN("ptrLen", 0);
   __CrestSetLen();
-//#line  1415
+//#line  1325
   return (ret);
   }
 }
 }
-//#line  1420 "openssl_proxies.c"
+//#line  1330 "openssl_proxies.c"
 extern int EVP_PKEY_derive_set_peer_proxy(EVP_PKEY_CTX *ctx , EVP_PKEY *peer ) 
 { int ret ;
   int tmp ;
 
   {
   __CrestCall("EVP_PKEY_derive_set_peer_proxy", (void (*)())(& EVP_PKEY_derive_set_peer_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:peer[20369]");
+  __CrestLoadStackPtr("openssl_proxies.i:peer[20305]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20368]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20304]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1422");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20368]");
+  __CrestLocation("openssl_proxies.c:1332");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20304]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:peer[20369]");
+  __CrestLoadStackPtr("openssl_proxies.i:peer[20305]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1422
+//#line  1332
   tmp = __crest_EVP_PKEY_derive_set_peer_opaque(ctx, peer);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20371]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20307]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1422");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20371]");
+  __CrestLocation("openssl_proxies.c:1332");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20307]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20370]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20306]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1422
+//#line  1332
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1424");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20368]");
+  __CrestLocation("openssl_proxies.c:1334");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20304]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13248,7 +12167,7 @@ extern int EVP_PKEY_derive_set_peer_proxy(EVP_PKEY_CTX *ctx , EVP_PKEY *peer )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("peerkey");
-  __CrestLoadStackPtr("openssl_proxies.i:peer[20369]");
+  __CrestLoadStackPtr("openssl_proxies.i:peer[20305]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13261,23 +12180,23 @@ extern int EVP_PKEY_derive_set_peer_proxy(EVP_PKEY_CTX *ctx , EVP_PKEY *peer )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("id");
-//#line  1424
+//#line  1334
   copy_attr_ex((void const   *)ctx, "peerkey", (void const   *)peer, "id");
   {
-  __CrestLocation("openssl_proxies.c:1426");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20370]");
+  __CrestLocation("openssl_proxies.c:1336");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20306]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1426
+//#line  1336
   return (ret);
   }
 }
 }
-//#line  1436 "openssl_proxies.c"
+//#line  1346 "openssl_proxies.c"
 extern int EVP_PKEY_decrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_t *outlen ,
                                   unsigned char const   *in , size_t inlen ) 
 { int ret ;
@@ -13285,67 +12204,67 @@ extern int EVP_PKEY_decrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
 
   {
   __CrestCall("EVP_PKEY_decrypt_proxy", (void (*)())(& EVP_PKEY_decrypt_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:inlen[20382]");
+  __CrestLoadStackPtr("openssl_proxies.i:inlen[20318]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:in[20381]");
+  __CrestLoadStackPtr("openssl_proxies.i:in[20317]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:outlen[20380]");
+  __CrestLoadStackPtr("openssl_proxies.i:outlen[20316]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20379]");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20315]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20378]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20314]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1439");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20378]");
+  __CrestLocation("openssl_proxies.c:1349");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20314]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20379]");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20315]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:outlen[20380]");
+  __CrestLoadStackPtr("openssl_proxies.i:outlen[20316]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:in[20381]");
+  __CrestLoadStackPtr("openssl_proxies.i:in[20317]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:inlen[20382]");
+  __CrestLoadStackPtr("openssl_proxies.i:inlen[20318]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1439
+//#line  1349
   tmp = __crest_EVP_PKEY_decrypt_opaque(ctx, out, outlen, in, inlen);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20384]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20320]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1439");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20384]");
+  __CrestLocation("openssl_proxies.c:1349");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20320]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20383]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20319]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1439
+//#line  1349
   ret = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1441");
-  __CrestLoadStackPtr("openssl_proxies.i:out[20379]");
+  __CrestLocation("openssl_proxies.c:1351");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20315]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13367,23 +12286,23 @@ extern int EVP_PKEY_decrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1441
+//#line  1351
   if ((unsigned long )out != (unsigned long )((void *)0)) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1443");
-    __CrestLoadStackPtr("openssl_proxies.i:in[20381]");
+    __CrestLocation("openssl_proxies.c:1353");
+    __CrestLoadStackPtr("openssl_proxies.i:in[20317]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:inlen[20382]");
+    __CrestLoadStackPtr("openssl_proxies.i:inlen[20318]");
     __CrestLoadInt((long long )8);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestLoadCString("enc");
-//#line  1443
+//#line  1353
     load_buf(in, inlen, "enc");
-    __CrestLocation("openssl_proxies.c:1444");
-    __CrestLoadStackPtr("openssl_proxies.i:ctx[20378]");
+    __CrestLocation("openssl_proxies.c:1354");
+    __CrestLoadStackPtr("openssl_proxies.i:ctx[20314]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -13397,12 +12316,12 @@ extern int EVP_PKEY_decrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestDone();
     __CrestLoadCString("key");
     __CrestLoadCString("pkey");
-//#line  1444
+//#line  1354
     load_ctx((void const   *)ctx, "key", "pkey");
-    __CrestLocation("openssl_proxies.c:1445");
+    __CrestLocation("openssl_proxies.c:1355");
     __CrestLoadCString("EVP_PKEY_decrypt");
     __CrestLoadCString("dec");
-    __CrestLoadStackPtr("openssl_proxies.i:outlen[20380]");
+    __CrestLoadStackPtr("openssl_proxies.i:outlen[20316]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -13412,10 +12331,10 @@ extern int EVP_PKEY_decrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestLoadInt((long long )1);
     __CrestLoadInt((long long )4);
     __CrestSetLen();
-//#line  1445
+//#line  1355
     symL("EVP_PKEY_decrypt", "dec", *outlen, 1);
-    __CrestLocation("openssl_proxies.c:1447");
-    __CrestLoadStackPtr("openssl_proxies.i:out[20379]");
+    __CrestLocation("openssl_proxies.c:1357");
+    __CrestLoadStackPtr("openssl_proxies.i:out[20315]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -13427,103 +12346,103 @@ extern int EVP_PKEY_decrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestLoadInt((long long )1);
     __CrestSetPtrStep();
     __CrestDone();
-//#line  1447
+//#line  1357
     store_buf((unsigned char const   *)out);
   } else {
     __CrestBranch(0);
   }
   }
   {
-  __CrestLocation("openssl_proxies.c:1450");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20383]");
+  __CrestLocation("openssl_proxies.c:1360");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20319]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1450
+//#line  1360
   return (ret);
   }
 }
 }
-//#line  1454 "openssl_proxies.c"
+//#line  1364 "openssl_proxies.c"
 extern int EVP_PKEY_CTX_ctrl_proxy(EVP_PKEY_CTX *ctx , int keytype , int optype ,
                                    int cmd , int p1 , void *p2 ) 
 { int tmp ;
 
   {
   __CrestCall("EVP_PKEY_CTX_ctrl_proxy", (void (*)())(& EVP_PKEY_CTX_ctrl_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:p2[20397]");
+  __CrestLoadStackPtr("openssl_proxies.i:p2[20333]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:p1[20396]");
+  __CrestLoadStackPtr("openssl_proxies.i:p1[20332]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:cmd[20395]");
+  __CrestLoadStackPtr("openssl_proxies.i:cmd[20331]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:optype[20394]");
+  __CrestLoadStackPtr("openssl_proxies.i:optype[20330]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:keytype[20393]");
+  __CrestLoadStackPtr("openssl_proxies.i:keytype[20329]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20392]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20328]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1457");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20392]");
+  __CrestLocation("openssl_proxies.c:1367");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20328]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:keytype[20393]");
+  __CrestLoadStackPtr("openssl_proxies.i:keytype[20329]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:optype[20394]");
+  __CrestLoadStackPtr("openssl_proxies.i:optype[20330]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:cmd[20395]");
+  __CrestLoadStackPtr("openssl_proxies.i:cmd[20331]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p1[20396]");
+  __CrestLoadStackPtr("openssl_proxies.i:p1[20332]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p2[20397]");
+  __CrestLoadStackPtr("openssl_proxies.i:p2[20333]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1457
+//#line  1367
   tmp = __crest_EVP_PKEY_CTX_ctrl_opaque(ctx, keytype, optype, cmd, p1, p2);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20398]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20334]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
   {
-  __CrestLocation("openssl_proxies.c:1457");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20398]");
+  __CrestLocation("openssl_proxies.c:1367");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20334]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1457
+//#line  1367
   return (tmp);
   }
 }
 }
-//#line  1467 "openssl_proxies.c"
+//#line  1377 "openssl_proxies.c"
 int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD const   *type ,
                              ENGINE *e , EVP_PKEY *pkey ) 
 { int ret ;
@@ -13531,66 +12450,66 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
 
   {
   __CrestCall("EVP_DigestSignInit_proxy", (void (*)())(& EVP_DigestSignInit_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:pkey[20409]");
+  __CrestLoadStackPtr("openssl_proxies.i:pkey[20345]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:e[20408]");
+  __CrestLoadStackPtr("openssl_proxies.i:e[20344]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:type[20407]");
+  __CrestLoadStackPtr("openssl_proxies.i:type[20343]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:pctx[20406]");
+  __CrestLoadStackPtr("openssl_proxies.i:pctx[20342]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20405]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20341]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1470");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20405]");
+  __CrestLocation("openssl_proxies.c:1380");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20341]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:pctx[20406]");
+  __CrestLoadStackPtr("openssl_proxies.i:pctx[20342]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:type[20407]");
+  __CrestLoadStackPtr("openssl_proxies.i:type[20343]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:e[20408]");
+  __CrestLoadStackPtr("openssl_proxies.i:e[20344]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:pkey[20409]");
+  __CrestLoadStackPtr("openssl_proxies.i:pkey[20345]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1470
+//#line  1380
   tmp = __crest_EVP_DigestSignInit_opaque(ctx, pctx, type, e, pkey);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20411]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20347]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1470");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20411]");
+  __CrestLocation("openssl_proxies.c:1380");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20347]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20410]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20346]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1470
+//#line  1380
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1472");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20405]");
+  __CrestLocation("openssl_proxies.c:1382");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20341]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13603,7 +12522,7 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("key");
-  __CrestLoadStackPtr("openssl_proxies.i:pkey[20409]");
+  __CrestLoadStackPtr("openssl_proxies.i:pkey[20345]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13616,10 +12535,10 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("id");
-//#line  1472
+//#line  1382
   copy_attr_ex((void const   *)ctx, "key", (void const   *)pkey, "id");
-  __CrestLocation("openssl_proxies.c:1473");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20405]");
+  __CrestLocation("openssl_proxies.c:1383");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20341]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13631,7 +12550,7 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:type[20407]");
+  __CrestLoadStackPtr("openssl_proxies.i:type[20343]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13644,10 +12563,10 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("type");
-//#line  1473
+//#line  1383
   copy_attr((void const   *)ctx, (void const   *)type, "type");
-  __CrestLocation("openssl_proxies.c:1474");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20405]");
+  __CrestLocation("openssl_proxies.c:1384");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20341]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13661,10 +12580,10 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
   __CrestDone();
   __CrestLoadCString("use");
   __CrestLoadCString("DigestSign");
-//#line  1474
+//#line  1384
   set_attr_str((void const   *)ctx, "use", "DigestSign");
-  __CrestLocation("openssl_proxies.c:1475");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20405]");
+  __CrestLocation("openssl_proxies.c:1385");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20341]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13678,11 +12597,11 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
   __CrestDone();
   __CrestLoadCString("msg");
   __CrestLoadCString("");
-//#line  1475
+//#line  1385
   set_attr_str((void const   *)ctx, "msg", "");
   {
-  __CrestLocation("openssl_proxies.c:1477");
-  __CrestLoadStackPtr("openssl_proxies.i:pctx[20406]");
+  __CrestLocation("openssl_proxies.c:1387");
+  __CrestLoadStackPtr("openssl_proxies.i:pctx[20342]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13704,11 +12623,11 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1477
+//#line  1387
   if ((unsigned long )pctx != (unsigned long )((void *)0)) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1478");
-    __CrestLoadStackPtr("openssl_proxies.i:pctx[20406]");
+    __CrestLocation("openssl_proxies.c:1388");
+    __CrestLoadStackPtr("openssl_proxies.i:pctx[20342]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -13724,7 +12643,7 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
     __CrestSetPtrStep();
     __CrestDone();
     __CrestLoadCString("key");
-    __CrestLoadStackPtr("openssl_proxies.i:pkey[20409]");
+    __CrestLoadStackPtr("openssl_proxies.i:pkey[20345]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -13737,27 +12656,27 @@ int EVP_DigestSignInit_proxy(EVP_MD_CTX *ctx , EVP_PKEY_CTX **pctx , EVP_MD cons
     __CrestSetPtrStep();
     __CrestDone();
     __CrestLoadCString("id");
-//#line  1478
+//#line  1388
     copy_attr_ex((void const   *)*pctx, "key", (void const   *)pkey, "id");
   } else {
     __CrestBranch(0);
   }
   }
   {
-  __CrestLocation("openssl_proxies.c:1480");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20410]");
+  __CrestLocation("openssl_proxies.c:1390");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20346]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1480
+//#line  1390
   return (ret);
   }
 }
 }
-//#line  1492 "openssl_proxies.c"
+//#line  1402 "openssl_proxies.c"
 extern int EVP_PKEY_verify_proxy(EVP_PKEY_CTX *ctx , unsigned char const   *sig ,
                                  size_t siglen , unsigned char const   *tbs , size_t tbslen ) 
 { int ret ;
@@ -13765,67 +12684,67 @@ extern int EVP_PKEY_verify_proxy(EVP_PKEY_CTX *ctx , unsigned char const   *sig 
 
   {
   __CrestCall("EVP_PKEY_verify_proxy", (void (*)())(& EVP_PKEY_verify_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20422]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20358]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:tbs[20421]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbs[20357]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:siglen[20420]");
+  __CrestLoadStackPtr("openssl_proxies.i:siglen[20356]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20419]");
+  __CrestLoadStackPtr("openssl_proxies.i:sig[20355]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20418]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20354]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1495");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20418]");
+  __CrestLocation("openssl_proxies.c:1405");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20354]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20419]");
+  __CrestLoadStackPtr("openssl_proxies.i:sig[20355]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:siglen[20420]");
+  __CrestLoadStackPtr("openssl_proxies.i:siglen[20356]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:tbs[20421]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbs[20357]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20422]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20358]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1495
+//#line  1405
   tmp = __crest_EVP_PKEY_verify_opaque(ctx, sig, siglen, tbs, tbslen);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20424]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20360]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1495");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20424]");
+  __CrestLocation("openssl_proxies.c:1405");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20360]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20423]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20359]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1495
+//#line  1405
   ret = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1500");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20423]");
+  __CrestLocation("openssl_proxies.c:1410");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20359]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13837,23 +12756,23 @@ extern int EVP_PKEY_verify_proxy(EVP_PKEY_CTX *ctx , unsigned char const   *sig 
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1500
+//#line  1410
   if (ret == 1) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1502");
-    __CrestLoadStackPtr("openssl_proxies.i:tbs[20421]");
+    __CrestLocation("openssl_proxies.c:1412");
+    __CrestLoadStackPtr("openssl_proxies.i:tbs[20357]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:tbslen[20422]");
+    __CrestLoadStackPtr("openssl_proxies.i:tbslen[20358]");
     __CrestLoadInt((long long )8);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestLoadCString("msg");
-//#line  1502
+//#line  1412
     load_buf(tbs, tbslen, "msg");
-    __CrestLocation("openssl_proxies.c:1503");
-    __CrestLoadStackPtr("openssl_proxies.i:ctx[20418]");
+    __CrestLocation("openssl_proxies.c:1413");
+    __CrestLoadStackPtr("openssl_proxies.i:ctx[20354]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -13867,46 +12786,46 @@ extern int EVP_PKEY_verify_proxy(EVP_PKEY_CTX *ctx , unsigned char const   *sig 
     __CrestDone();
     __CrestLoadCString("key");
     __CrestLoadCString("pkey");
-//#line  1503
+//#line  1413
     load_ctx((void const   *)ctx, "key", "pkey");
-    __CrestLocation("openssl_proxies.c:1504");
+    __CrestLocation("openssl_proxies.c:1414");
     __CrestLoadCString("EVP_PKEY_verify");
     __CrestLoadCString("sig");
-    __CrestLoadStackPtr("openssl_proxies.i:siglen[20420]");
+    __CrestLoadStackPtr("openssl_proxies.i:siglen[20356]");
     __CrestLoadInt((long long )8);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestLoadInt((long long )1);
     __CrestLoadInt((long long )4);
     __CrestSetLen();
-//#line  1504
+//#line  1414
     symL("EVP_PKEY_verify", "sig", siglen, 1);
-    __CrestLocation("openssl_proxies.c:1506");
-    __CrestLoadStackPtr("openssl_proxies.i:sig[20419]");
+    __CrestLocation("openssl_proxies.c:1416");
+    __CrestLoadStackPtr("openssl_proxies.i:sig[20355]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-//#line  1506
+//#line  1416
     store_buf(sig);
   } else {
     __CrestBranch(0);
   }
   }
   {
-  __CrestLocation("openssl_proxies.c:1514");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20423]");
+  __CrestLocation("openssl_proxies.c:1424");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20359]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1514
+//#line  1424
   return (ret);
   }
 }
 }
-//#line  1524 "openssl_proxies.c"
+//#line  1434 "openssl_proxies.c"
 extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_t *outlen ,
                                   unsigned char const   *in , size_t inlen ) 
 { int ret ;
@@ -13914,67 +12833,67 @@ extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
 
   {
   __CrestCall("EVP_PKEY_encrypt_proxy", (void (*)())(& EVP_PKEY_encrypt_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:inlen[20435]");
+  __CrestLoadStackPtr("openssl_proxies.i:inlen[20371]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:in[20434]");
+  __CrestLoadStackPtr("openssl_proxies.i:in[20370]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:outlen[20433]");
+  __CrestLoadStackPtr("openssl_proxies.i:outlen[20369]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20432]");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20368]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20431]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20367]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1527");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20431]");
+  __CrestLocation("openssl_proxies.c:1437");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20367]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:out[20432]");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20368]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:outlen[20433]");
+  __CrestLoadStackPtr("openssl_proxies.i:outlen[20369]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:in[20434]");
+  __CrestLoadStackPtr("openssl_proxies.i:in[20370]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:inlen[20435]");
+  __CrestLoadStackPtr("openssl_proxies.i:inlen[20371]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1527
+//#line  1437
   tmp = __crest_EVP_PKEY_encrypt_opaque(ctx, out, outlen, in, inlen);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20437]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20373]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1527");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20437]");
+  __CrestLocation("openssl_proxies.c:1437");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20373]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20436]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20372]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1527
+//#line  1437
   ret = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1529");
-  __CrestLoadStackPtr("openssl_proxies.i:out[20432]");
+  __CrestLocation("openssl_proxies.c:1439");
+  __CrestLoadStackPtr("openssl_proxies.i:out[20368]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -13996,10 +12915,10 @@ extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1529
+//#line  1439
   if ((unsigned long )out != (unsigned long )((void *)0)) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1531");
+    __CrestLocation("openssl_proxies.c:1441");
     __CrestLoadCString("lenvar");
     __CrestLoadCString("enc_len");
     __CrestLoadInt((long long )8);
@@ -14008,10 +12927,10 @@ extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestLoadInt((long long )0);
     __CrestLoadInt((long long )4);
     __CrestSetLen();
-//#line  1531
+//#line  1441
     symL("lenvar", "enc_len", sizeof(*outlen), 0);
-    __CrestLocation("openssl_proxies.c:1532");
-    __CrestLoadStackPtr("openssl_proxies.i:outlen[20433]");
+    __CrestLocation("openssl_proxies.c:1442");
+    __CrestLoadStackPtr("openssl_proxies.i:outlen[20369]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14031,22 +12950,22 @@ extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestLoadInt((long long )1);
     __CrestSetPtrStep();
     __CrestDone();
-//#line  1532
+//#line  1442
     store_buf((unsigned char const   *)((unsigned char *)outlen));
-    __CrestLocation("openssl_proxies.c:1534");
-    __CrestLoadStackPtr("openssl_proxies.i:in[20434]");
+    __CrestLocation("openssl_proxies.c:1444");
+    __CrestLoadStackPtr("openssl_proxies.i:in[20370]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:inlen[20435]");
+    __CrestLoadStackPtr("openssl_proxies.i:inlen[20371]");
     __CrestLoadInt((long long )8);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestLoadCString("plain");
-//#line  1534
+//#line  1444
     load_buf(in, inlen, "plain");
-    __CrestLocation("openssl_proxies.c:1535");
-    __CrestLoadStackPtr("openssl_proxies.i:ctx[20431]");
+    __CrestLocation("openssl_proxies.c:1445");
+    __CrestLoadStackPtr("openssl_proxies.i:ctx[20367]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14060,12 +12979,12 @@ extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestDone();
     __CrestLoadCString("key");
     __CrestLoadCString("pkey");
-//#line  1535
+//#line  1445
     load_ctx((void const   *)ctx, "key", "pkey");
-    __CrestLocation("openssl_proxies.c:1536");
+    __CrestLocation("openssl_proxies.c:1446");
     __CrestLoadCString("EVP_PKEY_encrypt");
     __CrestLoadCString("penc");
-    __CrestLoadStackPtr("openssl_proxies.i:outlen[20433]");
+    __CrestLoadStackPtr("openssl_proxies.i:outlen[20369]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14075,10 +12994,10 @@ extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestLoadInt((long long )0);
     __CrestLoadInt((long long )4);
     __CrestSetLen();
-//#line  1536
+//#line  1446
     symL("EVP_PKEY_encrypt", "penc", *outlen, 0);
-    __CrestLocation("openssl_proxies.c:1538");
-    __CrestLoadStackPtr("openssl_proxies.i:out[20432]");
+    __CrestLocation("openssl_proxies.c:1448");
+    __CrestLoadStackPtr("openssl_proxies.i:out[20368]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14090,27 +13009,27 @@ extern int EVP_PKEY_encrypt_proxy(EVP_PKEY_CTX *ctx , unsigned char *out , size_
     __CrestLoadInt((long long )1);
     __CrestSetPtrStep();
     __CrestDone();
-//#line  1538
+//#line  1448
     store_buf((unsigned char const   *)out);
   } else {
     __CrestBranch(0);
   }
   }
   {
-  __CrestLocation("openssl_proxies.c:1541");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20436]");
+  __CrestLocation("openssl_proxies.c:1451");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20372]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1541
+//#line  1451
   return (ret);
   }
 }
 }
-//#line  1552 "openssl_proxies.c"
+//#line  1462 "openssl_proxies.c"
 extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *siglen ,
                                unsigned char const   *tbs , size_t tbslen ) 
 { int ret ;
@@ -14118,67 +13037,67 @@ extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *
 
   {
   __CrestCall("EVP_PKEY_sign_proxy", (void (*)())(& EVP_PKEY_sign_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20448]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20384]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:tbs[20447]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbs[20383]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:siglen[20446]");
+  __CrestLoadStackPtr("openssl_proxies.i:siglen[20382]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20445]");
+  __CrestLoadStackPtr("openssl_proxies.i:sig[20381]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20444]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20380]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1555");
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20444]");
+  __CrestLocation("openssl_proxies.c:1465");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20380]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20445]");
+  __CrestLoadStackPtr("openssl_proxies.i:sig[20381]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:siglen[20446]");
+  __CrestLoadStackPtr("openssl_proxies.i:siglen[20382]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:tbs[20447]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbs[20383]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20448]");
+  __CrestLoadStackPtr("openssl_proxies.i:tbslen[20384]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1555
+//#line  1465
   tmp = __crest_EVP_PKEY_sign_opaque(ctx, sig, siglen, tbs, tbslen);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20450]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20386]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1555");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20450]");
+  __CrestLocation("openssl_proxies.c:1465");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20386]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20449]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20385]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1555
+//#line  1465
   ret = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1557");
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20445]");
+  __CrestLocation("openssl_proxies.c:1467");
+  __CrestLoadStackPtr("openssl_proxies.i:sig[20381]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14200,10 +13119,10 @@ extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1557
+//#line  1467
   if ((unsigned long )sig != (unsigned long )((void *)0)) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1559");
+    __CrestLocation("openssl_proxies.c:1469");
     __CrestLoadCString("lenvar");
     __CrestLoadCString("sig_len");
     __CrestLoadInt((long long )8);
@@ -14212,10 +13131,10 @@ extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *
     __CrestLoadInt((long long )0);
     __CrestLoadInt((long long )4);
     __CrestSetLen();
-//#line  1559
+//#line  1469
     symL("lenvar", "sig_len", sizeof(*siglen), 0);
-    __CrestLocation("openssl_proxies.c:1560");
-    __CrestLoadStackPtr("openssl_proxies.i:siglen[20446]");
+    __CrestLocation("openssl_proxies.c:1470");
+    __CrestLoadStackPtr("openssl_proxies.i:siglen[20382]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14235,22 +13154,22 @@ extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *
     __CrestLoadInt((long long )1);
     __CrestSetPtrStep();
     __CrestDone();
-//#line  1560
+//#line  1470
     store_buf((unsigned char const   *)((unsigned char *)siglen));
-    __CrestLocation("openssl_proxies.c:1562");
-    __CrestLoadStackPtr("openssl_proxies.i:tbs[20447]");
+    __CrestLocation("openssl_proxies.c:1472");
+    __CrestLoadStackPtr("openssl_proxies.i:tbs[20383]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:tbslen[20448]");
+    __CrestLoadStackPtr("openssl_proxies.i:tbslen[20384]");
     __CrestLoadInt((long long )8);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestLoadCString("msg");
-//#line  1562
+//#line  1472
     load_buf(tbs, tbslen, "msg");
-    __CrestLocation("openssl_proxies.c:1563");
-    __CrestLoadStackPtr("openssl_proxies.i:ctx[20444]");
+    __CrestLocation("openssl_proxies.c:1473");
+    __CrestLoadStackPtr("openssl_proxies.i:ctx[20380]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14264,12 +13183,12 @@ extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *
     __CrestDone();
     __CrestLoadCString("key");
     __CrestLoadCString("pkey");
-//#line  1563
+//#line  1473
     load_ctx((void const   *)ctx, "key", "pkey");
-    __CrestLocation("openssl_proxies.c:1564");
+    __CrestLocation("openssl_proxies.c:1474");
     __CrestLoadCString("EVP_PKEY_sign");
     __CrestLoadCString("sig");
-    __CrestLoadStackPtr("openssl_proxies.i:siglen[20446]");
+    __CrestLoadStackPtr("openssl_proxies.i:siglen[20382]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14279,10 +13198,10 @@ extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *
     __CrestLoadInt((long long )0);
     __CrestLoadInt((long long )4);
     __CrestSetLen();
-//#line  1564
+//#line  1474
     symL("EVP_PKEY_sign", "sig", *siglen, 0);
-    __CrestLocation("openssl_proxies.c:1565");
-    __CrestLoadStackPtr("openssl_proxies.i:sig[20445]");
+    __CrestLocation("openssl_proxies.c:1475");
+    __CrestLoadStackPtr("openssl_proxies.i:sig[20381]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14294,50 +13213,50 @@ extern int EVP_PKEY_sign_proxy(EVP_PKEY_CTX *ctx , unsigned char *sig , size_t *
     __CrestLoadInt((long long )1);
     __CrestSetPtrStep();
     __CrestDone();
-//#line  1565
+//#line  1475
     store_buf((unsigned char const   *)sig);
   } else {
     __CrestBranch(0);
   }
   }
   {
-  __CrestLocation("openssl_proxies.c:1568");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20449]");
+  __CrestLocation("openssl_proxies.c:1478");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20385]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1568
+//#line  1478
   return (ret);
   }
 }
 }
-//#line  1585 "openssl_proxies.c"
+//#line  1495 "openssl_proxies.c"
 int BN_num_bytes_proxy(BIGNUM const   *a ) 
 { int ret ;
   int tmp ;
 
   {
   __CrestCall("BN_num_bytes_proxy", (void (*)())(& BN_num_bytes_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:a[20453]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20389]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1587");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20453]");
+  __CrestLocation("openssl_proxies.c:1497");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20389]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1587
+//#line  1497
   tmp = __crest_BN_num_bits_opaque(a);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20455]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20391]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1587");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20455]");
+  __CrestLocation("openssl_proxies.c:1497");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20391]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14357,14 +13276,14 @@ int BN_num_bytes_proxy(BIGNUM const   *a )
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20454]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20390]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1587
+//#line  1497
   ret = (tmp + 7) / 8;
-  __CrestLocation("openssl_proxies.c:1589");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20453]");
+  __CrestLocation("openssl_proxies.c:1499");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20389]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14378,9 +13297,9 @@ int BN_num_bytes_proxy(BIGNUM const   *a )
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("bignum");
-//#line  1589
+//#line  1499
   load_ctx((void const   *)a, "val", "bignum");
-  __CrestLocation("openssl_proxies.c:1590");
+  __CrestLocation("openssl_proxies.c:1500");
   __CrestLoadCString("len");
   __CrestLoadCString("len");
   __CrestLoadInt((long long )4);
@@ -14389,10 +13308,10 @@ int BN_num_bytes_proxy(BIGNUM const   *a )
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1590
+//#line  1500
   symL("len", "len", sizeof(ret), 1);
-  __CrestLocation("openssl_proxies.c:1591");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20454]");
+  __CrestLocation("openssl_proxies.c:1501");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20390]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(void ), )");
@@ -14411,23 +13330,23 @@ int BN_num_bytes_proxy(BIGNUM const   *a )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1591
+//#line  1501
   store_buf((unsigned char const   *)((void *)(& ret)));
   {
-  __CrestLocation("openssl_proxies.c:1593");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20454]");
+  __CrestLocation("openssl_proxies.c:1503");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20390]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1593
+//#line  1503
   return (ret);
   }
 }
 }
-//#line  1603 "openssl_proxies.c"
+//#line  1513 "openssl_proxies.c"
 extern BIGNUM *BN_bin2bn_proxy(unsigned char const   *s , int len , BIGNUM *ret ) 
 { BIGNUM *ret2 ;
   BIGNUM *tmp ;
@@ -14435,51 +13354,51 @@ extern BIGNUM *BN_bin2bn_proxy(unsigned char const   *s , int len , BIGNUM *ret 
 
   {
   __CrestCall("BN_bin2bn_proxy", (void (*)())(& BN_bin2bn_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20462]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20398]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:len[20461]");
+  __CrestLoadStackPtr("openssl_proxies.i:len[20397]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:s[20460]");
+  __CrestLoadStackPtr("openssl_proxies.i:s[20396]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1605");
-  __CrestLoadStackPtr("openssl_proxies.i:s[20460]");
+  __CrestLocation("openssl_proxies.c:1515");
+  __CrestLoadStackPtr("openssl_proxies.i:s[20396]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:len[20461]");
+  __CrestLoadStackPtr("openssl_proxies.i:len[20397]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20462]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20398]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1605
+//#line  1515
   tmp = __crest_BN_bin2bn_opaque(s, len, ret);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20464]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20400]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1605");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20464]");
+  __CrestLocation("openssl_proxies.c:1515");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20400]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret2[20463]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret2[20399]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1605
+//#line  1515
   ret2 = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1608");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20462]");
+  __CrestLocation("openssl_proxies.c:1518");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20398]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14501,41 +13420,41 @@ extern BIGNUM *BN_bin2bn_proxy(unsigned char const   *s , int len , BIGNUM *ret 
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1608
+//#line  1518
   if ((unsigned long )ret == (unsigned long )((void *)0)) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1608");
-    __CrestLoadStackPtr("openssl_proxies.i:ret2[20463]");
+    __CrestLocation("openssl_proxies.c:1518");
+    __CrestLoadStackPtr("openssl_proxies.i:ret2[20399]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:result[20465]");
+    __CrestLoadStackPtr("openssl_proxies.i:result[20401]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestStore();
-//#line  1608
+//#line  1518
     result = ret2;
   } else {
     __CrestBranch(0);
-    __CrestLocation("openssl_proxies.c:1608");
-    __CrestLoadStackPtr("openssl_proxies.i:ret[20462]");
+    __CrestLocation("openssl_proxies.c:1518");
+    __CrestLoadStackPtr("openssl_proxies.i:ret[20398]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:result[20465]");
+    __CrestLoadStackPtr("openssl_proxies.i:result[20401]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestStore();
-//#line  1608
+//#line  1518
     result = ret;
   }
   }
-  __CrestLocation("openssl_proxies.c:1610");
-  __CrestLoadStackPtr("openssl_proxies.i:s[20460]");
+  __CrestLocation("openssl_proxies.c:1520");
+  __CrestLoadStackPtr("openssl_proxies.i:s[20396]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:len[20461]");
+  __CrestLoadStackPtr("openssl_proxies.i:len[20397]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14546,10 +13465,10 @@ extern BIGNUM *BN_bin2bn_proxy(unsigned char const   *s , int len , BIGNUM *ret 
   __CrestSetLen();
   __CrestDone();
   __CrestLoadCString("val");
-//#line  1610
+//#line  1520
   load_buf(s, (size_t )len, "val");
-  __CrestLocation("openssl_proxies.c:1611");
-  __CrestLoadStackPtr("openssl_proxies.i:result[20465]");
+  __CrestLocation("openssl_proxies.c:1521");
+  __CrestLoadStackPtr("openssl_proxies.i:result[20401]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14562,23 +13481,23 @@ extern BIGNUM *BN_bin2bn_proxy(unsigned char const   *s , int len , BIGNUM *ret 
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("val");
-//#line  1611
+//#line  1521
   store_ctx((void const   *)result, "val");
   {
-  __CrestLocation("openssl_proxies.c:1613");
-  __CrestLoadStackPtr("openssl_proxies.i:result[20465]");
+  __CrestLocation("openssl_proxies.c:1523");
+  __CrestLoadStackPtr("openssl_proxies.i:result[20401]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestApplyN("ptrLen", 0);
   __CrestSetLen();
-//#line  1613
+//#line  1523
   return (result);
   }
 }
 }
-//#line  1622 "openssl_proxies.c"
+//#line  1532 "openssl_proxies.c"
 extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to ) 
 { size_t ret ;
   int tmp ;
@@ -14586,31 +13505,31 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
 
   {
   __CrestCall("BN_bn2bin_proxy", (void (*)())(& BN_bn2bin_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:to[20470]");
+  __CrestLoadStackPtr("openssl_proxies.i:to[20406]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20469]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20405]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1624");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20469]");
+  __CrestLocation("openssl_proxies.c:1534");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20405]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:to[20470]");
+  __CrestLoadStackPtr("openssl_proxies.i:to[20406]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1624
+//#line  1534
   tmp = __crest_BN_bn2bin_opaque(a, to);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20472]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20408]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1624");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20472]");
+  __CrestLocation("openssl_proxies.c:1534");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20408]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14620,14 +13539,14 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   __CrestLoadInt((long long )8);
   __CrestSetLen();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20471]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20407]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1624
+//#line  1534
   ret = (size_t )tmp;
-  __CrestLocation("openssl_proxies.c:1626");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20469]");
+  __CrestLocation("openssl_proxies.c:1536");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20405]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14641,9 +13560,9 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("val");
-//#line  1626
+//#line  1536
   load_ctx((void const   *)a, "val", "val");
-  __CrestLocation("openssl_proxies.c:1627");
+  __CrestLocation("openssl_proxies.c:1537");
   __CrestLoadCString("len");
   __CrestLoadCString("len");
   __CrestLoadInt((long long )8);
@@ -14652,10 +13571,10 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1627
+//#line  1537
   symL("len", "len", sizeof(ret), 1);
-  __CrestLocation("openssl_proxies.c:1628");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20471]");
+  __CrestLocation("openssl_proxies.c:1538");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20407]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(void ), )");
@@ -14674,10 +13593,10 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1628
+//#line  1538
   store_buf((unsigned char const   *)((void *)(& ret)));
-  __CrestLocation("openssl_proxies.c:1630");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20469]");
+  __CrestLocation("openssl_proxies.c:1540");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20405]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14691,10 +13610,10 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("val");
-//#line  1630
+//#line  1540
   load_ctx((void const   *)a, "val", "val");
-  __CrestLocation("openssl_proxies.c:1631");
-  __CrestLoadStackPtr("openssl_proxies.i:to[20470]");
+  __CrestLocation("openssl_proxies.c:1541");
+  __CrestLoadStackPtr("openssl_proxies.i:to[20406]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14706,10 +13625,10 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1631
+//#line  1541
   store_buf((unsigned char const   *)to);
-  __CrestLocation("openssl_proxies.c:1633");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20471]");
+  __CrestLocation("openssl_proxies.c:1543");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20407]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14719,27 +13638,27 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:__retres5[20597]");
+  __CrestLoadStackPtr("openssl_proxies.i:__retres5[20513]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1633
+//#line  1543
   __retres5 = (int )ret;
   {
-  __CrestLocation("openssl_proxies.c:1622");
-  __CrestLoadStackPtr("openssl_proxies.i:__retres5[20597]");
+  __CrestLocation("openssl_proxies.c:1532");
+  __CrestLoadStackPtr("openssl_proxies.i:__retres5[20513]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1622
+//#line  1532
   return (__retres5);
   }
 }
 }
-//#line  1641 "openssl_proxies.c"
+//#line  1551 "openssl_proxies.c"
 extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , BIGNUM const   *m ,
                             BN_CTX *ctx ) 
 { int ret ;
@@ -14747,66 +13666,66 @@ extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , 
 
   {
   __CrestCall("BN_mod_exp_proxy", (void (*)())(& BN_mod_exp_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20483]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20419]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:m[20482]");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20418]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20481]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20417]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20480]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20416]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:r[20479]");
+  __CrestLoadStackPtr("openssl_proxies.i:r[20415]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1643");
-  __CrestLoadStackPtr("openssl_proxies.i:r[20479]");
+  __CrestLocation("openssl_proxies.c:1553");
+  __CrestLoadStackPtr("openssl_proxies.i:r[20415]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20480]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20416]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20481]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20417]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:m[20482]");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20418]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20483]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20419]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1643
+//#line  1553
   tmp = __crest_BN_mod_exp_opaque(r, a, p, m, ctx);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20485]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20421]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1643");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20485]");
+  __CrestLocation("openssl_proxies.c:1553");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20421]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20484]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20420]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1643
+//#line  1553
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1645");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20480]");
+  __CrestLocation("openssl_proxies.c:1555");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20416]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14820,10 +13739,10 @@ extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("bignum");
-//#line  1645
+//#line  1555
   load_ctx((void const   *)a, "val", "bignum");
-  __CrestLocation("openssl_proxies.c:1646");
-  __CrestLoadStackPtr("openssl_proxies.i:p[20481]");
+  __CrestLocation("openssl_proxies.c:1556");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20417]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14837,10 +13756,10 @@ extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("bignum");
-//#line  1646
+//#line  1556
   load_ctx((void const   *)p, "val", "bignum");
-  __CrestLocation("openssl_proxies.c:1647");
-  __CrestLoadStackPtr("openssl_proxies.i:m[20482]");
+  __CrestLocation("openssl_proxies.c:1557");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20418]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14854,19 +13773,19 @@ extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("bignum");
-//#line  1647
+//#line  1557
   load_ctx((void const   *)m, "val", "bignum");
-  __CrestLocation("openssl_proxies.c:1648");
+  __CrestLocation("openssl_proxies.c:1558");
   __CrestLoadCString("mod_exp");
   __CrestLoadCString("bignum");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1648
+//#line  1558
   symN("mod_exp", "bignum", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1649");
-  __CrestLoadStackPtr("openssl_proxies.i:r[20479]");
+  __CrestLocation("openssl_proxies.c:1559");
+  __CrestLoadStackPtr("openssl_proxies.i:r[20415]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14879,23 +13798,23 @@ extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , 
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("val");
-//#line  1649
+//#line  1559
   store_ctx((void const   *)r, "val");
   {
-  __CrestLocation("openssl_proxies.c:1651");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20484]");
+  __CrestLocation("openssl_proxies.c:1561");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20420]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1651
+//#line  1561
   return (ret);
   }
 }
 }
-//#line  1661 "openssl_proxies.c"
+//#line  1571 "openssl_proxies.c"
 extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str ) 
 { BIGNUM dummy ;
   int create_new ;
@@ -14906,17 +13825,17 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
 
   {
   __CrestCall("BN_hex2bn_proxy", (void (*)())(& BN_hex2bn_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:str[20490]");
+  __CrestLoadStackPtr("openssl_proxies.i:str[20426]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
   {
-  __CrestLocation("openssl_proxies.c:1665");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+  __CrestLocation("openssl_proxies.c:1575");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -14938,12 +13857,12 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1665
+//#line  1575
   if ((unsigned long )a != (unsigned long )((void *)0)) {
     __CrestBranch(1);
     {
-    __CrestLocation("openssl_proxies.c:1665");
-    __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+    __CrestLocation("openssl_proxies.c:1575");
+    __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -14968,112 +13887,112 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
     __CrestLoadInt((long long )4);
     __CrestSetLen();
     __CrestDone();
-//#line  1665
+//#line  1575
     if ((unsigned long )*a == (unsigned long )((void *)0)) {
       __CrestBranch(1);
-      __CrestLocation("openssl_proxies.c:1665");
+      __CrestLocation("openssl_proxies.c:1575");
       __CrestLoadInt((long long )1);
       __CrestLoadInt((long long )4);
       __CrestSetLen();
-      __CrestLoadStackPtr("openssl_proxies.i:tmp[20493]");
+      __CrestLoadStackPtr("openssl_proxies.i:tmp[20429]");
       __CrestLoadInt((long long )4);
       __CrestSetPtrStep();
       __CrestStore();
-//#line  1665
+//#line  1575
       tmp = 1;
     } else {
       __CrestBranch(0);
-      __CrestLocation("openssl_proxies.c:1665");
+      __CrestLocation("openssl_proxies.c:1575");
       __CrestLoadInt((long long )0);
       __CrestLoadInt((long long )4);
       __CrestSetLen();
-      __CrestLoadStackPtr("openssl_proxies.i:tmp[20493]");
+      __CrestLoadStackPtr("openssl_proxies.i:tmp[20429]");
       __CrestLoadInt((long long )4);
       __CrestSetPtrStep();
       __CrestStore();
-//#line  1665
+//#line  1575
       tmp = 0;
     }
     }
   } else {
     __CrestBranch(0);
-    __CrestLocation("openssl_proxies.c:1665");
+    __CrestLocation("openssl_proxies.c:1575");
     __CrestLoadInt((long long )0);
     __CrestLoadInt((long long )4);
     __CrestSetLen();
-    __CrestLoadStackPtr("openssl_proxies.i:tmp[20493]");
+    __CrestLoadStackPtr("openssl_proxies.i:tmp[20429]");
     __CrestLoadInt((long long )4);
     __CrestSetPtrStep();
     __CrestStore();
-//#line  1665
+//#line  1575
     tmp = 0;
   }
   }
-  __CrestLocation("openssl_proxies.c:1665");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20493]");
+  __CrestLocation("openssl_proxies.c:1575");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20429]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:create_new[20492]");
+  __CrestLoadStackPtr("openssl_proxies.i:create_new[20428]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1665
+//#line  1575
   create_new = tmp;
-  __CrestLocation("openssl_proxies.c:1667");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+  __CrestLocation("openssl_proxies.c:1577");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:str[20490]");
+  __CrestLoadStackPtr("openssl_proxies.i:str[20426]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1667
+//#line  1577
   tmp___0 = __crest_BN_hex2bn_opaque(a, str);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp___0[20496]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp___0[20432]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1667");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp___0[20496]");
+  __CrestLocation("openssl_proxies.c:1577");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp___0[20432]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20430]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1667
+//#line  1577
   ret = tmp___0;
-  __CrestLocation("openssl_proxies.c:1669");
-  __CrestLoadStackPtr("openssl_proxies.i:str[20490]");
+  __CrestLocation("openssl_proxies.c:1579");
+  __CrestLoadStackPtr("openssl_proxies.i:str[20426]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestLoadCString("hex");
-//#line  1669
+//#line  1579
   load_all(str, "hex");
-  __CrestLocation("openssl_proxies.c:1670");
+  __CrestLocation("openssl_proxies.c:1580");
   __CrestLoadCString("ztp");
   __CrestLoadCString("ztp");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1670
+//#line  1580
   symN("ztp", "ztp", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1671");
+  __CrestLocation("openssl_proxies.c:1581");
   __CrestLoadCString("BN_hex2bn");
   __CrestLoadCString("bignum");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1671
+//#line  1581
   symN("BN_hex2bn", "bignum", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1672");
-  __CrestLoadStackPtr("openssl_proxies.i:dummy[20491]");
+  __CrestLocation("openssl_proxies.c:1582");
+  __CrestLoadStackPtr("openssl_proxies.i:dummy[20427]");
   __CrestLoadInt((long long )24);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(void const   ), )");
@@ -15085,10 +14004,10 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("val");
-//#line  1672
+//#line  1582
   store_ctx((void const   *)(& dummy), "val");
-  __CrestLocation("openssl_proxies.c:1674");
-  __CrestLoadStackPtr("openssl_proxies.i:dummy[20491]");
+  __CrestLocation("openssl_proxies.c:1584");
+  __CrestLoadStackPtr("openssl_proxies.i:dummy[20427]");
   __CrestLoadInt((long long )24);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(void const   ), )");
@@ -15101,9 +14020,9 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("");
-//#line  1674
+//#line  1584
   load_ctx((void const   *)(& dummy), "val", "");
-  __CrestLocation("openssl_proxies.c:1675");
+  __CrestLocation("openssl_proxies.c:1585");
   __CrestLoadCString("len");
   __CrestLoadCString("len");
   __CrestLoadInt((long long )4);
@@ -15112,10 +14031,10 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1675
+//#line  1585
   symL("len", "len", sizeof(ret), 1);
-  __CrestLocation("openssl_proxies.c:1676");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
+  __CrestLocation("openssl_proxies.c:1586");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20430]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(void ), )");
@@ -15134,11 +14053,11 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1676
+//#line  1586
   store_buf((unsigned char const   *)((void *)(& ret)));
   {
-  __CrestLocation("openssl_proxies.c:1678");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+  __CrestLocation("openssl_proxies.c:1588");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15160,33 +14079,33 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1678
+//#line  1588
   if ((unsigned long )a != (unsigned long )((void *)0)) {
     __CrestBranch(1);
     {
-    __CrestLocation("openssl_proxies.c:1680");
-    __CrestLoadStackPtr("openssl_proxies.i:create_new[20492]");
+    __CrestLocation("openssl_proxies.c:1590");
+    __CrestLoadStackPtr("openssl_proxies.i:create_new[20428]");
     __CrestLoadInt((long long )4);
     __CrestSetPtrStep();
     __CrestLoadMem();
-//#line  1680
+//#line  1590
     if (create_new) {
       __CrestBranch(1);
-      __CrestLocation("openssl_proxies.c:1682");
-      __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+      __CrestLocation("openssl_proxies.c:1592");
+      __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
       __CrestApplyN("ptrLen", 0);
       __CrestSetPtrStep();
       __CrestLoadMem();
       __CrestApplyN("ptrLen", 0);
       __CrestSetPtrStep();
       __CrestLoadMem();
-      __CrestLoadStackPtr("openssl_proxies.i:mem_8[20595]");
+      __CrestLoadStackPtr("openssl_proxies.i:mem_8[20511]");
       __CrestApplyN("ptrLen", 0);
       __CrestSetPtrStep();
       __CrestStore();
-//#line  1682
+//#line  1592
       mem_8 = *a;
-      __CrestLocation("openssl_proxies.c:1682");
+      __CrestLocation("openssl_proxies.c:1592");
       __CrestLoadInt((long long )24);
       __CrestLoadInt((long long )8);
       __CrestSetLen();
@@ -15196,10 +14115,10 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
       __CrestLoadInt((long long )4);
       __CrestSetLen();
       __CrestDone();
-//#line  1682
+//#line  1592
       fresh_ptr((int )sizeof(*mem_8));
-      __CrestLocation("openssl_proxies.c:1683");
-      __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+      __CrestLocation("openssl_proxies.c:1593");
+      __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
       __CrestApplyN("ptrLen", 0);
       __CrestSetPtrStep();
       __CrestLoadMem();
@@ -15219,14 +14138,14 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
       __CrestLoadInt((long long )1);
       __CrestSetPtrStep();
       __CrestDone();
-//#line  1683
+//#line  1593
       store_buf((unsigned char const   *)((unsigned char *)a));
     } else {
       __CrestBranch(0);
     }
     }
-    __CrestLocation("openssl_proxies.c:1687");
-    __CrestLoadStackPtr("openssl_proxies.i:dummy[20491]");
+    __CrestLocation("openssl_proxies.c:1597");
+    __CrestLoadStackPtr("openssl_proxies.i:dummy[20427]");
     __CrestLoadInt((long long )24);
     __CrestSetPtrStep();
     __CrestLoadString("TSPtr(TSBase(void const   ), )");
@@ -15239,10 +14158,10 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
     __CrestDone();
     __CrestLoadCString("val");
     __CrestLoadCString("bignum");
-//#line  1687
+//#line  1597
     load_ctx((void const   *)(& dummy), "val", "bignum");
-    __CrestLocation("openssl_proxies.c:1688");
-    __CrestLoadStackPtr("openssl_proxies.i:a[20489]");
+    __CrestLocation("openssl_proxies.c:1598");
+    __CrestLoadStackPtr("openssl_proxies.i:a[20425]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -15258,61 +14177,61 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
     __CrestSetPtrStep();
     __CrestDone();
     __CrestLoadCString("val");
-//#line  1688
+//#line  1598
     store_ctx((void const   *)*a, "val");
   } else {
     __CrestBranch(0);
   }
   }
   {
-  __CrestLocation("openssl_proxies.c:1691");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
+  __CrestLocation("openssl_proxies.c:1601");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20430]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1691
+//#line  1601
   return (ret);
   }
 }
 }
-//#line  1701 "openssl_proxies.c"
+//#line  1611 "openssl_proxies.c"
 extern char *BN_bn2hex_proxy(BIGNUM const   *a ) 
 { char *ret ;
   char *tmp ;
 
   {
   __CrestCall("BN_bn2hex_proxy", (void (*)())(& BN_bn2hex_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:a[20499]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20435]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1703");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20499]");
+  __CrestLocation("openssl_proxies.c:1613");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20435]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1703
+//#line  1613
   tmp = __crest_BN_bn2hex_opaque(a);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20501]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20437]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1703");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20501]");
+  __CrestLocation("openssl_proxies.c:1613");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20437]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20500]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20436]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1703
+//#line  1613
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1705");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20499]");
+  __CrestLocation("openssl_proxies.c:1615");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20435]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15326,19 +14245,19 @@ extern char *BN_bn2hex_proxy(BIGNUM const   *a )
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("");
-//#line  1705
+//#line  1615
   load_ctx((void const   *)a, "val", "");
-  __CrestLocation("openssl_proxies.c:1706");
+  __CrestLocation("openssl_proxies.c:1616");
   __CrestLoadCString("BN_bn2hex");
   __CrestLoadCString("hex");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1706
+//#line  1616
   symN("BN_bn2hex", "hex", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1707");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20500]");
+  __CrestLocation("openssl_proxies.c:1617");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20436]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15350,65 +14269,71 @@ extern char *BN_bn2hex_proxy(BIGNUM const   *a )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1707
+//#line  1617
   store_all((char const   *)ret);
   {
-  __CrestLocation("openssl_proxies.c:1709");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20500]");
+  __CrestLocation("openssl_proxies.c:1619");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20436]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestApplyN("ptrLen", 0);
   __CrestSetLen();
-//#line  1709
+//#line  1619
   return (ret);
   }
 }
 }
-//#line  1715 "openssl_proxies.c"
+//#line  1625 "openssl_proxies.c"
 int BN_set_word_proxy(BIGNUM *a , unsigned long w ) 
 { int ret ;
   int tmp ;
 
   {
   __CrestCall("BN_set_word_proxy", (void (*)())(& BN_set_word_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:w[20506]");
+  __CrestLoadStackPtr("openssl_proxies.i:w[20442]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20505]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20441]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1717");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20505]");
+  __CrestLocation("openssl_proxies.c:1627");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20441]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:w[20506]");
+  __CrestLoadStackPtr("openssl_proxies.i:w[20442]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1717
-  tmp = __crest_BN_set_word_opaque(a, w);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20508]");
+  __CrestLoadString("TSBase(unsigned int )");
+  __CrestApplyN("castToInt", 2);
+  __CrestSimplify((long long )w);
+  __CrestLoadInt((long long )4);
+  __CrestSetLen();
+  __CrestDone();
+//#line  1627
+  tmp = __crest_BN_set_word_opaque(a, (unsigned int )w);
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20444]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1717");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20508]");
+  __CrestLocation("openssl_proxies.c:1627");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20444]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20507]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20443]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1717
+//#line  1627
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1719");
-  __CrestLoadStackPtr("openssl_proxies.i:w[20506]");
+  __CrestLocation("openssl_proxies.c:1629");
+  __CrestLoadStackPtr("openssl_proxies.i:w[20442]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
@@ -15431,10 +14356,10 @@ int BN_set_word_proxy(BIGNUM *a , unsigned long w )
   __CrestLoadInt((long long )8);
   __CrestSetLen();
   __CrestLoadCString("wordval");
-//#line  1719
+//#line  1629
   load_buf((unsigned char const   *)((unsigned char *)(& w)), sizeof(w), "wordval");
-  __CrestLocation("openssl_proxies.c:1720");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20505]");
+  __CrestLocation("openssl_proxies.c:1630");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20441]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15447,23 +14372,23 @@ int BN_set_word_proxy(BIGNUM *a , unsigned long w )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("val");
-//#line  1720
+//#line  1630
   store_ctx((void const   *)a, "val");
   {
-  __CrestLocation("openssl_proxies.c:1722");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20507]");
+  __CrestLocation("openssl_proxies.c:1632");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20443]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1722
+//#line  1632
   return (ret);
   }
 }
 }
-//#line  1725 "openssl_proxies.c"
+//#line  1635 "openssl_proxies.c"
 int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 ,
                            BIGNUM const   *a2 , BIGNUM const   *p2 , BIGNUM const   *m ,
                            BN_CTX *ctx , BN_MONT_CTX *in_mont ) 
@@ -15472,90 +14397,90 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 
 
   {
   __CrestCall("BN_mod_exp2_mont_proxy", (void (*)())(& BN_mod_exp2_mont_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20525]");
+  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20461]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20524]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20460]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:m[20523]");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20459]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:p2[20522]");
+  __CrestLoadStackPtr("openssl_proxies.i:p2[20458]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a2[20521]");
+  __CrestLoadStackPtr("openssl_proxies.i:a2[20457]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:p1[20520]");
+  __CrestLoadStackPtr("openssl_proxies.i:p1[20456]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a1[20519]");
+  __CrestLoadStackPtr("openssl_proxies.i:a1[20455]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:rr[20518]");
+  __CrestLoadStackPtr("openssl_proxies.i:rr[20454]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1730");
-  __CrestLoadStackPtr("openssl_proxies.i:rr[20518]");
+  __CrestLocation("openssl_proxies.c:1640");
+  __CrestLoadStackPtr("openssl_proxies.i:rr[20454]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:a1[20519]");
+  __CrestLoadStackPtr("openssl_proxies.i:a1[20455]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p1[20520]");
+  __CrestLoadStackPtr("openssl_proxies.i:p1[20456]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:a2[20521]");
+  __CrestLoadStackPtr("openssl_proxies.i:a2[20457]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p2[20522]");
+  __CrestLoadStackPtr("openssl_proxies.i:p2[20458]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:m[20523]");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20459]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20524]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20460]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20525]");
+  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20461]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1730
+//#line  1640
   tmp = __crest_BN_mod_exp2_mont_opaque(rr, a1, p1, a2, p2, m, ctx, in_mont);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20527]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20463]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1730");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20527]");
+  __CrestLocation("openssl_proxies.c:1640");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20463]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20526]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20462]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1730
+//#line  1640
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1732");
-  __CrestLoadStackPtr("openssl_proxies.i:a1[20519]");
+  __CrestLocation("openssl_proxies.c:1642");
+  __CrestLoadStackPtr("openssl_proxies.i:a1[20455]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15569,10 +14494,10 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("a1");
-//#line  1732
+//#line  1642
   load_ctx((void const   *)a1, "val", "a1");
-  __CrestLocation("openssl_proxies.c:1733");
-  __CrestLoadStackPtr("openssl_proxies.i:p1[20520]");
+  __CrestLocation("openssl_proxies.c:1643");
+  __CrestLoadStackPtr("openssl_proxies.i:p1[20456]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15586,10 +14511,10 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("p1");
-//#line  1733
+//#line  1643
   load_ctx((void const   *)p1, "val", "p1");
-  __CrestLocation("openssl_proxies.c:1734");
-  __CrestLoadStackPtr("openssl_proxies.i:a2[20521]");
+  __CrestLocation("openssl_proxies.c:1644");
+  __CrestLoadStackPtr("openssl_proxies.i:a2[20457]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15603,10 +14528,10 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("a1");
-//#line  1734
+//#line  1644
   load_ctx((void const   *)a2, "val", "a1");
-  __CrestLocation("openssl_proxies.c:1735");
-  __CrestLoadStackPtr("openssl_proxies.i:p2[20522]");
+  __CrestLocation("openssl_proxies.c:1645");
+  __CrestLoadStackPtr("openssl_proxies.i:p2[20458]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15620,10 +14545,10 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("p1");
-//#line  1735
+//#line  1645
   load_ctx((void const   *)p2, "val", "p1");
-  __CrestLocation("openssl_proxies.c:1736");
-  __CrestLoadStackPtr("openssl_proxies.i:m[20523]");
+  __CrestLocation("openssl_proxies.c:1646");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20459]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15637,19 +14562,19 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("bignum");
-//#line  1736
+//#line  1646
   load_ctx((void const   *)m, "val", "bignum");
-  __CrestLocation("openssl_proxies.c:1737");
+  __CrestLocation("openssl_proxies.c:1647");
   __CrestLoadCString("mod_exp2_mont");
   __CrestLoadCString("rr");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1737
+//#line  1647
   symN("mod_exp2_mont", "rr", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1738");
-  __CrestLoadStackPtr("openssl_proxies.i:rr[20518]");
+  __CrestLocation("openssl_proxies.c:1648");
+  __CrestLoadStackPtr("openssl_proxies.i:rr[20454]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15662,23 +14587,23 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 , BIGNUM const   *p1 
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("val");
-//#line  1738
+//#line  1648
   store_ctx((void const   *)rr, "val");
   {
-  __CrestLocation("openssl_proxies.c:1740");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20526]");
+  __CrestLocation("openssl_proxies.c:1650");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20462]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1740
+//#line  1650
   return (ret);
   }
 }
 }
-//#line  1743 "openssl_proxies.c"
+//#line  1653 "openssl_proxies.c"
 int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a , BIGNUM const   *p , BIGNUM const   *m ,
                           BN_CTX *ctx , BN_MONT_CTX *in_mont ) 
 { int ret ;
@@ -15686,74 +14611,74 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a , BIGNUM const   *p , B
 
   {
   __CrestCall("BN_mod_exp_mont_proxy", (void (*)())(& BN_mod_exp_mont_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20540]");
+  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20476]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20539]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20475]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:m[20538]");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20474]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20537]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20473]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20536]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20472]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:rr[20535]");
+  __CrestLoadStackPtr("openssl_proxies.i:rr[20471]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1747");
-  __CrestLoadStackPtr("openssl_proxies.i:rr[20535]");
+  __CrestLocation("openssl_proxies.c:1657");
+  __CrestLoadStackPtr("openssl_proxies.i:rr[20471]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20536]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20472]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20537]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20473]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:m[20538]");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20474]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ctx[20539]");
+  __CrestLoadStackPtr("openssl_proxies.i:ctx[20475]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20540]");
+  __CrestLoadStackPtr("openssl_proxies.i:in_mont[20476]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1747
+//#line  1657
   tmp = __crest_BN_mod_exp_mont_opaque(rr, a, p, m, ctx, in_mont);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20542]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20478]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1747");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20542]");
+  __CrestLocation("openssl_proxies.c:1657");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20478]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20541]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20477]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1747
+//#line  1657
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1749");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20536]");
+  __CrestLocation("openssl_proxies.c:1659");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20472]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15767,10 +14692,10 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a , BIGNUM const   *p , B
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("a");
-//#line  1749
+//#line  1659
   load_ctx((void const   *)a, "val", "a");
-  __CrestLocation("openssl_proxies.c:1750");
-  __CrestLoadStackPtr("openssl_proxies.i:p[20537]");
+  __CrestLocation("openssl_proxies.c:1660");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20473]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15784,10 +14709,10 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a , BIGNUM const   *p , B
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("p");
-//#line  1750
+//#line  1660
   load_ctx((void const   *)p, "val", "p");
-  __CrestLocation("openssl_proxies.c:1751");
-  __CrestLoadStackPtr("openssl_proxies.i:m[20538]");
+  __CrestLocation("openssl_proxies.c:1661");
+  __CrestLoadStackPtr("openssl_proxies.i:m[20474]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15801,19 +14726,19 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a , BIGNUM const   *p , B
   __CrestDone();
   __CrestLoadCString("val");
   __CrestLoadCString("bignum");
-//#line  1751
+//#line  1661
   load_ctx((void const   *)m, "val", "bignum");
-  __CrestLocation("openssl_proxies.c:1752");
+  __CrestLocation("openssl_proxies.c:1662");
   __CrestLoadCString("mod_exp_mont");
   __CrestLoadCString("rr");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1752
+//#line  1662
   symN("mod_exp_mont", "rr", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1753");
-  __CrestLoadStackPtr("openssl_proxies.i:rr[20535]");
+  __CrestLocation("openssl_proxies.c:1663");
+  __CrestLoadStackPtr("openssl_proxies.i:rr[20471]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15826,43 +14751,43 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a , BIGNUM const   *p , B
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("val");
-//#line  1753
+//#line  1663
   store_ctx((void const   *)rr, "val");
   {
-  __CrestLocation("openssl_proxies.c:1755");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20541]");
+  __CrestLocation("openssl_proxies.c:1665");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20477]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1755
+//#line  1665
   return (ret);
   }
 }
 }
-//#line  1763 "openssl_proxies.c"
+//#line  1673 "openssl_proxies.c"
 int DSA_generate_key_proxy(DSA *a ) 
 { int tmp ;
 
   {
   __CrestCall("DSA_generate_key_proxy", (void (*)())(& DSA_generate_key_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:a[20545]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20481]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1765");
+  __CrestLocation("openssl_proxies.c:1675");
   __CrestLoadCString("new");
   __CrestLoadCString("keyseed");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1765
+//#line  1675
   symN("new", "keyseed", (size_t *)((void *)0), 0);
-  __CrestLocation("openssl_proxies.c:1766");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20545]");
+  __CrestLocation("openssl_proxies.c:1676");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20481]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15875,10 +14800,10 @@ int DSA_generate_key_proxy(DSA *a )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("keyseed");
-//#line  1766
+//#line  1676
   store_ctx((void const   *)a, "keyseed");
-  __CrestLocation("openssl_proxies.c:1768");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20545]");
+  __CrestLocation("openssl_proxies.c:1678");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20481]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15892,19 +14817,19 @@ int DSA_generate_key_proxy(DSA *a )
   __CrestDone();
   __CrestLoadCString("keyseed");
   __CrestLoadCString("keyseed");
-//#line  1768
+//#line  1678
   load_ctx((void const   *)a, "keyseed", "keyseed");
-  __CrestLocation("openssl_proxies.c:1769");
+  __CrestLocation("openssl_proxies.c:1679");
   __CrestLoadCString("sk");
   __CrestLoadCString("skey");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1769
+//#line  1679
   symN("sk", "skey", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1770");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20545]");
+  __CrestLocation("openssl_proxies.c:1680");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20481]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15917,10 +14842,10 @@ int DSA_generate_key_proxy(DSA *a )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("skey");
-//#line  1770
+//#line  1680
   store_ctx((void const   *)a, "skey");
-  __CrestLocation("openssl_proxies.c:1772");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20545]");
+  __CrestLocation("openssl_proxies.c:1682");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20481]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15934,19 +14859,19 @@ int DSA_generate_key_proxy(DSA *a )
   __CrestDone();
   __CrestLoadCString("keyseed");
   __CrestLoadCString("keyseed");
-//#line  1772
+//#line  1682
   load_ctx((void const   *)a, "keyseed", "keyseed");
-  __CrestLocation("openssl_proxies.c:1773");
+  __CrestLocation("openssl_proxies.c:1683");
   __CrestLoadCString("pk");
   __CrestLoadCString("pkey");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1773
+//#line  1683
   symN("pk", "pkey", (size_t *)((void *)0), 1);
-  __CrestLocation("openssl_proxies.c:1774");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20545]");
+  __CrestLocation("openssl_proxies.c:1684");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20481]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -15959,546 +14884,85 @@ int DSA_generate_key_proxy(DSA *a )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("pkey");
-//#line  1774
+//#line  1684
   store_ctx((void const   *)a, "pkey");
-  __CrestLocation("openssl_proxies.c:1776");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20545]");
+  __CrestLocation("openssl_proxies.c:1686");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20481]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1776
+//#line  1686
   tmp = __crest_DSA_generate_key_opaque(a);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20546]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20482]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
   {
-  __CrestLocation("openssl_proxies.c:1776");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20546]");
+  __CrestLocation("openssl_proxies.c:1686");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20482]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1776
+//#line  1686
   return (tmp);
   }
 }
 }
-//#line  1784 "openssl_proxies.c"
+//#line  1694 "openssl_proxies.c"
 DSA *DSA_new_method_proxy(ENGINE *engine ) 
 { DSA *ret ;
   DSA *tmp ;
 
   {
   __CrestCall("DSA_new_method_proxy", (void (*)())(& DSA_new_method_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:engine[20549]");
+  __CrestLoadStackPtr("openssl_proxies.i:engine[20485]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1787");
-//#line  1787
+  __CrestLocation("openssl_proxies.c:1697");
+//#line  1697
   DSA_get_default_method();
   __CrestClear(1);
-  __CrestLocation("openssl_proxies.c:1789");
-  __CrestLoadStackPtr("openssl_proxies.i:engine[20549]");
+  __CrestLocation("openssl_proxies.c:1699");
+  __CrestLoadStackPtr("openssl_proxies.i:engine[20485]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1789
+//#line  1699
   tmp = __crest_DSA_new_method_opaque(engine);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20551]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20487]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1789");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20551]");
+  __CrestLocation("openssl_proxies.c:1699");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20487]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20550]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20486]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1789
+//#line  1699
   ret = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1790");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20550]");
+  __CrestLocation("openssl_proxies.c:1700");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20486]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestApplyN("ptrLen", 0);
   __CrestSetLen();
-//#line  1790
+//#line  1700
   return (ret);
   }
 }
 }
-//#line  1793 "openssl_proxies.c"
-DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa ) 
-{ DSA_SIG *ret ;
-  DSA_SIG *tmp ;
-
-  {
-  __CrestCall("dsa_do_sign_proxy", (void (*)())(& dsa_do_sign_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:dsa[20558]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:dlen[20557]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:dgst[20556]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLocation("openssl_proxies.c:1795");
-  __CrestLoadStackPtr("openssl_proxies.i:dgst[20556]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:dlen[20557]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:dsa[20558]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-//#line  1795
-  tmp = __crest_dsa_do_sign_opaque(dgst, dlen, dsa);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20560]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLocation("openssl_proxies.c:1795");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20560]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20559]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-//#line  1795
-  ret = tmp;
-  __CrestLocation("openssl_proxies.c:1802");
-  __CrestLoadInt((long long )24);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestLoadString("TSBase(int )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )sizeof(BIGNUM ));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1802
-  fresh_ptr((int )sizeof(BIGNUM ));
-  __CrestLocation("openssl_proxies.c:1803");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20559]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadInt((long long )16);
-  __CrestSetPtrStep();
-  __CrestFieldOffset("r");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )(& ret->r)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)(& ret->r))));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-//#line  1803
-  store_buf((unsigned char const   *)((unsigned char *)(& ret->r)));
-  __CrestLocation("openssl_proxies.c:1804");
-  __CrestLoadInt((long long )24);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestLoadString("TSBase(int )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )sizeof(BIGNUM ));
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-  __CrestDone();
-//#line  1804
-  fresh_ptr((int )sizeof(BIGNUM ));
-  __CrestLocation("openssl_proxies.c:1805");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20559]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadInt((long long )16);
-  __CrestSetPtrStep();
-  __CrestFieldOffset("s");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )(& ret->s)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)(& ret->s))));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-//#line  1805
-  store_buf((unsigned char const   *)((unsigned char *)(& ret->s)));
-  __CrestLocation("openssl_proxies.c:1807");
-  __CrestLoadStackPtr("openssl_proxies.i:dsa[20558]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(void const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )dsa));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadCString("skey");
-  __CrestLoadCString("skey");
-//#line  1807
-  load_ctx((void const   *)dsa, "skey", "skey");
-  __CrestLocation("openssl_proxies.c:1808");
-  __CrestLoadStackPtr("openssl_proxies.i:dgst[20556]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:dlen[20557]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )dlen);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("dgst");
-//#line  1808
-  load_buf(dgst, (size_t )dlen, "dgst");
-  __CrestLocation("openssl_proxies.c:1809");
-  __CrestLoadCString("dsa_sig_r");
-  __CrestLoadCString("dsa_sig_r");
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadInt((long long )0);
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-//#line  1809
-  symN("dsa_sig_r", "dsa_sig_r", (size_t *)((void *)0), 0);
-  __CrestLocation("openssl_proxies.c:1810");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20559]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadInt((long long )16);
-  __CrestSetPtrStep();
-  __CrestFieldOffset("r");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(void const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )ret->r));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadCString("val");
-//#line  1810
-  store_ctx((void const   *)ret->r, "val");
-  __CrestLocation("openssl_proxies.c:1812");
-  __CrestLoadStackPtr("openssl_proxies.i:dsa[20558]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(void const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )dsa));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadCString("skey");
-  __CrestLoadCString("skey");
-//#line  1812
-  load_ctx((void const   *)dsa, "skey", "skey");
-  __CrestLocation("openssl_proxies.c:1813");
-  __CrestLoadStackPtr("openssl_proxies.i:dgst[20556]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:dlen[20557]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )dlen);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("dgst");
-//#line  1813
-  load_buf(dgst, (size_t )dlen, "dgst");
-  __CrestLocation("openssl_proxies.c:1814");
-  __CrestLoadCString("dsa_sig_s");
-  __CrestLoadCString("dsa_sig_s");
-  __CrestLoadStackPtr("nullPtr");
-  __CrestLoadInt((long long )0);
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-//#line  1814
-  symN("dsa_sig_s", "dsa_sig_s", (size_t *)((void *)0), 0);
-  __CrestLocation("openssl_proxies.c:1815");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20559]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadInt((long long )16);
-  __CrestSetPtrStep();
-  __CrestFieldOffset("s");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(void const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )ret->s));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadCString("val");
-//#line  1815
-  store_ctx((void const   *)ret->s, "val");
-  {
-  __CrestLocation("openssl_proxies.c:1817");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20559]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestReturn(0);
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-//#line  1817
-  return (ret);
-  }
-}
-}
-//#line  1821 "openssl_proxies.c"
-int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *sig ,
-                        DSA *dsa ) 
-{ int ret ;
-  int tmp ;
-
-  {
-  __CrestCall("dsa_do_verify_proxy", (void (*)())(& dsa_do_verify_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:dsa[20569]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20568]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:dgst_len[20567]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:dgst[20566]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLocation("openssl_proxies.c:1824");
-  __CrestLoadStackPtr("openssl_proxies.i:dgst[20566]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:dgst_len[20567]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20568]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:dsa[20569]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-//#line  1824
-  tmp = __crest_dsa_do_verify_opaque(dgst, dgst_len, sig, dsa);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20571]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-  __CrestLocation("openssl_proxies.c:1824");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20571]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20570]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestStore();
-//#line  1824
-  ret = tmp;
-  __CrestLocation("openssl_proxies.c:1826");
-  __CrestLoadStackPtr("openssl_proxies.i:dsa[20569]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(void const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )dsa));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadCString("pkey");
-  __CrestLoadCString("pkey");
-//#line  1826
-  load_ctx((void const   *)dsa, "pkey", "pkey");
-  __CrestLocation("openssl_proxies.c:1827");
-  __CrestLoadStackPtr("openssl_proxies.i:dgst[20566]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:dgst_len[20567]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSBase(unsigned long )");
-  __CrestApplyN("castToInt", 2);
-  __CrestSimplify((long long )dgst_len);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestDone();
-  __CrestLoadCString("dgst");
-//#line  1827
-  load_buf(dgst, (size_t )dgst_len, "dgst");
-  __CrestLocation("openssl_proxies.c:1828");
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20568]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadInt((long long )16);
-  __CrestSetPtrStep();
-  __CrestFieldOffset("r");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(void const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )sig->r));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadCString("val");
-  __CrestLoadCString("dsa_sig_r");
-//#line  1828
-  load_ctx((void const   *)sig->r, "val", "dsa_sig_r");
-  __CrestLocation("openssl_proxies.c:1829");
-  __CrestLoadStackPtr("openssl_proxies.i:sig[20568]");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadInt((long long )16);
-  __CrestSetPtrStep();
-  __CrestFieldOffset("s");
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestLoadString("TSPtr(TSBase(void const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )sig->s));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadCString("val");
-  __CrestLoadCString("dsa_sig_s");
-//#line  1829
-  load_ctx((void const   *)sig->s, "val", "dsa_sig_s");
-  __CrestLocation("openssl_proxies.c:1830");
-  __CrestLoadCString("dsa_verify");
-  __CrestLoadCString("sig_verification");
-  __CrestLoadInt((long long )4);
-  __CrestLoadInt((long long )8);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-//#line  1830
-  symL("dsa_verify", "sig_verification", sizeof(ret), 1);
-  __CrestLocation("openssl_proxies.c:1831");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20570]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )(& ret)));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-  __CrestLoadString("TSPtr(TSBase(unsigned char const   ), )");
-  __CrestApplyN("castToPtr", 2);
-  __CrestSimplify((long long )((unsigned long )((unsigned char *)(& ret))));
-  __CrestApplyN("ptrLen", 0);
-  __CrestSetLen();
-  __CrestLoadInt((long long )1);
-  __CrestSetPtrStep();
-  __CrestDone();
-//#line  1831
-  store_buf((unsigned char const   *)((unsigned char *)(& ret)));
-  {
-  __CrestLocation("openssl_proxies.c:1833");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20570]");
-  __CrestLoadInt((long long )4);
-  __CrestSetPtrStep();
-  __CrestLoadMem();
-  __CrestReturn(0);
-  __CrestLoadInt((long long )4);
-  __CrestSetLen();
-//#line  1833
-  return (ret);
-  }
-}
-}
-//#line  1846 "openssl_proxies.c"
+//#line  1714 "openssl_proxies.c"
 int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp ) 
 { unsigned char *p ;
   size_t ret ;
@@ -16507,45 +14971,45 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
 
   {
   __CrestCall("i2d_DSA_PUBKEY_proxy", (void (*)())(& i2d_DSA_PUBKEY_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20576]");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20492]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20575]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20491]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1848");
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20576]");
+  __CrestLocation("openssl_proxies.c:1716");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20492]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20577]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20493]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1848
+//#line  1716
   p = *pp;
-  __CrestLocation("openssl_proxies.c:1850");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20575]");
+  __CrestLocation("openssl_proxies.c:1718");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20491]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20576]");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20492]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1850
+//#line  1718
   tmp = __crest_i2d_DSA_PUBKEY_opaque(a, pp);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20579]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20495]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1850");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20579]");
+  __CrestLocation("openssl_proxies.c:1718");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20495]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16555,13 +15019,13 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   __CrestLoadInt((long long )8);
   __CrestSetLen();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20578]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1850
+//#line  1718
   ret = (size_t )tmp;
-  __CrestLocation("openssl_proxies.c:1852");
+  __CrestLocation("openssl_proxies.c:1720");
   __CrestLoadCString("lenvar");
   __CrestLoadCString("len");
   __CrestLoadInt((long long )8);
@@ -16570,10 +15034,10 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   __CrestLoadInt((long long )0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1852
+//#line  1720
   symL("lenvar", "len", sizeof(ret), 0);
-  __CrestLocation("openssl_proxies.c:1853");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20578]");
+  __CrestLocation("openssl_proxies.c:1721");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(unsigned char ), )");
@@ -16592,11 +15056,11 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1853
+//#line  1721
   store_buf((unsigned char const   *)((unsigned char *)(& ret)));
   {
-  __CrestLocation("openssl_proxies.c:1855");
-  __CrestLoadStackPtr("openssl_proxies.i:p[20577]");
+  __CrestLocation("openssl_proxies.c:1723");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20493]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16618,10 +15082,10 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1855
+//#line  1723
   if ((unsigned long )p == (unsigned long )((void *)0)) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1857");
+    __CrestLocation("openssl_proxies.c:1725");
     __CrestLoadInt((long long )136);
     __CrestLoadInt((long long )8);
     __CrestSetLen();
@@ -16631,10 +15095,10 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
     __CrestLoadInt((long long )4);
     __CrestSetLen();
     __CrestDone();
-//#line  1857
+//#line  1725
     fresh_ptr((int )sizeof(DSA ));
-    __CrestLocation("openssl_proxies.c:1858");
-    __CrestLoadStackPtr("openssl_proxies.i:pp[20576]");
+    __CrestLocation("openssl_proxies.c:1726");
+    __CrestLoadStackPtr("openssl_proxies.i:pp[20492]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -16646,30 +15110,30 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
     __CrestLoadInt((long long )1);
     __CrestSetPtrStep();
     __CrestDone();
-//#line  1858
+//#line  1726
     store_buf((unsigned char const   *)pp);
-    __CrestLocation("openssl_proxies.c:1859");
-    __CrestLoadStackPtr("openssl_proxies.i:pp[20576]");
+    __CrestLocation("openssl_proxies.c:1727");
+    __CrestLoadStackPtr("openssl_proxies.i:pp[20492]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:p[20577]");
+    __CrestLoadStackPtr("openssl_proxies.i:p[20493]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestStore();
-//#line  1859
+//#line  1727
     p = *pp;
   } else {
     __CrestBranch(0);
-    __CrestLocation("openssl_proxies.c:1862");
-    __CrestLoadStackPtr("openssl_proxies.i:p[20577]");
+    __CrestLocation("openssl_proxies.c:1730");
+    __CrestLoadStackPtr("openssl_proxies.i:p[20493]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:ret[20578]");
+    __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
     __CrestLoadInt((long long )8);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -16678,19 +15142,19 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
     __CrestApplyN("ptrLen", 0);
     __CrestSetLen();
     __CrestDone();
-    __CrestLoadStackPtr("openssl_proxies.i:pp[20576]");
+    __CrestLoadStackPtr("openssl_proxies.i:pp[20492]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestStore();
-//#line  1862
+//#line  1730
     *pp = p + ret;
   }
   }
-  __CrestLocation("openssl_proxies.c:1864");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20575]");
+  __CrestLocation("openssl_proxies.c:1732");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20491]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16704,22 +15168,22 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   __CrestDone();
   __CrestLoadCString("pkey");
   __CrestLoadCString("dsa_pkey");
-//#line  1864
+//#line  1732
   load_ctx((void const   *)a, "pkey", "dsa_pkey");
-  __CrestLocation("openssl_proxies.c:1865");
+  __CrestLocation("openssl_proxies.c:1733");
   __CrestLoadCString("i2d_DSA_PUBKEY");
   __CrestLoadCString("DER");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20578]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1865
+//#line  1733
   symL("i2d_DSA_PUBKEY", "DER", ret, 1);
-  __CrestLocation("openssl_proxies.c:1866");
-  __CrestLoadStackPtr("openssl_proxies.i:p[20577]");
+  __CrestLocation("openssl_proxies.c:1734");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20493]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16731,10 +15195,10 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1866
+//#line  1734
   store_buf((unsigned char const   *)p);
-  __CrestLocation("openssl_proxies.c:1868");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20578]");
+  __CrestLocation("openssl_proxies.c:1736");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20494]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16744,27 +15208,27 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:__retres6[20598]");
+  __CrestLoadStackPtr("openssl_proxies.i:__retres6[20514]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1868
+//#line  1736
   __retres6 = (int )ret;
   {
-  __CrestLocation("openssl_proxies.c:1846");
-  __CrestLoadStackPtr("openssl_proxies.i:__retres6[20598]");
+  __CrestLocation("openssl_proxies.c:1714");
+  __CrestLoadStackPtr("openssl_proxies.i:__retres6[20514]");
   __CrestLoadInt((long long )4);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1846
+//#line  1714
   return (__retres6);
   }
 }
 }
-//#line  1879 "openssl_proxies.c"
+//#line  1747 "openssl_proxies.c"
 DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length ) 
 { unsigned char *p ;
   DSA *ret ;
@@ -16772,20 +15236,20 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
 
   {
   __CrestCall("d2i_DSA_PUBKEY_proxy", (void (*)())(& d2i_DSA_PUBKEY_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:length[20586]");
+  __CrestLoadStackPtr("openssl_proxies.i:length[20502]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20585]");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20501]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLoadStackPtr("openssl_proxies.i:a[20584]");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20500]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1881");
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20585]");
+  __CrestLocation("openssl_proxies.c:1749");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20501]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16800,45 +15264,45 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:p[20587]");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20503]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1881
+//#line  1749
   p = (unsigned char *)*pp;
-  __CrestLocation("openssl_proxies.c:1883");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20584]");
+  __CrestLocation("openssl_proxies.c:1751");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20500]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20585]");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20501]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:length[20586]");
+  __CrestLoadStackPtr("openssl_proxies.i:length[20502]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1883
+//#line  1751
   tmp = __crest_d2i_DSA_PUBKEY_opaque(a, pp, length);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20589]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20505]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1883");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20589]");
+  __CrestLocation("openssl_proxies.c:1751");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20505]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20588]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20504]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1883
+//#line  1751
   ret = tmp;
   {
-  __CrestLocation("openssl_proxies.c:1885");
-  __CrestLoadStackPtr("openssl_proxies.i:a[20584]");
+  __CrestLocation("openssl_proxies.c:1753");
+  __CrestLoadStackPtr("openssl_proxies.i:a[20500]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16863,26 +15327,26 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
   __CrestLoadInt((long long )4);
   __CrestSetLen();
   __CrestDone();
-//#line  1885
+//#line  1753
   if ((unsigned long )*a != (unsigned long )((void *)0)) {
     __CrestBranch(1);
-    __CrestLocation("openssl_proxies.c:1886");
-    __CrestLoadStackPtr("openssl_proxies.i:a[20584]");
+    __CrestLocation("openssl_proxies.c:1754");
+    __CrestLoadStackPtr("openssl_proxies.i:a[20500]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:ret[20588]");
+    __CrestLoadStackPtr("openssl_proxies.i:ret[20504]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestStore();
-//#line  1886
+//#line  1754
     ret = *a;
   } else {
     __CrestBranch(0);
-    __CrestLocation("openssl_proxies.c:1889");
+    __CrestLocation("openssl_proxies.c:1757");
     __CrestApplyN("ptrLen", 0);
     __CrestLoadInt((long long )8);
     __CrestSetLen();
@@ -16892,10 +15356,10 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
     __CrestLoadInt((long long )4);
     __CrestSetLen();
     __CrestDone();
-//#line  1889
+//#line  1757
     fresh_ptr((int )sizeof(ret));
-    __CrestLocation("openssl_proxies.c:1890");
-    __CrestLoadStackPtr("openssl_proxies.i:ret[20588]");
+    __CrestLocation("openssl_proxies.c:1758");
+    __CrestLoadStackPtr("openssl_proxies.i:ret[20504]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
@@ -16907,33 +15371,33 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
     __CrestLoadInt((long long )1);
     __CrestSetPtrStep();
     __CrestDone();
-//#line  1890
+//#line  1758
     store_buf((unsigned char const   *)ret);
-    __CrestLocation("openssl_proxies.c:1892");
-    __CrestLoadStackPtr("openssl_proxies.i:ret[20588]");
+    __CrestLocation("openssl_proxies.c:1760");
+    __CrestLoadStackPtr("openssl_proxies.i:ret[20504]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
-    __CrestLoadStackPtr("openssl_proxies.i:a[20584]");
+    __CrestLoadStackPtr("openssl_proxies.i:a[20500]");
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestLoadMem();
     __CrestApplyN("ptrLen", 0);
     __CrestSetPtrStep();
     __CrestStore();
-//#line  1892
+//#line  1760
     *a = ret;
   }
   }
-  __CrestLocation("openssl_proxies.c:1895");
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20585]");
+  __CrestLocation("openssl_proxies.c:1763");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20501]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:length[20586]");
+  __CrestLoadStackPtr("openssl_proxies.i:length[20502]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16944,19 +15408,19 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
   __CrestSetLen();
   __CrestDone();
   __CrestLoadCString("DER");
-//#line  1895
+//#line  1763
   load_buf(*pp, (size_t )length, "DER");
-  __CrestLocation("openssl_proxies.c:1896");
+  __CrestLocation("openssl_proxies.c:1764");
   __CrestLoadCString("d2i_DSA_PUBKEY");
   __CrestLoadCString("dsa_pkey");
   __CrestLoadStackPtr("nullPtr");
   __CrestLoadInt((long long )0);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1896
+//#line  1764
   symN("d2i_DSA_PUBKEY", "dsa_pkey", (size_t *)((void *)0), 0);
-  __CrestLocation("openssl_proxies.c:1897");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20588]");
+  __CrestLocation("openssl_proxies.c:1765");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20504]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16969,14 +15433,14 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
   __CrestSetPtrStep();
   __CrestDone();
   __CrestLoadCString("pkey");
-//#line  1897
+//#line  1765
   store_ctx((void const   *)ret, "pkey");
-  __CrestLocation("openssl_proxies.c:1899");
-  __CrestLoadStackPtr("openssl_proxies.i:p[20587]");
+  __CrestLocation("openssl_proxies.c:1767");
+  __CrestLoadStackPtr("openssl_proxies.i:p[20503]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:length[20586]");
+  __CrestLoadStackPtr("openssl_proxies.i:length[20502]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
@@ -16993,71 +15457,71 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-  __CrestLoadStackPtr("openssl_proxies.i:pp[20585]");
+  __CrestLoadStackPtr("openssl_proxies.i:pp[20501]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1899
+//#line  1767
   *pp = (unsigned char const   *)(p + length);
   {
-  __CrestLocation("openssl_proxies.c:1901");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20588]");
+  __CrestLocation("openssl_proxies.c:1769");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20504]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestApplyN("ptrLen", 0);
   __CrestSetLen();
-//#line  1901
+//#line  1769
   return (ret);
   }
 }
 }
-//#line  1918 "openssl_proxies.c"
+//#line  1786 "openssl_proxies.c"
 unsigned long lh_strhash_proxy(char const   *c ) 
 { unsigned long ret ;
   unsigned long tmp ;
 
   {
   __CrestCall("lh_strhash_proxy", (void (*)())(& lh_strhash_proxy));
-  __CrestLoadStackPtr("openssl_proxies.i:c[20592]");
+  __CrestLoadStackPtr("openssl_proxies.i:c[20508]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1920");
-  __CrestLoadStackPtr("openssl_proxies.i:c[20592]");
+  __CrestLocation("openssl_proxies.c:1788");
+  __CrestLoadStackPtr("openssl_proxies.i:c[20508]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
-//#line  1920
+//#line  1788
   tmp = lh_strhash(c);
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20594]");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20510]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-  __CrestLocation("openssl_proxies.c:1920");
-  __CrestLoadStackPtr("openssl_proxies.i:tmp[20594]");
+  __CrestLocation("openssl_proxies.c:1788");
+  __CrestLoadStackPtr("openssl_proxies.i:tmp[20510]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20593]");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20509]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestStore();
-//#line  1920
+//#line  1788
   ret = tmp;
-  __CrestLocation("openssl_proxies.c:1922");
-  __CrestLoadStackPtr("openssl_proxies.i:c[20592]");
+  __CrestLocation("openssl_proxies.c:1790");
+  __CrestLoadStackPtr("openssl_proxies.i:c[20508]");
   __CrestApplyN("ptrLen", 0);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestLoadCString("str");
-//#line  1922
+//#line  1790
   load_all(c, "str");
-  __CrestLocation("openssl_proxies.c:1923");
+  __CrestLocation("openssl_proxies.c:1791");
   __CrestLoadCString("lh_strhash");
   __CrestLoadCString("strhash");
   __CrestLoadInt((long long )8);
@@ -17066,10 +15530,10 @@ unsigned long lh_strhash_proxy(char const   *c )
   __CrestLoadInt((long long )1);
   __CrestLoadInt((long long )4);
   __CrestSetLen();
-//#line  1923
+//#line  1791
   symL("lh_strhash", "strhash", sizeof(ret), 1);
-  __CrestLocation("openssl_proxies.c:1924");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20593]");
+  __CrestLocation("openssl_proxies.c:1792");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20509]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadString("TSPtr(TSBase(void ), )");
@@ -17088,18 +15552,18 @@ unsigned long lh_strhash_proxy(char const   *c )
   __CrestLoadInt((long long )1);
   __CrestSetPtrStep();
   __CrestDone();
-//#line  1924
+//#line  1792
   store_buf((unsigned char const   *)((void *)(& ret)));
   {
-  __CrestLocation("openssl_proxies.c:1926");
-  __CrestLoadStackPtr("openssl_proxies.i:ret[20593]");
+  __CrestLocation("openssl_proxies.c:1794");
+  __CrestLoadStackPtr("openssl_proxies.i:ret[20509]");
   __CrestLoadInt((long long )8);
   __CrestSetPtrStep();
   __CrestLoadMem();
   __CrestReturn(0);
   __CrestLoadInt((long long )8);
   __CrestSetLen();
-//#line  1926
+//#line  1794
   return (ret);
   }
 }
