@@ -153,10 +153,13 @@ foreach(I RANGE ${NUM_HEADERS})
 
   list(GET HEADERS ${I} HEADER)
   list(GET HEADERS_ORIG ${I} HEADER_ORIG)
+  
+  get_filename_component(HEADER_PATH ${HEADER} PATH)
+  
   add_custom_command(OUTPUT ${HEADER}
+                      COMMAND mkdir ARGS -p ${HEADER_PATH}
                       COMMAND cp ${HEADER_ORIG} ${HEADER}
-                      DEPENDS ${HEADER_ORIG}
-                      VERBATIM)
+                      DEPENDS ${HEADER_ORIG})
 
 endforeach(I RANGE NUM_HEADERS)
 
