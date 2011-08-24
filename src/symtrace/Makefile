@@ -13,7 +13,7 @@ COMMON_SRC = types.ml utils.ml simplify.ml solver.mli solver_yices.ml solver.ml 
 OCAMLC = ocamlopt
 #OCAML_FLAGS = -g -package ocamlyices -package str -linkpkg 
 # OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -package num ocamlyices.cmxa -package str -linkpkg 
-OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) nums.cmxa ocamlyices.cmxa str.cmxa
+OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -I /usr/local/lib nums.cmxa ocamlyices.cmxa str.cmxa
 
 # doesn't work:
 #$(addprefix -I $(CIL_ROOT), /src /src/frontc $(CIL_OBJDIR))

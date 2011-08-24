@@ -92,6 +92,8 @@ AS_IF(
   ],
   [test -f /usr/local/lib/libyices.so], [LIBYICES=/usr/local/lib/libyices.so],
   [test -f /usr/local/lib64/libyices.so], [LIBYICES=/usr/local/lib/libyices.so],
+  [test -f /usr/local/lib/cygyices.dll], [LIBYICES=/usr/local/lib/cygyices.dll],  
+  [test -f /usr/local/lib64/cygyices.dll], [LIBYICES=/usr/local/lib64/cygyices.dll],
   [test -f /opt/lib/libyices.so], [LIBYICES=/opt/lib/libyices.so],
   [test -f /opt/lib64/libyices.so], [LIBYICES=/usr/local/lib/libyices.so],
   [test -f /usr/lib/libyices.so], [LIBYICES=/usr/lib/libyices.so],
@@ -102,10 +104,10 @@ AS_IF([test "x$LIBYICES" = x], [AC_MSG_RESULT(no)], [AC_MSG_RESULT($LIBYICES)])
 
 AS_IF([test "x$LIBYICES" != x],[
   AC_MSG_CHECKING(GMP dependency)
-  AS_IF([ldd $LIBYICES | grep libgmp > /dev/null],[
-    GMP=`ldd $LIBYICES | grep libgmp | head -1 | cut -d' ' -f3`
+  AS_IF([ldd $LIBYICES | grep gmp > /dev/null],[
+    GMP=`ldd $LIBYICES | grep gmp | head -1 | cut -d' ' -f3`
     AS_CASE([$GMP], [/*], [AC_MSG_RESULT($GMP)],[
-      need=`ldd $LIBYICES | grep libgmp | head -1 | cut -d' ' -f1`
+      need=`ldd $LIBYICES | grep gmp | head -1 | cut -d' ' -f1`
       need=`echo $need`
       AC_MSG_ERROR(no suitable GMP found for $need)
     ])

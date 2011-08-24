@@ -13,7 +13,7 @@ SYM_OBJ = openssl_proxies_sym.o system_proxies.o symbolic_interface.o common_sym
 CXXFLAGS = -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label
 CFLAGS   = -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label
 
-CFLAGS += -I$(OPENSSL_CRESTIFIED)/include
+CFLAGS += -I$(OPENSSL)/include
 
 PROXY_CONF_SYM = openssl_proxies.sym.conf
 CILLY_CC = $(PROXY_SYM_CILLY)

@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 2.6)
+set(CMAKE_LEGACY_CYGWIN_WIN32 0)
+cmake_minimum_required(VERSION 2.8)
 
 project (csec-tools)
+
 
 # set(CMAKE_VERBOSE_MAKEFILE true)
 
@@ -55,7 +57,7 @@ set(OCAMLYICES_ROOT ${CSEC_ROOT}/deps/ocamlyices)
 set(OCAMLYICES ${OCAMLYICES_ROOT}/ocamlyices.cmxa ${OCAMLYICES_ROOT}/yices.cmi)
 
 add_custom_command(OUTPUT ${OCAMLYICES_ROOT}/Makefile
-                     COMMAND ./configure
+                     COMMAND ./configure --enable-custom
                      WORKING_DIRECTORY ${OCAMLYICES_ROOT}
                      VERBATIM)
 
@@ -176,8 +178,8 @@ add_custom_target(src_CIL
 
 ######## src/symtrace ##############################
 
-set(IMLTRACE ${CSEC_ROOT}/src/symtrace/imltrace)
-set(PITRACE  ${CSEC_ROOT}/src/symtrace/pitrace)
+set(IMLTRACE ${CSEC_ROOT}/src/symtrace/imltrace${CMAKE_EXECUTABLE_SUFFIX})
+set(PITRACE  ${CSEC_ROOT}/src/symtrace/pitrace${CMAKE_EXECUTABLE_SUFFIX})
 
 add_custom_command(OUTPUT ${IMLTRACE} ${PITRACE}
                     COMMAND make

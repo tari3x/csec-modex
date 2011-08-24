@@ -30,10 +30,10 @@ if [ $# -lt 1 -o "x$1" = "x--help" -o "x$1" = "x-h" ]; then
 	exit 1
 fi
 
-if [ `id -u` -ne 0 ]; then
-	echo '[YI] Need super-user rights to install Yices, try sudo'
-	exec sudo $0 "$@"
-fi
+# if [ `id -u` -ne 0 ]; then
+#	echo '[YI] Need super-user rights to install Yices, try sudo'
+#	exec sudo $0 "$@"
+#fi
 
 ARCHIVE="`readlink -f "$1"`"
 TEMPDIR=`mktemp -dt yices-install.XXXXXX`
@@ -52,13 +52,16 @@ if [ ! -f lib/libyices.so ]; then
 fi
 
 echo '[YI] Install libraries'
-install lib/* "$LIBDIR" || failwith "cannot install libraries"
-ldconfig || failwith "ldconfig failed"
+mkdir -p "$LIBDIR"
+install -D lib/* "$LIBDIR" || failwith "cannot install libraries"
+# ldconfig || failwith "ldconfig failed"
 
 echo '[YI] Install headers'
-install -m 'a=r,u+w' include/*.h "$INSTALL/include" || failwith "cannot install headers"
+mkdir -p "$INSTALL/include"
+install -D -m 'a=r,u+w' include/*.h "$INSTALL/include" || failwith "cannot install headers"
 
 echo '[YI] Install executable'
+mkdir -p "$INSTALL/bin"
 install bin/yices "$INSTALL/bin" || failwith "cannot install executable"
 
 cd
