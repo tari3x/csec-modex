@@ -1,5 +1,0 @@
-(**
-  Yices binding for Ocaml
-
-  See the official {{:http://yices.csl.sri.com/capi.shtml} C API documentation}
-*)

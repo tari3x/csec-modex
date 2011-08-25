@@ -1,5 +1,11 @@
 .svn
 .depend
+.cproject
+.project
+.makepp
+.settings
+.csettings
+.paths
 *.out
 ################ C 
 *.cil.c
