@@ -1,3 +1,3 @@
 [submodule "deps/ocamlyices"]
 	path = deps/ocamlyices
-	url = git@github.com:tari3x/ocamlyices.git
+	url = git://github.com/tari3x/ocamlyices.git
