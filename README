@@ -7,6 +7,11 @@ The distribution includes the source code of the protocols analysed in the paper
 simple mac, RPC, and NSL. Unfortunately, we are not able to distribute the source code 
 of the metering protocol, due to licensing restrictions.
 
+Download
+========
+
+git clone --recursive git://github.com/tari3x/csec-tools.git
+
 Dependencies
 ============
 
@@ -23,12 +28,6 @@ The following dependencies require some extra work:
     deps/ocamlyices/install-yices.sh
   to install yices.
 
-  Make sure that the system finds dynamic libraries in /usr/local/lib, where yices is installed by default. 
-  On Cygwin this can be done by setting 
-    PATH=$PATH:/usr/local/lib
-
-  Make sure to install the GMP library if you are using dynamically linked version of Yices.
-    
 - camlidl. Version 1.05 is bundled with this distribution, you can install it as follows:
 
     cd deps/camlidl-1.05
