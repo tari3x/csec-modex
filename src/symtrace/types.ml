@@ -25,9 +25,23 @@ type sym = string * fixity
 
 type id = int
 
-type symid = 
-  | Det 
-  | Nondet of id
+(**
+    Expressions are mapped to ids such that if two expressions map to the same ids then 
+    they are known to be equal. Two expressions map to the same id iff one of the following is satisfied:
+    
+    - they both have the tag field and they have the same tag, which is not [NoTag],
+    - they are structurally equal after (recursively) setting all [Det] tags to 0.
+    
+    The rationale behind this is that if you perform simplifications, then the result of
+    a simplification will be considered equal to the original as long as you copy the tag.
+    
+    You should never use [NoTag] unless you really understand the consequences. Use freshDet of freshNondet
+    to add new tags. 
+*)
+type tag = 
+  | NoTag
+  | Det of int
+  | Nondet of int
 
 type len = exp
 
@@ -66,14 +80,14 @@ and exp =
   | String of bitstring
     (** A concrete bitstring in hex representation: each byte corresponds to two characters. *)
 
-  | Sym of sym * exp list * len * symid
+  | Sym of sym * exp list * len * tag
     (** [Sym s det es l id]  
         is a bitstring of length [l], which is an application of a symbolic function [s(e1, e2, ...)]. 
         The value [id] can be used to distinguish different applications of the same nondeterministic symbol,
         for instance in case of random number generation. For deterministic functions the [id] is [Det].
       *)
 
-  | Range of exp * len * len
+  | Range of exp * len * len * tag
     (** A substring of a given expression with given start position and length.
         A position is a point between two characters or at the beginning or end of the string.
         Given a string of length [l], the first position is [0], the last is [l]. 
@@ -82,7 +96,7 @@ and exp =
         Position and length are always within bounds.
      *)
 
-  | Concat of exp list
+  | Concat of exp list * tag
 
   | Struct of (exp StrMap.t) * (exp StrMap.t) * len * exp
     (** The first component are the real fields, the second are the crypto attributes.
@@ -115,27 +129,6 @@ and exp =
   | Unknown
     (** Used in length context only, where the value is not known or is not relevant. *)
 
-(** 
-  Meta information assigned to expressions.
-*)
-type meta =
-{
-  mutable name: string;
-  mutable hint: string;
-  (** Currently unused, names are given directly *)
-  
-  mutable refs: int;
-  (** The number of other expressions referring to this one.
-      This is used for deciding whether to inline this expression during output.
-   *)
-  
-  mutable printed: bool;
-  (** Has this expression been printed out already? *)
-  
-  (* This is kep here so that identical expressions get identical lengths.
-     You could say instead that identical expressions should only be obtained by duplication and drop this.  *)
-  mutable len: exp;
-} 
 
 module Expr =
 struct

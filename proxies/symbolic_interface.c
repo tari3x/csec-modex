@@ -42,7 +42,7 @@ void symL(const char * sym, const char * hint, size_t len, int deterministic)
   if(hint != NULL) Hint(hint);
 }
 
-void symN(const char * sym, const char * hint, size_t * len, int deterministic)
+void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenlen, int deterministic)
 {
   Sym(sym);
   if(!deterministic) Nondet();
@@ -53,11 +53,16 @@ void symN(const char * sym, const char * hint, size_t * len, int deterministic)
   {
     Dup();
     SymN("len", 1);
-    SetLen(sizeof(*len));
+    SetLen(lenlen);
     Done();
     Hint("len");
     StoreBuf(len);
   }
+}
+
+void symN(const char * sym, const char * hint, size_t * len, int deterministic)
+{
+  symNE(sym, hint, len, sizeof(*len), deterministic);
 }
 
 void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen)

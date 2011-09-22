@@ -27,24 +27,24 @@ query ev:client_accept(x, y).
 
 let A = 
 event client_begin(request);
-let var1 = conc1(request, HMAC_sha1(conc1(string_52657175657374(), request), keyAB)) in
-out(c, var1);
-in(c, msg1);
-in(c, var2);
-let var3 = HMAC_sha1(conc1(string_526573706f6e7365(), conc1(request, parse2(var2))), keyAB) in
-let var4 = parse1(var2) in
-if var4 = var3 then 
-event client_accept(request, parse3(var2)); 0.
+let msg1 = conc1(request, HMAC_sha1(conc1(string_52657175657374(), request), keyAB)) in
+out(c, msg1);
+in(c, msg2);
+in(c, msg3);
+let hash1 = HMAC_sha1(conc1(string_526573706f6e7365(), conc1(request, parse2(msg3))), keyAB) in
+let var1 = parse1(msg3) in
+if var1 = hash1 then 
+event client_accept(request, parse3(msg3)); 0.
 
 let B = 
+in(c, msg1);
 in(c, msg2);
-in(c, var24);
-let var25 = HMAC_sha1(conc1(string_52657175657374(), parse5(var24)), keyAB) in
-let var26 = parse4(var24) in
-if var26 = var25 then 
-event server_reply(parse6(var24), response);
-let var27 = conc1(response, HMAC_sha1(conc1(string_526573706f6e7365(), conc1(parse7(var24), response)), keyAB)) in
-out(c, var27); 0.
+let hash1 = HMAC_sha1(conc1(string_52657175657374(), parse5(msg2)), keyAB) in
+let var1 = parse4(msg2) in
+if var1 = hash1 then 
+event server_reply(parse6(msg2), response);
+let var2 = conc1(response, HMAC_sha1(conc1(string_526573706f6e7365(), conc1(parse7(msg2), response)), keyAB)) in
+out(c, var2); 0.
 
 process !
   new keyAB;

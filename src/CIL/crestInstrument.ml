@@ -378,7 +378,7 @@ class crestInstrumentVisitor f =
   
       | CastE (t, e) ->
         if isPointerType t && isZero e then
-          [mkLoadStackPtr "nullPtr"]
+          [mkLoadStackPtr "nullPtr"] @ (setPtrStep t)
         (* else if isPointerType t && not (isPointerType (typeOf e)) then
           E.s (error "instrumentExpr: cast to pointer of non-zero expression") *)
         else

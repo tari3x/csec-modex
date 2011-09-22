@@ -90,6 +90,8 @@ let resetState : unit -> unit = fun () ->
   Stack.clear callStack;
   callId := 0
 
+let lens : exp IntMap.t ref = ref IntMap.empty
+
 (*************************************************)
 (** {1 Helpers} *)
 (*************************************************)
@@ -148,6 +150,27 @@ let checkWellFormed : exp -> unit = fun e ->
 	  | e -> () (* getLen e <> Unknown *) (* see notes *)
 
 (*************************************************)
+(** {1 Length Caching} *)
+(*************************************************)
+
+let lenId : int ref = ref 0
+
+(** This is so that identical expressions get identical lengths.
+    You could say instead that identical expressions should only be obtained by duplication and drop this.  *)
+let freshLen : exp -> exp = fun e ->
+  let id = expId e in
+  try IntMap.find id !lens
+  with Not_found -> 
+    let i = !lenId + 1 in
+    lenId := i;
+    (* 
+       Needs to be nondeterministic in order not to be concretised. 
+    *)
+    let l = Sym (("lenvar", Prefix), [mkInt i], Unknown, freshNondet ()) in
+    lens := IntMap.add id l !lens;
+    l
+
+(*************************************************)
 (** {1 Dump} *)
 (*************************************************)
 
@@ -180,7 +203,7 @@ let flattenArray : exp IntMap.t -> exp = fun cells ->
   in
   let clist = fold2list IntMap.fold (fun i e -> (i, e)) cells in
   check (length clist) clist;
-  Concat (map snd clist)
+  Concat (map snd clist, freshDet ())
 
 let flattenIndex : pos -> pos = function
   | (Index i, step) :: pos -> (Flat (op "*" step (mkInt i)), step) :: pos
@@ -243,16 +266,16 @@ let rec extract : pos -> len -> exp -> exp = fun pos l e ->
       (* TODO: need a special case when e is an array - check things and try to extract a single cell, otherwise fail.
          In fact, flatten the array if it's one. *)
     | ((Flat oe, _) :: os', e) -> 
-      let e' = simplify (Range (e, oe, All)) in
+      let e' = simplify (Range (e, oe, All, freshDet ())) in
       extract os' l e'
 
-    | ([], e) -> simplify (Range (e, zero, l))
+    | ([], e) -> simplify (Range (e, zero, l, freshDet ()))
 
-    | (os, Concat (e' :: es)) -> extract os l e'
+    | (os, Concat (e' :: es, _)) -> extract os l e'
 
     | ((Field s, _) :: os', e) -> 
       (* We already pre-trim to length l, otherwise the length of the result is harder to compute. *)
-      let e' = simplify (Range (e, Sym (("field_offset", Prefix), [String s], Unknown, Det), l)) in
+      let e' = simplify (Range (e, Sym (("field_offset", Prefix), [String s], Unknown, freshDet ()), l, freshDet ())) in
       extract os' l e'
                   
     | _ -> fail "extract: cannot read through pointer"
@@ -284,7 +307,7 @@ let rec update : pos -> len -> len -> exp -> exp -> exp = fun pos step l_val e_h
         | _ ->
 		      if equalLen step' eltSize then
 	          let e_elem = try IntMap.find i cells 
-	                       with Not_found -> Concat [] in
+	                       with Not_found -> Concat ([], freshDet ()) in
 	          let e' = update pos' step' l_val e_elem e_val in
 	          Array (IntMap.add i e' cells, len, eltSize)
 	          
@@ -302,7 +325,7 @@ let rec update : pos -> len -> len -> exp -> exp -> exp = fun pos step l_val e_h
 		      (* else fail "update: index step incompatible with array element size" *)
       end
 
-    | ((Index i, step') :: pos', Concat []) -> 
+    | ((Index i, step') :: pos', Concat ([], _)) -> 
       if greaterEqualLen step' l_val then
 	      let e_new = Array (IntMap.empty, step, step') in
 	      update pos step l_val e_new e_val
@@ -318,13 +341,13 @@ let rec update : pos -> len -> len -> exp -> exp -> exp = fun pos step l_val e_h
 
     | ((Field s, step') :: pos', Struct (fields, attrs, len, e_old)) -> 
       let e_field = try StrMap.find s fields 
-                    with Not_found -> Concat [] in
+                    with Not_found -> Concat ([], freshDet ()) in
       let e' = update pos' step' l_val e_field e_val in
       Struct (StrMap.add s e' fields, attrs, len, e_old)
 
     | ((Attr s, step') :: pos', Struct (fields, attrs, len, e_old)) -> 
       let e_attr = try StrMap.find s attrs 
-                   with Not_found -> Concat [] in
+                   with Not_found -> Concat ([], freshDet ()) in
       let e' = update pos' step' l_val e_attr e_val in
       Struct (fields, StrMap.add s e' attrs, len, e_old)
 
@@ -334,29 +357,29 @@ let rec update : pos -> len -> len -> exp -> exp -> exp = fun pos step l_val e_h
 
     | ((Flat oe, step') :: pos', e) -> 
       (* FIXME: you might want to flattenIndexDeep pos' in case oe > 0 *)
-      let e1 = simplify (Range (e, zero, oe)) in
-      let e2 = simplify (Range (e, oe, All)) in
-      simplify (Concat [e1; update pos' step' l_val e2 e_val])
+      let e1 = simplify (Range (e, zero, oe, freshDet ())) in
+      let e2 = simplify (Range (e, oe, All, freshDet ())) in
+      simplify (Concat ([e1; update pos' step' l_val e2 e_val], freshDet ()))
 
     | ([], e) -> 
       if l_val = All then e_val else 
       if (greaterEqualLen (getLen e) l_val) then
-	      let e' = simplify (Range (e, l_val, All)) in
-	      simplify (Concat [e_val; e'])
+	      let e' = simplify (Range (e, l_val, All, freshDet ())) in
+	      simplify (Concat ([e_val; e'], freshDet ()))
       (* here we essentially replace e by undef which is sound *)
       else e_val
 
-    | (pos, Concat (e :: es)) when greaterEqualLen (getLen e) step -> 
+    | (pos, Concat (e :: es, _)) when greaterEqualLen (getLen e) step -> 
       (* 
         At this point [pos] starts with something that definitely goes into a deeper segment.
         Thus it is safe to pass only the first element down - the right thing happens even if
         [l_val = Infty].
        *)
       let e' = update pos step l_val e e_val in
-      simplify (Concat (e' :: es))
+      simplify (Concat (e' :: es, freshDet ()))
     
     | (((Field _ | Attr _), _) :: _, e) -> 
-      let e_old = simplify (Range (e, zero, step)) in
+      let e_old = simplify (Range (e, zero, step, freshDet ())) in
       let e_new = Struct (StrMap.empty, StrMap.empty, step, e_old) in
       update pos step l_val e_new e_val
     
@@ -480,14 +503,14 @@ let indexOffset : unit -> unit = fun () ->
 
 let applyAll : string -> unit = fun s ->
   let args = takeAllStack () in
-  toStack (Sym ((s, Prefix), args, Unknown, Det))
+  toStack (Sym ((s, Prefix), args, Unknown, freshDet ()))
 
 let applyN : string -> int -> unit = fun s numargs ->
   let args =
     try takeNStack numargs 
     with Stack.Empty -> fail "applyOp: not enough elements on stack"
   and sym  = if numargs = 2 then (s, Infix) else (s, Prefix) in (* && s <> "cast" *) (* I actually like infix casts *) 
-  let e' = Sym (sym, args, Unknown, Det) in
+  let e' = Sym (sym, args, Unknown, freshDet ()) in
   toStack e'
 
 let dup : unit -> unit = fun () ->
@@ -499,15 +522,15 @@ let dup : unit -> unit = fun () ->
 
 let nondet : unit -> unit = fun () ->
   match takeStack () with
-    | Sym (sym, args, len, Det) -> toStack (Sym (sym, args, len, Nondet (getId ())))
-    | Ptr (Stack name, pos)     -> toStack (Ptr (Stack (name ^ "[" ^ (string_of_int (getId ())) ^ "]"), pos)) 
+    | Sym (sym, args, len, Det _) -> toStack (Sym (sym, args, len, freshNondet ()))
+    | Ptr (Stack name, pos)       -> toStack (Ptr (Stack (name ^ "[" ^ (string_of_int (freshId ())) ^ "]"), pos)) 
     | _ -> fail "nondet: unexpected value on stack" 
 
 let concreteResult : intval -> unit = fun ival ->
   try
     match takeStack () with
         (* only concretise deterministic symbol applications *)
-      | Sym (sym, args, len, Det) as e ->
+      | Sym (sym, args, len, Det _) as e ->
         if for_all isConcrete args 
         then toStack (Int (ival, len))
         else toStack e
@@ -521,7 +544,7 @@ let append : unit -> unit = fun () ->
     try takeNStack 2 
     with Stack.Empty -> fail "append: not enough elements on stack"
   in
-  toStack (simplify (Concat args))
+  toStack (simplify (Concat (args, freshDet ())))
 
 let event : unit -> unit = fun () ->
   let e = 
@@ -537,18 +560,20 @@ let branch : intval -> unit = fun bdir ->
   in
   if not (isConcrete e) then
   begin
-	  let branch = if bdir = 0L then "branchF" else "branchT" in
+	  let branchS = if bdir = 0L then "branchF" else "branchT" in
+    let branch = Sym ((branchS, Prefix), [e], Unknown, freshNondet ()) in
+    debug ("branch: " ^ dump branch);
 	  (* each branch gets a different id, as we don't want them to unify in the final output *)
-	  events := !events @ [Sym ((branch, Prefix), [e], Unknown, Nondet (getId ()))];
+	  events := !events @ [branch];
     match bdir with
       | 1L -> addFact e
-      | _  -> addFact (Sym (("!", Prefix), [e], Unknown, Det))
+      | _  -> addFact (Sym (("!", Prefix), [e], Unknown, freshDet ()))
   end
 
 let hint : string -> unit = fun h ->
   try
     let e = Stack.top stack in
-    ignore (giveName e h);
+    addHint e h;
     debug ("attaching hint " ^ h ^ " " ^ " to " ^ dump e)
   with
     Stack.Empty -> fail "hint: stack empty"
@@ -567,7 +592,10 @@ let setPtrStep : unit -> unit = fun () ->
   let flatten : offset -> offsetVal = function
     | (Flat e,  step) -> Flat e
     | (Index i, step) -> Flat (op "*" step (mkInt i))
-    | (ov, _)         -> fail "setPtrStep: trying to flatten a field offset"
+      (* The logic here is that Field is already flat in the sense that the offset value is independet of step *)
+    | (Field f, step) -> Field f 
+      (* fail "setPtrStep: trying to flatten a field offset" *)
+    | (Attr _, _) -> fail "setPtrStep: trying to flatten an attribute"
   in
   
   let rec bubbleUp : offset -> pos -> pos = fun (ov, l) -> function
@@ -575,7 +603,7 @@ let setPtrStep : unit -> unit = fun () ->
       if greaterEqualLen l l' then
         
         if isZeroOffsetVal ov' then 
-          bubbleUp (ov, l) pos'          
+          bubbleUp (ov, l) pos'
           
         else if isZeroOffsetVal ov then
           if equalLen l l' then
@@ -627,13 +655,12 @@ let setPtrStep : unit -> unit = fun () ->
 let doDone : unit -> unit = fun () ->
   try 
     let e = takeStack () in
-    let m = getMeta e in
-    addFact (grEq m.len zero);
-    let e = setLen e m.len in
+    let l = freshLen e in
+    addFact (grEq l zero);
+    let e = setLen e l in
     let e = simplify e in
     (* debug ("doDone, simplified: " ^ dump e); *)
     (* debug ("doDone, with new len: " ^ dump e); *)
-    (* setMeta e m; *)
     if !debugEnabled then checkWellFormed e;
     toStack e;
     if isLength e then addFact (grEq e zero)
@@ -663,7 +690,7 @@ let store : storeFlag -> unit -> unit = fun flag () ->
     debug ("store, e: " ^ dump e);
     match p with 
       | Ptr (b, pos) ->
-        let e_host = try BaseMap.find b !mem with Not_found -> Concat [] in
+        let e_host = try BaseMap.find b !mem with Not_found -> Concat ([], freshDet ()) in
         let l_val = match flag with
           | StoreBuf -> getLength e
           | StoreMem -> getStep pos

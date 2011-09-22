@@ -29,4 +29,6 @@ unsigned char * get_xkey(size_t * len, char side);
 
 extern void fail(const char * fmt, ...);
 
+extern void print_buffer(const unsigned char * buf, int len);
+
 #endif /* LIB_H_ */

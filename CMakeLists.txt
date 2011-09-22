@@ -230,6 +230,21 @@ add_custom_target(RPC_check
                     WORKING_DIRECTORY ${RPC}
                     VERBATIM)
 
+######## tests/RPC-enc ##############################
+
+set(RPC_ENC tests/RPC-enc)
+
+add_custom_target(RPC_enc ALL
+                    COMMAND make verify
+                    DEPENDS ${TEST_DEPS}
+                    WORKING_DIRECTORY ${RPC_ENC}
+                    VERBATIM)
+
+add_custom_target(RPC_enc_check
+                    COMMAND make check
+                    DEPENDS ${TEST_DEPS}
+                    WORKING_DIRECTORY ${RPC_ENC}
+                    VERBATIM)
 
 ######## tests/CSur ##############################
 
@@ -267,7 +282,7 @@ add_custom_target(NSL_check
 
 add_custom_target(check)
 
-add_dependencies(check simple_hash_check RPC_check CSur_check NSL_check)
+add_dependencies(check simple_hash_check RPC_check RPC_enc_check CSur_check NSL_check )
 
 ######## clean ##############################
 

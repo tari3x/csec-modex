@@ -13,16 +13,20 @@ CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(O
 LDLIBS += $(BASE_LIB) $(PROXY_LIB) $(BASE_LIB) $(EXTRA_DEPS)
 LDLIBS += -lstdc++
 
-SSL_LIB =  $(OPENSSL)/libssl.a
-BIN_SSL_LIB = $(OPENSSL)/libssl_bin.a
-SYM_SSL_LIB = $(SSL_LIB)
-# $(OPENSSL_CRESTIFIED)/libssl_sym.a
+SSL_LIB = $(OPENSSL)/libssl.a
+#BIN_SSL_LIB = $(OPENSSL)/libssl_bin.a
 CRYPTO_LIB = $(OPENSSL)/libcrypto.a
-BIN_CRYPTO_LIB = $(OPENSSL)/libcrypto_bin.a
-SYM_CRYPTO_LIB = $(CRYPTO_LIB)
-# $(OPENSSL_CRESTIFIED)/libcrypto_sym.a
+#BIN_CRYPTO_LIB = $(OPENSSL)/libcrypto_bin.a
 BIN_PROXY_LIB += $(PROXIES)/libssl_proxy_bin.a
 SYM_PROXY_LIB += $(PROXIES)/libssl_proxy_sym.a
+
+ifdef USE_CRESTIFIED_OPENSSL
+	SYM_SSL_LIB = $(OPENSSL_CRESTIFIED)/libssl_sym.a
+	SYM_CRYPTO_LIB = $(OPENSSL_CRESTIFIED)/libcrypto_sym.a
+else
+	SYM_SSL_LIB = $(SSL_LIB)
+	SYM_CRYPTO_LIB = $(CRYPTO_LIB)
+endif
 
 PROXY_CONF_BIN = $(PROXIES)/openssl_proxies.bin.conf
 ifndef PROXY_CONF_SYM
@@ -67,6 +71,7 @@ check: $(GOOD_OUTPUTS)
 		echo "Test OK.";\
 	else\
 		echo "Test not OK.";\
+#		exit 1;\
 	fi
 #    touch $@;\
 
@@ -143,9 +148,14 @@ funlist: callgraph.out globs.out
 
 #%.bin.res.txt: %.bin.out.txt $(BINTRACE)
 #	bintrace $< > $@
- 
+
+ifdef DEBUG_IML
+iml.%.out: cvm.%.out $(IMLTRACE)
+	{ $(IMLTRACE) $< | tee $@; } 2>&1 | tee iml.$*.debug.out
+else
 iml.%.out: cvm.%.out $(IMLTRACE)
 	{ $(IMLTRACE) $< | tee $@; } > iml.$*.debug.out 2>&1
+endif
 
 $(CVM): $(SYM)
 	if [ -e "$(P1).sym" ]; then ./$(P1).sym $(P1_CMD) > cvm.P1.out; fi & \

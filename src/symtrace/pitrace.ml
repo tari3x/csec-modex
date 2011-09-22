@@ -72,14 +72,19 @@ let isParseFun : string -> bool = fun s ->
 
 let parserName : parsingRule -> string = function ((name, _), _) -> name
 
-(* must start from 0, because we use the id for addressing the actuals array *)
+(* 
+  Argument must start from 0, because we use it for addressing the actuals array.
+  
+  Must be deterministic because same arguments should match. Also we use structural identity
+  
+*)
 let newArg : len -> exp = fun len ->
   let id = !argId in
   argId := !argId + 1;
-  Sym (("arg", Prefix), [mkInt id], len, Nondet id)
+  Sym (("arg", Prefix), [mkInt id], len, NoTag)
 
 let mkLen len id = 
-  let l = Sym (("lenarg", Prefix), [mkInt id], len, Nondet id) in
+  let l = Sym (("lenarg", Prefix), [mkInt id], len, NoTag) in
   addFact (grEq l zero);
   l
 
@@ -91,7 +96,7 @@ let newLen : len -> exp = fun len ->
 (* FIXME: do something more elegant *)
 let resetArgAndLen () = argId := 0; lenId := 0
 
-(* Used to given lengths to formal arguments, there we need to strip it all *)
+(* Used to give lengths to formal arguments, there we need to strip it all *)
 let getRealLen = function
   | Sym(_, _, l, _) -> l
   | e -> getLen e
@@ -110,7 +115,8 @@ let showFun : piFunInfo -> string = function
 
 let showFuns : piFunInfo list -> unit = fun cs ->
   prerr_endline "";
-  iter (fun c -> prerr_endline (showFun c)) cs
+  iter (fun c -> prerr_endline (showFun c)) cs;
+  prerr_endline ""
 
 
 (*************************************************)
@@ -124,7 +130,14 @@ let extractConcats : exp list -> exp list * piFunInfo list = fun events ->
 
   let isArgLen : exp -> bool = fun e -> exists (fun l -> equalLen e l) !argLens in
 
-  let isArg : exp -> bool = fun e -> not (isConcrete e || isArithmetic e || isLength e) in
+  let isArg : exp -> bool = fun e ->
+    (* 
+    debug ("isArg: e = " ^ dump e);
+    debug ("isArg, concrete = " ^ string_of_bool (isConcrete e)); 
+    debug ("isArg, arithmetic = " ^ string_of_bool (isArithmetic e));
+    debug ("isArg, length = " ^ string_of_bool (isLength e));
+    *)
+    not (isConcrete e || isArithmetic e || isLength e) in
 
   let collectArgLens : exp list -> unit = fun es ->
     let f = function
@@ -138,7 +151,7 @@ let extractConcats : exp list -> exp list * piFunInfo list = fun events ->
         *) 
 	    | e when isArg e && not (exists (fun e' -> equalLen e (getRealLen e')) es) ->
 	      argLens := !argLens @ [getRealLen e];
-	    | _ -> ()
+	    | e -> debug ("collectArgLens: skipping e = " ^ dump e)
     in iter f es
   in 
 
@@ -172,13 +185,16 @@ let extractConcats : exp list -> exp list * piFunInfo list = fun events ->
   in
 
   let extract : exp -> exp = function
-    | Concat es ->
+    | Concat (es, tag) ->
       collectArgLens es;
       let name = newConcatName () in
       let (def, args) = collectArgs [] es in
-      concats := !concats @ [(name, Basic (Concat def))];
+      concats := !concats @ [(name, Basic (concat def))];
       arities := !arities @ [(name, length args)];
-      Sym ((name, Prefix), args, Unknown, Det)
+      debug ("extract, argLens = " ^ dumpList !argLens);
+      debug ("extract, e = " ^ dump (Concat (es, tag)));
+      debug ("extract, e_new = " ^ dump (concat def));
+      Sym ((name, Prefix), args, Unknown, tag)
     | e -> e
   in
   
@@ -209,19 +225,19 @@ let rec insertConcats : piFunInfo list -> unit = fun cs ->
   let rec unify : len list -> len list -> exp list * exp list -> exp list * exp list * exp list = 
     fun lens1 lens2 -> function (es1, es2) ->
     
-	  debug ("unify, es1: " ^ dump (Concat es1));
-	  debug ("unify, es2: " ^ dump (Concat es2));
+	  debug ("unify, es1: " ^ dumpList es1);
+	  debug ("unify, es2: " ^ dumpList es2);
     
     match (es1, es2) with
     | ([(Sym (("arg", _), _, _, _)) as arg1], es2) ->
       let arg = newArg (mkLen (getRealLenLen arg1) (length lens1)) in
       resetArgAndLen();
-      ([arg], [arg1], match es2 with [e] -> [e] | es2 -> [Concat es2])
+      ([arg], [arg1], match es2 with [e] -> [e] | es2 -> [concat es2])
 
     | (es1, [(Sym (("arg", _), _, _, _)) as arg2]) ->
       let arg = newArg (mkLen (getRealLenLen arg2) (length lens1)) in
       resetArgAndLen();
-      ([arg], (match es1 with [e] -> [e] | es1 -> [Concat es1]), [arg2])
+      ([arg], (match es1 with [e] -> [e] | es1 -> [concat es1]), [arg2])
 
     | (arg1 :: es1, arg2 :: es2) when isArg arg1 || isArg arg2 ->
       (*
@@ -284,7 +300,7 @@ let rec insertConcats : piFunInfo list -> unit = fun cs ->
   
   let rec insert : piFunInfo -> piFunInfo list -> piFunInfo list = fun cNew concats ->
     match (cNew, concats) with
-    | ((nameNew, Basic (Concat defNew)), ((nameOld, Basic (Concat defOld)) as cOld) :: cs) -> 
+    | ((nameNew, Basic (Concat (defNew, _))), ((nameOld, Basic (Concat (defOld, _))) as cOld) :: cs) -> 
       begin
       try
         let (def, argsOldPre, argsNewPre) = unify [] [] (defOld, defNew) in
@@ -293,18 +309,18 @@ let rec insertConcats : piFunInfo list -> unit = fun cs ->
         let argsNew = map compactArg argsNewPre in
         if defOld = def then
           (* unifying with cOld *)
-          cOld :: (nameNew, Rewrite (Sym ((nameOld, Prefix), argsNew, Unknown, Det))) :: cs
+          cOld :: (nameNew, Rewrite (Sym ((nameOld, Prefix), argsNew, Unknown, freshDet ()))) :: cs
         else if defNew = def then
           (* unifying with cNew *)
-          (nameOld, Rewrite (Sym ((nameNew, Prefix), argsOld, Unknown, Det))) :: insert cNew cs
+          (nameOld, Rewrite (Sym ((nameNew, Prefix), argsOld, Unknown, freshDet ()))) :: insert cNew cs
         else 
           (* unifying with a fresh constructor *)
           let nameFresh = newConcatName () in
-          let cFresh = (nameFresh, Basic (Concat def)) in
+          let cFresh = (nameFresh, Basic (concat def)) in
           arities := (nameFresh, length argsOld) :: !arities;
           newConcats := cFresh :: !newConcats; 
-          (nameOld, Rewrite (Sym ((nameFresh, Prefix), argsOld, Unknown, Det))) ::
-          (nameNew, Rewrite (Sym ((nameFresh, Prefix), argsNew, Unknown, Det))) :: cs
+          (nameOld, Rewrite (Sym ((nameFresh, Prefix), argsOld, Unknown, freshDet ()))) ::
+          (nameNew, Rewrite (Sym ((nameFresh, Prefix), argsNew, Unknown, freshDet ()))) :: cs
           
       with Disjoint -> cOld :: insert cNew cs
       end
@@ -324,7 +340,7 @@ let rec insertConcats : piFunInfo list -> unit = fun cs ->
 let rewriteConcats : exp list -> exp list = 
   
   let replaceArgs : exp list -> exp -> exp = fun args -> function
-    | Sym (("arg", _), _, _, Nondet i) -> nth args i
+    | Sym (("arg", _), [Int (i, _)], _, _) -> nth args (Int64.to_int i)
     | e -> e
   in
   
@@ -375,7 +391,7 @@ let extractParsers : exp list -> exp list * piFunInfo list = fun events ->
   in
 
   let extract : exp -> exp = function
-    | Range (x, pos, len) as e ->
+    | Range (x, pos, len, tag) as e ->
       
       debug ("extracting parser: " ^ dump e);
       
@@ -390,7 +406,7 @@ let extractParsers : exp list -> exp list * piFunInfo list = fun events ->
       let name = newParserName () in
       parsers := !parsers @ [(name, Basic e')];
       arities := (name, 1) :: !arities;
-      Sym ((name, Prefix), [x], Unknown, Det)
+      Sym ((name, Prefix), [x], Unknown, tag)
       
     | e -> e
   in
@@ -427,10 +443,10 @@ let computeParsingRules : piFunInfo list -> unit =
 
 
 let isValidParse : exp -> bool = function
-  | Sym (("arg", _), _, _, id)  -> true
-  | Concat _                    -> false
-	| e when isConcrete e         -> true
-	| _                           -> false
+  | Sym (("arg", _), _, _, _) -> true
+  | Concat _                  -> false
+	| e when isConcrete e       -> true
+	| _                         -> false
 
 
 (**
@@ -449,15 +465,17 @@ let checkParsingSafety : exp list -> unit =
     with Not_found -> failwith ("checkParse: cannot find parse result for " ^ f ^ ", " ^ g)
   in
 
+  
   let checkParse : exp -> exp = function
     | Sym ((f, _), [e], _, _) when isParseFun f ->
       let values = try assoc e !possibleValues with Not_found -> map fst !concats in
       let parseResults = map (findParseResult f) values in
       if not (for_all isValidParse parseResults) then
       begin
-        debug ("checkParse: values = " ^ String.concat ", " values);
-        debug ("checkParse: parseResults = " ^ String.concat "\n " (map dump parseResults));
-        failwith ("checkParsingSafety: invalid parse, f = " ^ f ^ ", e = " ^ dump e);
+        debug ("checkParse: invalid parse while checking f(e) = " ^ f ^ "(" ^ dump e ^ ")");
+        debug ("checkParse: possible values for e: " ^ String.concat ", " values);
+        debug ("checkParse: possible values of f(e): " ^ String.concat "\n " (map dump parseResults));
+        failwith ("checkParse: invalid parse");
       end;
       e
     | e -> e
@@ -472,7 +490,7 @@ let checkParsingSafety : exp list -> unit =
     | Sym (("IfEq", _), [Sym ((f, _), [e], _, _); c], _, _) when isParseFun f && isConcrete c ->
       if for_all (function ((f', _), c') -> f' <> f || isConcrete c') !parsingRules then
       begin
-        let values = concat (map (function ((f', g), c') -> if f <> f' || areDifferentTags c c' then [] else [g]) !parsingRules) in
+        let values = List.concat (map (function ((f', g), c') -> if f <> f' || areDifferentTags c c' then [] else [g]) !parsingRules) in
         possibleValues := (e, values) :: !possibleValues;
         debug ("checkParsingSafety: adding e = " ^ dump e ^ ", values = " ^ String.concat ", " values);
       end
@@ -527,7 +545,7 @@ let showPiExp : exp -> string = fun e ->
     | e -> "unexpected(" ^ dump e ^ ")"      
 
   and showExp : exp -> string = function e ->
-    let name = giveName e "" in
+    let name = giveName e in
 	  match e with
 	    | Sym ((("read"), _), _, _, _) -> 
         "in(c, " ^ name ^ ");";
@@ -545,7 +563,7 @@ let showPiExp : exp -> string = fun e ->
 	      "event " ^ showExp e ^ ";"
 
       | Sym ((("let"), _), [e], _, _) ->
-        "let " ^ giveName e "" ^ " = " ^ showExp e ^ " in"
+        "let " ^ giveName e ^ " = " ^ showExp e ^ " in"
 	
 	    | _ -> showExpBody e
 
@@ -565,6 +583,7 @@ let cleanupParsingRules : parsingRule list -> exp list -> parsingRule list = fun
   filter (fun p -> exists (containsSym (parserName p)) es) ps
 
 let showPiProcess : exp list -> string = fun es ->
+  resetNames ();
   let es = splitByType es in
   (* let es = elimCommonSubs es in *)
   let result = String.concat "\n" (map showPiExp es) ^ " 0.\n" in
@@ -585,7 +604,7 @@ let writePi : exp list -> exp list -> unit = fun client server ->
     if isValidParse e then
     let numargs = assoc concatName !arities in
     let result = match e with
-      | Sym (("arg", _), _, _, Nondet i) -> "x" ^ string_of_int i
+      | Sym (("arg", _), [Int (i, _)], _, _) -> "x" ^ (Int64.to_string i)
       | e -> showPiExp e
     in
     let newParser = (parserName <> !lastParser) in
@@ -643,53 +662,26 @@ let writePi : exp list -> exp list -> unit = fun client server ->
 (** {1 Filtering} *)
 (*************************************************)
 
-(* 
-(**
-  Tests whether a symbol is a primitive operator of the language.
-  Currently we use a shortcut saying that anything infix is primitive. 
-  
-  Ideally the instrumentation shall be telling symtrace, which symbols
-  are primitive and which are cryptographic
-*)
-let isPrim : sym -> bool = function
-  | (_, Infix) -> true
-  | (s, Prefix) -> List.mem s ["-"; "!"; "LNot"]
-
-(**
-  Tests whether an expression consists purely of primitive operators
-  applied to pure symbols (symbols without parameters).
-  
-  In other words, an expression is simple when it doesn't involve any cryptography.
-*)
-let rec isSimple : exp -> bool = function
-  | Concat es -> for_all isSimple es
-  | Range (e, _, len) -> len <= 4 || isSimple e
-  | Sym (s, [], _, _) -> true
-  | Sym (s, es, _, _) -> isPrim s && for_all isSimple es
-  | _ -> true            
-
-let cryptoEvent : exp -> bool = function
-  | Sym ((s, _), [e], _, _) when List.mem s ["branchT"; "branchF"] -> not (isSimple e)
-  | e -> not (isSimple e)
-*)
 
 let rec containsPtr : exp -> bool = function
   | Int _ -> false
   | String _ -> false
-  | Range (e, _, _) -> containsPtr e
+  | Range (e, _, _, _) -> containsPtr e
   | Sym (_, es, _, _) -> exists containsPtr es
   | Ptr _ -> true
   | _ -> false
 
+(*
 let isComparison : exp -> bool = function
-  | Sym ((("branchT" | "branchF"), _), [Sym (((">" | "<" | "<=" | ">="), _), _, _, _)], _, _) -> true
+  | Sym ((("branchT" | "branchF"), _), [Sym (((">" | "<" | "<=" | ">=" | "=="), _), _, _, _)], _, _) -> true
   | _ -> false
+*)
 
 let isArithmeticWrite : exp -> bool = function
   | Sym (("write", _), [e], _, _) -> isArithmetic e
   | _ -> false
 
-let isArithmeticComparison : exp -> bool = function
+let isArithmeticEq : exp -> bool = function
   | Sym ((("IfEq"), _), [e1; e2], _, _) when isArithmetic e1 || isArithmetic e2 -> true
   | _ -> false
 
@@ -698,8 +690,8 @@ let isLenWrite : exp -> bool = function
   | _ -> false
 
 let boringEvent : exp -> bool = fun e ->
-  (containsPtr e) || (isCastEq e) || (isComparison e) || (isArithmeticWrite e) ||
-  (isArithmeticComparison e) || (isLenWrite e)
+  (containsPtr e) || (isCastEq e) || (isArithComparison e) || (isArithmeticWrite e) ||
+  (isArithmeticEq e) || (isLenWrite e)
  
 let interestingEvent e = not (boringEvent e)
 
@@ -708,19 +700,21 @@ let cryptographicEvent e = not (isAuxiliaryIf e)
 let preprocess e = 
   
   let rec stripCast : exp -> exp = function
-    | Sym (("castToInt", _), [a; _], _, _) -> stripCast a
+      (* FIXME: need to preserve identity? *)
+    | (Sym (("castToInt", _), [a; _], _, _)) as e ->
+      addFact (eq [e; a]);
+      stripCast a
     | e -> e
   in
   
   let rewriteCrypto : exp -> exp = function
-    | Sym (("HMAC", fixity), [String hash; msg; key], l, det) -> Sym (("HMAC_" ^ hash, fixity), [msg; key], l, det)
+    | Sym (("HMAC", fixity), [String hash; msg; key], l, tag) -> Sym (("HMAC_" ^ hash, fixity), [msg; key], l, tag)
     | e -> e
   in
   
   let e' = Exp.preprocess e in
   let e' = visitExpLenPre stripCast e' in
   let e' = visitExpPre rewriteCrypto e' in
-  setMeta e' (getMeta e);
   e'
 
 let procAndFilter es = filter interestingEvent (map (visitExpPre preprocess) es)
@@ -738,12 +732,20 @@ begin
   inlineAll := false;
 
   (* server is typically the process executed first, i.e. P1 *)
-  let server = procAndFilter (execute (open_in Sys.argv.(1))) in
-  let client = procAndFilter (execute (open_in Sys.argv.(2))) in
+  let server = execute (open_in Sys.argv.(1)) in
+  let client = execute (open_in Sys.argv.(2)) in
 
   verbose := true;
   debugEnabled := true;
+  
+  if !verbose then prerr_endline "raw IML:";
+  if !verbose then prerr_endline (showIMLRaw client);
+  if !verbose then prerr_endline (showIMLRaw server);
 
+  let server = procAndFilter server in
+  let client = procAndFilter client in
+
+  if !verbose then prerr_endline "filtered IML:";
   if !verbose then prerr_endline (showIML client);
   if !verbose then prerr_endline (showIML server);
   
@@ -788,6 +790,10 @@ begin
 
   let client = postprocess client in
   let server = postprocess server in
+
+  if !verbose then prerr_endline "postprocessed IML:";
+  if !verbose then prerr_endline (showIML client);
+  if !verbose then prerr_endline (showIML server);
 
   writePi client server;
 end;

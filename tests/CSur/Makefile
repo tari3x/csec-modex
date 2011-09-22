@@ -4,8 +4,8 @@ CSEC_ROOT = ../..
 P1 = bob
 P2 = alice
 
-P1_SRC = primitives_crypt.c common.c bob.c
-P2_SRC = primitives_crypt.c common.c alice.c
+P1_SRC = primitives_crypt.c common.c lib.c bob.c
+P2_SRC = primitives_crypt.c common.c lib.c alice.c
 
 OUTPUTS = iml.all.out
 
@@ -18,8 +18,6 @@ test: primitives_crypt.c common.c test.c
 test: LDLIBS += $(PROXIES)/libssl_proxy_bin.a
 
 include $(CSEC_ROOT)/mk/main.mk
-
-alice bob: PROXY_LIB = $(BIN_PROXY_LIB)
 
 clean::
 	$(RM) alice bob

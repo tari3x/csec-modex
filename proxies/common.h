@@ -14,6 +14,7 @@
 // #include <crest.h>
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #include <openssl/bn.h>
 
@@ -25,14 +26,25 @@
 
 EXTERN void proxy_fail(const char * fmt, ...);
 
-void readenv(const unsigned char * buf, size_t * len, const char * s);
+void readenv(const unsigned char * buf, const size_t * len, const char * s);
+// a version that does not assume a particular length size
+void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * s);
 // shouldn't use this at all?
 void make_sym(const unsigned char * buf, size_t len, const char * s);
 // void make_simple_sym(const unsigned char * buf, size_t len, const char * s);
 void make_str_sym(const char * str, const char * sym);
 void event0(const char * s);
 void event1(const char * s, const unsigned char * buf, size_t len);
-void event2(const char * s, const unsigned char * buf1, size_t len1, const unsigned char * buf2, size_t len2);
+void event2(const char * s, const unsigned char * buf1, size_t len1,
+                            const unsigned char * buf2, size_t len2);
+void event3(const char * s, const unsigned char * buf1, size_t len1,
+                            const unsigned char * buf2, size_t len2,
+                            const unsigned char * buf3, size_t len3);
+void event4(const char * s, const unsigned char * buf1, size_t len1,
+                            const unsigned char * buf2, size_t len2,
+                            const unsigned char * buf3, size_t len3,
+                            const unsigned char * buf4, size_t len4);
+
 
 // TODO: remove later when using the patcher
 #ifdef CSEC_VERIFY

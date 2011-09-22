@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-void readenv(const unsigned char * buf, size_t * len, const char * s)
+void readenv(const unsigned char * buf, const size_t * len, const char * s)
 {
 //  char s_len[100] = "test";
 //  mute();
@@ -24,6 +24,11 @@ void readenv(const unsigned char * buf, size_t * len, const char * s)
   // if((int) *len != *len) error("make_sym: len doesn't fit into int: %s", s);
 
   var(s, buf, len, sizeof(*len));
+}
+
+void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * s)
+{
+  var(s, buf, len, lenlen);
 }
 
 void make_sym(const unsigned char * buf, size_t len, const char * s)
@@ -59,6 +64,32 @@ void event2(const char * s, const unsigned char * buf1, size_t len1, const unsig
 {
   load_buf(buf1, len1, "");
   load_buf(buf2, len2, "");
+  symL(s, s, 0, FALSE);
+  symL("event", "event", 0, FALSE);
+  event();
+}
+
+void event3(const char * s, const unsigned char * buf1, size_t len1,
+                            const unsigned char * buf2, size_t len2,
+                            const unsigned char * buf3, size_t len3)
+{
+  load_buf(buf1, len1, "");
+  load_buf(buf2, len2, "");
+  load_buf(buf3, len3, "");
+  symL(s, s, 0, FALSE);
+  symL("event", "event", 0, FALSE);
+  event();
+}
+
+void event4(const char * s, const unsigned char * buf1, size_t len1,
+                            const unsigned char * buf2, size_t len2,
+                            const unsigned char * buf3, size_t len3,
+                            const unsigned char * buf4, size_t len4)
+{
+  load_buf(buf1, len1, "");
+  load_buf(buf2, len2, "");
+  load_buf(buf3, len3, "");
+  load_buf(buf4, len4, "");
   symL(s, s, 0, FALSE);
   symL("event", "event", 0, FALSE);
   event();

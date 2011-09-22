@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "common.h"
+#include "lib.h"
 
 int print_connect_error (int err)
 {

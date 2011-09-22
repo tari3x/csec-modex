@@ -37,28 +37,28 @@ new nonce2;
 let var1 = conc6(E(isek(pkX), conc2(nonce1, pkA), nonce2)) in
 out(c, var1);
 in(c, msg1);
-in(c, var2);
-let var3 = parse2(D(skA, var2)) in
-if var3 = nonce1 then 
-let var4 = parse3(D(skA, var2)) in
-if var4 = pkX then 
+in(c, msg2);
+let var2 = parse2(D(skA, msg2)) in
+if var2 = nonce1 then 
+let var3 = parse3(D(skA, msg2)) in
+if var3 = pkX then 
 new nonce3;
-let var5 = conc6(E(isek(pkX), parse4(D(skA, var2)), nonce3)) in
-out(c, var5); 0.
+let var4 = conc6(E(isek(pkX), parse4(D(skA, msg2)), nonce3)) in
+out(c, var4); 0.
 
 let B = 
+in(c, msg1);
 in(c, msg2);
-in(c, var27);
-let var28 = parse6(D(skB, var27)) in
-if var28 = pkX then 
-new nonce4;
-new nonce5;
-let var29 = conc6(E(isek(pkX), conc5(parse7(D(skB, var27)), nonce4, pkB), nonce5)) in
-out(c, var29);
+let var1 = parse6(D(skB, msg2)) in
+if var1 = pkX then 
+new nonce1;
+new nonce2;
+let var2 = conc6(E(isek(pkX), conc5(parse7(D(skB, msg2)), nonce1, pkB), nonce2)) in
+out(c, var2);
 in(c, msg3);
-in(c, var30);
-let var31 = D(skB, var30) in
-if var31 = nonce4 then 
+in(c, msg4);
+let msg5 = D(skB, msg4) in
+if msg5 = nonce1 then 
 event endB(); 0.
 
 

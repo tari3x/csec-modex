@@ -17,13 +17,7 @@ open Types
 (** Routines to be called on failure *)
 let failFuns : (unit -> unit) list ref = ref []
 
-(** Meta information for expressions *)
-let meta: meta ExpMap.t ref = ref ExpMap.empty
-
-(** The tags used for names *)
-let nameTags : int StrMap.t ref = ref StrMap.empty
-
-(** The ids used for symbol applications and stack pointers. *)
+(** The ids used for tags, expression ids and stack pointers. *)
 let curId : int ref = ref 0
 
 let debugEnabled = ref false
@@ -34,13 +28,7 @@ let debugEnabled = ref false
  *)
 let markEnabled = ref false
 
-(* 
-Don't reset the Exp state
-let resetState : unit -> unit = fun () ->
-  meta := ExpMap.empty;
-  nameTag := 0;
-  eqs := []
-*)
+let hints: string IntMap.t ref = ref IntMap.empty
 
 (*************************************************)
 (** {1 General Purpose} *)
@@ -145,12 +133,20 @@ let debugBracketTree : string -> unit = fun s ->
   
   String.iter print s
 
-
 let fail : string -> 'a = fun s -> 
   (* debug s; *)
   (* dumpStack (); *)
   iter (fun f -> f ()) !failFuns;
   failwith s
+
+(*************************************************)
+(** {1 Helpers} *)
+(*************************************************)
+
+let freshId : unit -> int = fun () ->
+  curId := !curId + 1;
+  if !curId = 0 then fail "freshId: overflow"; 
+  !curId
 
 (*************************************************)
 (** {1 Dump} *)
@@ -178,17 +174,17 @@ and dumpFull : exp -> string = function
   | String s -> s
   | Sym ((s, Prefix), es, len, id) -> 
       let idPart = match id with 
-        | Det      -> "" 
-        | Nondet i -> "[" ^ string_of_int i ^ "]" 
+        | (Det _ | NoTag) -> "" 
+        | Nondet i        -> "[" ^ string_of_int i ^ "]" 
       in
       s ^ idPart ^ "(" ^ String.concat ", " (map dumpFull es) ^ ")" ^ "<" ^ dumpLen len ^ ">"
         (* ^ "[" ^ string_of_int len ^ "," ^ string_of_int id ^ "]" *)
-  | Sym ((s, Infix), es, len, id) ->
+  | Sym ((s, Infix), es, len, tag) ->
       let len_dump = if s = "castToInt" then "<" ^ dumpLen len ^ ">" else "" in
       "(" ^ String.concat (" " ^ s ^ " ") (map dumpFull es) ^ ")" ^ len_dump
       (* ^ "[" ^ string_of_int len ^ "," ^ string_of_int id ^ "]" *)
-  | Range (e, f, l) -> "(" ^ dumpFull e ^ ")" ^ "{" ^ dumpLen f ^ "," ^ dumpLen l ^ "}"
-  | Concat es -> "(" ^ String.concat "|" (map dumpFull es) ^ ")"
+  | Range (e, f, l, _) -> "(" ^ dumpFull e ^ ")" ^ "{" ^ dumpLen f ^ "," ^ dumpLen l ^ "}"
+  | Concat (es, _) -> "(" ^ String.concat "|" (map dumpFull es) ^ ")"
   | Ptr (b, pos) -> "<<" ^ dumpBase b ^ "; " ^ String.concat ", " (map dumpOffset pos) ^ ">>"
   | Struct (fields, _, len, _) ->
       let showField name e = name ^ " ~> " ^ dumpFull e in
@@ -216,61 +212,14 @@ let dump : exp -> string = fun e ->
     (String.sub s 0 1000) ^ " ... (clipped at 1000 symbols, full len: " ^ string_of_int (String.length s) ^ ")" 
   else s
 
-let dumpList : exp list -> string = fun es -> "[" ^ String.concat "," (map dump es) ^ "]"
+let dumpList : exp list -> string = fun es -> "[" ^ String.concat ", " (map dump es) ^ "]"
 
 let dumpProcess : exp list -> string = fun es -> String.concat "\n" (map dump es) ^ "\n"
 
+
 (*************************************************)
-(** {1 Helpers} *)
+(** {1 Traversal} *)
 (*************************************************)
-
-let getId : unit -> int = fun () -> curId := !curId + 1; !curId
-
-let mkInt : int -> exp = fun i -> Int (Int64.of_int i, Unknown)
-
-let mkVar : string -> exp = fun s -> Sym (("var", Prefix), [String s], Unknown, Det) 
-
-let mkLet : exp -> exp = fun e -> Sym (("let", Prefix), [e], Unknown, Det)
-
-let undef : len -> exp = fun l -> Sym (("undef", Prefix), [], l, Nondet (getId ()))
-
-let getMeta : exp -> meta = fun e -> 
-  try ExpMap.find e !meta
-  with Not_found -> 
-    let i = getId () in
-    (* 
-       Needs to be nondeterministic in order not to be concretised. 
-       At the same time I keep i as parameter for it to be visible in the output.
-    *)
-    let l = Sym (("lenvar", Prefix), [mkInt i], Unknown, Nondet i) in
-    let m = {name = ""; hint = ""; refs = 0; printed = false; len = l} in
-    meta := ExpMap.add e m !meta;
-    m
-
-let setMeta : exp -> meta -> unit = fun e m ->
-  (* debug ("setMeta: e = " ^ dump e ^ " name = " ^ m.name ^ " hint = " ^ m.hint); *) 
-  meta := ExpMap.add e m !meta
-            
-let giveName : exp -> string -> string = fun e hint ->
-  let m = getMeta e in
-  if m.hint = "" then m.hint <- hint;
-  if m.name = "" then
-  begin
-    let h = if m.hint = "" then "var" else m.hint in
-    let tag = try StrMap.find h !nameTags with Not_found -> 1 in
-    m.name <- h ^ (string_of_int tag);
-    nameTags := StrMap.add h (tag + 1) !nameTags;
-    (* debug ("giveName: h = " ^ h ^ ", tag = " ^ string_of_int tag); *)
-  end;
-  
-  (* debug ("giveName: name = " ^ m.name ^ ", e = " ^ dump e); *)
-  
-  m.name
-
-let resetNames : unit -> unit = fun () ->
-  let reset : meta -> meta = fun m -> { m with name = "" } in
-  meta := ExpMap.map reset !meta;
-  nameTags := StrMap.empty
 
 (**
   Applies a function to all nodes in an expression, in preorder:
@@ -286,9 +235,9 @@ let rec visitExpPre : (exp -> exp) -> exp -> exp = fun f e ->
   let visit = visitExpPre f in
 
   match f e with
-    | Sym (sym, es, len, id) -> Sym (sym, map visit es, len, id)       (* FIXME: not visiting length *)
-    | Range (e, pos, len) -> Range (visit e, visit pos, visit len)
-    | Concat es -> Concat (map visit es)
+    | Sym (sym, es, len, tag) -> Sym (sym, map visit es, len, tag)       (* FIXME: not visiting length *)
+    | Range (e, pos, len, tag) -> Range (visit e, visit pos, visit len, tag)
+    | Concat (es, tag) -> Concat (map visit es, tag)
     | Struct (fields, attrs, len, e_old) -> Struct (StrMap.map visit fields, StrMap.map visit attrs, visit len, e_old)
     | e -> e
 
@@ -300,18 +249,18 @@ let rec visitExpLenPre : (len -> len) -> exp -> exp = fun f e ->
   let rec visitLen : len -> len = fun l -> visitExpLenPre f (f l) in
   
   let e' = match e with
-    | Sym (sym, es, len, id) -> Sym (sym, map (visitExpLenPre f) es, visitLen len, id)
-    | Range (e, pos, len) -> Range (visitExpLenPre f e, visitLen pos, visitLen len)
-    | Concat es -> Concat (map (visitExpLenPre f) es)
+    | Sym (sym, es, len, tag) -> Sym (sym, map (visitExpLenPre f) es, visitLen len, tag)
+    | Range (e, pos, len, tag) -> Range (visitExpLenPre f e, visitLen pos, visitLen len, tag)
+    | Concat (es, tag) -> Concat (map (visitExpLenPre f) es, tag)
     | Struct (fields, attrs, len, e_old) -> Struct (StrMap.map (visitExpLenPre f) fields, 
                                                     StrMap.map (visitExpLenPre f) attrs, visitLen len, e_old)
     | e -> e
   in
   (* I think this is the responsibility of the caller: *)
-	(*let m = getMeta e in
-	let m' = getMeta e' in
-	m'.hint <- m.hint;*)
-	e'
+    (*let m = getMeta e in
+    let m' = getMeta e' in
+    m'.hint <- m.hint;*)
+    e'
   
 (**
   Applies a function to all nodes in an expression, in postorder:
@@ -327,26 +276,103 @@ let rec visitExpPost : (exp -> exp) -> exp -> exp = fun f e ->
   
   f
   (match e with
-    | Sym (sym, es, len, id) -> Sym (sym, map visit es, visit len, id)
-    | Range (e, pos, len) -> Range (visit e, visit pos, visit len)
-    | Concat es -> Concat (map visit es)
+    | Sym (sym, es, len, tag) -> Sym (sym, map visit es, visit len, tag)
+    | Range (e, pos, len, tag) -> Range (visit e, visit pos, visit len, tag)
+    | Concat (es, tag) -> Concat (map visit es, tag)
     | e -> e)
 
-let rec visitExpPostMeta : (exp -> exp) -> exp -> exp = fun f e ->
 
-  (* debug ("visitExpPost, e: " ^ dump e); *)
+(*************************************************)
+(** {1 Tags and Identities} *)
+(*************************************************)
 
-  let visit = visitExpPostMeta f in
+let tag2id : id IntMap.t ref = ref IntMap.empty
+let exp2id : id ExpMap.t ref = ref ExpMap.empty
+
+let getTag : exp -> tag = function
+    | Sym (sym, es, len, tag) -> tag
+    | Range (e, offset, len, tag) -> tag
+    | Concat (es, tag) -> tag
+    | _ -> NoTag
+
+let tagNum : tag -> int = function
+  | Det i    -> i
+  | Nondet i -> i
+  | NoTag    -> failwith "tagNum called with NoTag"
+
+let removeDet : exp -> exp = 
   
-  let updateMeta e' = setMeta e' (getMeta e); e' in
+  let remove : exp -> exp = function
+    | Sym (sym, es, len, Det _) -> Sym (sym, es, len, Det 0)
+    | Range (e, offset, len, Det _) -> Range (e, offset, len, Det 0)
+    | Concat (es, Det _) -> Concat (es, Det 0)
+    | e -> e
+  in
   
-  f (updateMeta
-  (match e with
-    | Sym (sym, es, len, id) -> Sym (sym, map visit es, visit len, id)
-    | Range (e, pos, len) -> Range (visit e, visit pos, visit len)
-    | Concat es -> Concat (map visit es)
-    | e -> e))
+  visitExpPost remove
 
+(**
+   Structural equality up to deterministic tags.
+*)
+let structEq : exp -> exp -> bool = fun e1 e2 -> removeDet e1 = removeDet e2
+
+let expId : exp -> id = fun e ->
+  
+  let idByStructure : exp -> id = fun e ->
+    let e' = removeDet e in
+	  try ExpMap.find e' !exp2id
+	  with Not_found -> 
+	    let id = freshId () in
+	    exp2id := ExpMap.add e' id !exp2id;
+	    id
+  in
+  
+  match getTag e with
+    | NoTag -> idByStructure e
+    | tag ->
+      try IntMap.find (tagNum tag) !tag2id
+      with Not_found ->
+        let id = idByStructure e in
+        tag2id := IntMap.add (tagNum tag) id !tag2id;
+        id
+  
+let freshDet : unit -> tag = fun () -> Det (freshId ())
+
+let freshNondet : unit -> tag = fun () -> Nondet (freshId ())
+
+(*************************************************)
+(** {1 Hints} *)
+(*************************************************)
+
+let getHint : exp -> string = fun e ->
+  let id = expId e in
+  try IntMap.find id !hints
+  with Not_found -> ""
+
+let addHint : exp -> string -> unit = fun e hint ->
+  let id = expId e in
+  let old_hint = getHint e in
+  if old_hint = "" then
+    hints := IntMap.add id hint !hints
+
+(*************************************************)
+(** {1 Misc} *)
+(*************************************************)
+
+let concat : exp list -> exp = fun es -> Concat (es, freshDet ())
+
+let range : exp -> len -> len -> exp = fun e f l -> Range (e, f, l, freshDet ())
+
+let mkInt : int -> exp = fun i -> Int (Int64.of_int i, Unknown)
+
+let mkVar : string -> exp -> exp = fun s e ->
+  match getTag e with
+    | NoTag -> Sym (("var", Prefix), [String s], Unknown, freshDet ())
+    | tag   -> Sym (("var", Prefix), [String s], Unknown, tag)
+
+let mkLet : exp -> exp = fun e -> Sym (("let", Prefix), [e], Unknown, freshDet ())
+
+let undef : len -> exp = fun l -> Sym (("undef", Prefix), [], l, freshNondet ())
 
 let zero : exp = Int (0L, Unknown)
 let one  : exp = Int (1L, Unknown)
@@ -355,10 +381,10 @@ let rec isConcrete : exp -> bool = function
   | Int _ -> true
   | String _ -> true
   | Sym (("var", _), _, _, _) -> false
-  | Sym (_, es, _, Det) -> for_all isConcrete es
+  | Sym (_, es, _, Det _) -> for_all isConcrete es
   | Sym _ -> false
-  | Range (e, _, _) -> isConcrete e
-  | Concat es -> for_all isConcrete es 
+  | Range (e, _, _, _) -> isConcrete e
+  | Concat (es, _) -> for_all isConcrete es 
   | _ -> false (* as first approximation *)
 
 let isLength : exp -> bool = function
@@ -366,10 +392,10 @@ let isLength : exp -> bool = function
   | Sym (("bn_len", _), _, _, _) -> fail "isLength: bn_len is deprecated"
   | _ -> false
 
-
 let isArithmetic : exp -> bool = function
   | Int _ -> true
   | Sym ((sym, _), _, _, _) when List.mem sym ["+"; "-"] -> true
+  | Sym (("castToInt", _), _, _, _) -> true
   | _ -> false
 
 let isInteger : exp -> bool = function
@@ -384,15 +410,17 @@ let isAuxiliaryIf : exp -> bool = function
   | _ -> false
 
 
-let eq: exp list -> exp = fun es -> Sym (("==", Infix), es, Unknown, Det)
+let eq: exp list -> exp = fun es -> Sym (("==", Infix), es, Unknown, freshDet ())
 
-let neg : exp -> exp = fun e -> Sym (("!", Prefix), [e], Unknown, Det)
+let neg : exp -> exp = fun e -> Sym (("!", Prefix), [e], Unknown, freshDet ())
 
-let gr : exp -> exp -> exp = fun a b -> Sym ((">", Infix), [a; b], Unknown, Det)
+let gr : exp -> exp -> exp = fun a b -> Sym ((">", Infix), [a; b], Unknown, freshDet ())
 
-let grEq : exp -> exp -> exp = fun a b -> Sym ((">=", Infix), [a; b], Unknown, Det)
+let grEq : exp -> exp -> exp = fun a b -> Sym ((">=", Infix), [a; b], Unknown, freshDet ())
 
 let interesting : exp -> bool = function
   | Ptr (Stack "SAX_meter.i:r_size[4705]", _) -> true 
   (* | Ptr (Heap (17, _), _) -> true *)
   | _ -> false
+
+

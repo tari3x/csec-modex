@@ -12,6 +12,7 @@ Ce fichier d�crit le protocole du point de vue de "Alice"
 
 #include "needham_type.h"
 #include "common.h"
+#include "lib.h"
 #include "primitives_crypt.h"
 
 #include <proxies/common.h>
