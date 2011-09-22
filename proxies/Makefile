@@ -7,8 +7,6 @@ include $(CSEC_ROOT)/mk/common.mk
 #C_SRC = $(wildcard *.c)
 
 SYM_OBJ = openssl_proxies_sym.o openssl_proxies_internal.o system_proxies.o symbolic_interface.o common_sym.o
-# This should go into a separate library:
-# 
 
 #OBJ = $(CPP_SRC:.cpp=.o) $(C_SRC:.c=.o)
 
