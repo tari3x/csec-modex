@@ -6,14 +6,14 @@ include $(CSEC_ROOT)/mk/common.mk
 #CPP_SRC = $(wildcard *.cpp)
 #C_SRC = $(wildcard *.c)
 
-SYM_OBJ = openssl_proxies_sym.o system_proxies.o symbolic_interface.o common_sym.o
+SYM_OBJ = openssl_proxies_sym.o openssl_proxies_internal.o system_proxies.o symbolic_interface.o common_sym.o
+# This should go into a separate library:
+# 
 
 #OBJ = $(CPP_SRC:.cpp=.o) $(C_SRC:.c=.o)
 
-CXXFLAGS = -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label
-CFLAGS   = -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label
-
-CFLAGS += -I$(OPENSSL)/include
+CXXFLAGS = -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(OPENSSL)/include
+CFLAGS   = $(CXXFLAGS)
 
 PROXY_CONF_SYM = openssl_proxies.sym.conf
 CILLY_CC = $(PROXY_SYM_CILLY)
@@ -32,7 +32,7 @@ libssl_proxy_bin.a libssl_proxy_sym.a:
 $(SYM_OBJ): CC = $(CILLY_CC)
 $(SYM_OBJ): $(CIL_EXEC)
 
-openssl_proxies%.o: openssl_proxies.c
+openssl_proxies_sym.o openssl_proxies_bin.o: openssl_proxies.c
 	$(BUILD)
 
 common_bin.o common_sym.o: common.c
