@@ -14,6 +14,7 @@ config.status
 *.cil.c
 *.i
 *.o
+*.a
 ################ Ocaml
 *.cmi
 *.cmx
