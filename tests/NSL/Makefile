@@ -26,9 +26,6 @@ test: LDLIBS += $(CRYPTO_LIB) $(SYM_PROXY_LIB)
 
 lib_proxy.o: CC = $(PROXY_SYM_CILLY)
 
-# need this for print_buffer, FIXME: split it properly
-client server: LDLIBS += $(SYM_PROXY_LIB)
-
 # don't compile lib with CIL cause fail has varargs
 CILLY_FLAGS += --leavealone=lib
 
