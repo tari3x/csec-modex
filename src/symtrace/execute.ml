@@ -25,6 +25,7 @@
       Dup
       Nondet // For a symbol application on top of stack indicate that the application is not deterministic.
              // For a stack pointer assigns it a fresh id.
+      // TODO: infix/prefix as a separate operation
       ConcreteResult val
       Append // stack: first, second; second consumed
       Event
@@ -522,8 +523,8 @@ let dup : unit -> unit = fun () ->
 
 let nondet : unit -> unit = fun () ->
   match takeStack () with
-    | Sym (sym, args, len, Det _) -> toStack (Sym (sym, args, len, freshNondet ()))
-    | Ptr (Stack name, pos)       -> toStack (Ptr (Stack (name ^ "[" ^ (string_of_int (freshId ())) ^ "]"), pos)) 
+    | Sym ((s, _), args, len, Det _) -> toStack (Sym ((s, Prefix), args, len, freshNondet ()))
+    | Ptr (Stack name, pos)          -> toStack (Ptr (Stack (name ^ "[" ^ (string_of_int (freshId ())) ^ "]"), pos)) 
     | _ -> fail "nondet: unexpected value on stack" 
 
 let concreteResult : intval -> unit = fun ival ->

@@ -18,39 +18,6 @@ else()
   set(OPENSSL_CONFIG csec)
 endif(CMAKE_SYSTEM_PROCESSOR MATCHES ".*64.*")
 
-######## deps/CIL ################################
-
-set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.3.7-svn)
-
-# find ARCHOS as configured by CIL
-if(NOT EXISTS ${CIL_ROOT}/config.mk)
-  execute_process(COMMAND ./configure WORKING_DIRECTORY ${CIL_ROOT})
-endif(NOT EXISTS ${CIL_ROOT}/config.mk)
-
-execute_process(COMMAND sed -n "s/.*ARCHOS=\\(.*\\)/\\1/p" ${CIL_ROOT}/config.mk
-                OUTPUT_VARIABLE ARCHOS
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-                
-#configure_file (mk/archos.mk.in mk/archos.mk)
-# execute_process(COMMAND make -sf mk/archos.mk
-#                 OUTPUT_VARIABLE ARCHOS 
-#                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-set(CIL_OBJDIR ${CIL_ROOT}/obj/${ARCHOS})
-set(CIL_LIB ${CIL_OBJDIR}/cil.a)
-set(CILLY ${CIL_ROOT}/bin/cilly)
-
-add_custom_command(OUTPUT ${CIL_ROOT}/Makefile
-                     COMMAND ./configure
-                     WORKING_DIRECTORY ${CIL_ROOT}
-                     VERBATIM)
-
-add_custom_command(OUTPUT ${CIL_LIB} 
-                     COMMAND make
-                     DEPENDS ${CIL_ROOT}/Makefile
-                     WORKING_DIRECTORY ${CIL_ROOT}
-                     VERBATIM)
-
 ######## deps/ocamlyices ###########################
 
 set(OCAMLYICES_ROOT ${CSEC_ROOT}/deps/ocamlyices)
@@ -121,19 +88,9 @@ add_custom_command(OUTPUT ${PROVERIF}
                     WORKING_DIRECTORY ${PV_ROOT}
                     VERBATIM)
 
-
-######## proxies ##############################
+######## include ################################
 
 set(PROXIES ${CSEC_ROOT}/proxies)
-set(LIBSSL_PROXY_SYM ${PROXIES}/libssl_proxy_sym.a)
-
-add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
-                    COMMAND make
-                    WORKING_DIRECTORY ${PROXIES}
-                    DEPENDS ${CIL_LIB} include/crest.h
-                    VERBATIM)
-
-######## include ################################
 
 set(HEADERS include/crest.h include/proxies/common.h include/proxies/interface.h
             include/proxies/openssl-proxies-1.0.0.h
@@ -168,30 +125,81 @@ endforeach(I RANGE NUM_HEADERS)
 add_custom_target(include 
                     DEPENDS ${HEADERS})
                     
-######## src/CIL ##############################
+######## deps/CIL and src/CIL  ##############################
+
+set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.3.7-svn)
+
+# find ARCHOS as configured by CIL
+if(NOT EXISTS ${CIL_ROOT}/config.mk)
+  execute_process(COMMAND ./configure WORKING_DIRECTORY ${CIL_ROOT})
+endif(NOT EXISTS ${CIL_ROOT}/config.mk)
+
+execute_process(COMMAND sed -n "s/.*ARCHOS=\\(.*\\)/\\1/p" ${CIL_ROOT}/config.mk
+                OUTPUT_VARIABLE ARCHOS
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+                
+#configure_file (mk/archos.mk.in mk/archos.mk)
+# execute_process(COMMAND make -sf mk/archos.mk
+#                 OUTPUT_VARIABLE ARCHOS 
+#                 OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set(CIL_OBJDIR ${CIL_ROOT}/obj/${ARCHOS})
+set(CIL_LIB ${CIL_OBJDIR}/cil.a)
+set(CILLY ${CIL_ROOT}/bin/cilly)
+
+set(CIL_DIR ${CSEC_ROOT}/src/CIL)
+
+set(CIL_SRC ${CIL_DIR}/crestInstrument.ml ${CIL_DIR}/funreplace.ml ${CIL_DIR}/mark.ml)
+
+add_custom_command(OUTPUT ${CIL_ROOT}/Makefile
+                     COMMAND ./configure
+                     WORKING_DIRECTORY ${CIL_ROOT}
+                     VERBATIM)
+
+add_custom_command(OUTPUT ${CIL_LIB} 
+                     COMMAND make
+                     DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
+                     WORKING_DIRECTORY ${CIL_DIR}
+                     VERBATIM)
 
 add_custom_target(src_CIL 
                     COMMAND make
-                    DEPENDS ${CIL_ROOT}/Makefile
-                    WORKING_DIRECTORY src/CIL
+                    DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
+                    WORKING_DIRECTORY ${CIL_DIR}
                     VERBATIM)
 
 ######## src/symtrace ##############################
 
-set(IMLTRACE ${CSEC_ROOT}/src/symtrace/imltrace${CMAKE_EXECUTABLE_SUFFIX})
-set(PITRACE  ${CSEC_ROOT}/src/symtrace/pitrace${CMAKE_EXECUTABLE_SUFFIX})
+set(SYMTRACE_DIR ${CSEC_ROOT}/src/symtrace)
+
+set(IMLTRACE ${SYMTRACE_DIR}/imltrace${CMAKE_EXECUTABLE_SUFFIX})
+set(PITRACE  ${SYMTRACE_DIR}/pitrace${CMAKE_EXECUTABLE_SUFFIX})
+
+set(SYMTRACE_SRC ${SYMTRACE_DIR}/execute.ml ${SYMTRACE_DIR}/exp.ml ${SYMTRACE_DIR}/imltrace.ml ${SYMTRACE_DIR}/pitrace.ml
+                 ${SYMTRACE_DIR}/simplify.ml ${SYMTRACE_DIR}/solver_yices.ml ${SYMTRACE_DIR}/solver.ml ${SYMTRACE_DIR}/types.ml
+                 ${SYMTRACE_DIR}/utils.ml)
 
 add_custom_command(OUTPUT ${IMLTRACE} ${PITRACE}
                     COMMAND make
-                    DEPENDS ${OCAMLYICES_ROOT}/ocamlyices.cmxa
-                    WORKING_DIRECTORY src/symtrace/
+                    DEPENDS ${OCAMLYICES_ROOT}/ocamlyices.cmxa ${SYMTRACE_SRC}
+                    WORKING_DIRECTORY ${SYMTRACE_DIR}
                     VERBATIM)
 
 add_custom_target(src_symtrace 
                     COMMAND make
-                    WORKING_DIRECTORY src/CIL
+                    WORKING_DIRECTORY ${SYMTRACE_DIR}
                     VERBATIM)
-                    
+                
+######## proxies ##############################
+
+set(LIBSSL_PROXY_SYM ${PROXIES}/libssl_proxy_sym.a)
+
+add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
+                    COMMAND make
+                    WORKING_DIRECTORY ${PROXIES}
+                    DEPENDS ${CIL_LIB} include/crest.h 
+                    VERBATIM)
+                
 ######## tests ##############################
 
 # ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTIFIED}/libssl_sym.a
