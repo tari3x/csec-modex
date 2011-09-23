@@ -30,9 +30,9 @@ The following dependencies require some extra work:
 
 - camlidl. Version 1.05 is bundled with this distribution, you can install it as follows:
 
-    cd deps/camlidl-1.05
-    make
-    sudo make install
+      cd deps/camlidl-1.05
+      make
+      sudo make install
 
 - curses library is required by CIL
 
