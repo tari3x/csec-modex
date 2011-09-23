@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project (csec-tools)
 
-
 # set(CMAKE_VERBOSE_MAKEFILE true)
 
 set(CSEC_ROOT ${CMAKE_BINARY_DIR})
@@ -17,6 +16,10 @@ else()
   # set(64_BIT false)
   set(OPENSSL_CONFIG csec)
 endif(CMAKE_SYSTEM_PROCESSOR MATCHES ".*64.*")
+
+execute_process(COMMAND ocamlc -where
+                OUTPUT_VARIABLE OCAML_LIB
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 ######## deps/ocamlyices ###########################
 

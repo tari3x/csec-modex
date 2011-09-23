@@ -20,6 +20,8 @@ CILLY = @CILLY@
 
 PROXY_SYM_CILLY = $(CILLY) --doCrestInstrument --csec-config=$(PROXY_CONF_SYM) --save-temps --commPrintLn
 
+OCAML_LIB = @OCAML_LIB@
+
 # some system dependency, I guess autoconf would be real nice here
 # ifdef WINDIR
 #   EXTRA_DEPS = -lwsock32 -ladvapi32 -lgdi32 -luser32

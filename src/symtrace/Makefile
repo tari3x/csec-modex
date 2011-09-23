@@ -34,7 +34,7 @@ pitrace: $(COMMON_SRC) pitrace.ml
 doc: $(COMMON_SRC) imltrace.ml pitrace.ml
 	mkdir -p $@
 	touch $@  
-	ocamldoc -html -d $@ $^
+	ocamldoc -I $(OCAMLYICES_ROOT) -I $(OCAML_LIB) -html -d $@ $^
   
 clean:
 	$(RM) imltrace pitrace *.cmi *.cmo *.cmx *.o
