@@ -243,13 +243,13 @@ add_custom_target(RPC_check
 set(RPC_ENC tests/RPC-enc)
 
 add_custom_target(RPC_enc ALL
-                    COMMAND make verify
+                    COMMAND make -f Makefile.csec-tools verify
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${RPC_ENC}
                     VERBATIM)
 
 add_custom_target(RPC_enc_check
-                    COMMAND make check
+                    COMMAND make -f Makefile.csec-tools check
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${RPC_ENC}
                     VERBATIM)
