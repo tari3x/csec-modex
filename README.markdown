@@ -10,7 +10,7 @@ of the metering protocol, due to licensing restrictions.
 Download
 ========
 
-git clone --recursive git://github.com/tari3x/csec-tools.git
+    git clone --recursive git://github.com/tari3x/csec-tools.git
 
 Dependencies
 ============
@@ -22,11 +22,11 @@ The following dependencies require some extra work:
 
 - Yices SMT solver, which we are not allowed to redistribute due to licensing restrictions. 
 
-  The tools are known to work with version 1.0.28/1.0.29 with dynamically linked GMP which you can obtain from
-    http://yices.csl.sri.com/
-  You can then use the script
-    deps/ocamlyices/install-yices.sh
-  to install yices.
+    The tools are known to work with version 1.0.28/1.0.29 with dynamically linked GMP which you can obtain from
+      http://yices.csl.sri.com/
+    You can then use the script
+      deps/ocamlyices/install-yices.sh
+    to install yices.
 
 - camlidl. Version 1.05 is bundled with this distribution, you can install it as follows:
 
