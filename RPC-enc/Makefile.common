@@ -1,0 +1,21 @@
+
+# FD: Sorry about the .exe, the fact that the thing compiles everytime I want
+# to run it is starting to get on my nerves
+P1 = server.exe
+P2 = client.exe
+
+P1_SRC = server.c net.c lib.c
+P2_SRC = client.c net.c lib.c
+
+P1_CMD = localhost 4433
+P2_CMD = localhost localhost 4433 "What is the weather like?"
+
+INCS = -Ipolarssl/include -Igcm
+LIBLOCS = -Lpolarssl/library -Lgcm
+LIBS = -lminimal -lgcm -ldl -lstdc++
+
+DFLAGS = -DVERBOSE
+
+CFLAGS += $(INCS)
+LDFLAGS += $(LIBLOCS)
+
