@@ -1,0 +1,20 @@
+
+CSEC_ROOT = ../..
+
+include Makefile.common
+
+OUTPUTS = iml.all.out
+
+#everything: orig sym
+everything: iml.all.out
+
+all: orig sym
+
+test: primitives_crypt.c common.c test.c
+test: LDLIBS += $(PROXIES)/libssl_proxy_bin.a
+
+include $(CSEC_ROOT)/mk/main.mk
+
+clean::
+	$(RM) $(P1) $(P2)
+	

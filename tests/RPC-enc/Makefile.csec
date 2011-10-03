@@ -1,0 +1,34 @@
+
+CSEC_ROOT = ../..
+
+include Makefile.common
+
+everything: compile sym
+everything: iml verify
+
+all: iml verify
+
+SYM_PROXY_LIB += lib_proxy.o net_proxy.o
+# does this preserve the dependency on the source?
+lib_proxy.o net_proxy.o: CC = $(PROXY_SYM_CILLY)
+
+PROXY_CONF_SYM = proxies.conf.out
+
+OUTPUTS = iml.all.out pvmodel.out 
+# $(CVM)
+
+csec-verify-log: csec-verify.log
+csec-verify.log:
+	$(MAKE) -f Makefile.csec iml verify > $@ 2>&1
+
+include $(CSEC_ROOT)/mk/main.mk
+
+# we actually use compile target instead of orig
+$(ORIG) $(SYM): BASE_LIB = -lminimal -lgcm
+$(ORIG) $(SYM): polarssl gcm
+
+$(PROXY_CONF_SYM): proxies.conf $(PROXIES)/openssl_proxies.sym.conf
+	cat $^ > $@
+
+# don't compile lib with CIL cause fail has varargs
+CILLY_FLAGS += --leavealone=lib

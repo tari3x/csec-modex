@@ -1,0 +1,59 @@
+free c.
+fun E/2.
+private fun key/2.
+reduc
+  D(k, E(k, x)) = x.
+equation 
+  key(A, B) = key(B, A).
+
+data conc1/2.
+
+reduc 
+  parse5(conc1(x0, x1)) = x0.
+reduc 
+  parse6(conc1(x0, x1)) = x0.
+reduc 
+  parse7(conc1(x0, x1)) = x0.
+reduc 
+  parse8(conc1(x0, x1)) = x1.
+reduc 
+  parse9(conc1(x0, x1)) = x1.
+reduc 
+  parse10(conc1(x0, x1)) = x0.
+reduc 
+  parse11(conc1(x0, x1)) = x1.
+
+(* Authentication properties: *)
+query ev:client_accept(client, server, req, resp) ==> ev:server_reply(client, server, req, resp) | ev:bad(client, server).
+query ev:server_reply(client, server, req, resp) ==> ev:client_begin(client, server, req) | ev:bad(client, server).
+
+(* Secrecy properties: *)
+query attacker:key(client, server) ==> ev:bad(client, server).
+query attacker:kS1[serverID = server; !1 = sessionID] ==> ev:bad(clientID[!1 = sessionID], server).
+
+(* Sanity property: *)
+query ev:client_accept(client, server, req, resp) ==> ev:bad(client, server).
+
+let A = 
+event client_begin(clientID, serverID, request);
+new kS1;
+let msg1 = conc1(clientID, E(key(clientID, serverID), conc1(request, kS1))) in
+out(c, msg1);
+in(c, msg2);
+in(c, msg3);
+event client_accept(clientID, serverID, request, D(kS1, msg3)); 0.
+
+let B = 
+in(c, msg1);
+in(c, msg2);
+new response1;
+event server_reply(parse5(msg2), serverID, parse6(D(key(parse7(msg2), serverID), parse8(msg2))), response1);
+let cipher1 = E(parse9(D(key(parse10(msg2), serverID), parse11(msg2))), response1) in
+out(c, cipher1); 0.
+
+free request, response.
+
+process
+    ! (new clientID; out(c, clientID); in(c, serverID); !A)
+  | ! (new serverID; out(c, serverID); !B)
+  | ! (in(c, (clientID, serverID)); event bad(clientID, serverID); event bad(serverID, clientID); out(c, key(clientID, serverID)))

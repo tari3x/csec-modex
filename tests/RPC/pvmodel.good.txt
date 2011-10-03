@@ -1,0 +1,54 @@
+free c.
+fun HMAC_sha1/2.
+fun string_52657175657374/0.
+fun string_526573706f6e7365/0.
+
+data conc1/2.
+
+reduc 
+  parse1(conc1(x0, x1)) = x1.
+reduc 
+  parse2(conc1(x0, x1)) = x0.
+reduc 
+  parse3(conc1(x0, x1)) = x0.
+reduc 
+  parse4(conc1(x0, x1)) = x1.
+reduc 
+  parse5(conc1(x0, x1)) = x0.
+reduc 
+  parse6(conc1(x0, x1)) = x0.
+reduc 
+  parse7(conc1(x0, x1)) = x0.
+
+query ev:client_accept(x, y) ==> ev:server_reply(x, y).
+query ev:server_reply(x, y) ==> ev:client_begin(x).
+
+query ev:client_accept(x, y).
+
+let A = 
+event client_begin(request);
+let msg1 = conc1(request, HMAC_sha1(conc1(string_52657175657374(), request), keyAB)) in
+out(c, msg1);
+in(c, msg2);
+in(c, msg3);
+let hash1 = HMAC_sha1(conc1(string_526573706f6e7365(), conc1(request, parse2(msg3))), keyAB) in
+let var1 = parse1(msg3) in
+if var1 = hash1 then 
+event client_accept(request, parse3(msg3)); 0.
+
+let B = 
+in(c, msg1);
+in(c, msg2);
+let hash1 = HMAC_sha1(conc1(string_52657175657374(), parse5(msg2)), keyAB) in
+let var1 = parse4(msg2) in
+if var1 = hash1 then 
+event server_reply(parse6(msg2), response);
+let var2 = conc1(response, HMAC_sha1(conc1(string_526573706f6e7365(), conc1(parse7(msg2), response)), keyAB)) in
+out(c, var2); 0.
+
+process !
+  new keyAB;
+  in(c, request);
+  in(c, response);
+  (!A | !B)
+ 
