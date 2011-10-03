@@ -1,6 +1,0 @@
-
-P1 = bob
-P2 = alice
-
-P1_SRC = primitives_crypt.c common.c lib.c bob.c
-P2_SRC = primitives_crypt.c common.c lib.c alice.c
