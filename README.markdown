@@ -10,7 +10,7 @@ of the metering protocol, due to licensing restrictions.
 Download
 ========
 
-    git clone --recursive git://github.com/tari3x/csec-tools.git
+    git clone --recursive git://github.com/tari3x/csec-modex.git
 
 Dependencies
 ============
@@ -30,9 +30,9 @@ The following dependencies require some extra work:
 
 - camlidl. Version 1.05 is bundled with this distribution, you can install it as follows:
 
-          cd deps/camlidl-1.05
-          make
-          sudo make install
+        cd deps/camlidl-1.05
+        make
+        sudo make install
 
 - curses library is required by CIL
 
@@ -73,3 +73,7 @@ This might fail, because the reference output was produced on a 64 bit machine a
 this influences the format of the network messages. In future this shall be fixed by
 transition to an architecture-independent implementation.
 
+Contact
+=======
+
+Please send bug reports and suggestions to Mihhail Aizatulin (avatar@hot.ee)

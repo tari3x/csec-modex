@@ -7,7 +7,8 @@ COMMON_SRC = types.ml utils.ml simplify.ml solver.mli solver_yices.ml solver.ml 
 # solver_simple.ml 
 
 # Profiling:
-# (can compile with ocamlopt -p to use gprof)
+# can compile with ocamlopt -p to use gprof
+# valgrind doesn't need special compilation (just -g)
 #OCAMLC = ocamlcp
 #OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -I /usr/local/lib nums.cma ocamlyices.cma str.cma
 

@@ -154,7 +154,7 @@ type mem = exp BaseMap.t
 type answer = Yes | No | Maybe
 
 (**
-    [true] means definitely not equal, [false] means we don't know.
+    [true] means definitely true, [false] means we don't know.
 *)
 type pbool = bool
 
