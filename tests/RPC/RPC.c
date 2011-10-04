@@ -6,6 +6,10 @@
 
 #include "RPC.h"
 
+#ifdef CSEC_VERIFY
+  #include <proxies/common.h>
+#endif
+
 // #define VERBOSE
 
 void client(dstr_c *a, dstr_c *b, key_c *k, dstr_c *s)
@@ -127,13 +131,7 @@ int main(int argc, char *argv[])
 	// FIXME: make it properly
 	int isClient = 0;
 
-#ifdef CSEC_VERIFY
-	mute();
-#endif
 	isClient = !strncmp(argv[1], "client", 6);
-#ifdef CSEC_VERIFY
-	unmute();
-#endif
 
 	if (isClient)
 	{

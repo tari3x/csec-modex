@@ -9,6 +9,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef CSEC_VERIFY
+  #include <proxies/common.h>
+#endif
+
+
 #define SHA1_LEN 20
 
 void client(unsigned char * payload, ulong payload_len, unsigned char * key, ulong key_len)

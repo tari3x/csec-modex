@@ -214,13 +214,13 @@ set(TEST_DEPS ${HEADERS} ${OPENSSL}/libcrypto.a ${OPENSSL}/libssl.a
 set(SIMPLE_HASH tests/simple_hash)
 
 add_custom_target(simple_hash ALL
-                    COMMAND make
+                    COMMAND make -f Makefile.csec
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${SIMPLE_HASH}
                     VERBATIM)
 
 add_custom_target(simple_hash_check
-                    COMMAND make check
+                    COMMAND make -f Makefile.csec check
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${SIMPLE_HASH}
                     VERBATIM)
@@ -230,13 +230,13 @@ add_custom_target(simple_hash_check
 set(RPC tests/RPC)
 
 add_custom_target(RPC ALL
-                    COMMAND make
+                    COMMAND make -f Makefile.csec
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${RPC}
                     VERBATIM)
 
 add_custom_target(RPC_check
-                    COMMAND make check
+                    COMMAND make -f Makefile.csec check
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${RPC}
                     VERBATIM)
@@ -246,13 +246,13 @@ add_custom_target(RPC_check
 set(RPC_ENC tests/RPC-enc)
 
 add_custom_target(RPC_enc ALL
-                    COMMAND make -f Makefile.csec-tools verify
+                    COMMAND make -f Makefile.csec verify
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${RPC_ENC}
                     VERBATIM)
 
 add_custom_target(RPC_enc_check
-                    COMMAND make -f Makefile.csec-tools check
+                    COMMAND make -f Makefile.csec check
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${RPC_ENC}
                     VERBATIM)
@@ -262,13 +262,13 @@ add_custom_target(RPC_enc_check
 set(CSUR tests/CSur)
 
 add_custom_target(CSur ALL
-                    COMMAND make
+                    COMMAND make -f Makefile.csec
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${CSUR}
                     VERBATIM)
 
 add_custom_target(CSur_check
-                    COMMAND make check
+                    COMMAND make -f Makefile.csec check
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${CSUR}
                     VERBATIM)
@@ -278,13 +278,13 @@ add_custom_target(CSur_check
 set(NSL tests/NSL)
 
 add_custom_target(NSL ALL
-                    COMMAND make
+                    COMMAND make -f Makefile.csec
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${NSL}
                     VERBATIM)
 
 add_custom_target(NSL_check
-                    COMMAND make check
+                    COMMAND make -f Makefile.csec check
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${NSL}
                     VERBATIM)

@@ -1,6 +1,8 @@
  
 CSEC_ROOT = ../..
  
+include Makefile.common
+ 
 #everything: orig sym
 everything: iml verify
 
