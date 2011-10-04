@@ -10,6 +10,10 @@
 
 #include "lib.h"
 
+#ifdef CSEC_VERIFY
+  #include <proxies/common.h>
+#endif
+
 #define SHA1_LEN 20
 
 void server(unsigned char * key, ulong key_len)

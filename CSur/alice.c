@@ -15,6 +15,10 @@ Ce fichier d�crit le protocole du point de vue de "Alice"
 #include "lib.h"
 #include "primitives_crypt.h"
 
+#ifdef CSEC_VERIFY
+  #include <proxies/common.h>
+#endif
+
 /* 
  A -> B : {Na, A}_pub(B). 
  B -> A : {Na, Nb}_pub(A). 

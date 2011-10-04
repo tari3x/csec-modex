@@ -5,7 +5,9 @@
 #include "net.h"
 #include "lib.h"
 
-// #include <proxies/common.h>
+#ifdef CSEC_VERIFY
+  #include <proxies/common.h>
+#endif
 
 #include <string.h>
 #include <stdio.h>

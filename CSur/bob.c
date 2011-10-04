@@ -24,6 +24,10 @@
 #include "lib.h"
 #include "primitives_crypt.h"
 
+#ifdef CSEC_VERIFY
+  #include <proxies/common.h>
+#endif
+
 /* */
 
 int main(int argc, char **argv) {

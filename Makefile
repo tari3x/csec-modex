@@ -10,3 +10,8 @@ clean:
 	for dir in $(SUBDIRS); do\
 		(cd $$dir && $(MAKE) -f Makefile.run clean;)\
 	done
+
+html: README.html
+
+README.html: README.markdown
+	markdown $< > $@
