@@ -1,4 +1,6 @@
 
+FILES = client.c server.c lib.c lib.h lib_proxy.c net.c net.h rpc-enc.h  Makefile proxies.conf RPC-enc.v iml.all.good.txt query.in pvmodel.good.txt
+
 # FD: Sorry about the .exe, the fact that the thing compiles everytime I want
 # to run it is starting to get on my nerves
 P1 = server.exe

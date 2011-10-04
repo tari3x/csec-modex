@@ -1,0 +1,35 @@
+
+include Makefile.common
+
+execute: $(P1) $(P2)
+	./$(P1) $(P1_CMD) & \
+	sleep 1; ./$(P2) $(P2_CMD) & \
+	wait
+
+logs: compile # $(P1) $(P2)
+	./$(P1) $(P1_CMD) > server.log & \
+	sleep 1; ./$(P2) $(P2_CMD) > client.log &\
+	wait
+
+$(P1) $(P2): polarssl gcm $(P1_SRC)
+	$(CC) $(DFLAGS) -Wall $(INCS) $(P1_SRC) $(LIBLOCS) $(LIBS) -o $(P1)
+	$(CC) $(DFLAGS) -Wall $(INCS) $(P2_SRC) $(LIBLOCS) $(LIBS) -o $(P2)
+
+compile: $(P1) $(P2)
+
+polarssl: polarssl/library/libminimal.a
+
+polarssl/library/libminimal.a:
+	cd polarssl/library; make minimal
+
+gcm: gcm/libgcm.a
+
+gcm/libgcm.a:
+	cd gcm; make gcmlib
+
+clean:
+	$(RM) $(P1) $(P2)
+
+purge:: clean
+	cd polarssl/library; make clean
+	cd gcm; make clean

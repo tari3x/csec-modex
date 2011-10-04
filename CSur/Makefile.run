@@ -1,7 +1,7 @@
 
 include Makefile.common
 
-CFLAGS += -DVERBOSE -I/usr/include/openssl
+CFLAGS += -DVERBOSE 
 LDLIBS += -lssl -lcrypto
 
 all: execute
