@@ -1,10 +1,11 @@
 
-The example protocols from csec-challenge.
+The example protocols from csec-challenge. The README files in the individual protocol folders
+contain a short description of the protocols.
 
 Download
 ========
 
-    git clone --recursive git://github.com/tari3x/csec-challenge.git
+    git clone git://github.com/tari3x/csec-protocols.git
 
 How to use
 ==========
