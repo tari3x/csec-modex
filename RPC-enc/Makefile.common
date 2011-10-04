@@ -21,3 +21,12 @@ DFLAGS = -DVERBOSE
 CFLAGS += $(INCS)
 LDFLAGS += $(LIBLOCS)
 
+polarssl: polarssl/library/libminimal.a
+
+polarssl/library/libminimal.a:
+	cd polarssl/library; make minimal
+
+gcm: gcm/libgcm.a
+
+gcm/libgcm.a:
+	cd gcm; make gcmlib

@@ -9,13 +9,15 @@ Download
 How to use
 ==========
 
-Running make in the top directory should compile and run all the protocols.
+Running make in the top directory should compile and run all the protocols. Most protocols
+rely on OpenSSL for cryptography, so the system must have the OpenSSL development package
+installed.
 
 Cygwin
 ------
 
 The protocols are known to run on cygwin. To compile, install Cygwin from http://www.cygwin.com.
-From the devel packages, include make, gcc-core, and gcc-g++. 
+From the devel packages, include make, gcc-core, gcc-g++, and openssl-devel. 
 Make sure that "C:\\cygwin\\bin" (or wherever you install the binaries) is on your Windows path.
 Finally, execute "make" from command line in the top distribution directory.
 
