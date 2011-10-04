@@ -1,12 +1,12 @@
 
 CSEC_ROOT = ../..
 
-include Makefile.common
-
 everything: compile sym
 everything: iml verify
 
 all: iml verify
+
+include Makefile.common
 
 SYM_PROXY_LIB += lib_proxy.o net_proxy.o
 # does this preserve the dependency on the source?
