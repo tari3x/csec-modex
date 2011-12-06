@@ -1,0 +1,51 @@
+let A = 
+new nonce1<20>;
+let msg1 = 6d736731|i20|nonce1|pkA in
+new nonce2<20>;
+let cipher1 = E(isek(pkX), msg1, nonce2) in
+let msg2 = 656e6372|len(cipher1)<8>|cipher1 in
+out(c, msg2);
+in(c, msg3<8>);
+let var1 = (msg3 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
+in(c, msg4<var1>);
+let msg5 = D(skA, msg4) in
+if len(pkX)<8> + i40 + i16 + i4 = len(msg5)<8> then 
+if msg5{0, 4} = 6d736732 then 
+if msg5{4, 8} = i20 then 
+if msg5{12, 8} = i20 then 
+let var2 = msg5{20, msg5{4, 8}} in
+if var2 = nonce1 then 
+let var3 = msg5{msg5{4, 8} + msg5{12, 8} + i16 + i4, len(msg5) - (msg5{4, 8} + msg5{12, 8} + i16 + i4)} in
+if var3 = pkX then 
+let msg6 = msg5{msg5{4, 8} + i16 + i4, msg5{12, 8}} in
+new nonce3<20>;
+let cipher2 = E(isek(pkX), msg6, nonce3) in
+let msg7 = 656e6372|len(cipher2)<8>|cipher2 in
+out(c, msg7);
+
+let B = 
+in(c, msg1<8>);
+let var1 = (msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
+in(c, msg2<var1>);
+let msg3 = D(skB, msg2) in
+if len(pkX)<8> + i8 + i20 + i4 = len(msg3)<8> then 
+if msg3{0, 4} = 6d736731 then 
+if msg3{4, 8} = i20 then 
+let var2 = msg3{i8 + msg3{4, 8} + i4, len(msg3) - (i8 + msg3{4, 8} + i4)} in
+if var2 = pkX then 
+let var3 = msg3{4, 8} in
+let var4 = msg3{12, msg3{4, 8}} in
+new nonce1<20>;
+let msg4 = 6d736732|var3|i20|var4|nonce1|pkB in
+new nonce2<20>;
+let cipher1 = E(isek(pkX), msg4, nonce2) in
+let msg5 = 656e6372|len(cipher1)<8>|cipher1 in
+out(c, msg5);
+in(c, msg6<8>);
+let var5 = (msg6 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
+in(c, msg7<var5>);
+let msg8 = D(skB, msg7) in
+if len(msg8)<8> = i20 then 
+if msg8 = nonce1 then 
+event endB();
+

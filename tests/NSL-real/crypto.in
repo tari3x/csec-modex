@@ -1,0 +1,8 @@
+fun ek/1.
+fun dk/1.
+fun E/3.
+reduc
+  D(dk(a), E(ek(a), x, r)) = x.
+reduc
+  isek(ek(a)) = ek(a).
+  

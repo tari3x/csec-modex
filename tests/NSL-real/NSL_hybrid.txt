@@ -1,0 +1,30 @@
+NSL protocolwith hybrid encryption:
+
+The format of the messages is as follow:
+
+
+m1:
+
+A --> B : "encr"|m1_e_len|{"msg1"|SIZE_NONCE|nonce_A|pubA_len|pubA}_{he} 
+
+where:
+
+{x}_{he} = enc_symkey_iv_len|{symkey_len|symkey|iv}_{pubB}|{x}_{symkey}
+
+
+m2:
+
+B --> A : "encr"|m2_e_len|{"msg2"|SIZE_NONCE|SIZE_NONCE|nonce_A|nonce_B|pubB}_{he} 
+
+where:
+
+{x}_{he} = enc_symkey_iv_len|{symkey_len|symkey|iv}_{pubA}|{x}_{symkey}
+
+
+m3:
+
+A --> B : "encr"|m3_e_len|{nonce_B}_{he} 
+
+where:
+
+{x}_{he} = enc_symkey_iv_len|{symkey_len|symkey|iv}_{pubB}|{x}_{symkey}

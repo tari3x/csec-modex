@@ -1,0 +1,29 @@
+ 
+CSEC_ROOT = ../..
+ 
+include Makefile.common
+ 
+#everything: orig sym
+everything: iml verify
+
+all: orig sym
+
+SYM_PROXY_LIB += lib_proxy.o
+
+PROXY_CONF_SYM = proxies.conf.out
+
+include $(CSEC_ROOT)/mk/main.mk
+
+$(PROXY_CONF_SYM): proxies.conf $(PROXIES)/openssl_proxies.sym.conf
+	cat $^ > $@
+
+test: test.c lib.c
+test: LDLIBS += $(CRYPTO_LIB) $(SYM_PROXY_LIB)
+
+lib_proxy.o: CC = $(PROXY_SYM_CILLY)
+
+# don't compile lib with CIL cause fail has varargs
+CILLY_FLAGS += --leavealone=lib
+
+clean::
+	$(RM) client server
