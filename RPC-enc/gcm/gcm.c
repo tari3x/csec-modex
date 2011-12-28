@@ -1,7 +1,8 @@
 #include "gcm.h"
 #include <string.h>
-#include <string.h>
+#ifndef WIN32
 #include <arpa/inet.h>
+#endif
 
 static void mul_alpha(uint32 *z) {
   int carry = z[3] & 1;
@@ -108,7 +109,7 @@ MODIFIERS void gcm_init_64k(gcm_ctx_64k *c, uchar key[], size_t keylen) {
   build_hash_table_64k(c, hkey);
 }
 
-MODIFIERS void inline gcm_encrypt_64k(gcm_ctx_64k *c, uchar *nonce, size_t nlen, 
+MODIFIERS void /*inline*/ gcm_encrypt_64k(gcm_ctx_64k *c, uchar *nonce, size_t nlen, 
 				      uchar *data, size_t dlen, uchar *adata, 
 				      size_t alen, uchar *out, uchar *tag) {
   uint32 tmp[8] = {0, 0, 0, 0, 0, htonl(alen << 3), 0, htonl(dlen << 3)};
@@ -801,7 +802,7 @@ void gcm_init_256b(gcm_ctx_256b *c, uchar key[16], size_t keylen) {
   build_hash_table_256b(c, hkey);
 }
 
-MODIFIERS void inline gcm_encrypt_256b(gcm_ctx_256b *c, uchar *nonce, size_t nlen, 
+MODIFIERS void /*inline*/ gcm_encrypt_256b(gcm_ctx_256b *c, uchar *nonce, size_t nlen, 
 				       uchar *data, size_t dlen, uchar *adata, 
 				       size_t alen, uchar *out, uchar *tag) {
   uint32 tmp[8] = {0, 0, 0, 0, 0, htonl(alen << 3), 0, htonl(dlen << 3)};
