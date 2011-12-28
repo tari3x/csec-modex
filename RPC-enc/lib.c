@@ -78,6 +78,7 @@ extern uint32_t decrypt(unsigned char * key, uint32_t keylen, unsigned char * in
   return inlen - 32;
 }
 
+// FIXME: implement this properly
 unsigned char * get_shared_key(unsigned char* client, uint32_t client_len, unsigned char* server, uint32_t server_len, uint32_t * len)
 {
   *len = 16;

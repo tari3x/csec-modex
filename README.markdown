@@ -1,6 +1,11 @@
 
 The example protocols from csec-challenge. See below for the description of message structures.
 
+Disclaimer
+==========
+
+This source code forms a collection of benchmark examples to further research on verification tools; it is not intended for production use.
+
 Download
 ========
 
@@ -16,7 +21,7 @@ installed.
 Cygwin
 ------
 
-The protocols are known to run on cygwin. To compile, install Cygwin from http://www.cygwin.com.
+The protocols are known to run on Cygwin. To compile, install Cygwin from http://www.cygwin.com.
 From the devel packages, include make, gcc-core, gcc-g++, and openssl-devel. 
 Make sure that "C:\\cygwin\\bin" (or wherever you install the binaries) is on your Windows path.
 Finally, execute "make" from command line in the top distribution directory.
@@ -55,6 +60,11 @@ An implementation of the Needham-Schroeder-Lowe protocol:
 The encryption and decryption functions are stubs for now.
 
 Compiling with -DLOWE_ATTACK will disable the check for B's identity.
+
+The implementation gives detailed feedback when a message is not formatted correctly.
+This feedback is printed to stdandard output and we assume that the attacker cannot observe it.
+If the attacker could observe the reason for parsing failure, he would gain information
+about the encrypted value.
 
 RPC
 ---

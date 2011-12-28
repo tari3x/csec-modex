@@ -8,12 +8,6 @@
 #include "prp.h"
 #ifdef linux
 #include <endian.h>
-#elif defined(WIN32)
-// Windows is little endian only 
-#define __LITTLE_ENDIAN 1234
-#define __BIG_ENDIAN    4321
-#define __BYTE_ORDER __LITTLE_ENDIAN
-#define __FLOAT_WORD_ORDER __BYTE_ORDER
 #else
 #include <machine/endian.h>
 #endif

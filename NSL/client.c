@@ -2,6 +2,7 @@
 // This file is distributed as part of csec-tools under a BSD license.
 // See LICENSE file for copyright notice.
 
+#include "keys.h"
 #include "net.h"
 #include "lib.h"
 
@@ -16,6 +17,10 @@
 
 int main(int argc, char ** argv)
 {
+  // our identity and the identity of the other partner
+  unsigned char * host, * xhost;
+  size_t host_len, xhost_len;
+
   unsigned char * pkey, * skey, * xkey;
   size_t pkey_len, skey_len, xkey_len;
 
@@ -28,8 +33,8 @@ int main(int argc, char ** argv)
   size_t m2_len, m2_e_len;
   size_t m2_l1, m2_l2;
 
-  unsigned char * m3_e;
-  size_t m3_e_len;
+  unsigned char * m3, * m3_e;
+  size_t m3_len, m3_e_len;
 
   unsigned char * p;
 
@@ -38,27 +43,45 @@ int main(int argc, char ** argv)
 
   BIO * bio = socket_connect();
 
+  host = get_host(&host_len, 'A');
+  xhost = get_xhost(&xhost_len, 'A');
+
   pkey = get_pkey(&pkey_len, 'A');
   skey = get_skey(&skey_len, 'A');
-  xkey = get_xkey(&xkey_len, 'A');
 
 #ifdef VERBOSE
-  printf("pkey = ");
+  printf("A pkey = ");
   print_buffer(pkey, pkey_len);
   printf("\n");
 
-  printf("skey = ");
+  printf("A skey = ");
   print_buffer(skey, skey_len);
   printf("\n");
 
-  printf("xkey = ");
+  printf("A xhost = ");
+  print_buffer(xhost, xhost_len);
+  printf("\n");
+#endif
+
+  xkey = lookup_xkey(&xkey_len, xhost, xhost_len, 'A');
+
+#ifdef VERBOSE
+  printf("A xkey = ");
   print_buffer(xkey, xkey_len);
   printf("\n");
 #endif
 
+#ifdef CSEC_VERIFY
+#ifdef USE_EVENT_PARAMS
+  event2("beginA", host, host_len, xhost, xhost_len);
+#else
+  event0("beginA");
+#endif
+#endif
+
   /* Send message 1 */
 
-  m1_len = SIZE_NONCE + 4 + pkey_len
+  m1_len = SIZE_NONCE + 4 + host_len
       + sizeof(size_t);
   p = m1 = malloc(m1_len);
 
@@ -69,7 +92,7 @@ int main(int argc, char ** argv)
   Na = p;
   nonce(Na);
   p += SIZE_NONCE;
-  memcpy(p, pkey, pkey_len);
+  memcpy(p, host, host_len);
 
   m1_e_len = encrypt_len(xkey, xkey_len,
                          m1, m1_len);
@@ -107,7 +130,7 @@ int main(int argc, char ** argv)
       decrypt(skey, skey_len,
               m2_e, m2_e_len, m2);
 
-  if(xkey_len + 2 * SIZE_NONCE
+  if(xhost_len + 2 * SIZE_NONCE
       + 2 * sizeof(size_t) + 4 != m2_len)
   {
     printf("A: m2 has wrong length\n");
@@ -145,7 +168,7 @@ int main(int argc, char ** argv)
 #ifndef LOWE_ATTACK
   if(memcmp(m2 + m2_l1 + m2_l2
             + 2 * sizeof(size_t) + 4,
-            xkey,  xkey_len))
+            xhost,  xhost_len))
   {
     printf("A: x_xkey in m2 doesn't match xkey\n");
     exit(1);
@@ -162,13 +185,21 @@ int main(int argc, char ** argv)
 
   /* Send message 3 */
 
+  m3_len = 4 + m2_l2;
+  p = m3 = malloc(m3_len);
+
+  memcpy(p, "msg3", 4);
+  p += 4;
+
+  memcpy(p, xNb, m2_l2);
+
   m3_e_len = encrypt_len(xkey, xkey_len,
-                         xNb, m2_l2);
+                         m3, m3_len);
   m3_e = malloc(m3_e_len + sizeof(size_t) + 4);
   memcpy(m3_e, "encr", 4);
   m3_e_len =
-      encrypt(xkey, xkey_len, xNb,
-              m2_l2, m3_e + sizeof(m3_e_len) + 4);
+      encrypt(xkey, xkey_len, m3,
+              m3_len, m3_e + sizeof(m3_e_len) + 4);
   * (size_t *)(m3_e + 4) = m3_e_len;
 
   send(bio, m3_e, m3_e_len + sizeof(m3_e_len) + 4);
@@ -188,6 +219,15 @@ int main(int argc, char ** argv)
     printf("\n");
     fflush(stdout);
 #endif
+
+#ifdef CSEC_VERIFY
+#ifdef USE_EVENT_PARAMS
+  event2("endA", host, host_len, xhost, xhost_len);
+#else
+  event0("endA");
+#endif
+#endif
+
 
   return 0;
 }

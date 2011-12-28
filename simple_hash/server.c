@@ -18,50 +18,50 @@
 
 void server(unsigned char * key, ulong key_len)
 {
-  ulong payload_len;
+  ulong msg_len;
 
   BIO * b = socket_listen();
 
-  // receive the payload length and compute message length
-  recv(b, (unsigned char*) &payload_len, sizeof(payload_len));
-  if(payload_len < 0) fail ("payload_len < 0");
-
-  ulong body_len = sizeof(payload_len) + 1 + payload_len;
-  ulong msg_len = body_len + SHA1_LEN;
+  // receive the message length
+  recv(b, (unsigned char*) &msg_len, sizeof(msg_len));
+  if(msg_len < 0) fail ("payload_len < 0");
 
   // allocate the message and the hash buffers
   unsigned char * buf = malloc(msg_len);
   unsigned char * hmac = malloc(SHA1_LEN);
 
-  // store payload length in the received message buffer
   unsigned char * p = buf;
-  * (ulong *) p = payload_len;
+
+  // receive the message
+  recv(b, buf, msg_len);
+
+  // extract the payload length
+  ulong payload_len = * (ulong *) p;
   p += sizeof(payload_len);
 
-  // receive the tag, the payload and the hash into message buffer
-  //recv(b, p, 1 + payload_len + SHA1_LEN);
-  recv(b, p, 1);
-  unsigned char * tag = p;
-  *(p++) = 1; // overwrite the tag
+  // check the payload length
+  if(sizeof(payload_len) + 1 + payload_len + SHA1_LEN != msg_len)
+    fail("payload_len wrong");
 
-  recv(b, p, payload_len);
-  //unsigned char * payload = p + 1;
-  //unsigned char * msg_hmac = p + 1 + payload_len;
+  // check the tag
+  if (*p != 1)
+    fail("tag check failed");
 
-  unsigned char * payload = p;
-  p += payload_len;
+  unsigned char * payload = p + 1;
+  unsigned char * msg_hmac = p + 1 + payload_len;
 
-  recv(b, p, SHA1_LEN);
-
-  unsigned char * msg_hmac = p;
-  p += SHA1_LEN;
+  // reconstruct the hashed buffer
+  ulong body_len = sizeof(payload_len) + 1 + payload_len;
+  unsigned char * body = malloc(body_len);
+  *(ulong *) body = payload_len;
+  *(body + sizeof(payload_len)) = 2;
+  memcpy(body + sizeof(payload_len) + 1, payload, payload_len);
 
   unsigned int md_len;
-  *tag = 2;
-  HMAC(EVP_sha1(), key, key_len, buf, body_len, hmac, &md_len);
-  *tag = 1;
+  HMAC(EVP_sha1(), key, key_len, body, body_len, hmac, &md_len);
 
   if(!memcmp(hmac, msg_hmac, SHA1_LEN))
+  // if(1)
   {
     #ifdef VERBOSE
         printf("received and verified ");
@@ -69,16 +69,13 @@ void server(unsigned char * key, ulong key_len)
         printf("\n");
         fflush(stdout);
     #endif
+
     #ifdef CSEC_VERIFY
       event1("server_recv", payload, payload_len);
     #endif
   }
   else
-  {
-#ifdef VERBOSE
-    printf("verification failed\n");
-#endif
-  }
+    fail("MAC check failed");
 
   // wait for the client to close, to avoid "Address already in use" errors
   wait_close(b);
