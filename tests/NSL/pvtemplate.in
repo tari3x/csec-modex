@@ -1,0 +1,99 @@
+
+free c.
+fun true/0.
+
+(*************************
+  Public-key encryption
+**************************)
+
+fun ek/1.
+fun dk/1.
+fun E/3.
+reduc
+  D(E(x, ek(a), r), dk(a)) = x.
+reduc
+  isek(ek(a)) = ek(a).
+  
+(*************************
+  Signatures
+**************************)
+  
+fun sk/1.
+fun vk/1.
+fun sign/3.
+
+fun cert/2.
+
+reduc 
+  check_key(host, key, sign(cert(key, host), sk(r), r'), vk(r)) = true.
+  
+(*************************
+  Misc
+**************************)
+  
+reduc inverse_injbot(x) = x.
+
+fun hostA/0.
+fun hostB/0.
+  
+(******************** 
+  <Query>
+********************)
+
+query
+  ev:endB(x, y) ==> ev:beginA(x, y) | ev:bad(x).
+
+query
+  ev:endA(x, y) ==> ev:beginB(x, y) | ev:bad(y).
+
+(*
+  New version of PV displays this information anyway
+*)
+query 
+  ev:endB(x, y) ==> ev:bad(x).
+
+(*************************** 
+  <Model>
+***************************)
+
+let A = 0 . let B = 0 .
+
+(*************************** 
+  <Environment>
+***************************)
+
+let A' = 
+  in(c, (pkX, hostX, sigX));
+  A .
+
+let B' = 
+  in(c, (pkX, hostX, sigX));
+  B .
+
+let keyServer = 
+  in(c, (h, k));
+  if h = hostA then
+    out(c, (pkA, h, sign(cert(pkA, h), skS, r3)))
+  else if h = hostB then 
+    out(c, (pkB, h, sign(cert(pkB, h), skS, r3)))
+  else
+    event bad(h);
+    out(c, (k, h, sign(cert(k, h), skS, r3))) .
+
+process
+! (
+  new A_seed; 
+  new B_seed;
+  let pkA = ek(A_seed) in
+  let skA = dk(A_seed) in
+  let pkB = ek(B_seed) in
+  let skB = dk(B_seed) in
+
+  new rkS;
+  let pkS = vk(rkS) in
+  let skS = sk(rkS) in
+  
+  out(c, (pkA, pkB, pkS));
+  (!A' | !B' | !keyServer)
+)
+

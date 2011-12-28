@@ -25,7 +25,7 @@ extern uint32_t encrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
 
   load_buf(key, keylen, "key");
   load_buf(in, inlen, "msg");
-  symNE("E", "cipher", &ret, sizeof(ret), TRUE);
+  symNE("E", "cipher", &ret, sizeof(ret), TRUE, -1);
   store_buf(out);
 
   if(ret > encrypt_len_proxy(key, keylen, in, inlen))
@@ -52,7 +52,7 @@ extern uint32_t decrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
 
   load_buf(key, keylen, "key");
   load_buf(in, inlen, "cipher");
-  symNE("D", "msg", &ret, sizeof(ret), TRUE);
+  symNE("D", "msg", &ret, sizeof(ret), TRUE, -1);
   store_buf(out);
 
   if(ret > decrypt_len_proxy(key, keylen, in, inlen))
@@ -67,7 +67,7 @@ unsigned char * get_shared_key_proxy(unsigned char* client, uint32_t client_len,
 
   load_buf(client, client_len, "client");
   load_buf(server, server_len, "server");
-  symNE("key", "kAB", len, sizeof(*len), TRUE);
+  symNE("key", "kAB", len, sizeof(*len), TRUE, -1);
   store_buf(ret);
   //readenv(ret, len, "kAB");
 
@@ -82,7 +82,7 @@ unsigned char * mk_session_key_proxy(uint32_t * len)
   // but in a symbolic model this does not make a difference
   // and so we use the nonce itself as a key
 
-  symNE("nonce", "kS", len, sizeof(*len), FALSE);
+  symNE("new", "kS", len, sizeof(*len), FALSE, -1);
   store_buf(ret);
 
   return ret;
@@ -104,7 +104,7 @@ unsigned char * get_response_proxy(uint32_t * len)
 {
   unsigned char * ret = get_response(len);
 
-  symNE("nonce", "response", len, sizeof(*len), FALSE);
+  symNE("new", "response", len, sizeof(*len), FALSE, -1);
   store_buf(ret);
 
   return ret;

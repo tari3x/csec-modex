@@ -1,0 +1,46 @@
+
+free c.
+
+(********************************
+  Crypto
+*********************************)
+
+fun E/2.
+private fun key/2.
+reduc
+  D(k, E(k, x)) = x.
+(* 
+equation 
+  key(A, B) = key(B, A).
+*)
+
+(********************************
+  <Query>
+*********************************)
+
+(* Authentication properties: *)
+query ev:client_accept(client, server, req, resp) ==> ev:server_reply(client, server, req, resp) | ev:bad(client, server).
+query ev:server_reply(client, server, req, resp) ==> ev:client_begin(client, server, req) | ev:bad(client, server).
+
+(* Secrecy properties: *)
+query attacker:key(client, server) ==> ev:bad(client, server).
+query attacker:kS1[clientID = client; serverID = server] ==> ev:bad(client, server).
+
+(* Sanity property: *)
+query ev:client_accept(client, server, req, resp) ==> ev:bad(client, server).
+free request, response.
+
+(********************************
+  <Model>
+*********************************)
+
+let A = 0 . let B = 0 .
+
+(********************************
+  <Environment>
+*********************************)
+
+process
+    ! (in(c, clientID); in(c, serverID); !A)
+  | ! (in(c, serverID); !B)
+  | ! (in(c, (clientID, serverID)); event bad(clientID, serverID); out(c, key(clientID, serverID)))

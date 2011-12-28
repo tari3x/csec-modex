@@ -23,7 +23,8 @@ void client(unsigned char * payload, ulong payload_len, unsigned char * key, ulo
   unsigned char * msg = malloc(msg_len);
 
   unsigned char * p = msg;
-  * (ulong *)p = payload_len; p += sizeof(payload_len);     // add length
+  * (ulong *)p = payload_len;                               // add length
+  p += sizeof(payload_len);
   unsigned char * tag = p;
   *(p++) = 1;                                               // add the tag
   memcpy(p, payload, payload_len);                          // add the payload
@@ -36,6 +37,7 @@ void client(unsigned char * payload, ulong payload_len, unsigned char * key, ulo
   *tag = 1;
 
   BIO * b = socket_connect();
+  send(b, (unsigned char *) &msg_len, sizeof(msg_len));
   send(b, msg, msg_len);
 }
 

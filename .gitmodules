@@ -1,6 +1,3 @@
 [submodule "deps/ocamlyices"]
 	path = deps/ocamlyices
 	url = git://github.com/tari3x/ocamlyices.git
-[submodule "tests/RPC-enc"]
-	path = tests/RPC-enc
-	url = git://github.com/tari3x/rpc-enc.git

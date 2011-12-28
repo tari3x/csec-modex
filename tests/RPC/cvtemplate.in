@@ -1,0 +1,58 @@
+
+channel c_in, c_out. 
+type mstring.
+
+param N.
+
+(******************** 
+  MAC
+********************)
+
+type mkeyseed [fixed, large].
+type mkey [bounded].
+type macinput.
+(* type macres. *)
+proba Pmac.
+
+expand UF_CMA_mac(mkeyseed, mkey, mstring, mstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+
+forall m: mstring, k: mkey, r: mstring;
+  ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
+
+(******************** 
+  <Query>
+********************)
+ 
+event client_begin(mstring).
+event client_accept(mstring, mstring).
+event server_reply(mstring, mstring).
+
+query x: mstring, y:mstring;
+  event client_accept(x, y) ==> server_reply(x, y).
+
+query x: mstring, y:mstring;
+  event server_reply(x, y) ==> client_begin(x).
+
+(*
+query x: mstring, y:mstring;
+  event client_accept(x, y).
+*)
+
+(******************** 
+  <Model>
+********************)
+
+let A = 0 . let B = 0 .
+
+(******************** 
+  <Environment>
+********************)
+
+process
+! N (
+  in(c_in, (request: mstring, response: mstring));
+  new keyseed: mkeyseed; 
+  let keyAB = mkgen(keyseed) in
+  out(c_out, ());
+  ((! N A) | (! N B))
+)

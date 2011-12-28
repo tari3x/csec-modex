@@ -1632,6 +1632,9 @@ int BN_set_word_proxy(BIGNUM *a, unsigned long w)
   return ret;
 }
 
+/*
+ * rr = a1^p1 * a2*p2 mod m
+ */
 int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
                                   BIGNUM const   *p1 , BIGNUM const   *a2 ,
                                   BIGNUM const   *p2 , BIGNUM const   *m ,
@@ -1650,6 +1653,9 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
   return ret;
 }
 
+/*
+ * See BN_mod_exp_proxy.
+ */
 int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
                                  BIGNUM const   *p , BIGNUM const   *m ,
                                  BN_CTX *ctx , BN_MONT_CTX *in_mont )
@@ -1672,6 +1678,13 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
  */
 int DSA_generate_key_proxy(DSA *a)
 {
+/*
+  size_t keylen;
+  symL("dsa_keylen", "keylen", sizeof(size_t), TRUE);
+  store_buf(&keylen, sizeof(keylen));
+*/
+
+  // TODO: explicit length variable with length hint
   symN("new", "keyseed", NULL, FALSE);
   store_ctx(a, "keyseed");
 

@@ -1,0 +1,100 @@
+
+channel c_in, c_out. 
+type mstring.
+
+param N.
+
+(******************** 
+  MAC
+********************)
+
+type mkeyseed [fixed, large].
+type mkey [bounded].
+type macinput.
+(* type macres. *)
+proba Pmac.
+
+expand UF_CMA_mac(mkeyseed, mkey, mstring, mstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+
+forall m: mstring, k: mkey, r: mstring;
+  ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
+
+
+(*************************** 
+ Constants 
+***************************)
+
+
+(*************************** 
+  Concatenation and Parsing 
+***************************)
+
+fun conc1(mstring, mstring): mstring [compos].
+fun conc2(mstring): mstring [compos].
+fun conc3(mstring, mstring): mstring [compos].
+
+forall var1: mstring, var2: mstring, var3: mstring;
+  conc2(var1) <> conc3(var2, var3).
+
+(*************************** 
+  Typecasting 
+***************************)
+
+
+(******************** 
+  <Query>
+********************)
+ 
+event client_begin(mstring).
+event client_accept(mstring, mstring).
+event server_reply(mstring, mstring).
+
+query x: mstring, y:mstring;
+  event client_accept(x, y) ==> server_reply(x, y).
+
+query x: mstring, y:mstring;
+  event server_reply(x, y) ==> client_begin(x).
+
+(*
+query x: mstring, y:mstring;
+  event client_accept(x, y).
+*)
+
+
+(*************************** 
+  Model 
+***************************)
+
+let A = 
+in(c_in, ());
+event client_begin(request);
+let msg1 = conc1(request, HMAC_sha1(conc2(request), keyAB)) in
+out(c_out, (msg1));
+in(c_in, (msg2: mstring, msg3: mstring));
+let conc1(var1, var2) = msg3 in
+let hash1 = HMAC_sha1(conc3(request, var1), keyAB) in
+if var2 = hash1 then 
+event client_accept(request, var1);
+out(c_out, ()); 0 .
+
+let B = 
+in(c_in, (msg1: mstring, msg2: mstring));
+let conc1(var1, var2) = msg2 in
+let hash1 = HMAC_sha1(conc2(var1), keyAB) in
+if var2 = hash1 then 
+event server_reply(var1, response);
+let msg3 = conc1(response, HMAC_sha1(conc3(var1, response), keyAB)) in
+out(c_out, (msg3)); 0 .
+
+(******************** 
+  <Environment>
+********************)
+
+process
+! N (
+  in(c_in, (request: mstring, response: mstring));
+  new keyseed: mkeyseed; 
+  let keyAB = mkgen(keyseed) in
+  out(c_out, ());
+  ((! N A) | (! N B))
+)

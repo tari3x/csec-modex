@@ -161,7 +161,9 @@ void iconcat(dbytes_c *ab, dbytes_c *a, dbytes_c *b)
 	totLen = ab->length - sizeof(aLen) - sizeof(char);
 	memcpy(&aLen, ab->address, sizeof(aLen));
 	
-	if (aLen > totLen || ab->address[sizeof(aLen)] != '|')
+	// FIXME: restore when you can prove that (int) 7c = i127
+	// if (aLen > totLen || ab->address[sizeof(aLen)] != '|')
+	if (aLen > totLen || memcmp(ab->address + sizeof(aLen), "|", 1))
 	{
 		fprintf(stderr, "Error: This byte array is not a valid concatenation.\n");
 		exit(0);

@@ -1,7 +1,13 @@
  
 open Types
 
+val solver_debug : bool ref
+
 val addFact : exp -> unit 
+
+val resetFacts : unit -> unit
+
+val isTrue: exp -> pbool
 
 val equal : exp -> exp -> pbool
 

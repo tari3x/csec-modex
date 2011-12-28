@@ -1,0 +1,28 @@
+
+free c.
+
+(******************** 
+  Crypto
+********************)
+
+fun HMAC_sha1/2.
+
+(******************** 
+  <Query>
+********************)
+
+query ev:client_accept(x, y) ==> ev:server_reply(x, y).
+query ev:server_reply(x, y) ==> ev:client_begin(x).
+
+query ev:client_accept(x, y).
+
+(******************** 
+  <Environment>
+********************)
+
+process !
+  new keyAB;
+  in(c, request);
+  in(c, response);
+  (!A | !B)
+ 

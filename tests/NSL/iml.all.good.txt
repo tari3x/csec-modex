@@ -1,51 +1,83 @@
 let A = 
-new nonce1<20>;
-let msg1 = 6d736731|i20|nonce1|pkA in
-new nonce2<20>;
-let cipher1 = E(isek(pkX), msg1, nonce2) in
+if !(len(hostA)<8> > i40) then 
+if !(len(hostX)<8> > i40) then 
+if !(len(pkA)<8> > i100) then 
+if !(len(skA)<8> > i100) then 
+if !(len(pkX)<8> > i100) then 
+if check_key(hostX, pkX, sigX, pkS)<1> then 
+event beginA(hostA, hostX);
+new nonce1<20>: fixed_20_nonce;
+let msg1 = 6d736731|i20|nonce1|hostA in
+new nonce2<lenvar(i105)>: seed_T;
+if !(len(E(msg1, isek(pkX), nonce2))<8> > encrypt_len()<8>) then 
+if i0 < (len(E(msg1, isek(pkX), nonce2))<8> + i8 + i4) then 
+let cipher1 = E(msg1, isek(pkX), nonce2) in
 let msg2 = 656e6372|len(cipher1)<8>|cipher1 in
 out(c, msg2);
+let var1 = len(cipher1)<8> + i8 + i4 in
+if !((var1 castToInt TSBase(int )) <= i0) then 
+if !(((var1 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(E(msg1, isek(pkX), nonce2))<8> + i8 + i4)) then 
 in(c, msg3<8>);
-let var1 = (msg3 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
-in(c, msg4<var1>);
-let msg5 = D(skA, msg4) in
-if len(pkX)<8> + i40 + i16 + i4 = len(msg5)<8> then 
+in(c, msg4<(msg3 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+if !(len(inverse_injbot(D(msg4, skA)))<8> > decrypt_len()<8>) then 
+if len(hostX)<8> + i40 + i16 + i4 = len(inverse_injbot(D(msg4, skA)))<8> then 
+let msg5 = inverse_injbot(D(msg4, skA)) in
 if msg5{0, 4} = 6d736732 then 
 if msg5{4, 8} = i20 then 
 if msg5{12, 8} = i20 then 
 let var2 = msg5{20, msg5{4, 8}} in
 if var2 = nonce1 then 
 let var3 = msg5{msg5{4, 8} + msg5{12, 8} + i16 + i4, len(msg5) - (msg5{4, 8} + msg5{12, 8} + i16 + i4)} in
-if var3 = pkX then 
-let msg6 = msg5{msg5{4, 8} + i16 + i4, msg5{12, 8}} in
-new nonce3<20>;
-let cipher2 = E(isek(pkX), msg6, nonce3) in
+if var3 = hostX then 
+let var4 = msg5{msg5{4, 8} + i16 + i4, msg5{12, 8}} in
+let msg6 = 6d736733|var4 in
+new nonce3<lenvar(i237)>: seed_T;
+if !(len(E(msg6, isek(pkX), nonce3))<8> > encrypt_len()<8>) then 
+if i0 < (len(E(msg6, isek(pkX), nonce3))<8> + i8 + i4) then 
+let cipher2 = E(msg6, isek(pkX), nonce3) in
 let msg7 = 656e6372|len(cipher2)<8>|cipher2 in
 out(c, msg7);
+let var5 = len(cipher2)<8> + i8 + i4 in
+if !((var5 castToInt TSBase(int )) <= i0) then 
+if !(((var5 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(E(msg6, isek(pkX), nonce3))<8> + i8 + i4)) then 
+event endA(hostA, hostX);
 
 let B = 
+if !(len(hostB)<8> > i40) then 
+if !(len(pkB)<8> > i100) then 
+if !(len(skB)<8> > i100) then 
 in(c, msg1<8>);
-let var1 = (msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
-in(c, msg2<var1>);
-let msg3 = D(skB, msg2) in
-if len(pkX)<8> + i8 + i20 + i4 = len(msg3)<8> then 
+in(c, msg2<(msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+if !(len(inverse_injbot(D(msg2, skB)))<8> > decrypt_len()<8>) then 
+if !(i32 >= len(inverse_injbot(D(msg2, skB)))<8>) then 
+let msg3 = inverse_injbot(D(msg2, skB)) in
 if msg3{0, 4} = 6d736731 then 
 if msg3{4, 8} = i20 then 
-let var2 = msg3{i8 + msg3{4, 8} + i4, len(msg3) - (i8 + msg3{4, 8} + i4)} in
-if var2 = pkX then 
-let var3 = msg3{4, 8} in
-let var4 = msg3{12, msg3{4, 8}} in
-new nonce1<20>;
-let msg4 = 6d736732|var3|i20|var4|nonce1|pkB in
-new nonce2<20>;
-let cipher1 = E(isek(pkX), msg4, nonce2) in
+if !((len(inverse_injbot(D(msg2, skB)))<8> - (i8 + msg3{4, 8} + i4)) > i40) then 
+if !(len(pkX)<8> > i100) then 
+let host1 = msg3{i8 + msg3{4, 8} + i4, len(msg3) - (i8 + msg3{4, 8} + i4)} in
+if check_key(host1, pkX, sigX, pkS)<1> then 
+event beginB(host1, hostB);
+let var1 = msg3{4, 8} in
+let var2 = msg3{12, msg3{4, 8}} in
+new nonce1<20>: fixed_20_nonce;
+let msg4 = 6d736732|var1|i20|var2|nonce1|hostB in
+new nonce2<lenvar(i175)>: seed_T;
+if !(len(E(msg4, isek(pkX), nonce2))<8> > encrypt_len()<8>) then 
+if i0 < (len(E(msg4, isek(pkX), nonce2))<8> + i8 + i4) then 
+let cipher1 = E(msg4, isek(pkX), nonce2) in
 let msg5 = 656e6372|len(cipher1)<8>|cipher1 in
 out(c, msg5);
+let var3 = len(cipher1)<8> + i8 + i4 in
+if !((var3 castToInt TSBase(int )) <= i0) then 
+if !(((var3 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(E(msg4, isek(pkX), nonce2))<8> + i8 + i4)) then 
 in(c, msg6<8>);
-let var5 = (msg6 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
-in(c, msg7<var5>);
-let msg8 = D(skB, msg7) in
-if len(msg8)<8> = i20 then 
-if msg8 = nonce1 then 
-event endB();
+in(c, msg7<(msg6 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+if !(len(inverse_injbot(D(msg7, skB)))<8> > decrypt_len()<8>) then 
+let msg8 = inverse_injbot(D(msg7, skB)) in
+if msg8{0, 4} = 6d736733 then 
+if len(inverse_injbot(D(msg7, skB)))<8> = i24 then 
+let var4 = msg8{4, len(msg8) - i4} in
+if var4 = nonce1 then 
+event endB(host1, hostB);
 

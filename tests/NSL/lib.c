@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <ctype.h>
 
 #include <openssl/rand.h>
 
@@ -104,6 +105,12 @@ extern size_t decrypt(unsigned char * key, size_t keylen, unsigned char * in, si
   return outlen;
 }
 
+unsigned char * get_sigkey(size_t *  len)
+{
+  *len = 3;
+  return (unsigned char *) "pkS";
+}
+
 unsigned char * get_pkey(size_t * len, char side)
 {
   *len = 3;
@@ -128,16 +135,62 @@ unsigned char * get_skey(size_t * len, char side)
   return (unsigned char *) ret;
 }
 
-unsigned char * get_xkey(size_t * len, char side)
+unsigned char * get_xkey(size_t * len, const unsigned char * xhost, size_t xhost_len)
 {
   *len = 3;
 
   char * ret;
 
-  if(side == 'A') ret = "pkB";
-  if(side == 'B') ret = "pkA";
+  if(xhost[4] == 'A') ret = "pkA";
+  if(xhost[4] == 'B') ret = "pkB";
 
   return (unsigned char *) ret;
+}
+
+unsigned char * get_host(size_t * len, char side)
+{
+  *len = 5;
+
+  char * ret;
+
+  if(side == 'A') ret = "hostA";
+  if(side == 'B') ret = "hostB";
+
+  return (unsigned char *) ret;
+}
+
+unsigned char * get_xhost(size_t * len, char side)
+{
+  *len = 5;
+
+  char * ret;
+
+  if(side == 'A') ret = "hostB";
+  if(side == 'B') ret = "hostA";
+
+  return (unsigned char *) ret;
+}
+
+
+unsigned char * get_xsig(size_t * len, const unsigned char * xhost, size_t xhost_len)
+{
+  *len = 4;
+
+  char * ret;
+
+  if(xhost[4] == 'A') ret = "sigA";
+  if(xhost[4] == 'B') ret = "sigB";
+
+  return (unsigned char *) ret;
+}
+
+bool check_key(const unsigned char * host, size_t host_len,
+               const unsigned char * key, size_t key_len,
+               const unsigned char * sig, size_t sig_len,
+               const unsigned char * sigkey, size_t sigkey_len)
+{
+  // TODO: implement cryptographically
+  return ((host[4] == key[2]) && (key[2] == sig[3]));
 }
 
 void fail(const char * fmt, ...)
@@ -166,15 +219,17 @@ void print_buffer(const unsigned char * buf, int len)
     return;
   }
 
+  // printf("%*s", len, buf);
+
   sblen = len * 2 + 1;
   sbuf = (char *) malloc(sblen);
 
   for(i = 0; i < len; i++)
-    sprintf(sbuf + 2 * i, "%02x", buf[i]);
-    /* if(isprint(buf[i]))
+    // sprintf(sbuf + 2 * i, "%02x", buf[i]);
+    if(isprint(buf[i]))
       putchar(buf[i]);
     else
-      printf("\\%.2x", buf[i]); */
+      printf("\\%.2x", buf[i]);
 
   // hm, all of this is still interleaving!
   // write(2, sbuf, sblen);

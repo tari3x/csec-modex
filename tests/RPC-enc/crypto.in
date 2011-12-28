@@ -1,6 +1,0 @@
-fun E/2.
-private fun key/2.
-reduc
-  D(k, E(k, x)) = x.
-equation 
-  key(A, B) = key(B, A).

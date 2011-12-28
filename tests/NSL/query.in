@@ -1,6 +1,0 @@
-
-query
-  ev:endB() ==> ev:beginA() | ev:notA().
-
-query 
-  ev:endB() ==> ev:notA().

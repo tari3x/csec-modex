@@ -76,4 +76,7 @@ transition to an architecture-independent implementation.
 Contact
 =======
 
-Please send bug reports and suggestions to Mihhail Aizatulin (avatar@hot.ee)
+Please send bug reports and suggestions to Mihhail Aizatulin (<avatar@hot.ee>)
+
+When submitting bug reports please include the full output of running make together
+with all the *.debug.out files from the test folder in which an error happened.

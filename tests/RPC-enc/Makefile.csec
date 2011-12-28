@@ -2,9 +2,9 @@
 CSEC_ROOT = ../..
 
 everything: compile sym
-everything: iml verify
+everything: iml pv
 
-all: iml verify
+all: iml pv
 
 include Makefile.common
 
@@ -19,7 +19,7 @@ OUTPUTS = iml.all.out pvmodel.out
 
 csec-verify-log: csec-verify.log
 csec-verify.log:
-	$(MAKE) -f Makefile.csec iml verify > $@ 2>&1
+	$(MAKE) -f Makefile.csec iml pv > $@ 2>&1
 
 include $(CSEC_ROOT)/mk/main.mk
 

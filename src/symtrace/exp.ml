@@ -76,6 +76,20 @@ let getLenLen : exp -> len = fun e ->
     | Unknown -> Unknown
     | l -> getLen l
 
+(* 
+  Used in several places:
+  
+  - to give lengths to formal arguments in [Transform], there we need to strip it all 
+  - in [mkVar]
+*)
+let getRealLen = function
+  | Sym(_, _, l, _) -> l
+  | e -> getLen e
+
+let getRealLenLen e = match getRealLen e with
+  | Unknown -> fail "getRealLenLen: unknown length"
+  | l -> getRealLen l
+
 let setLen : exp -> exp -> exp = fun e l -> 
   match e with
       | Int (ival, Unknown) -> Int (ival, l)
@@ -113,6 +127,16 @@ let isFieldOffsetVal : offsetVal -> bool = function
   | Field _ -> true
   | _ -> false
 
+(*
+  We copy the tag id, but change all tags to deterministic, by the logic that variable references are deterministic.
+*)
+let mkVar : string -> exp -> exp = fun s e ->
+  match getTag e with
+    | NoTag -> Sym (("var", Prefix), [String s], getRealLen e, freshDet ())
+    | tag   -> Sym (("var", Prefix), [String s], getRealLen e, Det (tagNum tag))
+
+let mkLet : exp -> exp -> exp = fun pat e ->
+  Sym (("let", Prefix), [pat; e], Unknown, freshDet ())
 
 (*************************************************)
 (** {1 Simplification} *)
@@ -312,7 +336,7 @@ let rec simplify : exp -> exp =
 (* let deepSimplify : exp -> exp = visitExpPost simplify *)
 
 (*************************************************)
-(** {1 Output Meta} *)
+(** {1 Process Meta} *)
 (*************************************************)
 
 (** 
@@ -327,22 +351,56 @@ type meta =
       This is used for deciding whether to inline this expression during output.
    *)
   
-  mutable printed: bool;
-  (** Has this expression been printed out already? *)  
+  mutable defined: bool;
+  (** Is the variable that has the name of this expression introduced somewhere? *)
 } 
 
-(** Meta information for expressions *)
+(** 
+  Meta information for expressions.
+  Transient, nothing can be assumed between function calls.
+*)
 let meta: meta IntMap.t ref = ref IntMap.empty
 
-(** The tags used for names *)
+(** 
+  The tags used for names.
+  Volatile, nothing can be assumed between function calls.
+*)
 let nameTags : int StrMap.t ref = ref StrMap.empty
 
+(**
+  An environment that records names given to expressions in a process.
+*)
+type pMeta = meta IntMap.t * int StrMap.t
+
+type process = exp list * pMeta
+
+let resetRefs : unit -> unit = fun () ->
+  let reset : meta -> meta = fun m -> { m with refs = 0 } in
+  meta := IntMap.map reset !meta
+
+(*
+let resetNames : unit -> unit = fun () ->
+  let reset : meta -> meta = fun m -> { m with name = "" } in
+  meta := IntMap.map reset !meta;
+  nameTags := StrMap.empty
+*)
+
+let emptyMeta: unit -> pMeta = fun () -> (IntMap.empty, StrMap.empty)
+
+let setActiveMeta: pMeta -> unit = fun (m, n) ->
+  meta := m;
+  nameTags := n
+
+let resetMeta: unit -> unit = fun () -> setActiveMeta (emptyMeta ())
+  
+let getActiveMeta: unit -> pMeta = fun () -> (!meta, !nameTags)   
 
 let getMeta : exp -> meta = fun e ->
   let id = expId e in
+  (* debug ("getMeta, id = " ^ string_of_int id ^ ", e = " ^ dump e); *)
   try IntMap.find id !meta
   with Not_found -> 
-    let m = { name = ""; refs = 0; printed = false } in
+    let m = { name = ""; refs = 0; defined = false } in
     meta := IntMap.add id m !meta;
     m
 
@@ -362,6 +420,10 @@ let giveName : exp -> string = fun e ->
   *)
   m.name
 
+(*************************************************)
+(** {1 Transformations} *)
+(*************************************************)
+
 
 let inlineAll = ref false
 
@@ -377,21 +439,24 @@ let needsBracket : exp -> bool = function
   | Sym ((_, Infix), _, _, _) -> true
   | _ -> false
 
-let isIMLAction : exp -> bool = function
-  | Sym ((("read" | "nonce"), _), _, _, _) -> true
-  | _ -> false
-
 let mustInline : exp -> bool = 
-	let isShort : exp -> bool = function 
-	  | Int _ -> true
-	  | Ptr _ -> true
+    let isShort : exp -> bool = function 
+      | Int _ -> true
+      | Ptr _ -> true
     | e when isArithmetic e -> true
-	  | e -> match getIntVal (getLen e) with Some l_val -> l_val < 30 | _ -> false
+      | e -> match getIntVal (getLen e) with Some l_val -> l_val < 30 | _ -> false
   in
   function
     | All | Unknown -> true
     | Sym ((("var" | "len" | "lenvar" | "field_offset"), _), _, _, _) -> true
-	  | e -> isConcrete e && isShort e
+    | e -> isConcrete e && isShort e
+
+
+(* FIXME: remove later, see splitByType *)    
+let isIMLAction : exp -> bool = function
+  | Sym ((("read" | "new" | "newT"), _), _, _, _) -> true
+  | _ -> false
+
 
 let rec markOffset : offset -> unit = function
   | (Flat e, _) -> markExp e
@@ -413,112 +478,166 @@ and markExp : exp -> unit = fun e ->
   Records for each expression, how often it is referenced by other expressions.
   Call this with the same list that you intend to output.
 *)
-let markExps : exp list -> unit = iter markExp
+let markExps : exp list -> unit = fun es -> resetRefs (); iter markExp es
 
-let resetMeta : unit -> unit = fun () ->
-  let reset : meta -> meta = fun m -> { m with refs = 0; printed = false } in
-  meta := IntMap.map reset !meta
 
-let resetNames : unit -> unit = fun () ->
-  let reset : meta -> meta = fun m -> { m with name = "" } in
-  meta := IntMap.map reset !meta;
-  nameTags := StrMap.empty
-
+(*
+(*
+    Whether to exhaustively eliminate common subexpressions is a matter of taste:
+    with splitByType you get
+        let dsa_sig_r1 = dsa_sig_r(sk(keyseed1), hash4) in
+        let dsa_sig_s1 = dsa_sig_s(sk(keyseed1), hash4) in
+    and with 
+        let skey1 = sk(keyseed1) in
+            let dsa_sig_r1 = dsa_sig_r(skey1, hash4) in
+            let dsa_sig_s1 = dsa_sig_s(skey1, hash4) in
+*)
 let elimCommonSubs : exp list -> exp list = fun es ->
 
-	let rec elimSubs : exp -> exp list = fun e ->
-	  
-	  (* this is constructed in reverse order, reverse once before returning *)
-	  let subs : exp list ref = ref [] in
-	  
-	  let elim : exp -> exp = fun e ->
-		  let m = getMeta e in
-		  (* already defined before, just replace by the name *)
-		  if m.printed then 
-		    mkVar m.name e
-		  (* inline expressions that are only referenced once or are short concrete values *)
-		  else if !inlineAll || (mustInline e) || (not (isIMLAction e) && (m.refs = 1)) then
-	      e
-		  (* not inlined, output as separate definition *)
-		  else 
-		  begin
-	      let name = giveName e in
-		    m.printed <- true;
-	      subs := (if isIMLAction e then e else mkLet e) :: !subs;
-	      mkVar name e
-		  end
-	  in
-	  
-	  let e' = visitExpPost elim e in
-	  rev (e' :: !subs)
+    let rec elimSubs : exp -> exp list = fun e ->
+      
+      (* this is constructed in reverse order, reverse once before returning *)
+      let subs : exp list ref = ref [] in
+
+      let elim : exp -> exp = fun e ->
+          let m = getMeta e in
+          (* already defined before, just replace by the name *)
+          if m.printed then 
+            mkVar m.name e
+          (* inline expressions that are only referenced once or are short concrete values *)
+          else if !inlineAll || (mustInline e) || (not (isIMLAction e) && (m.refs = 1)) then
+          e
+          (* not inlined, output as separate definition *)
+          else 
+          begin
+          let name = giveName e in
+            m.printed <- true;
+          subs := (if isIMLAction e then e else mkLet e) :: !subs;
+          mkVar name e
+          end
+      in
+      
+      let e' = visitExpPost elim e in
+      rev (e' :: !subs)
     
   in
   markExps es;
   let result = List.concat (map elimSubs es) in
   resetMeta ();
   result
+*)
 
-type expType = Conc | Parse | Crypt | Top | Bot
+(*
+  The types form a lattice
+  
+  Top
+  \/
+  {Conc, Parse, Crypt, Formula}
+  \/
+  Bot
+  
+  Such that an expression of type t' should be inlined in an expression of type t whenever t' <= t.
+*)
+type expType = Conc | Parse | Crypt | Formula | Top | Bot
 
-let splitByType : exp list -> exp list = fun es ->
-
-	let splitExpByType : exp -> exp list = fun e ->
+(*
+  Idempotent, if started with same meta as returned.
+*)
+let splitByType : process -> process = fun (es, meta) ->
 	
-	  let subs : exp list ref = ref [] in
-	
+		let splitExpByType : exp -> exp list = fun e ->
+		
+		let subs : exp list ref = ref [] in
+		
+		let mustMoveOut : exp -> bool = fun e ->
+		  let m = getMeta e in
+		  (isIMLAction e) || (isNondet e && m.refs > 1)
+		in
+		
 	  let moveOut : expType -> expType -> exp -> exp = fun t t' e ->
-	    if t = Top || mustInline e || (not (isIMLAction e) && t = t') then e else
+	  let inline = 
+	    if mustMoveOut e then false
+	    else if mustInline e then true
+	    else if t = Top || t = t' then true
+	    else false 
+	  in
+	  if inline then e else
 	    let m = getMeta e in
-	    if m.printed then
-	      mkVar m.name e
+      let v = mkVar (giveName e) e in
+	    if m.defined then v
 	    else begin
-			  let name = giveName e in
-			  m.printed <- true;
-			  subs := (if isIMLAction e then e else mkLet e) :: !subs;
-			  mkVar name e
+			  m.defined <- true;
+		    let e_def = match e with
+		      | Sym ((s, fixity), [], len, tag) when List.mem s ["read"; "new"] -> 
+		        Sym ((s, fixity), [v], len, tag)
+          | Sym (("newT", fixity), [String t], len, tag) ->
+            Sym (("newT", fixity), [v; String t], len, tag) 
+		      | e -> mkLet v e
+	      in
+	      subs := e_def :: !subs;
+	      v
 	    end 
 	  in
 	
 	  let rec split : expType -> exp -> exp = fun t e -> 
 	    match e with
-			  | Int _ -> e
-			  | String _ -> e
-			  | Sym ((s, fixity), es, l, tag) ->
-			    let t' = 
-	          if s = "len" || fixity = Infix then 
-	            if List.mem t [Parse; Conc] then t else Parse
-	          else Crypt
-	        in
-			    let e' = Sym ((s, fixity), map (split t') es, split t' l, tag) in
-			    moveOut t t' e'
-			  | Range (e1, pos, len, tag) -> 
-			    let e' = Range (split Parse e1, split Parse pos, split Parse len, tag) in
-			    moveOut t Parse e'
-			  | Concat (es, tag) -> 
-			    let e' = Concat (map (split Conc) es, tag) in
-			    moveOut t Conc e'
-			  | e -> e
-      in
-	
+      | Int _ -> e
+      | String _ -> e
+      | Sym ((s, fixity), es, l, tag) ->
+        let t' = 
+  	      if List.mem s ["len"; "+"; "-"; "!"; "&&"; "||"; "LOR"; "<"; ">"; "<="; ">="] then 
+	          if List.mem t [Parse; Conc; Top] then t else Parse
+          (* else if List.mem s ["!"; "&&"; "||"; "LOR"; "<"; ">"; "<="; ">="] then Formula *)
+   	      else Crypt
+        in
+        let e' = Sym ((s, fixity), map (split t') es, split t' l, tag) in
+        moveOut t t' e'
+      | Range (e1, pos, len, tag) -> 
+        let e' = Range (split Parse e1, split Parse pos, split Parse len, tag) in
+        moveOut t Parse e'
+      | Concat (es, tag) -> 
+        let e' = Concat (map (split Conc) es, tag) in
+        moveOut t Conc e'
+	    | Struct (fields, attrs, len, default) ->
+	      let e' = Struct (StrMap.map (split Top) fields, attrs, len, default) in
+	      moveOut t Bot e'
+	    | e -> e
+	  in
+	  
 	  let e' = match e with
-      | Sym ((("IfEq"), fixity), [e1; e2], l, det) ->
-        let (e1', e2') = 
-          if isAuxiliaryIf e 
-          then (split Top e1, split Top e2)
-          else (split Bot e1, split Bot e2)
-        in 
-        Sym (("IfEq", fixity), [e1'; e2'], l, det)
+	  | Sym ((("IfEq"), fixity), [e1; e2], l, det) ->
+	    let (e1', e2') = 
+	      if isAuxiliaryIf e 
+	      then (split Top e1, split Top e2)
+	      else (split Bot e1, split Bot e2)
+	    in 
+	    Sym (("IfEq", fixity), [e1'; e2'], l, det)
+    | Sym (("If", fixity), [e], l, det) -> 
+      Sym (("If", fixity), [split Top e], l, det)
 	    (* | Sym ((("branchT"), fixity), [e], l, det) -> Sym (("branchT", fixity), [split Top e], l, det) *)
-	    | Sym ((("write"), fixity), [e], l, det) -> Sym (("write", fixity), [split Bot e], l, det)
-	    | e -> split Top e
+	  | Sym (("write", fixity), [e], l, tag) -> Sym (("write", fixity), [split Bot e], l, tag)
+	    (* making sure top-level reads don't get moved out *)
+	  | Sym (("read", _), _, _, _) -> e
+	  | Sym (("let", _), [_; _], _, _) ->
+      (* this info should already be contained in pMeta *)
+	    (* let m = getMeta rhs in m.printed <- true; *)
+	    split Top e
+	    (* We want event to stay top: "event e(x);", not "let y = e(x) in event y;" *)
+      (* FIXME: this only happens because event is Crypto and its parameters as well! *)
+	  | e -> split Top e
 	  in
 	  rev (e' :: !subs)
-    
+
   in
+  setActiveMeta meta;
   markExps es;
-  let result = List.concat (map splitExpByType es) in
-  resetMeta ();
-  result
+  let es' = List.concat (map splitExpByType es) in
+  es', getActiveMeta ()
+
+(*************************************************)
+(** {1 Output} *)
+(*************************************************)
+
   
 let showTag : tag -> string = function
   | NoTag -> "NoTag"
@@ -609,118 +728,78 @@ and showIExp : ?bracket: bool -> exp -> string = fun ?(bracket = false) e ->
 		  if bracket && (needsBracket e) then "(" ^ showIExpBody e ^ ")"
 		  else showIExpBody e
 
+let showInVar : exp -> string = function
+  | Sym (("var", _), [String name], l, _) -> name ^ "<" ^ showLen l ^ ">"
+  | _ -> failwith "showInVar: not a var"
+
 let showIExpTop : exp -> string = fun e ->
-  let name = giveName e in
   match e with
-    | Sym (("read", _), _, l, _) -> 
-      "in(c, " ^ name ^ "<" ^ showLen l ^ ">);"
+    | Sym (("read", _), [v], _, _) -> 
+      "in(c, " ^ showInVar v ^ ");";
 
-    | Sym ((("nonce"), _), _, l, _) -> 
-      "new " ^ name ^ "<" ^ showLen l ^ ">;"
+		| Sym (("read", _), vs, _, _) -> 
+		  "in(c, (" ^ String.concat ", " (map showInVar vs) ^ "));";
+		
+		| Sym (("new", _), [v], _, _) -> 
+		  "new " ^ showInVar v ^ ";";
 
-    | Sym (("write", _), [e], _, _) -> 
-      "out(c, " ^ showIExp e ^ ");"
+    | Sym (("newT", _), [v; String t], _, _) -> 
+      "new " ^ showInVar v ^ ": " ^ t ^ ";";
 
-    | Sym ((("IfEq"), _), [e1; e2], _, _) ->
-      "if " ^ showIExp e1 ^ " = " ^ showIExp e2 ^ " then "
+    | Sym (("write", _), [e'], _, _) -> 
+      "out(c, " ^ showIExp e' ^ ");";
 
-    | Sym ((("event"), _), [e], _, _) -> 
-      "event " ^ showIExp e ^ ";"
+		| Sym (("write", _), es, _, _) -> 
+		  "out(c, (" ^ String.concat ", " (map showIExp es) ^ "));";
+		
+		| Sym ((("IfEq"), _), [e1; e2], _, _) ->
+		  "if " ^ showIExp e1 ^ " = " ^ showIExp e2 ^ " then "
 
-    | Sym ((("let"), _), [e], _, _) ->
-      "let " ^ giveName e ^ " = " ^ showIExp e ^ " in"
-      
-    | _ -> fail ("showIExpTop: unexpected top value: " ^ dump e)
+    | Sym ((("If"), _), [e], _, _) ->
+      "if " ^ showIExp e ^ " then "
+        		
+		| Sym ((("event"), _), [e], _, _) -> 
+		  "event " ^ showIExp e ^ ";"
+		
+		| Sym ((("let"), _), [pat; rhs], _, _) ->
+		  "let " ^ showIExp pat ^ " = " ^ showIExp rhs ^ " in"
+		  
+		| _ -> fail ("showIExpTop: unexpected top value: " ^ dump e)
 
-let showIMLRaw : exp list -> string = fun es ->
-  resetNames ();
-  let result = String.concat "\n" (map showIExp (elimCommonSubs es)) ^ "\n" in
+
+(**
+  Only for IML processes that don't contain let expressions,
+  and where inputs and restrictions are still inlined. 
+*)
+let showSimpleIMLRaw : exp list -> string = fun es ->
+  resetMeta ();
+  let result = String.concat "\n" (map showIExp es) ^ "\n" in
   result
 
-let showIML : exp list -> string = fun es ->
-  resetNames ();
-  let result = String.concat "\n" (map showIExpTop (splitByType (* elimCommonSubs *) es)) ^ "\n" in
-  result
+(**
+  Only for IML processes that don't contain let expressions,
+  and where inputs and restrictions are still inlined. 
+*)
+let showSimpleIML : exp list -> string = fun es ->
+  let es', _ = splitByType (es, emptyMeta ()) in
+  String.concat "\n" (map showIExpTop es') ^ "\n" 
 
+(**
+  Outputs the process as is, does not do any rewriting 
+*)
+let showStructuredIML : exp list -> pMeta -> string = fun es meta ->
+  setActiveMeta meta;
+  String.concat "\n" (map showIExpTop es) ^ "\n" 
+
+let dumpIML: exp list -> string = fun es -> String.concat "\n" (map dump es) ^ "\n"
 
 (*************************************************)
 (** {1 Filtering} *)
 (*************************************************)
 
-(* 
-(**
-  Tests whether a symbol is a primitive operator of the language.
-  Currently we use a shortcut saying that anything infix is primitive. 
-  
-  Ideally the instrumentation shall be telling symtrace, which symbols
-  are primitive and which are cryptographic
-*)
-let isPrim : sym -> bool = function
-  | (_, Infix) -> true
-  | (s, Prefix) -> List.mem s ["-"; "!"; "LNot"]
-
-(**
-  Tests whether an expression consists purely of primitive operators
-  applied to pure symbols (symbols without parameters).
-  
-  In other words, an expression is simple when it doesn't involve any cryptography.
-*)
-let rec isSimple : exp -> bool = function
-  | Concat es -> for_all isSimple es
-  | Range (e, _, len) -> len <= 4 || isSimple e
-  | Sym (s, [], _, _) -> true
-  | Sym (s, es, _, _) -> isPrim s && for_all isSimple es
-  | _ -> true 
-
-let cryptoEvent : exp -> bool = function
-  | Sym ((s, _), [e], _, _) when List.mem s ["branchT"; "branchF"] -> not (isSimple e)
-  | e -> not (isSimple e)
-*)
-
-let rec containsPtr : exp -> bool = function
-  | Int _ -> false
-  | String _ -> false
-  | Range (e, _, _, _) -> containsPtr e
-  | Sym (_, es, _, _) -> exists containsPtr es
-  | Ptr _ -> true
-  | _ -> false
-
 (*
-let isTrivialEquality : exp -> bool = function
-  | Sym ((("branchT" | "branchF"), _), [Sym (("==", _), [e1; e2], _, _)], _, _) when e1 = e2 -> true
-  | _ -> false
+  Right now the preprocessed form uses If and IfEq, but see what becomes more comfortable. 
 *)
-
-let isArithComparison : exp -> bool = function
-  | Sym ((("branchT" | "branchF"), _), [Sym (((">" | "<" | "<=" | ">="), _), es, _, _)], _, _) -> true
-    (* 
-      This is because of len(D(...)) != 0 check in RPC-enc.
-      At the same time we would like to keep the true branches that do those comparisons,
-      as those are used in proving parsing safety.
-      
-      But note that true branches are transformed into IfEq anyway.
-    *)
-  | Sym (("branchF", _), [Sym (("==", _), es, _, _)], _, _) -> true
-  | _ -> false
-
-let isStringComparison : exp -> bool = function
-  | Sym ((("branchT" | "branchF"), _), [Sym (("cmp", _), es, _, _)], _, _) when for_all isConcrete es -> true
-  | _ -> false
-
-let isCastEq : exp -> bool = 
-  
-  let rec stripCast : exp -> exp = function
-    | Sym (("castToInt", _), [a; _], _, _) -> stripCast a
-    | e -> e
-  in
-  
-  function
-	  | Sym (("IfEq", _), [e1; e2], _, _) -> structEq (stripCast e1) (stripCast e2)
-	  | _ -> false
-
-let interestingEvent : exp -> bool = fun e ->
-  (not (containsPtr e)) && (not (isArithComparison e)) && (not (isStringComparison e)) && (not (isCastEq e))
-
 let preprocess : exp -> exp = function
   | Sym ((("branchF"), _), [Sym (("!=", _), args, _, _)], _, tag) ->
     Sym ((("IfEq"), Prefix), args, Unknown, tag)
@@ -731,9 +810,67 @@ let preprocess : exp -> exp = function
   | Sym ((("branchF"), _), [Sym (("cmp", _), args, _, _)], _, tag) ->
     Sym ((("IfEq"), Prefix), args, Unknown, tag)
 
+  | Sym ((("branchT"), _), [e], _, tag) ->
+    Sym ((("If"), Prefix), [e], Unknown, tag)
+
+  | Sym ((("branchF"), _), [e], _, tag) ->
+    Sym ((("If"), Prefix), [Sym (("!", Prefix), [e], Unknown, freshDet ())], Unknown, tag)
+
   | Sym (("==", _), [Sym (("cmp", _), [e1; e2], _, _); z], _, tag) when equal z zero ->
     Sym (("==", Infix), [e1; e2], Unknown, tag)
 
   | e -> e
+
+let rec containsPtr : exp -> bool = function
+  | Int _ -> false
+  | String _ -> false
+  | Range (e, _, _, _) -> containsPtr e
+  | Sym (_, es, _, _) -> exists containsPtr es
+  | Ptr _ -> true
+  | _ -> false
+
+(*
+  The heuristic is to leave the comparisons that mention ranges, concats, vars, or lens in the top-level arithmetic expression,
+  hoping that those will be enough to prove the parsing safety.
+  
+  We also keep mentions of environment vars at top level.
+
+  The heuristic doesn't distinguish in NSL/server.c between the useless
+  !(len(inverse_injbot(D(msg2, skB)))<8> > decrypt_len()<8>)
+  and the useful 
+  !(i32 >= len(inverse_injbot(D(msg2, skB)))<8>)
+  
+  If you really want to get rid of the former, you could check that decrypt_len()<8>
+  is not mentioned anywhere else.
+*)
+let isBoringComparison : exp -> bool = 
+
+  let rec interesting : exp -> bool = function
+	  | Range _ -> true
+	  | Concat _ -> true
+    | Sym ((("var" | "len"), _), _, _, _) -> true
+	  | Sym ((s, _), es, _, _) when List.mem s ["len"; "+"; "-"; "!"; "&&"; "||"; "LOR"; "<"; ">"; "<="; ">="; "castToInt"] -> 
+	    exists interesting es
+	  | _ -> false
+  in  
+  
+  function
+  | Sym (("If", _), [e], _, _) when isComparison e || isLogical e -> not (interesting e) 
+  | _ -> false
+
+let isCastEq : exp -> bool = 
+  
+  let rec stripCast : exp -> exp = function
+    | Sym (("castToInt", _), [a; _], _, _) -> stripCast a
+    | e -> e
+  in
+  
+  function
+      | Sym (("IfEq", _), [e1; e2], _, _) -> structEq (stripCast e1) (stripCast e2)
+      | _ -> false
+
+let boringEvent : exp -> bool = fun e -> containsPtr e || isBoringComparison e || isCastEq e
+
+let interestingEvent : exp -> bool = fun e -> not (boringEvent e)
 
 let procAndFilter es = filter interestingEvent (map (visitExpPost preprocess) es)

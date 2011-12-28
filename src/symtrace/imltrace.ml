@@ -23,5 +23,5 @@ begin
   if !debugEnabled then iter (comp debugBracketTree dump) (filter interestingEvent events);
   if !debugEnabled then prerr_endline "";
   (* resetNames (); *)
-  print_endline (showIML (procAndFilter events));
+  print_endline (showSimpleIML (procAndFilter events));
 end;

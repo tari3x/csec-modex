@@ -1,5 +1,9 @@
 
-#include <lib.h>
+#include "lib.h"
+
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
 
 void fail(const char * fmt, ...)
 {

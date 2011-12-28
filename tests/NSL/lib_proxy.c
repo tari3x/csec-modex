@@ -11,7 +11,8 @@ extern void nonce_proxy(unsigned char * N)
 {
   nonce(N);
 
-  symL("nonce", "nonce", SIZE_NONCE, FALSE);
+  newTL("fixed_20_nonce", "nonce", SIZE_NONCE);
+  // symL("new", "nonce", SIZE_NONCE, FALSE);
   store_buf(N);
 }
 
@@ -31,15 +32,11 @@ extern size_t encrypt_proxy(unsigned char * key, size_t keylen, unsigned char * 
 {
   size_t ret = encrypt(key, keylen, in, inlen, out);
 
-  unsigned char nonce[SIZE_NONCE];
-
-  nonce_proxy(nonce);
-
-  load_buf(key, keylen, "key");
-  // hm, it would be sensible to set length to keylen here, but right now I don't allow len() inside lens
-  symN("isek", "key", NULL, TRUE);
-  load_buf(in, inlen, "msg");
-  load_buf(nonce, SIZE_NONCE, "nonce");
+    load_buf(in, inlen, "msg");
+      load_buf(key, keylen, "key");
+      // hm, it would be sensible to set length to keylen here, but right now I don't allow len() inside lens
+    symNE("isek", "key", NULL, 0, TRUE, 1);
+    newTN("seed_T", "nonce", NULL);
   symN("E", "cipher", &ret, TRUE);
   store_buf(out);
 
@@ -65,14 +62,22 @@ extern size_t decrypt_proxy(unsigned char * key, size_t keylen, unsigned char * 
 {
   size_t ret = decrypt(key, keylen, in, inlen, out);
 
-  load_buf(key, keylen, "key");
   load_buf(in, inlen, "cipher");
-  symN("D", "msg", &ret, TRUE);
+  load_buf(key, keylen, "key");
+  symN("D", "msg", NULL, TRUE);
+  symN("inverse_injbot", "msg", &ret, TRUE);
   store_buf(out);
 
   if(ret > decrypt_len_proxy(key, keylen, in, inlen))
     fail("decrypt_proxy: bad length");
 
+  return ret;
+}
+
+unsigned char * get_sigkey_proxy(size_t * len)
+{
+  unsigned char * ret = get_sigkey(len);
+  readenv(ret, len, "pkS");
   return ret;
 }
 
@@ -84,6 +89,9 @@ unsigned char * get_pkey_proxy(size_t * len, char side)
   name[2] = side;
 
   readenv(ret, len, name);
+
+  if(*len > 100)
+    fail("pkey too long");
 
 //  make_sym(len, sizeof(*len), "user_len");
 //  make_sym(ret, *len, name);
@@ -101,23 +109,80 @@ unsigned char * get_skey_proxy(size_t * len, char side)
 
   readenv(ret, len, name);
 
+  if(*len > 100)
+    fail("pkey too long");
+
 //  make_sym(len, sizeof(*len), "user_len");
 //  make_sym(ret, *len, name);
 
   return ret;
 }
 
-unsigned char * get_xkey_proxy(size_t * len, char side)
+unsigned char * get_xkey_proxy(size_t * len, const unsigned char * host, size_t host_len)
 {
-  unsigned char * ret = get_xkey(len, side);
+  unsigned char * ret = get_xkey(len, host, host_len);
 
   char name[] = "pkX";
 
   readenv(ret, len, name);
 
+  if(*len > 100)
+    fail("pkey too long");
+
 //  make_sym(len, sizeof(*len), "user_len");
 //  make_sym(ret, *len, name);
 
   return ret;
 }
 
+unsigned char * get_xsig_proxy(size_t * len, const unsigned char * host, size_t host_len)
+{
+  unsigned char * ret = get_xsig(len, host, host_len);
+  char name[] = "sigX";
+  readenv(ret, len, name);
+  return ret;
+}
+
+unsigned char * get_host_proxy(size_t * len, char side)
+{
+  unsigned char * ret = get_host(len, side);
+  char name[] = "hostX";
+  name[4] = side;
+  readenv(ret, len, name);
+
+  if(*len > 40)
+    fail("host name too long");
+
+  return ret;
+}
+
+unsigned char * get_xhost_proxy(size_t * len, char side)
+{
+  unsigned char * ret = get_xhost(len, side);
+  char name[] = "hostX";
+  readenv(ret, len, name);
+
+  if(*len > 40)
+    fail("host name too long");
+
+  return ret;
+}
+
+bool check_key_proxy(const unsigned char * host, size_t host_len,
+               const unsigned char * key, size_t key_len,
+               const unsigned char * sig, size_t sig_len,
+               const unsigned char * sigkey, size_t sigkey_len)
+{
+  bool ret = check_key(host, host_len, key, key_len, sig, sig_len, sigkey, sigkey_len);
+
+  load_buf(host, host_len, "host");
+  load_buf(key, key_len, "key");
+  load_buf(sig, sig_len, "sig");
+  load_buf(sigkey, sigkey_len, "sigkey");
+
+  symL("check_key", NULL, sizeof(ret), TRUE);
+
+  store_buf(&ret);
+
+  return ret;
+}

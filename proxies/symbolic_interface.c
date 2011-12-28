@@ -33,6 +33,11 @@ void load_int(int n, const char * hint)
   Hint(hint);
 }
 
+void load_str(const char * str)
+{
+  LoadStr(str);
+}
+
 void symL(const char * sym, const char * hint, size_t len, int deterministic)
 {
   Sym(sym);
@@ -42,9 +47,12 @@ void symL(const char * sym, const char * hint, size_t len, int deterministic)
   if(hint != NULL) Hint(hint);
 }
 
-void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenlen, int deterministic)
+void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenlen, int deterministic, int nargs)
 {
-  Sym(sym);
+  if(nargs == -1)
+    Sym(sym);
+  else
+    SymN(sym, nargs);
   if(!deterministic) Nondet();
   Done();
   if(hint != NULL) Hint(hint);
@@ -62,7 +70,37 @@ void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenl
 
 void symN(const char * sym, const char * hint, size_t * len, int deterministic)
 {
-  symNE(sym, hint, len, sizeof(*len), deterministic);
+  symNE(sym, hint, len, sizeof(*len), deterministic, -1);
+}
+
+void newTL(const char * type, const char * hint, size_t len)
+{
+  LoadStr(type);
+  SymN("newT", 1);
+  Nondet();
+  SetLen(len);
+  Done();
+  if(hint != NULL) Hint(hint);
+}
+
+
+void newTN(const char * type, const char * hint, size_t * len)
+{
+  LoadStr(type);
+  SymN("newT", 1);
+  Nondet();
+  Done();
+  if(hint != NULL) Hint(hint);
+
+  if(len != NULL)
+  {
+    Dup();
+    SymN("len", 1);
+    SetLen(sizeof(*len));
+    Done();
+    Hint("len");
+    StoreBuf(len);
+  }
 }
 
 void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen)

@@ -40,7 +40,7 @@ SYM_CILLY = $(CILLY) --dofunreplace --csec-config=$(PROXY_CONF_SYM) --funreplace
 BUILD_CMD = $(CC) $(CFLAGS) $(CPPFLAGS) $(BUILD_SRC) $(LDFLAGS) $(LDLIBS) -o $@
 
 ifndef OUTPUTS 
-	OUTPUTS = iml.all.out pvmodel.out
+	OUTPUTS = iml.all.out pvmodel.out cvmodel.out
 endif
 GOOD_OUTPUTS = $(OUTPUTS:.out=.good.txt)
 
@@ -68,9 +68,9 @@ check: $(GOOD_OUTPUTS)
 
 %.good.txt: %.out
 	@if diff $@ $<; then\
-		echo "Test OK.";\
+		echo "$<: Test OK.";\
 	else\
-		echo "Test not OK.";\
+		echo "$<: Test not OK.";\
 #		exit 1;\
 	fi
 #    touch $@;\
@@ -90,11 +90,17 @@ cvm: $(CVM)
 replace_good: $(OUTPUTS)
 	rename out good.txt $^
 
-verify: pvmodel.out
+pv: pvmodel.out
 	$(PROVERIF) -in pi $^ | grep RESULT
 
-verify_full: pvmodel.out
+pv_full: pvmodel.out
 	$(PROVERIF) -in pi $^
+
+cv: cvmodel.out
+	$(CRYPTOVERIF) -lib $(CV_DEFAULT) $^ | grep RESULT
+
+cv_full: cvmodel.out
+	$(CRYPTOVERIF) -lib $(CV_DEFAULT) $^
 
 compile: orig sym
 
@@ -109,8 +115,12 @@ run: orig
 	if [ -e "$(P3)" ]; then sleep 2; ./$(P3) $(P3_CMD); fi & \
 	wait
 
-pvmodel.out: $(CVM) query.in env.in crypto.in $(PITRACE)
-	{ $(PITRACE) $(filter-out $(PITRACE), $^) | tee $@; } > pvmodel.debug.out 2>&1
+pvmodel.out: $(CVM) pvtemplate.in $(PITRACE)
+	{ $(PITRACE) $(CVM) | tee $@; } > pvmodel.debug.out 2>&1
+
+cvmodel.out: $(CVM) $(CV_DEFAULT).cvl cvtemplate.in $(CVTRACE)
+	{ $(CVTRACE) $(CVM) $(CV_DEFAULT) | tee $@; } > cvmodel.debug.out 2>&1
+
 
 # FIXME: reverse P1, P2 order when going static
 iml.all.out: $(IML)
@@ -132,7 +142,7 @@ filegraph: sym
 callgraph.out: sym $(OPENSSL_CRESTIFIED)/openssl.callgraph.out
 	cat *.callgraph.out $(OPENSSL_CRESTIFIED)/openssl.callgraph.out > callgraph.out
 
-globs.out: sym $(OPENSSL_CRESTIFIEDD)/openssl.globs.out
+globs.out: sym $(OPENSSL_CRESTIFIED)/openssl.globs.out
 	cat *.globs.out $(OPENSSL_CRESTIFIED)/openssl.globs.out > globs.out
 
 funlist: callgraph.out globs.out

@@ -38,6 +38,7 @@ EXTERN void load_buf(const unsigned char * buf, size_t len, const char * hint);
 EXTERN void load_all(const char * buf, const char * hint);
 EXTERN void load_ctx(const void * ctx, const char * attr, const char * hint);
 EXTERN void load_int(int n, const char * hint);
+EXTERN void load_str(const char * str);
 
 /**
  * Apply an operation to the top of the stack.
@@ -47,7 +48,12 @@ EXTERN void load_int(int n, const char * hint);
  */
 EXTERN void symL(const char * sym, const char * hint, size_t len, int deterministic);
 EXTERN void symN(const char * sym, const char * hint, size_t * len, int deterministic);
-EXTERN void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenlen, int deterministic);
+EXTERN void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenlen, int deterministic, int nargs);
+
+/**
+ * Create a nonce, of a given type and unknown length
+ */
+EXTERN void newTN(const char * type, const char * hint, size_t * len);
 
 EXTERN void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen);
 

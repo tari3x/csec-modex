@@ -26,17 +26,30 @@ type sym = string * fixity
 type id = int
 
 (**
-    Expressions are mapped to ids such that if two expressions map to the same ids then 
-    they are known to be equal. Two expressions map to the same id iff one of the following is satisfied:
-    
-    - they both have the tag field and they have the same tag, which is not [NoTag],
+    Two expressions will be considered equal if one of the following is satisfied:
+
+    - they both have the tag field, none of the tags is [NoTag], and both tags have the same id 
+      (still one tag can be [Det] and the other [Nondet]) ,
     - they are structurally equal after (recursively) setting all [Det] tags to 0.
-    
-    The rationale behind this is that if you perform simplifications, then the result of
-    a simplification will be considered equal to the original as long as you copy the tag.
-    
-    You should never use [NoTag] unless you really understand the consequences. Use freshDet of freshNondet
+
+    Also expressions are mapped to ids such that if two expressions map to the same id then 
+    one of the above conditions is satisfied. The rationale behind this is that if you perform simplifications, 
+    then the result of a simplification will be considered equal to the original as long as you copy the tag.
+
+    It is not possible to have the reverse implication (the two conditions implying same ids) because
+    two expressions A and B could independently be simplified to C.
+
+    You should never use [NoTag] unless you really understand the consequences. Use [freshDet] or [freshNondet]
     to add new tags. 
+*)
+(*
+  I would say the problems you have with id mismatch stem from the fact that you are doing part of
+  the job that the solver needs to be doing. If the solver would understand all of the expression
+  structure, then it would not need to rely on ids at all. Then ids would only be necessary for keeping
+  naming consistency, in which case you could just use tags and not look at the structure of expressions at all.
+  
+  It's not clear how to change the situation, because I want to simplify expressions for readability, 
+  and don't know a solver that would do it for me.
 *)
 type tag = 
   | NoTag
@@ -128,7 +141,27 @@ and exp =
     
   | Unknown
     (** Used in length context only, where the value is not known or is not relevant. *)
+    (* FIXME: shouldn't unknown be given an index to prevent it being equal to other unknowns? *)
 
+
+(**
+  The following symbols are treated specially: 
+  
+  - var(String name)
+  - lenvar(Int id)  
+  - const(String c)
+  - let(e_pat, e_rhs)
+  - If(e)
+  - IfEq(e1, e2)
+  - BranchT(e)
+  - BranchF(e)
+  - read (no args before splitting, or var name(s) after splitting) 
+  - write(var name(s))
+  - new (no args before splitting, or var name after splitting)
+  - newT (String type before splitting, [v; String type] after splitting)
+  - arg (Int i)
+  - final(e) used in traversal functions
+*)
 
 module Expr =
 struct

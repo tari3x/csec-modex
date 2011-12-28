@@ -1,0 +1,30 @@
+
+free c.
+
+(******************** 
+  Crypto
+********************)
+
+fun HMAC_sha1/2.
+
+(******************** 
+  <Query>
+********************)
+
+query ev:server_recv(x) ==> ev:client_send(x).
+query ev:server_recv(x).
+
+(******************** 
+  <Model>
+********************)
+
+let A = 0. let B = 0.
+
+(******************** 
+  <Environment>
+********************)
+
+process !
+  new key;
+  in(c, payload);
+  (!A | !B)

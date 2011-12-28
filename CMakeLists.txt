@@ -71,9 +71,11 @@ add_custom_command(OUTPUT ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTI
 
 ######## deps/cryptoverif ###########################
 
-set(CV_ROOT ${CSEC_ROOT}/deps/cryptoverif1.11)
+set(CV_ROOT ${CSEC_ROOT}/deps/cryptoverif1.12)
 
 set(CRYPTOVERIF ${CV_ROOT}/cryptoverif)
+
+set(CV_DEFAULT ${CV_ROOT}/default)
 
 add_custom_command(OUTPUT ${CRYPTOVERIF}
                     COMMAND ./build
@@ -177,12 +179,13 @@ set(SYMTRACE_DIR ${CSEC_ROOT}/src/symtrace)
 
 set(IMLTRACE ${SYMTRACE_DIR}/imltrace${CMAKE_EXECUTABLE_SUFFIX})
 set(PITRACE  ${SYMTRACE_DIR}/pitrace${CMAKE_EXECUTABLE_SUFFIX})
+set(CVTRACE  ${SYMTRACE_DIR}/cvtrace${CMAKE_EXECUTABLE_SUFFIX})
 
 set(SYMTRACE_SRC ${SYMTRACE_DIR}/execute.ml ${SYMTRACE_DIR}/exp.ml ${SYMTRACE_DIR}/imltrace.ml ${SYMTRACE_DIR}/pitrace.ml
                  ${SYMTRACE_DIR}/simplify.ml ${SYMTRACE_DIR}/solver_yices.ml ${SYMTRACE_DIR}/solver.ml ${SYMTRACE_DIR}/types.ml
                  ${SYMTRACE_DIR}/utils.ml)
 
-add_custom_command(OUTPUT ${IMLTRACE} ${PITRACE}
+add_custom_command(OUTPUT ${IMLTRACE} ${PITRACE} ${CVTRACE}
                     COMMAND make
                     DEPENDS ${OCAMLYICES_ROOT}/ocamlyices.cmxa ${SYMTRACE_SRC}
                     WORKING_DIRECTORY ${SYMTRACE_DIR}
@@ -207,7 +210,7 @@ add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
 
 # ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTIFIED}/libssl_sym.a
 set(TEST_DEPS ${HEADERS} ${OPENSSL}/libcrypto.a ${OPENSSL}/libssl.a  
-               ${OCAMLYICES} ${LIBSSL_PROXY_SYM} ${IMLTRACE} ${PITRACE} ${PROVERIF})
+               ${OCAMLYICES} ${LIBSSL_PROXY_SYM} ${IMLTRACE} ${PITRACE} ${CVTRACE} ${PROVERIF})
                
 ######## tests/simple_hash ##############################
 
@@ -246,7 +249,7 @@ add_custom_target(RPC_check
 set(RPC_ENC tests/RPC-enc)
 
 add_custom_target(RPC_enc ALL
-                    COMMAND make -f Makefile.csec verify
+                    COMMAND make -f Makefile.csec
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${RPC_ENC}
                     VERBATIM)

@@ -2,14 +2,18 @@ let A =
 event client_begin(request);
 let msg1 = len(request)<8> + i20 + i8 + i1 in
 out(c, msg1);
+if i0 < (len(request)<8> + i20 + i8 + i1) then 
 let msg2 = i7|7c|52657175657374|request in
 let hash1 = HMAC(sha1, msg2, keyAB)<20> in
 let msg3 = len(request)<8>|7c|request|hash1 in
 out(c, msg3);
+let var1 = len(request)<8> + i20 + i8 + i1 in
+if !((var1 castToInt TSBase(int )) <= i0) then 
+if !(((var1 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(request)<8> + i20 + i8 + i1)) then 
 in(c, msg4<8>);
-let var1 = (msg4 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
-in(c, msg5<var1>);
-if msg5{8, 1} castToInt TSBase(int ) = i124 then 
+in(c, msg5<(msg4 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+if !(msg5{0, 8} > (msg4 - (i8 + i1))) then 
+if msg5{8, 1} = 7c then 
 if msg4 - (i8 + i1 + msg5{0, 8}) = i20 then 
 let var2 = msg5{9, msg5{0, 8}} in
 let msg6 = i8|7c|526573706f6e7365|len(request)<8>|7c|request|var2 in
@@ -20,21 +24,25 @@ event client_accept(request, var2);
 
 let B = 
 in(c, msg1<8>);
-let var1 = (msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long ) in
-in(c, msg2<var1>);
-if msg2{8, 1} castToInt TSBase(int ) = i124 then 
+in(c, msg2<(msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+if !(msg2{0, 8} > (msg1 - (i8 + i1))) then 
+if msg2{8, 1} = 7c then 
 if msg1 - (i8 + i1 + msg2{0, 8}) = i20 then 
-let var2 = msg2{9, msg2{0, 8}} in
-let msg3 = i7|7c|52657175657374|var2 in
+let var1 = msg2{9, msg2{0, 8}} in
+let msg3 = i7|7c|52657175657374|var1 in
 let hash1 = HMAC(sha1, msg3, keyAB)<20> in
-let var3 = msg2{i9 + msg2{0, 8}, len(msg2) - (i9 + msg2{0, 8})} in
-if var3 = hash1 then 
-event server_reply(var2, response);
+let var2 = msg2{i9 + msg2{0, 8}, len(msg2) - (i9 + msg2{0, 8})} in
+if var2 = hash1 then 
+event server_reply(var1, response);
 let msg4 = len(response)<8> + i20 + i8 + i1 in
 out(c, msg4);
-let var4 = msg2{0, 8} in
-let msg5 = i8|7c|526573706f6e7365|var4|7c|var2|response in
+if i0 < (len(response)<8> + i20 + i8 + i1) then 
+let var3 = msg2{0, 8} in
+let msg5 = i8|7c|526573706f6e7365|var3|7c|var1|response in
 let hash2 = HMAC(sha1, msg5, keyAB)<20> in
 let msg6 = len(response)<8>|7c|response|hash2 in
 out(c, msg6);
+let var4 = len(response)<8> + i20 + i8 + i1 in
+if !((var4 castToInt TSBase(int )) <= i0) then 
+if !(((var4 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(response)<8> + i20 + i8 + i1)) then 
 
