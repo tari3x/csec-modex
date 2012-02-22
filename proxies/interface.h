@@ -54,9 +54,19 @@ EXTERN void symNE(const char * sym, const char * hint, unsigned char * len, size
  * Create a nonce, of a given type and unknown length
  */
 EXTERN void newTN(const char * type, const char * hint, size_t * len);
+/**
+ * Create a nonce, of a given type and known length
+ */
+EXTERN void newTL(const char * type, const char * hint, size_t len);
+/**
+ * Create a nonce, of known length l and type fixed_l
+ */
+EXTERN void newL(const char * hint, size_t len);
 
+
+EXTERN void varsym(const char * name);
 EXTERN void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen);
-
+EXTERN void varL(const char * name, const unsigned char * buf, size_t len);
 
 /**
  * Add a left hand side. Same versions as for the right hand side.

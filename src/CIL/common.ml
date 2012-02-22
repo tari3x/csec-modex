@@ -115,12 +115,17 @@ let open_append fname =
 
 let fail : string -> 'a = fun s -> failwith s
 
+let some: 'a option -> 'a = function
+  | Some a -> a
+  | None   -> failwith "some called with None"
+
+
 (*************************************************)
 (** {1 Misc} *)
 (*************************************************)
 
 let isInterfaceFun : string -> bool = fun s -> 
-  mem s ["event0"; "event1"; "event2"; "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail"]
+  mem s ["event0"; "event1"; "event2"; "event3"; "readenv"; "readenvL"; "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail"]
 
 (*************************************************)
 (** {1 Configuration} *)
@@ -153,7 +158,7 @@ let setSrcPath : file -> unit = fun f ->
   This is also called from crestInstrument to give names to stack locations.
 *)
 let mkUniqueName : varinfo -> string = fun v ->
-  if not v.vglob (* || v.vstorage = Static *) then 
+  if not v.vglob || v.vstorage = Static then 
     !srcName ^ ":" ^ v.vname ^ "[" ^ string_of_int v.vid ^ "]"
   else
     v.vname 
@@ -342,7 +347,8 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
         if g.locdef = None then
           g.locdef <- Some locdef
         else if (g.locdef <> Some locdef) && (g.stor = Static) then
-          fail ("readGlobs: two different source files define two static functions of the same name, this is unsupported: " ^ key)
+          fail ("readGlobs: two different source files define two static functions of the same name, this is unsupported: " 
+                 ^ key ^ ", " ^ locdef ^ ", " ^ some g.locdef)
 	    | "NoStorage" -> g.stor <- NoStorage
 	    | "Static" -> g.stor <- Static
 	    | "Register" -> g.stor <- Register

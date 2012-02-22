@@ -4,7 +4,7 @@ CSEC_ROOT = ../..
 include Makefile.common
 
 # for simple make call
-everything: iml pv
+everything: iml pv cv
 #everything: iml verify_full
 
 # for eclipse

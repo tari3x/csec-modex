@@ -39,22 +39,11 @@ let prove : unit -> unit = function _ -> failwith "prove: undefined"
 (** {1 Pi Output} *)
 (*************************************************)
 
-(* let keys : string list ref = ref [] *)
-
-let constants : string list ref = ref []
-
 let showPiExp : exp -> string = fun e ->
 
   let rec showExpBody : exp -> string = function 
-	  | Int (ival, len) -> 
-      let result = "integer_" ^ Int64.to_string ival in
-      if not (List.mem result !constants) then constants := !constants @ [result];
-      result
-	  | String s -> 
-      let result = "string_" ^ s in
-      if not (List.mem result !constants) then constants := !constants @ [result];
-      result ^ "()"
-    | Sym (("var", _), [String s], _, _) -> s      
+    | Sym (("var", _), [String s], _, _) -> s
+    | Sym (("const", _), [String s], _, _) -> s ^ "()"            
 	  | Sym ((s, Prefix), es, len, id) ->
 	    s ^ "(" ^ String.concat ", " (map showExp es) ^ ")"
     | e -> "unexpected(" ^ dump e ^ ")"      
@@ -151,7 +140,9 @@ let writePi : exp list -> exp list -> unit = fun client server ->
   iter print_endline !query;
   
   print_endline "";
-                                                      
+                          
+  print_endline "\n(*************************** \n  Model \n***************************)\n";
+                                                                                                              
   print_endline "let A = ";
   print_endline clientProc;
   print_endline "let B = ";
@@ -177,9 +168,12 @@ let writePi : exp list -> exp list -> unit = fun client server ->
 begin
   inlineAll := false;
 
+  (*
   (* server is typically the process executed first, i.e. P1 *)
-  let server = execute (open_in Sys.argv.(1)) in
-  let client = execute (open_in Sys.argv.(2)) in
+  let server = input_value (open_in_bin Sys.argv.(1)) in
+  let client = input_value (open_in_bin Sys.argv.(2)) in
+  *)
+  let (client, server) = rawIn (open_in_bin Sys.argv.(1)) in
 
   verbose := true;
   debugEnabled := true;
@@ -207,13 +201,25 @@ begin
 
   if !verbose then showFuns !concats;
 
+  try 
+    let (name, _) = find (comp not (isInjectiveConcat false)) !concats in
+    fail ("concat not injective: " ^ name)
+  with Not_found -> ();
+
   let client = rewriteConcats client in
   let server = rewriteConcats server in
 
   if !verbose then prerr_endline (showSimpleIML client);
   if !verbose then prerr_endline (showSimpleIML server);
 
-  cleanupConcats ();
+  let client = extractConstConcats client in
+  let server = extractConstConcats server in
+
+  if !verbose then prerr_endline "\nIML after constant concats extraction:";
+  if !verbose then prerr_endline (showSimpleIML client);
+  if !verbose then prerr_endline (showSimpleIML server);
+
+  cleanupConcats (client @ server);
 
   if !verbose then prerr_endline "concats after tag rewriting:";
   if !verbose then showFuns !concats;
@@ -230,7 +236,7 @@ begin
   computeSafeParsers client;
   computeSafeParsers server;
 
-  readTemplate (open_in "pvtemplate.in");
+  readTemplate (open_in Sys.argv.(2));
 
   resetMeta ();
 
@@ -242,6 +248,13 @@ begin
   checkParsingSafety ();
 
   if !verbose then prerr_endline "\npostprocessed IML:";
+  if !verbose then prerr_endline (showSimpleIML client);
+  if !verbose then prerr_endline (showSimpleIML server);
+
+  let client = extractConstants client in
+  let server = extractConstants server in
+
+  if !verbose then prerr_endline "\nIML after constant extraction:";
   if !verbose then prerr_endline (showSimpleIML client);
   if !verbose then prerr_endline (showSimpleIML server);
 

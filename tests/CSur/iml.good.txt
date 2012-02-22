@@ -1,0 +1,39 @@
+let A = 
+new nonce1<16>;
+let var1 = <{msg: <{msg1: <{id: i0; nonce: nonce1}>}>; msg_type: i1}> in
+let hex1 = BN_bn2hex(mod_exp(var1, BN_hex2bn(ztp(bob_pub_key())), BN_hex2bn(ztp(bob_mod_key())))) in
+let msg1 = hex1{0, 128} in
+out(c, msg1);
+let var2 = ztp(nonce1) in
+in(c, msg2<128>);
+let hex2 = msg2|i0 in
+let bignum1 = mod_exp(BN_hex2bn(ztp(hex2)), BN_hex2bn(ztp(alice_priv_key())), BN_hex2bn(ztp(alice_mod_key()))) in
+let var3 = bignum1{field_offset(msg) + field_offset(msg2) + field_offset(nonce1), 16} in
+let var4 = ztp(var3) in
+if var4 = var2 then 
+let var5 = bignum1{field_offset(msg) + field_offset(msg2) + field_offset(nonce2), 16} in
+event alice_accept(nonce1, var5);
+let var6 = <{msg: <{msg3: <{nonce: bignum1{field_offset(msg) + field_offset(msg2) + field_offset(nonce2), 16}}>}>; msg_type: i3}> in
+let hex3 = BN_bn2hex(mod_exp(var6, BN_hex2bn(ztp(bob_pub_key())), BN_hex2bn(ztp(bob_mod_key())))) in
+let msg3 = hex3{0, 128} in
+out(c, msg3);
+
+let B = 
+in(c, msg1<128>);
+let hex1 = msg1|i0 in
+let bignum1 = mod_exp(BN_hex2bn(ztp(hex1)), BN_hex2bn(ztp(bob_priv_key())), BN_hex2bn(ztp(bob_mod_key()))) in
+new nonce1<16>;
+let var1 = <{msg: <{msg2: <{nonce1: bignum1{field_offset(msg) + field_offset(msg1) + field_offset(nonce), 16}; nonce2: nonce1}>}>; msg_type: i2}> in
+let hex2 = BN_bn2hex(mod_exp(var1, BN_hex2bn(ztp(alice_pub_key())), BN_hex2bn(ztp(alice_mod_key())))) in
+let msg2 = hex2{0, 128} in
+out(c, msg2);
+let var2 = ztp(nonce1) in
+in(c, msg3<128>);
+let hex3 = msg3|i0 in
+let bignum2 = mod_exp(BN_hex2bn(ztp(hex3)), BN_hex2bn(ztp(bob_priv_key())), BN_hex2bn(ztp(bob_mod_key()))) in
+let var3 = bignum2{field_offset(msg) + field_offset(msg3) + field_offset(nonce), 16} in
+let var4 = ztp(var3) in
+if var4 = var2 then 
+let var5 = bignum1{field_offset(msg) + field_offset(msg1) + field_offset(nonce), 16} in
+event bob_accept(var5, nonce1);
+

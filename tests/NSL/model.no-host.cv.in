@@ -1,0 +1,94 @@
+
+param N.
+
+type fixed_20 [fixed, large].
+
+type host.
+const hA: host.
+const hB: host.
+
+(************************
+  Public-key encryption
+*************************)
+
+(* IND-CCA2 probabilistic public-key encryption 
+   keyseed: type of key seeds, must be "fixed" (to be able to generate random numbers from it), typically large.
+   pkey: type of public keys, must be "bounded"
+   skey: type of secret keys, must be "bounded"
+   cleartext: type of cleartexts, must be "bounded" or "fixed" (the encryptions of *all* cleartexts of any length
+              are assumed to be indistinguishable from each other).
+   ciphertext: type of ciphertexts
+   seed: type of random seeds for encryption, must be "fixed"
+
+   dk: public-key generation function 
+   sk: secret-key generation function
+   E: encryption function
+   D: decryption function
+   injbot: natural injection from cleartext to bitstringbot
+   Z: a constant cleartext
+
+   Penc(t, N): probability of breaking the IND-CCA2 property
+   in time t for one key and N decryption queries.
+   Penccoll: probability of collision between independently generated keys
+*)
+
+type keyseed_T [fixed, large].
+type bounded_100 [bounded].
+type bounded_200 [bounded].
+type seed_T [fixed].
+
+proba Penc.
+proba Penccoll.
+
+expand IND_CCA2_public_key_enc(keyseed_T, bounded_100, bounded_100, bounded_200, mstring, seed_T, dk, ek, E, D, injbot, Z, Penc, Penccoll).
+
+fun inverse_injbot(bitstringbot): bounded_200.
+
+fun isek(bounded_100): bounded_100.
+
+forall x: bounded_100;
+  isek(x) = x.
+
+(******************** 
+  Query
+********************)
+ 
+event beginA(bounded_100, bounded_100).
+event endB(bounded_100, bounded_100).
+event bad(bounded_100).
+
+(* na: nonce, nb: nonce *)
+query x: bounded_100, y: bounded_100;
+  event endB(x, y) ==> beginA(x, y) || bad(x).
+
+let A' = 
+  in(c_in, pkX: bounded_100);
+  
+  event beginA(pkA, pkX);
+  out(c_out, ());
+  A .  
+
+let B' = 
+  in(c_in, pkX: bounded_100);
+  
+  if pkX = pkA then
+    out(c_out, ());
+    B
+  else 
+    event bad(pkX); 
+    out(c_out, ());
+    B .
+
+process
+  (
+  in(c_in, ());
+  new A_seed: keyseed_T; 
+  new B_seed: keyseed_T;
+  let pkA = ek(A_seed) in
+  let skA = dk(A_seed) in
+  let pkB = ek(B_seed) in
+  let skB = dk(B_seed) in
+
+  out(c_out, (pkA, pkB));
+  ((! N A') | (! N B'))
+)

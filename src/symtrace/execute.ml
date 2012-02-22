@@ -524,7 +524,7 @@ let dup : unit -> unit = fun () ->
 let nondet : unit -> unit = fun () ->
   match takeStack () with
     | Sym ((s, _), args, len, Det _) -> toStack (Sym ((s, Prefix), args, len, freshNondet ()))
-    | Ptr (Stack name, pos)          -> toStack (Ptr (Stack (name ^ "[" ^ (string_of_int (freshId ())) ^ "]"), pos)) 
+    | Ptr (Stack name, pos)          -> toStack (Ptr (Stack (name ^ "[" ^ (string_of_int (freshId curPtrId)) ^ "]"), pos)) 
     | _ -> fail "nondet: unexpected value on stack" 
 
 let concreteResult : intval -> unit = fun ival ->
@@ -832,4 +832,36 @@ let execute : in_channel -> exp list = fun file ->
   let es = !events in (* map deepSimplify  *)
   resetState ();
   es
+  
+(*************************************************)
+(** {1 Marshalling} *)
+(*************************************************)
+
+let rawOut: out_channel -> exp list -> exp list -> unit = fun c client server ->
+  output_value c client;
+  output_value c server;
+  output_value c !hints;
+  output_value c !tag2id;
+  output_value c !exp2id;
+  (* storing the cache gives only a negligible improvement *)
+  (* output_value c !Solver_yices.cache;
+  output_value c !Solver_yices.eqCache;
+  output_value c !lenCache; *)
+  output_value c !curPtrId;
+  output_value c !curExpId;
+  output_value c !curTagId
+  
+let rawIn: in_channel -> exp list * exp list = fun c ->
+  let client = input_value c in
+  let server = input_value c in
+  hints := input_value c;
+  tag2id := input_value c;
+  exp2id := input_value c;
+  (* Solver_yices.cache := input_value c;
+  Solver_yices.eqCache := input_value c;
+  lenCache := input_value c; *)
+  curPtrId := input_value c;
+  curExpId := input_value c;
+  curTagId := input_value c;
+  (client, server)
   

@@ -24,6 +24,8 @@ __nonnull__(1,2))) ;
 
 extern void *malloc_proxy(size_t __size );
 
+extern void *__builtin_alloca_proxy(unsigned long  ) ;
+
 extern  void *realloc_proxy(void *__ptr , size_t __size );
 
 extern  __attribute__((__nothrow__)) void *memset_proxy(void *__s , int __c , size_t __n )  __attribute__((__nonnull__(1))) ;

@@ -115,12 +115,26 @@ let isVarargFunType : typ -> bool = function
 	| _ -> false  
 
 let opaque : varinfo -> varinfo = fun v ->
+  if isVarargFunType v.vtype then v else
+  (* 
+    The reason to make it static is that we insert a definition when encountering a declaration,
+    because some definitions might not actually be crestified.
+    
+    This can lead to a warning that the opaque wrapper is unused (which is only given for static functions),
+    so I turn it off at compilation. Maybe try asking CIL to remove unused definitions.
+  *)
   { v with vname = "__crest_" ^ v.vname ^ "_opaque"; vstorage = Static } 
 
 let needsOpaqueWrapper : varinfo -> bool = fun v ->
-     isOpaque v && isFunctionType v.vtype 
-  && not (isProxied v)
-  && not (isVarargFunType v.vtype)
+  (*
+  ignore (Pretty.printf "needsOpaqueWrapper? %a\n" d_lval (Var v, NoOffset));
+  ignore (Pretty.printf "isOpaque: %B\n" (isOpaque v));
+  ignore (Pretty.printf "isFunctionType: %B\n" (isFunctionType v.vtype));
+  ignore (Pretty.printf "isProxied: %B\n" (isProxied v));
+  *)
+  isOpaque v && isFunctionType v.vtype && not (isProxied v)
+  (* the opaque wrapper now reacts specially to these: *)
+  (* && not (isVarargFunType v.vtype) *)
 
 (*************************************************)
 (** {1 Visitors} *)
@@ -156,9 +170,9 @@ class crestInstrumentVisitor f =
       func
   in
   
-  let initFunc : string -> varinfo = fun name ->
-    let f = makeGlobalVar ("__crest_" ^ name ^ "_init") (cType "void ()()" []) in
-    {f with vstorage = Extern}
+  let initFunc : varinfo -> varinfo = fun v ->
+    let f = makeGlobalVar ("__crest_" ^ v.vname ^ "_init") (cType "void ()()" []) in
+    {f with vstorage = v.vstorage}
   in
 
   let invokeFunc      = mkInstFunc "Invoke" [funPtrArg] in
@@ -207,7 +221,7 @@ class crestInstrumentVisitor f =
 
   let binaryOpCode = function
     | PlusA   -> "+"   | MinusA  ->  "-"   | Mult  -> "*"    | Div   -> "/"
-    | Mod     -> "%"   | BAnd    ->  "&"   | BOr   -> "BOR"  | BXor  -> "^"
+    | Mod     -> "%"   | BAnd    ->  "&"   | BOr   -> "BOR"  | BXor  -> "XOR"
     | Shiftlt -> "<<"  | Shiftrt ->  ">>"  | LAnd  -> "&&"   | LOr   -> "LOR"
     | Eq      -> "=="  | Ne      ->  "!="  | Gt    -> ">"    | Le    -> "<="
     | Lt      -> "<"   | Ge      ->  ">="
@@ -271,7 +285,7 @@ class crestInstrumentVisitor f =
   let mkFieldOffset f          = mkInstCall fieldOffsetFunc [mkString (f.fname)] in
   let mkIndexOffset ()         = mkInstCall indexOffsetFunc [] in 
   let mkLocation l             = mkInstCall locationFunc [mkString (Pretty.sprint 100 (d_loc () l))] in   
-  let mkInit v                 = mkInstCall invokeFunc [mkFunAddr (initFunc v.vname)] in
+  let mkInit v                 = mkInstCall invokeFunc [mkFunAddr (initFunc v)] in
   let mkDone ()                = mkInstCall doneFunc [] in
 
   let mkRef v = mkLoadStackPtr (mkUniqueName v) in
@@ -411,9 +425,12 @@ class crestInstrumentVisitor f =
 	    [mkApplyN (fname ^ "()") (length args); mkNondet ()] @ (setLen t)
 
   in 
+  
   let opaqueWrapper : varinfo -> global list = fun v ->
     
-	  if StrSet.mem v.vname !opaqueWrappers then []
+    (* in calls to vararg funs we don't put parameters on stack *)
+    if isVarargFunType v.vtype then []
+	  else if StrSet.mem v.vname !opaqueWrappers then []
 	  else 
 	  begin
 	    opaqueWrappers := StrSet.add v.vname !opaqueWrappers;
@@ -520,7 +537,8 @@ object (self)
   (*
    * Instrument function entry.
    *)
-  method vfunc(f) =
+  method vfunc (f: fundec) =
+    (* ignore (Pretty.printf "entering function %a\n" d_lval (Var f.svar, NoOffset)); *)
     if shouldSkipFunction f.svar then
       SkipChildren
     else
@@ -529,13 +547,18 @@ object (self)
         if (not isVarArgs) then
           iter (flip prependToBlock f.sbody) (List.map instParam f.sformals) 
         else 
-          E.s (error "varargs not supported");
+          E.s (error "varargs not supported, each vararg function must be declared opaque, f: %s\n" f.svar.vname);
         prependToBlock [mkCall f.svar] f.sbody ;
         DoChildren
 
 
   method vglob = function
-    | GVar (v, {init = i}, loc) as g ->
+    | GVar (v, {init = i}, loc) as g when not (isOpaque v) && not (v.vstorage = Extern) ->
+      
+      (*
+      ignore (Pretty.printf "crestifying global %a\n" (printGlobal plainCilPrinter) g);  
+      *)
+      
       markCrestified v;
       let f = emptyFunction ("__crest_" ^ v.vname ^ "_init") in
       let initialised = makeGlobalVar ("__crest_" ^ v.vname ^ "_initialised") boolType in
@@ -555,21 +578,47 @@ object (self)
         [mkStmtOneInstr (mkReturn 1)]
       in
       f.sbody.bstmts <- body;
+      
+       (* Sometimes a global is defined in a header without extern, like in rergress.h in cryptokix.
+          I don't really know how that is valid C. 
+          This usually correlated with giving the global no declaration and no initialisation, so
+          we choose to make the function static to prevent multiple definition errors.
+       *)
+      if i = None then
+      begin 
+        (* 
+	      f.svar.vstorage <- Static;
+	      initialised.vstorage <- Static;
+        *)
+        E.s (error "globals without initialisers must be declared opaque: %a\n" d_global g);
+      end;
+        
       ChangeTo [g; GVar (initialised, {init = Some (SingleInit (integer 0))}, loc); GFun (f, loc)]
 
     | GFun (f, loc) as g ->
+      (* ignore (Pretty.printf "visiting function definition %a\n" (printGlobal defaultCilPrinter) g); *)
+      (* FIXME: why are functions for which we introduce an opaque wrapper considered crestified? *)
+      (* FIXME: looks like the svar here is never static? *) 
       markCrestified f.svar;
       if needsOpaqueWrapper f.svar then
+      begin
+        (* ignore (Pretty.printf "the function needs an opaque wrapper\n"); *)
         (* opaqueDefNames := f.svar.vname :: !opaqueDefNames; *)
         ChangeTo ([g] @ opaqueWrapper f.svar)
+      end
       else
+      begin
+        (* ignore (Pretty.printf "the function doesn't need an opaque wrapper\n"); *)
         DoChildren
+      end
 
     | GVarDecl (v, loc) as g when needsOpaqueWrapper v ->
+      (* ignore (Pretty.printf "visiting function declaration %a\n" (printGlobal defaultCilPrinter) g); *)
+      (* The reason we put a definition here is that some opaque functions might be defined in non-crestified code. *)
       ChangeTo ([g] @ opaqueWrapper v)
 
     | GVarDecl (v, loc) as g when not (isOpaque v) && not (isFunctionType v.vtype) ->
-      let f = initFunc v.vname in
+      let f = initFunc v in
       ChangeTo [g; GVarDecl (f, loc)]
                   
     | _ -> DoChildren 
@@ -580,6 +629,10 @@ class opaqueReplaceVisitorClass = object
   inherit nopCilVisitor
 
   method vvrbl : varinfo -> varinfo visitAction = function
+      (* 
+        This replaces calls to all opaque f() by calls to __crest_f_opaque(), 
+        the definition of which is created by opaqueWrapper.
+      *)
     | v when needsOpaqueWrapper v -> ChangeTo (opaque v)
     | _ -> SkipChildren
 

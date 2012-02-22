@@ -12,25 +12,25 @@
 void load_buf(const unsigned char * buf, size_t len, const char * hint)
 {
   LoadBuf(buf, len);
-  Hint(hint);
+  if(hint != NULL) Hint(hint);
 }
 
 void load_all(const char * buf, const char * hint)
 {
   LoadAll(buf);
-  Hint(hint);
+  if(hint != NULL) Hint(hint);
 }
 
 void load_ctx(const void * ctx, const char * attr, const char * hint)
 {
   LoadAttr(ctx, attr);
-  Hint(hint);
+  if(hint != NULL) Hint(hint);
 }
 
 void load_int(int n, const char * hint)
 {
   LoadInt(n);
-  Hint(hint);
+  if(hint != NULL) Hint(hint);
 }
 
 void load_str(const char * str)
@@ -103,12 +103,27 @@ void newTN(const char * type, const char * hint, size_t * len)
   }
 }
 
-void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen)
+void newL(const char * hint, size_t len)
+{
+  SymN("new", 0);
+  Nondet();
+  SetLen(len);
+  Done();
+  if(hint != NULL) Hint(hint);
+}
+
+
+void varsym(const char * name)
 {
   LoadStr(name);
-  Sym("var");
+  SymN("var", 1);
   Done();
   Hint(name);
+}
+
+void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen)
+{
+  varsym(name);
 
   Dup();
   SymN("len", 1);
@@ -119,6 +134,18 @@ void var(const char * name, const unsigned char * buf, const unsigned char * len
   StoreBuf(len);
   StoreBuf(buf);
 }
+
+void varL(const char * name, const unsigned char * buf, size_t len)
+{
+  LoadStr(name);
+  SymN("var", 1);
+  SetLen(len);
+  Done();
+  Hint(name);
+
+  StoreBuf(buf);
+}
+
 
 void store_buf(const unsigned char * buf)
 {

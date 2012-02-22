@@ -8,7 +8,7 @@
 (**
   Compute leaves of a graph, in the connected component of the "main" node.
   
-  Output those that are not proxied, opaque or crestified
+  Output those that are not proxied (or for which no proxy function exists), opaque or crestified
   
   Quadratic implementation.
 *) 
@@ -18,11 +18,17 @@ open List
 open Common
 
 let isBad : vertex -> bool = fun v ->
-  let glob = StrMap.find v !globs in not glob.crestified
+  let glob = try 
+    StrMap.find v !globs
+    with Not_found -> fail ("isBad, not found: " ^ v) 
+  in not glob.crestified
 
 let isHandled : vertex -> bool = fun v ->
-  let glob = StrMap.find v !globs in
-  glob.proxied || glob.opaque || (isInterfaceFun v)
+  let glob = try 
+    StrMap.find v !globs
+    with Not_found -> fail ("isHandled, not found: " ^ v) in 
+  if glob.proxied then StrMap.mem (v ^ "_proxy") !globs else
+  glob.opaque || (isInterfaceFun v)
 
 let leaves : vertex -> graph -> vertex list = fun v g ->
   

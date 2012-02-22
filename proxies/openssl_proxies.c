@@ -32,9 +32,11 @@
  *
  * SHA256_CTX: msg
  *
- * DSA: pkey, skey
+ * DSA: pkey, skey, keyseed
  *
  * DSA_SIG: sig
+ * DSA_SIG.r: val
+ * DSA_SIG.s: val
  *
  * Hints:
  * ======
@@ -1073,7 +1075,7 @@ extern int RAND_bytes_proxy(unsigned char *buf , int num )
 {
   int ret = RAND_bytes(buf, num);
 
-  symL("RAND_bytes", "nonce", num, FALSE);
+  newL("nonce", num);
   store_buf(buf);
 
   return ret;
@@ -1098,111 +1100,6 @@ extern int RAND_pseudo_bytes_proxy(unsigned char *buf , int num )
   return ret;
 }
 
-extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa )
-{
-  RSA * ret = RSAPrivateKey_dup(rsa);
-
-  copy_ctx(ret, rsa);
-
-  return ret;
-}
-
-/*
- * RSA_verify() verifies that the signature sigbuf of size siglen matches a given message digest m
- * of size m_len. type denotes the message digest algorithm that was used to generate the signature.
- * rsa is the signer's public key.
- *
- * RSA_verify() returns 1 on successful verification, 0 otherwise.
- */
-#if OPENSSL_MAJOR == 0
-  extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
-                              unsigned char *sigbuf , unsigned int siglen , RSA *rsa )
-#else
-  extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
-                              unsigned char const   *sigbuf , unsigned int siglen , RSA *rsa )
-#endif
-{
-  int ret = RSA_verify(type, m, m_length, sigbuf, siglen, rsa);
-
-  // FIXME: Change this for symbolic tracing
-  if(ret == 1)
-  {
-    load_buf(m, m_length, "msg");
-    load_ctx(rsa, "id", "pkey");
-    symL("RSA_verify", "sig", siglen, TRUE);
-    store_buf(sigbuf);
-  }
-
-  return ret;
-}
-
-
-
-/*
- * RSA_public_encrypt() encrypts the flen bytes at from (usually a session key)
- * using the public key rsa and stores the ciphertext in to. to must point to RSA_size(rsa) bytes of memory.
- *
- * RSA_public_encrypt() returns the size of the encrypted data (i.e., RSA_size(rsa)).
- */
-extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
-                                    RSA *rsa , int padding )
-{
-  int ret = RSA_public_encrypt(flen, from, to, rsa, padding);
-
-  load_buf(from, flen, "plain");
-  load_ctx(rsa, "id", "pkey");
-  symL("RSA_public_encrypt", "enc", ret, FALSE);
-  store_buf(to);
-
-  return ret;
-}
-
-/*
- * RSA_private_decrypt() decrypts the flen bytes at from using the private key rsa
- * and stores the plaintext in to.
- * to must point to a memory section large enough to hold the decrypted data
- * (which is smaller than RSA_size(rsa)). padding is the padding mode that was used to encrypt the data.
- *
- * RSA_private_decrypt() returns the size of the recovered plaintext.
- */
-extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
-                                     RSA *rsa , int padding )
-{
-  // NB: it is possible that from and to is the same pointer
-  load_buf(from, flen, "enc");
-  load_ctx(rsa, "id", "pkey");
-
-  int ret = RSA_private_decrypt(flen, from, to, rsa, padding);
-
-  // FIXME: relying on concrete value?
-  symL("RSA_private_decrypt", "dec", ret, TRUE);
-  store_buf(to);
-
-  return ret;
-}
-
-/*
- * RSA_sign() signs the message digest m of size m_len using the private key rsa
- * as specified in PKCS #1 v2.0. It stores the signature in sigret and the signature size in siglen.
- * sigret must point to RSA_size(rsa) bytes of memory.
- *
- * type denotes the message digest algorithm that was used to generate m.
- * It usually is one of NID_sha1, NID_ripemd160 and NID_md5; see objects for details.
- * If type is NID_md5_sha1, an SSL signature (MD5 and SHA1 message digests with PKCS #1 padding
- * and no algorithm identifier) is created.
- */
-extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_length ,
-                          unsigned char *sigret , unsigned int *siglen , RSA *rsa )
-{
-  int ret = RSA_sign(type, m, m_length, sigret, siglen, rsa);
-
-  load_buf(m, m_length, "msg");
-  load_ctx(rsa, "id", "pkey");
-  symL("RSA_sign", "sig", *siglen, FALSE);
-  store_buf(sigret);
-
-  return ret;
-}
 
 extern RSA *d2i_RSAPrivateKey_bio_proxy(BIO *bp , RSA **rsa )
 {
@@ -1213,6 +1110,7 @@ extern RSA *d2i_RSAPrivateKey_bio_proxy(BIO *bp , RSA **rsa )
 
   return ret;
 }
+
 
 extern RSA *PEM_read_bio_RSAPrivateKey_proxy(BIO *bp , RSA **x , pem_password_cb *cb ,
                                              void *u )
@@ -1647,7 +1545,7 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
   load_ctx(a2, "val", "a1");
   load_ctx(p2, "val", "p1");
   load_ctx(m, "val", "bignum");
-  symN("mod_exp2_mont", "rr", NULL, TRUE);
+  symN("mod_exp2", "rr", NULL, TRUE);
   store_ctx(rr, "val");
 
   return ret;
@@ -1665,7 +1563,7 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
   load_ctx(a, "val", "a");
   load_ctx(p, "val", "p");
   load_ctx(m, "val", "bignum");
-  symN("mod_exp_mont", "rr", NULL, TRUE);
+  symN("mod_exp", "rr", NULL, TRUE);
   store_ctx(rr, "val");
 
   return ret;
@@ -1684,16 +1582,15 @@ int DSA_generate_key_proxy(DSA *a)
   store_buf(&keylen, sizeof(keylen));
 */
 
-  // TODO: explicit length variable with length hint
-  symN("new", "keyseed", NULL, FALSE);
+  newTN("DSA_keyseed", "keyseed", NULL);
   store_ctx(a, "keyseed");
 
   load_ctx(a, "keyseed", "keyseed");
-  symN("sk", "skey", NULL, TRUE);
+  symN("DSA_sk", "skey", NULL, TRUE);
   store_ctx(a, "skey");
 
   load_ctx(a, "keyseed", "keyseed");
-  symN("pk", "pkey", NULL, TRUE);
+  symN("DSA_pk", "pkey", NULL, TRUE);
   store_ctx(a, "pkey");
 
   return DSA_generate_key(a);
@@ -1805,4 +1702,208 @@ unsigned long lh_strhash_proxy(char const   *c )
   store_buf((void *) &ret);
 
   return ret;
+}
+
+
+////////////////////////////////////////////
+// DES
+////////////////////////////////////////////
+
+extern void DES_ecb3_encrypt_proxy(const_DES_cblock *input , DES_cblock *output ,
+                                   DES_key_schedule *ks1 , DES_key_schedule *ks2 ,
+                                   DES_key_schedule *ks3 , int enc )
+{
+  // FIXME: fill in
+  DES_ecb3_encrypt(input, output, ks1, ks2, ks3, enc);
+}
+
+extern void DES_ncbc_encrypt_proxy(unsigned char const   *input , unsigned char *output ,
+                                   long length , DES_key_schedule *schedule , DES_cblock *ivec ,
+                                   int enc )
+{
+  // FIXME: fill in
+  DES_ncbc_encrypt(input, output, length, schedule, ivec, enc);
+}
+
+extern void DES_ecb_encrypt_proxy(const_DES_cblock *input , DES_cblock *output , DES_key_schedule *ks ,
+                                  int enc )
+{
+  // FIXME: fill in
+  DES_ecb_encrypt(input, output, ks, enc);
+}
+
+extern void DES_ede3_cbc_encrypt_proxy(unsigned char const   *input , unsigned char *output ,
+                                       long length , DES_key_schedule *ks1 , DES_key_schedule *ks2 ,
+                                       DES_key_schedule *ks3 , DES_cblock *ivec ,
+                                       int enc )
+{
+  // FIXME: fill in
+  DES_ede3_cbc_encrypt(input, output, length, ks1, ks2, ks3, ivec, enc);
+}
+
+extern void DES_set_key_unchecked_proxy(const_DES_cblock *key , DES_key_schedule *schedule )
+{
+  // FIXME: fill in
+  DES_set_key_unchecked(key, schedule);
+}
+
+
+////////////////////////////////////////////
+// AES
+////////////////////////////////////////////
+
+extern int AES_set_encrypt_key_proxy(unsigned char const   *userKey , int bits , AES_KEY *key )
+{
+  // FIXME: fill in
+  return AES_set_encrypt_key(userKey, bits, key);
+}
+
+extern int AES_set_decrypt_key_proxy(unsigned char const   *userKey , int bits , AES_KEY *key )
+{
+  // FIXME: fill in
+  return AES_set_decrypt_key(userKey, bits, key);
+}
+
+extern void AES_ecb_encrypt_proxy(unsigned char const   *in , unsigned char *out ,
+                                  AES_KEY const   *key , int enc )
+{
+  // FIXME: fill in
+  AES_ecb_encrypt(in, out, key, enc);
+}
+
+extern void AES_cbc_encrypt_proxy(unsigned char const   *in , unsigned char *out ,
+                                  size_t length , AES_KEY const   *key , unsigned char *ivec ,
+                                  int enc )
+{
+  // FIXME: fill in
+  AES_cbc_encrypt(in, out, length, key, ivec, enc);
+}
+
+
+
+////////////////////////////////////////////
+// RSA
+////////////////////////////////////////////
+
+
+RSA *RSA_generate_key_proxy(int bits , unsigned long e , void (*callback)(int  ,
+                                                                                 int  ,
+                                                                                 void * ) ,
+                                   void *cb_arg )
+{
+  // FIXME: fill in
+  return RSA_generate_key(bits, e, callback, cb_arg);
+}
+
+
+extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa )
+{
+  RSA * ret = RSAPrivateKey_dup(rsa);
+
+  copy_ctx(ret, rsa);
+
+  return ret;
+}
+
+/*
+ * RSA_verify() verifies that the signature sigbuf of size siglen matches a given message digest m
+ * of size m_len. type denotes the message digest algorithm that was used to generate the signature.
+ * rsa is the signer's public key.
+ *
+ * RSA_verify() returns 1 on successful verification, 0 otherwise.
+ */
+#if OPENSSL_MAJOR == 0
+  extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                              unsigned char *sigbuf , unsigned int siglen , RSA *rsa )
+#else
+  extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                              unsigned char const   *sigbuf , unsigned int siglen , RSA *rsa )
+#endif
+{
+  int ret = RSA_verify(type, m, m_length, sigbuf, siglen, rsa);
+
+  // FIXME: Change this for symbolic tracing
+  if(ret == 1)
+  {
+    load_buf(m, m_length, "msg");
+    load_ctx(rsa, "id", "pkey");
+    symL("RSA_verify", "sig", siglen, TRUE);
+    store_buf(sigbuf);
+  }
+
+  return ret;
+}
+
+
+
+/*
+ * RSA_public_encrypt() encrypts the flen bytes at from (usually a session key)
+ * using the public key rsa and stores the ciphertext in to. to must point to RSA_size(rsa) bytes of memory.
+ *
+ * RSA_public_encrypt() returns the size of the encrypted data (i.e., RSA_size(rsa)).
+ */
+extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
+                                    RSA *rsa , int padding )
+{
+  int ret = RSA_public_encrypt(flen, from, to, rsa, padding);
+
+  load_buf(from, flen, "plain");
+  load_ctx(rsa, "id", "pkey");
+  symL("RSA_public_encrypt", "enc", ret, FALSE);
+  store_buf(to);
+
+  return ret;
+}
+
+/*
+ * RSA_private_decrypt() decrypts the flen bytes at from using the private key rsa
+ * and stores the plaintext in to.
+ * to must point to a memory section large enough to hold the decrypted data
+ * (which is smaller than RSA_size(rsa)). padding is the padding mode that was used to encrypt the data.
+ *
+ * RSA_private_decrypt() returns the size of the recovered plaintext.
+ */
+extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
+                                     RSA *rsa , int padding )
+{
+  // NB: it is possible that from and to is the same pointer
+  load_buf(from, flen, "enc");
+  load_ctx(rsa, "id", "pkey");
+
+  int ret = RSA_private_decrypt(flen, from, to, rsa, padding);
+
+  // FIXME: relying on concrete value?
+  symL("RSA_private_decrypt", "dec", ret, TRUE);
+  store_buf(to);
+
+  return ret;
+}
+
+/*
+ * RSA_sign() signs the message digest m of size m_len using the private key rsa
+ * as specified in PKCS #1 v2.0. It stores the signature in sigret and the signature size in siglen.
+ * sigret must point to RSA_size(rsa) bytes of memory.
+ *
+ * type denotes the message digest algorithm that was used to generate m.
+ * It usually is one of NID_sha1, NID_ripemd160 and NID_md5; see objects for details.
+ * If type is NID_md5_sha1, an SSL signature (MD5 and SHA1 message digests with PKCS #1 padding
+ * and no algorithm identifier) is created.
+ */
+extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                          unsigned char *sigret , unsigned int *siglen , RSA *rsa )
+{
+  int ret = RSA_sign(type, m, m_length, sigret, siglen, rsa);
+
+  load_buf(m, m_length, "msg");
+  load_ctx(rsa, "id", "pkey");
+  symL("RSA_sign", "sig", *siglen, FALSE);
+  store_buf(sigret);
+
+  return ret;
+}
+
+extern void RSA_blinding_off_proxy(RSA *rsa )
+{
+  // FIXME: fill in
+  RSA_blinding_off(rsa);
 }

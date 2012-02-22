@@ -1,10 +1,12 @@
 
 This is an implementation of the verification method described in 
 "Extracting and Verifying Cryptographic Models from C Protocol Code by Symbolic Execution" 
+and 
+"Computational Verification of C Protocol Implementations by Symbolic Execution" 
 by Mihhail Aizatulin, Andy Gordon, and Jan Jürjens.
 
-The distribution includes the source code of the protocols analysed in the paper: CSur,
-simple mac, RPC, and NSL. Unfortunately, we are not able to distribute the source code 
+The distribution includes the source code of the protocols analysed in the papers: CSur,
+simple mac, simple xor, RPC, RPC-enc, and NSL. Unfortunately, we are not able to distribute the source code 
 of the metering protocol, due to licensing restrictions.
 
 Download
@@ -47,7 +49,7 @@ To build all the tools and run the verification experiments install cmake and ru
 
 The first run of make will likely be cluttered with output.
 When running make the second time you should see verification output of the kind:
-	
+
     $ make
     [  0%] Generating src/symtrace/imltrace.exe, src/symtrace/pitrace.exe
     [ 24%] Built target CSur

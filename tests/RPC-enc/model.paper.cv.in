@@ -1,0 +1,173 @@
+
+(* 
+  This is a simplified version that 
+  uses mstring where possible.
+*)
+
+param N.
+
+channel c_in, c_out.
+
+type mstring [bounded].
+
+(********************************
+  IND-CPA INT-CTXT encryption
+*********************************)
+
+type keyseed [fixed, large].
+type seed [fixed, large].
+
+proba Penc.
+proba Pencptxt.
+proba Pencctxt.
+
+expand IND_CPA_INT_CTXT_sym_enc(keyseed, mstring, mstring, mstring, seed, kgen, E, D, injbot, Z, Penc, Pencctxt). 
+
+fun inverse_injbot(bitstringbot): mstring.
+
+
+(*************************** 
+  Key lookup
+***************************)
+
+type keydb.
+
+(* the ids of a designated pair of honest participants *)
+const clientID: mstring.
+const serverID: mstring. 
+
+(* key database operations *)
+fun add_honest(mstring, keydb): keydb.
+fun lookup(mstring, mstring, keydb): mstring.
+
+forall k: mstring, db: keydb;
+  lookup(clientID, serverID, add_honest(k, db)) = k.
+
+(* a host id that carries along the fact that it is compromised *)
+fun badHost(mstring): mstring [compos].
+
+(*
+  It is important that in the bad host branch we remove the mention of the honest key,
+  so we can show that it isn't leaked anywhere.
+*)
+forall h:mstring, k: mstring, db: keydb;
+  lookup(badHost(h), serverID, add_honest(k, db)) = lookup(badHost(h), serverID, db).
+
+(*************************** 
+  Misc
+***************************)
+
+type payload [fixed, large].
+
+(************************
+  <Type hints>
+*************************)
+
+fun Zmstring(mstring): mstring.
+
+fun conc1(mstring, mstring): mstring [compos].
+fun parse3(mstring): mstring.
+fun parse4(mstring): mstring.
+
+fun cast_payload_mstring(payload): mstring [compos].
+
+(************************
+  <Crypto2>
+*************************)
+
+forall x: mstring;
+  Z(x) = Zmstring(x).
+
+(* All honestly generated keys have the same length *)
+const Zkey: mstring.
+forall x: keyseed;
+  Zmstring(kgen(x)) = Zkey.
+
+(* Rule for zeroing out the payload *)
+const Zpayload: mstring.
+forall x: payload;
+  Zmstring(cast_payload_mstring(x)) = Zpayload.
+
+(********************************
+  <Query>
+*********************************)
+
+event client_begin(mstring, mstring, mstring).
+event client_accept(mstring, mstring, mstring, mstring).
+event server_reply(mstring, mstring, mstring, mstring).
+event bad(mstring).
+
+(* Authentication of the server to the client *)
+query hClient: mstring, hServer: mstring, x: mstring, y: mstring;
+  event client_accept(hClient, hServer, x, y) ==> server_reply(hClient, hServer, x, y).
+
+(* Authentication of the client to the server *)
+query hClient: mstring, hServer: mstring, x: mstring, y: mstring;
+  event server_reply(hClient, hServer, x, y) ==> client_begin(hClient, hServer, x) || bad(hClient).
+
+(* Strong secrecy of the request *)
+query secret request.
+
+(* Weak conditional secrecy of the response *)
+event leaked(mstring, mstring).
+query hClient: mstring, resp: mstring;
+  event leaked(hClient, resp) ==> bad(hClient).
+
+(*************************** 
+  <Model> 
+***************************)
+
+let A = 0 . 
+let B = 0 .
+
+(********************************
+  <Environment>
+*********************************)
+
+let A' =
+  in(c_in, xClient: mstring);
+  
+  (*
+    For proving correspondences it may be more convincing to let the attacker choose
+    the payloads, but we need to generate them randomly to check secrecy.
+  *)
+  new request: payload;
+  
+  out(c_out, ());
+  A .
+
+(* The sentinel used in formulating weak secrecy of the response *)
+let sentinel =
+  in(c_in, response': payload);
+  if response' = response then
+  event leaked(xClient, cast_payload_mstring(response));
+  yield .
+
+let B' = 
+  in(c_in, xClient: mstring);
+
+  new response: payload;
+
+  if xClient = clientID then
+    out(c_out, ());  
+    ( B | sentinel )
+  else
+    let badHost(xClient') = xClient in
+    event bad(xClient);
+    out(c_out, ());
+    ( B | sentinel ) .
+
+
+process 
+! N(
+  (* get a key database from the attacker *)
+  in(c_in, adb: keydb);
+    
+  (* generate and insert the honest key *)
+  new kAB_seed: keyseed;
+  let kAB = kgen(kAB_seed) in
+  let db = add_honest(kAB, adb) in
+
+  out(c_out, ());
+  ((! N A') | (! N B'))
+)

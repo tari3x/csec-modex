@@ -14,6 +14,8 @@
 #include <openssl/engine.h>
 #include <openssl/hmac.h>
 #include <openssl/pem.h>
+#include <openssl/des.h>
+#include <openssl/aes.h>
 
  
 /*
@@ -305,25 +307,6 @@ extern int RAND_bytes_proxy(unsigned char *buf , int num ) ;
 extern int RAND_pseudo_bytes_proxy(unsigned char *buf , int num ) ;
 #pragma cilnoremove("RAND_pseudo_bytes_proxy")
 
-extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa ) ;
-#pragma cilnoremove("RSAPrivateKey_dup_proxy")
-
-extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
-                            unsigned char const   *sigbuf , unsigned int siglen ,
-                            RSA *rsa ) ;
-#pragma cilnoremove("RSA_verify_proxy")
-
-extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
-                                    RSA *rsa , int padding ) ;
-#pragma cilnoremove("RSA_public_encrypt_proxy")
-
-extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
-                                     RSA *rsa , int padding ) ;
-#pragma cilnoremove("RSA_private_decrypt_proxy")
-
-extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_length ,
-                          unsigned char *sigret , unsigned int *siglen , RSA *rsa ) ;
-#pragma cilnoremove("RSA_sign_proxy")
 
 extern RSA *d2i_RSAPrivateKey_bio_proxy(BIO *bp , RSA **rsa ) ;
 #pragma cilnoremove("d2i_RSAPrivateKey_bio_proxy")
@@ -487,6 +470,80 @@ extern int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
 extern int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
                                  BIGNUM const   *p , BIGNUM const   *m ,
                                  BN_CTX *ctx , BN_MONT_CTX *in_mont ) ;
+
+
+////////////////////////////////////////////
+// DES
+////////////////////////////////////////////
+
+extern void DES_ecb3_encrypt_proxy(const_DES_cblock *input , DES_cblock *output ,
+                                   DES_key_schedule *ks1 , DES_key_schedule *ks2 ,
+                                   DES_key_schedule *ks3 , int enc ) ;
+
+extern void DES_ncbc_encrypt_proxy(unsigned char const   *input , unsigned char *output ,
+                                   long length , DES_key_schedule *schedule , DES_cblock *ivec ,
+                                   int enc ) ;
+
+extern void DES_ecb_encrypt_proxy(const_DES_cblock *input , DES_cblock *output , DES_key_schedule *ks ,
+                                  int enc ) ;
+
+extern void DES_ede3_cbc_encrypt_proxy(unsigned char const   *input , unsigned char *output ,
+                                       long length , DES_key_schedule *ks1 , DES_key_schedule *ks2 ,
+                                       DES_key_schedule *ks3 , DES_cblock *ivec ,
+                                       int enc ) ;
+
+extern void DES_set_key_unchecked_proxy(const_DES_cblock *key , DES_key_schedule *schedule ) ;
+
+
+////////////////////////////////////////////
+// AES
+////////////////////////////////////////////
+
+extern int AES_set_encrypt_key_proxy(unsigned char const   *userKey , int bits , AES_KEY *key ) ;
+
+extern int AES_set_decrypt_key_proxy(unsigned char const   *userKey , int bits , AES_KEY *key ) ;
+
+extern void AES_ecb_encrypt_proxy(unsigned char const   *in , unsigned char *out ,
+                                  AES_KEY const   *key , int enc ) ;
+
+extern void AES_cbc_encrypt_proxy(unsigned char const   *in , unsigned char *out ,
+                                  size_t length , AES_KEY const   *key , unsigned char *ivec ,
+                                  int enc ) ;
+
+////////////////////////////////////////////
+// RSA
+////////////////////////////////////////////
+
+
+#pragma cilnoremove("RSA_generate_key_proxy")
+extern RSA *RSA_generate_key_proxy(int bits , unsigned long e , void (*callback)(int  ,
+                                                                                 int  ,
+                                                                                 void * ) ,
+                                   void *cb_arg ) ;
+
+
+extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa ) ;
+#pragma cilnoremove("RSAPrivateKey_dup_proxy")
+
+extern int RSA_verify_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                            unsigned char const   *sigbuf , unsigned int siglen ,
+                            RSA *rsa ) ;
+#pragma cilnoremove("RSA_verify_proxy")
+
+extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
+                                    RSA *rsa , int padding ) ;
+#pragma cilnoremove("RSA_public_encrypt_proxy")
+
+extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , unsigned char *to ,
+                                     RSA *rsa , int padding ) ;
+#pragma cilnoremove("RSA_private_decrypt_proxy")
+
+extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_length ,
+                          unsigned char *sigret , unsigned int *siglen , RSA *rsa ) ;
+#pragma cilnoremove("RSA_sign_proxy")
+
+extern void RSA_blinding_off_proxy(RSA *rsa ) ;
+
 
 
 ////////////////////////////////////////////

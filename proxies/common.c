@@ -31,6 +31,11 @@ void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenle
   var(s, buf, len, lenlen);
 }
 
+void readenvL(const unsigned char * buf, size_t len, const char * s)
+{
+  varL(s, buf, len);
+}
+
 void make_sym(const unsigned char * buf, size_t len, const char * s)
 {
   symL(s, s, len, FALSE);

@@ -1,0 +1,22 @@
+
+CSEC_ROOT = ../..
+
+include Makefile.common
+
+#everything: orig sym
+everything: iml cv
+
+all: orig sym
+
+PROXY_CONF_SYM = proxies.conf.out
+OUTPUTS = iml.out model.cv.out
+SYM_PROXY_LIB += lib_proxy.o
+include $(CSEC_ROOT)/mk/main.mk
+
+$(PROXY_CONF_SYM): proxies.conf $(PROXIES)/openssl_proxies.sym.conf
+	cat $^ > $@
+
+lib_proxy.o: CC = $(PROXY_SYM_CILLY)
+
+clean::
+	$(RM) client server

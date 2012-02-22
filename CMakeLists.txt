@@ -99,14 +99,16 @@ set(PROXIES ${CSEC_ROOT}/proxies)
 
 set(HEADERS include/crest.h include/proxies/common.h include/proxies/interface.h
             include/proxies/openssl-proxies-1.0.0.h
-            include/proxies/openssl-proxies.h)
+            include/proxies/openssl-proxies.h
+            include/proxies/system-proxies.h)
 
 # include/proxies/openssl-proxies-0.9.8o.h 
 
 set(HEADERS_ORIG 
             ${PROXIES}/crest.h ${PROXIES}/common.h ${PROXIES}/interface.h
             ${PROXIES}/openssl_proxies-1.0.0.h
-            ${PROXIES}/openssl_proxies.h)
+            ${PROXIES}/openssl_proxies.h
+            ${PROXIES}/system_proxies.h)
 
 # ${PROXIES}/openssl_proxies-0.9.8o.h  
 
@@ -210,7 +212,7 @@ add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
 
 # ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTIFIED}/libssl_sym.a
 set(TEST_DEPS ${HEADERS} ${OPENSSL}/libcrypto.a ${OPENSSL}/libssl.a  
-               ${OCAMLYICES} ${LIBSSL_PROXY_SYM} ${IMLTRACE} ${PITRACE} ${CVTRACE} ${PROVERIF})
+               ${OCAMLYICES} ${LIBSSL_PROXY_SYM} ${IMLTRACE} ${PITRACE} ${CVTRACE} ${PROVERIF} ${CRYPTOVERIF})
                
 ######## tests/simple_hash ##############################
 
@@ -227,6 +229,23 @@ add_custom_target(simple_hash_check
                     DEPENDS ${TEST_DEPS}
                     WORKING_DIRECTORY ${SIMPLE_HASH}
                     VERBATIM)
+
+######## tests/simple_xor ##############################
+
+set(SIMPLE_XOR tests/simple_xor)
+
+add_custom_target(simple_xor ALL
+                    COMMAND make -f Makefile.csec
+                    DEPENDS ${TEST_DEPS}
+                    WORKING_DIRECTORY ${SIMPLE_XOR}
+                    VERBATIM)
+
+add_custom_target(simple_xor_check
+                    COMMAND make -f Makefile.csec check
+                    DEPENDS ${TEST_DEPS}
+                    WORKING_DIRECTORY ${SIMPLE_XOR}
+                    VERBATIM)
+
 
 ######## tests/RPC ##############################
 
@@ -296,13 +315,23 @@ add_custom_target(NSL_check
 
 add_custom_target(check)
 
-add_dependencies(check simple_hash_check RPC_check RPC_enc_check CSur_check NSL_check )
+add_dependencies(check simple_hash_check simple_xor_check RPC_check RPC_enc_check CSur_check NSL_check )
+
+######## README ##############################
+
+# doesn't work for some reason, even though works in command line
+add_custom_target(readme
+                    COMMAND markdown README.markdown > README.html
+                    OUTPUT README.html
+                    DEPENDS README.markdown
+                    WORKING_DIRECTORY ${CSEC_ROOT}
+                    VERBATIM)
 
 ######## clean ##############################
 
 # Not cleaning in dependencies:
 # ${CIL_ROOT} ${OPENSSL} ${PV_ROOT}
-set(CLEAN_DIRS ${OCAMLYICES_ROOT} ${PROXIES} src/CIL src/symtrace ${RPC} ${SIMPLE_HASH} ${CSUR} ${NSL})
+set(CLEAN_DIRS ${OCAMLYICES_ROOT} ${PROXIES} src/CIL src/symtrace ${RPC} ${SIMPLE_HASH} ${SIMPLE_XOR} ${CSUR} ${NSL})
 
 set(i 1)
 

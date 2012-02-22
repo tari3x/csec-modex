@@ -97,6 +97,13 @@ extern void *malloc_proxy(size_t size)
   return ret;
 }
 
+extern void *__builtin_alloca_proxy(unsigned long  size)
+{
+  // NB calling malloc instead, because alloc automatically frees when the caller exits
+  return malloc_proxy(size);
+}
+
+
 /*
  * realloc() changes the size of the memory block pointed to by ptr to size bytes.
  * The contents will be unchanged to the minimum of the old and new sizes; newly allocated memory will be uninitialized.

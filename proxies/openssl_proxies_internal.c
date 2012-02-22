@@ -4,6 +4,10 @@
 #include "common.h"
 #include "interface.h"
 
+/*
+ * We do splitting into r and s because it was used in the metering protocol.
+ * For well-behaved protocols it should be enough to just use the sig attribute.
+ */
 DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
 {
   DSA_SIG * ret = dsa_do_sign(dgst, dlen, dsa);
@@ -18,14 +22,18 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
   fresh_ptr(sizeof(BIGNUM));
   store_buf((unsigned char *) &(ret->s));
 
-  load_ctx(dsa, "skey", "skey");
   load_buf(dgst, dlen, "dgst");
-  symN("dsa_sig_r", "dsa_sig_r", NULL, FALSE);
+  load_ctx(dsa, "skey", "skey");
+  newTN("DSA_seed", "seed", NULL);
+  symN("DSA_sign", "dsa_sig", NULL, TRUE);
+  store_ctx(ret, "sig");
+
+  load_ctx(ret, "sig", NULL);
+  symN("DSA_r", "dsa_sig_r", NULL, TRUE);
   store_ctx(ret->r, "val");
 
-  load_ctx(dsa, "skey", "skey");
-  load_buf(dgst, dlen, "dgst");
-  symN("dsa_sig_s", "dsa_sig_s", NULL, FALSE);
+  load_ctx(ret, "sig", NULL);
+  symN("DSA_s", "dsa_sig_s", NULL, TRUE);
   store_ctx(ret->s, "val");
 
   return ret;
@@ -37,11 +45,16 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *si
 {
   int ret = dsa_do_verify(dgst, dgst_len, sig, dsa);
 
-  load_ctx(dsa, "pkey", "pkey");
-  load_buf(dgst, dgst_len, "dgst");
+  // FIXME: only do it if no sig is present already
   load_ctx(sig->r, "val", "dsa_sig_r");
   load_ctx(sig->s, "val", "dsa_sig_s");
-  symL("dsa_verify", "sig_verification", sizeof(ret), TRUE);
+  symN("DSA_combine", "dsa_sig", NULL, TRUE);
+  store_ctx(sig, "sig");
+
+  load_buf(dgst, dgst_len, "dgst");
+  load_ctx(dsa, "pkey", "pkey");
+  load_ctx(sig, "sig", "sig");
+  symL("DSA_verify", "sig_verification", sizeof(ret), TRUE);
   store_buf((unsigned char *) &ret);
 
   return ret;

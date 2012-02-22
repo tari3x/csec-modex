@@ -5,7 +5,7 @@ include $(CSEC_ROOT)/mk/common.mk
 
 CV_LIB = cryptoverif/cryptoverif.cmx
 
-COMMON_SRC = types.ml utils.ml simplify.ml solver.mli solver_yices.ml solver.ml exp.ml execute.ml transform.ml
+COMMON_SRC = types.ml utils.ml simplify.ml solver.mli solver_yices.ml solver.ml exp.ml execute.ml
 # solver_simple.ml 
 
 # Profiling:
@@ -32,10 +32,10 @@ htdoc: doc
 imltrace: $(COMMON_SRC) imltrace.ml
 	$(OCAMLC) $(OCAML_FLAGS) -o $@ $^
 
-pitrace: $(COMMON_SRC) pitrace.ml
+pitrace: $(COMMON_SRC) imltypes.ml transform.ml pitrace.ml
 	$(OCAMLC) $(OCAML_FLAGS) -o $@ $^
 
-cvtrace: $(CV_LIB) $(COMMON_SRC) cvtrace.ml
+cvtrace: $(CV_LIB) $(COMMON_SRC) imltypes.ml transform.ml cvtrace.ml
 	$(OCAMLC) $(OCAML_FLAGS) -o $@ $^
 
 $(CV_LIB):

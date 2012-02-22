@@ -4,15 +4,13 @@ CSEC_ROOT = ../..
 include Makefile.common
  
 #everything: orig sym
-everything: iml pv
+everything: iml pv model.cv.out
 
 all: orig sym
 
 SYM_PROXY_LIB += lib_proxy.o
 
 PROXY_CONF_SYM = proxies.conf.out
-
-OUTPUTS = iml.all.out pvmodel.out cvmodel.out
 
 include $(CSEC_ROOT)/mk/main.mk
 

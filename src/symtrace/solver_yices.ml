@@ -21,6 +21,15 @@ let ctx : context = mk_context ()
 
 let cache : pbool IntMap.t ref = ref IntMap.empty
 
+(* accelerated cache for eq queries *)
+module IntPair =
+struct
+  type t = int * int
+  let compare = Pervasives.compare
+end
+module PairMap = Map.Make (IntPair) 
+let eqCache: pbool PairMap.t ref = ref PairMap.empty 
+
 let solver_debug : bool ref = ref false
 
 (*************************************************)
@@ -180,7 +189,8 @@ let isTrue : exp -> pbool = fun e ->
 		  end
 		  else false
   in
-  debug ("checking (yices) " ^ dump e ^ ", result (yices) = " ^ string_of_bool result);    
+  (* this is 25% performance penalty without the if: *)
+  if !solver_debug then debug ("checking (yices) " ^ dump e ^ ", result (yices) = " ^ string_of_bool result);    
   cache := IntMap.add id result !cache;
   result
     
@@ -193,12 +203,18 @@ let addFact : exp -> unit = fun e ->
     
 let resetFacts : unit -> unit = fun () -> 
   reset ctx;
-  cache := IntMap.empty
+  cache := IntMap.empty;
+  eqCache := PairMap.empty
 
 let equal : exp -> exp -> pbool = fun a b -> 
   if isSpecialLen a b then 
     fail "equal: trying to apply to special length values (Unknown or Infty)";
-  isTrue (eq [a; b])
+  let aId, bId = expId a, expId b in
+  try PairMap.find (aId, bId) !eqCache 
+  with Not_found ->
+    let result = isTrue (eq [a; b]) in
+    eqCache := PairMap.add (aId, bId) result !eqCache;
+    result
 
 let notEqual : exp -> exp -> pbool = fun a b -> 
   if isSpecialLen a b then 

@@ -214,6 +214,7 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
 
 #ifdef CSEC_VERIFY
   // Assumption that the argv field indeed contains the request from the environment:
+  // TOOD: replace by random for the purpose of secrecy
   readenvE(ctx->request, &(ctx->request_len), sizeof(ctx->request_len), "request");
 #endif
 

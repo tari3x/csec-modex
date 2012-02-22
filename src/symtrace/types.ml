@@ -147,7 +147,9 @@ and exp =
 (**
   The following symbols are treated specially: 
   
+  - id(int id) (used internally in expId)
   - var(String name)
+  - varT(String name, String type)
   - lenvar(Int id)  
   - const(String c)
   - let(e_pat, e_rhs)
@@ -155,8 +157,10 @@ and exp =
   - IfEq(e1, e2)
   - BranchT(e)
   - BranchF(e)
-  - read (no args before splitting, or var name(s) after splitting) 
+  - read (no args, used before splitting)
+  - readVar (vars, used after splitting)
   - write(var name(s))
+  - yield()
   - new (no args before splitting, or var name after splitting)
   - newT (String type before splitting, [v; String type] after splitting)
   - arg (Int i)

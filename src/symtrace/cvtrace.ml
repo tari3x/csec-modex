@@ -6,165 +6,36 @@ open Execute
 open Exp
 open Utils
 open Transform
+open Imltypes
 open Solver
 
 open Cryptoverif.Types
 open Cryptoverif.Syntax
 open Cryptoverif.Stringmap
 
-(*************************************************)
-(** {1 Input and Output Merging} *)
-(*************************************************)
 
-let mergeInOut : exp list -> exp list = fun es ->
-
-  (* let dummy = mkVar "dummy" (concat []) in *) 
-
-  let rec mergeIn : exp list -> exp list -> exp list = fun vs es -> match (vs, es) with
-    | vs, Sym (("read", _), [v], _, _) :: es' -> mergeIn (v :: vs) es'
-    | [], e :: es' -> e :: mergeIn [] es'
-    | vs, ((Sym (("write", _), _, _, _)) as e) :: es' ->
-      Sym (("read", Prefix), vs, Unknown, freshNondet ()) :: e :: mergeIn [] es' 
-    | vs, e :: es' -> e :: mergeIn vs es'
-    | [], [] -> 
-      [Sym (("read", Prefix), [], Unknown, freshNondet ())] 
-    | vs, [] -> 
-      [Sym (("read", Prefix), vs, Unknown, freshNondet ())]
-  in
-
-  let rec mergeOut : exp list -> exp list -> exp list = fun vs es -> match (vs, es) with
-    | vs, Sym (("write", _), [v], _, _) :: es' -> mergeOut (v :: vs) es'
-    | [], e :: es' -> e :: mergeOut [] es'
-    | vs, ((Sym (("read", _), _, _, _)) as e) :: es' ->
-      Sym (("write", Prefix), vs, Unknown, freshNondet ()) :: e :: mergeOut [] es' 
-    | vs, e :: es' -> e :: mergeOut vs es'
-    | [], [] -> 
-      [Sym (("write", Prefix), [], Unknown, freshNondet ())] 
-    | vs, [] -> 
-      [Sym (("write", Prefix), vs, Unknown, freshNondet ())]
-  in
-      
-  List.rev (mergeIn [] (List.rev (mergeOut [] es)))
-
-(*************************************************)
-(** {1 Constant extraction} *)
-(*************************************************)
-
-let constants : string list ref = ref []
-
-let extractConstants : exp list -> exp list = 
-  
-  let extract : exp -> exp = function
-    | Int (ival, len) -> 
-      let c = "integer_" ^ Int64.to_string ival in
-      if not (List.mem c !constants) then constants := !constants @ [c];
-      Sym (("const", Prefix), [String c], Unknown, NoTag)
-    | String s -> 
-      let c = "string_" ^ s in
-      if not (List.mem c !constants) then constants := !constants @ [c];
-      Sym (("const", Prefix), [String c], Unknown, NoTag)
-    | e -> e
-  in
-  
-  List.map (visitExpBodyPre extract)
 
 (*************************************************)
 (** {1 Typechecking} *)
 (*************************************************)
 
-(*
-  Not using CV typet, because it contains options that we don't care about,
-  and so is not equatable. 
-*)
-type imltype = 
-  | MStringBot               (** All machine-representable strings and bottom. 
-                                 Only used as result type, and therefore equivalent to bitstringbot. *)
-  | MString                  (** All machine-representable strings *)
-  | Fixed of int * string    (** All strings of a given length, with name *)
-  | Bounded of int * string  (** All strings up to a given length *)
-  | Named of string          (** Some other type *)
-
-(* FIXME: use your own type, because you can't use equality of typet anyway *)
-type ftype = imltype list * imltype
-
-let types: ftype StrMap.t ref = ref StrMap.empty
-
-let boolType = Named "bool"
-
-(** {2 String Representations} *)
-
-let parseType: string -> imltype = fun s -> 
-  match Str.bounded_split (Str.regexp "_") s 3 with
-    | ["bitstringbot"] -> MStringBot
-    | ["mstring"] -> MString
-    | ["fixed"; n; name] -> Fixed (int_of_string n, name)
-    | ["bounded"; n; name] -> Bounded (int_of_string n, name)
-    | _ -> Named s
-
-let showType: imltype -> string = function
-  | MStringBot        -> "bitstringbot"
-  | MString           -> "mstring"
-  | Fixed (n, name)   -> "fixed_" ^ string_of_int n ^ "_" ^ name
-  | Bounded (n, name) -> "bounded_" ^ string_of_int n ^ "_" ^ name
-  | Named name        -> name
-
-let convertFunType: typet list * typet -> ftype = fun (ts, t) ->
-  map (fun t -> parseType t.tname) ts, parseType t.tname 
-
-let lenToType : exp -> imltype = function
-  | Int (i, _) -> Fixed (Int64.to_int i, "")
-  | e -> fail ("lenToType: integer expected, got " ^ dump e)
-
-let showFtype : string -> ftype -> string = fun name (ts, t) -> 
-  name ^ "(" ^ String.concat ", " (List.map showType ts) ^ "): " ^ showType t
-  
-let printFtype : string -> ftype -> unit = fun name t -> prerr_endline (showFtype name t)
-
-let dumpTypes : unit -> unit = fun () ->
-  prerr_endline "Types: ";
-  StrMap.iter printFtype !types;
-  prerr_endline ""
-
-
-(** {2 Casting Functions} *)
-(*****************************)
-
-
-let casts: (imltype * imltype) list ref = ref []
-
-let castFun: imltype -> imltype -> string = fun t t' -> "cast_" ^ showType t ^ "_" ^ showType t'
-
-let mkCast: imltype -> imltype -> exp -> exp = fun t t' e ->
-  (* debug ("mkCast: casting " ^ dump e ^ " to " ^ dumpType t); *)
-  let cf = castFun t t' in
-  if not (List.mem (t, t') !casts) then
-    casts := (t, t') :: !casts;  
-  Sym ((cf, Prefix), [e], Unknown, freshDet ())
-
-(**
-  [mkInverse(mkCast t t' e)]
-*)
-let mkInverseCast: imltype -> imltype -> exp -> exp = fun t t' e ->
-  (* debug ("mkCast: casting " ^ dump e ^ " to " ^ dumpType t); *)
-  let cf = "inverse_cast_" ^ showType t ^ "_" ^ showType t' in
-  if not (List.mem (t, t') !casts) then
-    casts := (t, t') :: !casts;  
-  Sym ((cf, Prefix), [e], Unknown, freshDet ())
-
+let templateFile = ref ""
 
 (** {2 Collecting Types from the Environment} *)
 (*****************************)
 
+let convertFunType: typet list * typet -> ftype = fun (ts, t) ->
+  map (fun t -> parseType t.tname) ts, parseType t.tname 
 
 let collectEnvTypes : unit -> unit = fun () -> 
   
   let doEntry : string -> env_entry -> unit = fun k -> function
-	  | EFunc f -> types  := StrMap.add f.f_name (convertFunType f.f_type) !types 
+	  | EFunc f -> funTypes := (f.f_name, convertFunType f.f_type) :: !funTypes 
     | EEvent f ->
       (* for some reason it adds an extra bitstring parameter in front of the ones I define *)
       let (atypes, rtype) = f.f_type in
-      types := StrMap.add f.f_name (convertFunType (tl atypes, rtype)) !types
-	  | EVar b -> types := StrMap.add b.sname (convertFunType ([], b.btype)) !types
+      funTypes := (f.f_name, convertFunType (tl atypes, rtype)) :: !funTypes
+	  | EVar b -> funTypes := (b.sname, convertFunType ([], b.btype)) :: !funTypes
 	  | _ -> ()
   in
   
@@ -173,7 +44,7 @@ let collectEnvTypes : unit -> unit = fun () ->
 let rec collectInputProcessTypes : inputprocess -> unit = fun q -> 
   
   let rec collectPattern : pattern -> unit = function
-    | PatVar b -> types  := StrMap.add b.sname (convertFunType ([], b.btype)) !types
+    | PatVar b -> funTypes := (b.sname, convertFunType ([], b.btype)) :: !funTypes
     | PatTuple (_, pats) -> iter collectPattern pats 
     | PatEqual _ -> ()
   in
@@ -188,46 +59,36 @@ and collectOutputProcessTypes : process -> unit = fun p ->
   match p.p_desc with
 	  | Yield -> ()
 	  | Restr (b, p) ->
-      types  := StrMap.add b.sname (convertFunType ([], b.btype)) !types;
+      funTypes  := (b.sname, convertFunType ([], b.btype)) :: !funTypes;
       collectOutputProcessTypes p
 	  | Test (_, p, p') -> collectOutputProcessTypes p; collectOutputProcessTypes p'
 	  | Find _ -> fail "collectTypes: unexpected find construct"
 	  | Output (_, _, q) -> collectInputProcessTypes q
-	  | Let (PatVar b, _, p, p') ->
-      types  := StrMap.add b.sname (convertFunType ([], b.btype)) !types;
+	  | Let (pat, _, p, p') ->
+      collectPatternTypes pat;  
       collectOutputProcessTypes p; collectOutputProcessTypes p'
-    | Let _ -> 
-      fail "collectTypes: let patterns not supported"
 	  | EventP (_, p) -> collectOutputProcessTypes p
+
+and collectPatternTypes: pattern -> unit = function
+  | PatVar b -> funTypes := (b.sname, convertFunType ([], b.btype)) :: !funTypes 
+  | PatTuple (_, pats) -> iter collectPatternTypes pats
+  | PatEqual _ -> ()
 
 let collectConstTypes : unit -> unit = fun () ->
   let collect : string -> unit = fun c ->
-    types  := StrMap.add c ([], MString) !types
+    funTypes := (c, ([], mstring)) :: !funTypes
   in
   List.iter collect !constants
 
 let collectFunTypes : piFunInfo list -> unit = fun fs ->
   let collect : piFunInfo -> unit = fun (fname, _) ->
     let arity = assoc fname !arities in
-    types  := StrMap.add fname (replicate arity MString, MString) !types
+    funTypes := (fname, (replicate arity mstring, mstring)) :: !funTypes
   in
   List.iter collect fs
 
 let collectTypes : unit -> unit = fun () ->
-  (* construct an environment file for CV to read *)
-  (* let def_file = Filename.temp_file "cvdef_file" ".out" in *)
-  let def_file = "cvtemplate.in" in
-  (*
-  let def_out = open_out def_file in
-  let cvdefs = 
-    "channel c_in, c_out. type mstring."
-    ^ String.concat "\n" (!crypto @ !typehints @ !query) 
-    ^ "\n\nlet A = 0 . let B = 0 .\n"
-    ^ String.concat "\n" !envp in
-  output_string def_out cvdefs;
-  close_out def_out;
-  *)
-  let (_, _, _, _, queries, _, q) = read_file def_file in
+  let (_, _, _, _, queries, _, q) = read_file !templateFile in
   collectEnvTypes ();
   collectInputProcessTypes q;
   collectConstTypes ()
@@ -241,15 +102,16 @@ let collectTypes : unit -> unit = fun () ->
 
 let subtype: imltype -> imltype -> bool = fun t t' ->
   match t, t' with
-	| _, MStringBot -> true
-	| MStringBot, _ -> false
-	| _, MString    -> true
-	| MString, _    -> false 
-	| _, Named _    -> t = t'
-  | Named _, _    -> false
-  | Bounded (i, _), Bounded (i', _) -> i <= i'
-  | Fixed (i, _), Bounded (i', _)   -> i <= i'
-  | _, Fixed _                      -> t = t'
+    | _, MStringBot -> true
+    | MStringBot, _ -> false
+    | _, MString _  -> true
+    | MString _, _  -> false 
+    | _, Named _    -> t = t'
+	  | Named _, _    -> false
+	  | Bounded (i, _), Bounded (i', _) -> i <= i'
+	  | Fixed (i, _), Bounded (i', _)   -> i <= i'
+	  | Fixed (i, _), Fixed (i', _)     -> i = i'
+	  | _ -> false
 
 let meet : imltype -> imltype -> imltype = fun t t' ->
   if subtype t t' then t
@@ -258,30 +120,18 @@ let meet : imltype -> imltype -> imltype = fun t t' ->
 
 
 let checkType : pCtx -> exp -> exp = fun ctx ->
-  
-  let getType : exp -> imltype = function
-    | Sym (("read", _), [], _, _) -> MString
-    | Sym (("new", _), [], l, _) -> lenToType l
-    | Sym (("newT", _), [String t], l, _) -> parseType t
-    | Sym ((("var" | "const"), _), [String s], _, _) -> let (_, t) = StrMap.find s !types in t
-    | Sym ((f, _), _, _, _) ->
-      begin try let (_, t) = StrMap.find f !types in t
-      with Not_found -> MString (* This is relevant in typechecking equality *) end
-    | e -> fail ("getType: unexpected expression: " ^ dump e)
-  in  
-
   let mkTypeFact : exp -> imltype -> exp = fun e -> function
     | MStringBot -> tt
-    | MString    -> tt
+    | MString _  -> tt
     | Fixed (n, _)    -> eq [mkInt n; getLen e]
     | Bounded (n, _)  -> grEq (mkInt n) (getLen e)
     | Named n         -> unknown () (* fail ("checkType: generic named type: e = " ^ dump e ^ ", t = " ^ n) *)
   in
 
   let proveType: ftype -> exp -> unit = function (argTypes, resType) -> function
-    | Sym ((f, _), es, _, _) as e when isFormatFun f ->
+    | Sym ((f, _), es, _, _) as e when isFormatFun f || f = "read" ->
 
-      let args = mkFormalArgs f in
+      let args = mkFormalArgs (length es) in
       
       (* replace es with formal argument expressions and expand all format function definitions *)
       let rewrite: exp -> exp = fun e -> expandFormatFuns (substMany es args e) in 
@@ -307,15 +157,36 @@ let checkType : pCtx -> exp -> exp = fun ctx ->
       solver_debug := false;
    
     | _ -> fail "proveType: unexpected expression"
-            
   in
 
+  let cast: imltype -> imltype -> exp -> exp = fun t t_e e ->
+      if t = t_e then e
+    else if subtype t_e t then
+      mkCast t_e t e
+    (*
+       Inverse casts should not be allowed, functions should not be forced to check their argument type.
+      (* sometimes unequal types may be equivalent (like mstring with alias), so we need to orient them somehow *)
+    else if subtype t_e t && t_e < t then
+      mkCast t_e t e
+    else if subtype t t_e && t < t_e then
+      (* 
+        We don't want cast functions to be pattern-matched, because it makes writing
+        some rewrite rules more difficult (like in RPC-enc). 
+      *)
+      (* mkInverseCast t t_e e *)
+      mkCast t_e t e
+    *)
+    else 
+      fail ("typecheck: cannot introduce a typecast for " ^ dump e ^ " from " ^ showType t_e ^ " to " ^ showType t)
+  in
+    
   let rec check: imltype -> exp -> exp = fun t e ->
     debug ("\n==============================\nchecking type of " ^ dump e);
     match e with
-    | Sym ((("read" | "new" | "newT" | "var" | "const" | "If"), _), _, _, _) -> e
+    | Sym (("If", _), [e'], _, _) -> replaceArgs [check boolType e'] e
     | Sym ((("write"), _), _, _, _) when isArithmeticWrite e -> e
-    | Sym ((("write"), _), es, _, _) -> replaceArgs (map (check MString) es) e
+      (* being liberal with what we write *)
+    | Sym ((("write"), _), [e'], _, _) -> replaceArgs [check (getType e') e'] e (* (map (check mstring) es) *) 
       (* for some reason CV considers events to be of bool type *)
     | Sym ((("event"), _), es, _, _) -> replaceArgs (map (check boolType) es) e
     
@@ -325,8 +196,25 @@ let checkType : pCtx -> exp -> exp = fun ctx ->
       let t = meet t1 t2 in
       replaceArgs [check t e1; check t e2] e
       
-    | Sym ((f, _), es, _, _) when StrMap.mem f !types ->
-      let (argTypes, t_e) = StrMap.find f !types in
+    | Sym ((("new" | "newT" | "var" | "const"), _), _, _, _) -> 
+      let t_e = getType e in
+      cast t t_e e
+
+    | Sym (("read", _), _, _, _) when mem_assoc (expId e) !readTypes -> 
+      debug ("has type: " ^ dump e);
+      let t_e = getType e in
+      debug ("the type is " ^ showType t_e);      
+      cast t t_e e
+                  
+    | Sym (("read", _), _, _, _) -> 
+      debug ("checking typeless: " ^ dump e);
+      proveType ([], t) e; 
+      debug ("type proved: " ^ showType t);
+      readTypes := (expId e, t) :: !readTypes;
+      e
+                  
+    | Sym ((f, _), es, _, _) when mem_assoc f !funTypes ->
+      let (argTypes, t_e) = assoc f !funTypes in
             
       if isFormatFun f then proveType (argTypes, t_e) e;
 
@@ -336,38 +224,39 @@ let checkType : pCtx -> exp -> exp = fun ctx ->
       in
       let e' = replaceArgs es' e in
 
-	    if t = t_e then e'
-	    else if subtype t_e t then
-	      mkCast t_e t e'
-	    else if subtype t t_e then
-	      mkInverseCast t t_e e'
-	    else 
-	      fail ("typecheck: cannot introduce a typecast for function" ^ showFtype f (argTypes, t_e));
+      cast t t_e e'
 
     | Sym ((f, _), es, _, _) ->
       let (argTypes, t_e) = (map getType es, t) in
       
       if isFormatFun f then proveType (argTypes, t_e) e;
 
-      types := StrMap.add f (argTypes, t_e) !types;
+      funTypes := (f, (argTypes, t_e)) :: !funTypes;
       let es' = 
         try map2 check argTypes es 
         with Invalid_argument _ -> fail ("wrong number of arguments in " ^ dump e);
       in
-      replaceArgs es' e 
+      replaceArgs es' e
       
     | e -> fail ("typecheck: unexpected expression: " ^ dump e)
   in
   
-  check MString
+  check mstring
   (* List.map (visitAllSubexp check) *) (* visitExpBodyPost *) 
 
 
 let typecheck: exp list -> exp list = mapWithCtx checkType
 
+
 (*************************************************)
 (** {1 Use pattern matching where possible} *)
 (*************************************************)
+
+(**
+    Using pattern matching is only possible when the encoder is injective, and we actually don't check that,
+    as this is not necessarily implied by having a safe parser.
+    We rely on the fact that CV will reject the pattern matching if encoder is not marked as [compos].
+*)
 
 type cvprocess = exp list * pMeta
 
@@ -459,6 +348,57 @@ let usePatterns: cvprocess -> cvprocess = function (p, meta) ->
   p', getActiveMeta ()
 
 (*************************************************)
+(** {1 Regularity Properties} *)
+(*************************************************)
+
+let zeroTypes: unit -> imltype list = fun () ->
+
+  let zts: imltype list ref = ref [] in
+  
+  let addType: (string * ftype) -> unit = fun (c, (ts, t)) ->
+    if isConcat c then zts := t :: ts @ !zts;
+  in 
+  
+  iter addType !funTypes;
+  nub !zts
+
+let zeroFunName: imltype -> string = fun t -> "Z" ^ showType t
+
+(*************************************************)
+(** {1 Input and Output Merging} *)
+(*************************************************)
+
+let mergeInOut : exp list -> exp list = fun es ->
+
+  (* let dummy = mkVar "dummy" (concat []) in *) 
+
+  let rec mergeIn : exp list -> exp list -> exp list = fun vs es -> match (vs, es) with
+    | vs, Sym (("read", _), [v], _, _) :: es' -> mergeIn (v :: vs) es'
+    | [], e :: es' -> e :: mergeIn [] es'
+    | vs, ((Sym (("write", _), _, _, _)) as e) :: es' ->
+      Sym (("read", Prefix), vs, Unknown, freshNondet ()) :: e :: mergeIn [] es' 
+    | vs, e :: es' -> e :: mergeIn vs es'
+    | [], [] -> 
+      [Sym (("read", Prefix), [], Unknown, freshNondet ())] 
+    | vs, [] -> 
+      [Sym (("read", Prefix), vs, Unknown, freshNondet ())]
+  in
+
+  let rec mergeOut : exp list -> exp list -> exp list = fun vs es -> match (vs, es) with
+    | vs, Sym (("write", _), [v], _, _) :: es' -> mergeOut (v :: vs) es'
+    | [], e :: es' -> e :: mergeOut [] es'
+    | vs, ((Sym (("read", _), _, _, _)) as e) :: es' ->
+      Sym (("write", Prefix), vs, Unknown, freshNondet ()) :: e :: mergeOut [] es' 
+    | vs, e :: es' -> e :: mergeOut vs es'
+    | [], [] -> 
+      [Sym (("yield", Prefix), [], Unknown, freshNondet ())] 
+    | vs, [] -> 
+      [Sym (("write", Prefix), vs, Unknown, freshNondet ())]
+  in
+      
+  List.rev (mergeIn [] (List.rev (mergeOut [] es)))
+
+(*************************************************)
 (** {1 CV Output} *)
 (*************************************************)
   
@@ -467,18 +407,19 @@ let showCVExp : exp -> string = fun e ->
   let rec showExpBody : exp -> string = function 
     | Sym (("const", _), [String c], _, _) -> c
     | Sym (("var", _), [String s], _, _) -> s
-    | Sym ((s, Prefix), es, len, id) ->
+    | Sym ((s, _), es, len, id) ->
       s ^ "(" ^ String.concat ", " (map showExp es) ^ ")"
-    | e -> "unexpected(" ^ dump e ^ ")"
+    | e -> "unexpected{" ^ dump e ^ "}"
 
   and showInVar : imltype -> exp -> string = fun t -> function
 	  | Sym (("var", _), [String name], l, _) -> name ^ ": " ^ showType t
 	  | _ -> failwith "showInVar: not a var"
 
   and showExp : exp -> string = function e ->
+    (* debug ("showing " ^ dump e); *)
     match e with
 	    | Sym (("read", _), vs, _, _) -> 
-	      "in(c_in, (" ^ String.concat ", " (map (showInVar MString) vs) ^ "));";
+	      "in(c_in, (" ^ String.concat ", " (map (fun v -> showInVar (getType v) v) vs) ^ "));";
 	
 	    | Sym (("new", _), [v], l, _) -> 
         let t = lenToType l in
@@ -489,7 +430,10 @@ let showCVExp : exp -> string = fun e ->
     	
 	    | Sym (("write", _), es, _, _) -> 
 	      "out(c_out, (" ^ String.concat ", " (map showIExp es) ^ "));";
-	                                                                                       
+
+      | Sym (("yield", _), [], _, _) -> 
+        "yield.";
+                                                                                                                                                                                	                                                                                       
 	    | Sym ((("IfEq"), _), [e1; e2], _, _) ->
 	      "if " ^ showExp e1 ^ " = " ^ showExp e2 ^ " then "
 
@@ -524,25 +468,36 @@ let showCVProcess : cvprocess -> string = function (es, (m, t)) ->
   nameTags := t; 
   (* let es = splitByType es in *)
   (* let es = elimCommonSubs es in *)
-  let result = String.concat "\n" (map showCVExp es) ^ " 0 .\n" in
+  let zero = 
+    if es = [] then " 0 .\n" else
+    match last es with
+      | Sym (("yield", _), [], _, _) -> "\n"
+      | _ -> " 0 .\n"
+  in
+  let result = String.concat "\n" (map showCVExp es) ^ zero in
   result
 
 let print_indent s = print_endline ("  " ^ s)
 
 let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
   
-  let printConcat : piFunInfo -> unit = function
-    | (name, Basic _) -> 
-      print_endline ("fun " ^ showFtype name (StrMap.find name !types) ^ " [compos].")
-      (* print_endline ""; *) 
-      (* print_endline ("fun " ^ name ^ "(" ^ String.concat ", " (replicate (assoc name !arities) "mstring") ^ "): mstring [compos].") *)
-    | _ -> ()
+  let printConcatRaw: piFun -> bool -> unit = fun name isInjective -> 
+    let compos = if isInjective then " [compos]." else "." in
+    print_endline ("fun " ^ showFtype name (assoc name !funTypes) ^ compos)
+  in
+    
+  let printConcat : piFunInfo -> unit = function (name, _) as c ->
+    debug ("printing " ^ name);
+    print_endline ("(* " ^ showFun c ^ " *)");
+    printConcatRaw name (isInjectiveConcat true c);
+    print_endline ""
   in
 
   let printParser : piFunInfo -> unit = function
-    | (name, Basic _) -> 
-      print_endline ("fun " ^ showFtype name (StrMap.find name !types) ^ ".")
-      (* print_endline ""; *) 
+    | (name, Basic _) as p -> 
+      print_endline ("(* " ^ showFun p ^ " *)");
+      print_endline ("fun " ^ showFtype name (assoc name !funTypes) ^ ".");
+      print_endline "";
       (* print_endline ("fun " ^ name ^ "(mstring): mstring.") *)
     | _ -> ()
   in
@@ -551,9 +506,23 @@ let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
 	  print_endline ("fun " ^ castFun t t' ^ "(" ^ showType t ^ "): " ^ showType t' ^ " [compos].")
   in
   
-  let printConstant : string -> unit = fun s -> print_endline ("const " ^ s ^ ": mstring.") in
+  let printCastEq: imltype * imltype -> unit = fun (t, t') ->
+    if List.mem (t', t) !casts then 
+    begin
+      (* this is a cast between two equal (aliased) types *)
+      print_endline ("forall x: " ^ showType t ^ ";");
+      print_endline ("  " ^ castFun t' t ^ "(" ^ castFun t t' ^ "(x)) = x.")
+    end
+  in
+  
+  let printConstant : string -> unit = fun s ->
+    let e = try assoc s !constDefs with Not_found -> fail "impossible: printConstant" in
+    print_endline ("(* " ^ dump e ^ " *)");
+    print_endline ("const " ^ s ^ ": mstring.") 
+  in
 
   let printDisjoint: piFun * piFun -> unit = fun (c1, c2) ->
+    debug ("printing" ^ c1 ^ " " ^ c2);
     try
     begin    
 	    let id = ref 0 in
@@ -561,8 +530,8 @@ let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
 	    let formalArg: imltype -> string = fun _ -> id := !id + 1; "var" ^ string_of_int !id in
 	    let showArg: string -> imltype -> string = fun v t -> v ^ ": " ^ showType t in
 	
-	    let (argTypes1, t1) = StrMap.find c1 !types in
-	    let (argTypes2, t2) = StrMap.find c2 !types in
+	    let (argTypes1, t1) = assoc c1 !funTypes in
+	    let (argTypes2, t2) = assoc c2 !funTypes in
 	
 	    if t1 = t2 then
 	    begin
@@ -575,6 +544,31 @@ let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
 	    end
     end with Not_found -> ()
   in
+
+  let printZeroFun: imltype -> unit = fun t ->
+    let tname = showType t in
+    print_endline ("fun " ^ zeroFunName t ^ "(" ^ tname ^ "): " ^ tname ^ ".")
+  in
+
+  let printConcatRegular: piFun -> unit = fun c ->
+    let (ts, t) = assoc c !funTypes in
+    
+    let zc = "Z" ^ c in
+    funTypes := (zc, (ts, t)) :: !funTypes;
+    printConcatRaw zc false;
+    
+    let id = ref 0 in
+
+    let formalArg: imltype -> string = fun _ -> id := !id + 1; "var" ^ string_of_int !id in
+    let showArg: string -> imltype -> string = fun v t -> v ^ ": " ^ showType t in
+    let applyZero: string -> imltype -> string  = fun v t -> zeroFunName t ^ "(" ^ v ^ ")" in
+
+    let args = map formalArg ts in
+
+    print_endline ("forall " ^ String.concat ", " (map2 showArg args ts) ^ ";");
+    print_endline ("  " ^ zeroFunName t ^ "(" ^ c  ^ "(" ^ String.concat ", " args ^ ")) = " 
+                    ^ zc ^ "(" ^ String.concat ", " (map2 applyZero args ts) ^ ").");
+  in        
 
   let clientProc = showCVProcess client in
   let serverProc = showCVProcess server in
@@ -589,17 +583,25 @@ let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
   print_endline "\n(*************************** \n Constants \n***************************)\n";
   iter printConstant !constants;
 
-  print_endline "\n(*************************** \n  Concatenation and Parsing \n***************************)\n";
+  print_endline "\n(*************************** \n  Formatting Functions \n***************************)\n";
   iter printConcat !concats;
   iter printParser !parsers;
   print_endline "";
   iter printDisjoint !disjointPairs;
-  
+
+  print_endline "\n(*************************** \n  Zero Functions \n***************************)\n";
+  iter printZeroFun (zeroTypes ()); 
+
+  print_endline "\n(*************************** \n  Length-Regularity \n***************************)\n";
+  iter printConcatRegular (assoc_keys !concats);
+                  
   print_endline "\n(*************************** \n  Typecasting \n***************************)\n";
-  iter printCast !casts; 
+  iter printCast !casts;
+  iter printCastEq !casts; 
   
   print_endline "";
-  
+
+  iter print_endline !crypto2;
   iter print_endline !query;
   
   print_endline "\n(*************************** \n  Model \n***************************)\n";
@@ -625,16 +627,18 @@ let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
 begin
   inlineAll := false;
 
-  (* server is typically the process executed first, i.e. P1 *)
-  let server = execute (open_in Sys.argv.(1)) in
-  let client = execute (open_in Sys.argv.(2)) in
+  (*
+  let server = input_value (open_in_bin Sys.argv.(1)) in
+  let client = input_value (open_in_bin Sys.argv.(2)) in
+  *)
+  let (client, server) = rawIn (open_in_bin Sys.argv.(1)) in
+
+  verbose := true;
+  debugEnabled := true;
 
   if !verbose then prerr_endline "\nraw IML:";
   if !verbose then prerr_endline (showSimpleIMLRaw client);
   if !verbose then prerr_endline (showSimpleIMLRaw server);
-
-  verbose := true;
-  debugEnabled := true;
 
   let server = procAndFilter server in
   let client = procAndFilter client in
@@ -656,15 +660,22 @@ begin
     First, it is not always possible (metering).
     Second, processes are easier to typecheck without nested concats.
   *)
-  insertConcats ~allowSplit:false allConcats;
+  insertConcats ~needDisjoint:false allConcats;
 
   if !verbose then showFuns !concats;
 
   let client = rewriteConcats client in
   let server = rewriteConcats server in
-  
-  cleanupConcats ();
 
+  let client = extractConstConcats client in
+  let server = extractConstConcats server in
+
+  if !verbose then prerr_endline "\nIML after constant concats extraction:";
+  if !verbose then prerr_endline (showSimpleIML client);
+  if !verbose then prerr_endline (showSimpleIML server);
+
+  cleanupConcats (client @ server);
+      
   if !verbose then prerr_endline (showSimpleIML client);
   if !verbose then prerr_endline (showSimpleIML server);
 
@@ -690,8 +701,9 @@ begin
   if !verbose then prerr_endline (showSimpleIML server);
 
   (* Typechecking *)
-  readTemplate (open_in "cvtemplate.in");
-  Cryptoverif.Settings.lib_name := Sys.argv.(3);
+  Cryptoverif.Settings.lib_name := Sys.argv.(2);
+  templateFile := Sys.argv.(3);
+  readTemplate (open_in !templateFile);
   collectTypes ();
   dumpTypes ();
   let client = typecheck client in

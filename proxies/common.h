@@ -27,8 +27,15 @@
 EXTERN void proxy_fail(const char * fmt, ...);
 
 void readenv(const unsigned char * buf, const size_t * len, const char * s);
-// a version that does not assume a particular length size
+/**
+ * A version that does not assume a particular length size
+ */
 void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * s);
+/**
+ * A fixed-length version. In terms of paper CVM this corresponds to reading from
+ * the environment and then checking that the length is indeed of the requested size.
+ */
+void readenvL(const unsigned char * buf, size_t len, const char * s);
 // shouldn't use this at all?
 void make_sym(const unsigned char * buf, size_t len, const char * s);
 // void make_simple_sym(const unsigned char * buf, size_t len, const char * s);

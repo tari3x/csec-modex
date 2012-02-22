@@ -1,0 +1,107 @@
+
+channel c_in, c_out. 
+type mstring.
+
+param N.
+
+(******************** 
+  MAC
+********************)
+
+type mkeyseed [fixed, large].
+type mkey [bounded].
+type macinput.
+(* type macres. *)
+proba Pmac.
+
+expand UF_CMA_mac(mkeyseed, mkey, mstring, mstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+
+forall m: mstring, k: mkey, r: mstring;
+  ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
+
+
+(*************************** 
+ Constants 
+***************************)
+
+
+(*************************** 
+  Formatting Functions 
+***************************)
+
+(* conc1/2 := lenarg(i0)<8>|tag(i1)<1>|arg(i0)<lenarg(i0)>|arg(i1)<lenarg(i1)> *)
+fun conc1(mstring, mstring): mstring [compos].
+
+(* conc2/1 := lenarg(i0)<8>|tag(i2)<1>|arg(i0)<lenarg(i0)> *)
+fun conc2(mstring): mstring [compos].
+
+
+forall var1: mstring, var2: mstring, var3: mstring;
+  conc1(var1, var2) <> conc2(var3).
+
+(*************************** 
+  Zero Functions 
+***************************)
+
+fun Zmstring(mstring): mstring.
+
+(*************************** 
+  Length-Regularity 
+***************************)
+
+fun Zconc1(mstring, mstring): mstring.
+forall var1: mstring, var2: mstring;
+  Zmstring(conc1(var1, var2)) = Zconc1(Zmstring(var1), Zmstring(var2)).
+fun Zconc2(mstring): mstring.
+forall var1: mstring;
+  Zmstring(conc2(var1)) = Zconc2(Zmstring(var1)).
+
+(*************************** 
+  Typecasting 
+***************************)
+
+
+(******************** 
+  <Query>
+********************)
+ 
+event client_send(mstring).
+event server_recv(mstring).
+
+query x: mstring, y:mstring;
+  event server_recv(x) ==> client_send(x).
+
+
+(*************************** 
+  Model 
+***************************)
+
+let A = 
+in(c_in, ());
+event client_send(payload);
+let msg1 = conc1(payload, HMAC_sha1(conc2(payload), key)) in
+out(c_out, (msg1)); 0 .
+
+let B = 
+in(c_in, (msg1: mstring, msg2: mstring));
+let conc1(var1, var2) = msg2 in
+let hash1 = HMAC_sha1(conc2(var1), key) in
+if hash1 = var2 then 
+event server_recv(var1);
+yield.
+
+(************************
+  <Environment>
+*************************)
+
+
+process
+! N (
+  in(c_in, (payload: mstring));
+
+  new keyseed: mkeyseed; 
+  let key = mkgen(keyseed) in
+
+  out(c_out, ());
+  (!N A | !N B)
+)

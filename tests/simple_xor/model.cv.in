@@ -1,0 +1,51 @@
+
+channel c_in, c_out. 
+type mstring.
+
+param N.
+
+(************************
+  Types
+*************************)
+
+type fixed_20 [fixed, large].
+type fixed_21 [fixed, large].
+
+(************************
+  XOR
+*************************)
+
+expand Xor(fixed_21, XOR).
+
+(************************
+  <Query>
+*************************)
+
+query secret nonce1.
+
+(************************
+  <Model>
+*************************)
+
+let A = 
+  in(c_in, ()); 
+  new nonce1: fixed_20; 
+  yield .
+  
+let B = 0 .
+
+(************************
+  <Environment>
+*************************)
+
+
+process
+! N (
+  in(c_in, ());
+
+  (* one-time pad *)
+  new pad: fixed_21;
+
+  out(c_out, ());
+  (A | B)
+)

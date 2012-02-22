@@ -6,6 +6,9 @@
 
 #include <proxies/common.h>
 #include <proxies/interface.h>
+#include <proxies/system-proxies.h>
+
+#include <string.h>
 
 extern uint32_t encrypt_len_proxy(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen)
 {
@@ -23,8 +26,9 @@ extern uint32_t encrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
 {
   uint32_t ret = encrypt(key, keylen, in, inlen, out);
 
-  load_buf(key, keylen, "key");
   load_buf(in, inlen, "msg");
+  load_buf(key, keylen, "key");
+  newTN("seed", "nonce", NULL);
   symNE("E", "cipher", &ret, sizeof(ret), TRUE, -1);
   store_buf(out);
 
@@ -50,9 +54,10 @@ extern uint32_t decrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
 {
   uint32_t ret = decrypt(key, keylen, in, inlen, out);
 
-  load_buf(key, keylen, "key");
   load_buf(in, inlen, "cipher");
-  symNE("D", "msg", &ret, sizeof(ret), TRUE, -1);
+  load_buf(key, keylen, "key");
+  symN("D", "msg", NULL, TRUE);
+  symNE("inverse_injbot", "msg", &ret, sizeof(ret), TRUE, -1);
   store_buf(out);
 
   if(ret > decrypt_len_proxy(key, keylen, in, inlen))
@@ -65,9 +70,21 @@ unsigned char * get_shared_key_proxy(unsigned char* client, uint32_t client_len,
 {
   unsigned char * ret = get_shared_key(client, client_len, server, server_len, len);
 
+  // We only provide the service for one identity of attacker's choice (xClient).
+  // This can be improved with multipath, because then we can just inline the case split
+  // bad client / good client.
+  size_t xclient_len = client_len;
+  unsigned char * xclient = malloc(xclient_len);
+  memcpy(xclient, client, xclient_len);
+  readenv(xclient, &xclient_len, "xClient");
+
+  if((client_len != xclient_len) || memcmp_proxy(client, xclient, xclient_len))
+    fail("trying to look up key for unknown host");
+
   load_buf(client, client_len, "client");
   load_buf(server, server_len, "server");
-  symNE("key", "kAB", len, sizeof(*len), TRUE, -1);
+  varsym("db");
+  symNE("lookup", "kAB", len, sizeof(*len), TRUE, -1);
   store_buf(ret);
   //readenv(ret, len, "kAB");
 
@@ -78,11 +95,8 @@ unsigned char * mk_session_key_proxy(uint32_t * len)
 {
   unsigned char * ret = mk_session_key(len);
 
-  // typically one would use a keygen function seeded with a nonce,
-  // but in a symbolic model this does not make a difference
-  // and so we use the nonce itself as a key
-
-  symNE("new", "kS", len, sizeof(*len), FALSE, -1);
+  newTN("keyseed", "kS_seed", NULL);
+  symN("kgen", "kS", len, FALSE);
   store_buf(ret);
 
   return ret;
@@ -104,8 +118,13 @@ unsigned char * get_response_proxy(uint32_t * len)
 {
   unsigned char * ret = get_response(len);
 
-  symNE("new", "response", len, sizeof(*len), FALSE, -1);
-  store_buf(ret);
+  // symNE("new", "response", len, sizeof(*len), FALSE, -1);
+  // store_buf(ret);
+
+  // newTN("mstring_payload", "response", len);
+  // store_buf(ret);
+
+  readenv(ret, len, "response");
 
   return ret;
 }

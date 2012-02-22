@@ -101,14 +101,36 @@ class markVisitorClass = object
       
     | _ -> SkipChildren
 
+  method vinst(i) =
+    
+    (* ignore (Pretty.printf "marking instruction %a\n" (printInstr plainCilPrinter) i); *)
+    match i with
+      | Call (_, Lval (Var f, _), [_; CastE (_, Const (CStr s))], _) when f.vname = "dlsym" ->
+            
+        let v = makeVarinfo true s (TFun (TVoid [], None, false, [])) in
+        addRef v;
+        addChild !currentGlobal v;
+        
+        SkipChildren
+
+      | _ -> DoChildren
+
   method vglob : global -> global list visitAction = function
-    | GVar (v, _, loc) -> 
+    | GVar (v, _, loc) ->
+       
       addDef v loc; 
+      if mem v.vname !boringNames then
+        markOpaque v;
+        
       DoChildren
 
     | GFun (f, loc) -> 
       (* addChild g f.svar; (* Add a self-reference. Why are we doing this? *) *)
       addDef f.svar loc; 
+      
+      if needsProxy f.svar || mem f.svar.vname !boringNames then
+        markOpaque f.svar;
+      
       DoChildren
    
     | _ -> DoChildren

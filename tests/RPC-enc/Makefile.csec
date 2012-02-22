@@ -2,9 +2,9 @@
 CSEC_ROOT = ../..
 
 everything: compile sym
-everything: iml pv
+everything: iml pv cv
 
-all: iml pv
+all: iml pv cv_full
 
 include Makefile.common
 
@@ -14,7 +14,7 @@ lib_proxy.o net_proxy.o: CC = $(PROXY_SYM_CILLY)
 
 PROXY_CONF_SYM = proxies.conf.out
 
-OUTPUTS = iml.all.out pvmodel.out 
+CV_OUTPUTS = model.full.cv.out model.paper.cv.out
 # $(CVM)
 
 csec-verify-log: csec-verify.log
@@ -31,4 +31,4 @@ $(PROXY_CONF_SYM): proxies.conf $(PROXIES)/openssl_proxies.sym.conf
 	cat $^ > $@
 
 # don't compile lib with CIL cause fail has varargs
-CILLY_FLAGS += --leavealone=lib
+# CILLY_FLAGS += --leavealone=lib

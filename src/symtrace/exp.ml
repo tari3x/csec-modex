@@ -28,6 +28,12 @@ open Utils
 open Solver
 
 (******************************************************************)
+(** {1 State}                                                     *)
+(******************************************************************)
+
+let lenCache: len ExpMap.t ref = ref ExpMap.empty
+
+(******************************************************************)
 (** {1 Symbolic Arithmetic Expression Manipulation}               *)
 (******************************************************************)
 
@@ -63,9 +69,19 @@ let rec getLen : exp -> len = fun e ->
     | Sym (_, _, _, _) -> Sym (("len", Prefix), [e], Unknown, freshDet ())
     | Range (_, _, All, _) -> Unknown (* FIXME: Shouldn't this be flagged in the first place? *)
     | Range (_, _, len, _) -> len 
-    | Concat (es, _) ->
+    | Concat (es, tag) ->
+      (* 
+        We are actually interested in syntactic length, that's why we don't map ids.
+        Interestingly, performace difference is negligible when compared to id mapping.
+      *)
+      begin try 
+        ExpMap.find e !lenCache
+      with Not_found ->
         let lens = map getLen es in
-        fold_left addLen zero lens
+        let len = fold_left addLen zero lens in
+        lenCache := ExpMap.add e len !lenCache;
+        len
+      end
     | Struct (_, _, l, _) -> l
     | Array (_, l, _) -> l
     | Ptr (_, _) -> ptrLen
@@ -92,16 +108,16 @@ let getRealLenLen e = match getRealLen e with
 
 let setLen : exp -> exp -> exp = fun e l -> 
   match e with
-      | Int (ival, Unknown) -> Int (ival, l)
-      (* | String _ as s -> Range (s, zero, l) *)
-      | Sym (sym, args, Unknown, tag) -> Sym (sym, args, l, tag)
-      (* | Range (e, f, _) -> Range (e, f, l) *)
-      | Struct (fields, attrs, Unknown, e_old) -> Struct (fields, attrs, l, e_old)
-      | Array (elems, Unknown, eltSize) -> Array (elems, l, eltSize)
-        (* | Ptr _ as p -> p (* silently ignoring pointer lengths *) 
-      | Concat _ as e -> e (* silently ignore *) *) 
-        (* | _ -> fail "setLen: unexpected expression on stack" *)
-      | e -> e (* silently ignoring concats, pointers and expressions that already have length *)
+	  | Int (ival, Unknown) -> Int (ival, l)
+	  (* | String _ as s -> Range (s, zero, l) *)
+	  | Sym (sym, args, Unknown, tag) -> Sym (sym, args, l, tag)
+	  (* | Range (e, f, _) -> Range (e, f, l) *)
+	  | Struct (fields, attrs, Unknown, e_old) -> Struct (fields, attrs, l, e_old)
+	  | Array (elems, Unknown, eltSize) -> Array (elems, l, eltSize)
+	    (* | Ptr _ as p -> p (* silently ignoring pointer lengths *) 
+	  | Concat _ as e -> e (* silently ignore *) *) 
+	    (* | _ -> fail "setLen: unexpected expression on stack" *)
+	  | e -> e (* silently ignoring concats, pointers and expressions that already have length *)
 
 
 let getStep : offset list -> exp = comp snd last
@@ -443,7 +459,7 @@ let mustInline : exp -> bool =
     let isShort : exp -> bool = function 
       | Int _ -> true
       | Ptr _ -> true
-    | e when isArithmetic e -> true
+      | e when isArithmetic e -> true
       | e -> match getIntVal (getLen e) with Some l_val -> l_val < 30 | _ -> false
   in
   function
@@ -549,14 +565,15 @@ let splitByType : process -> process = fun (es, meta) ->
 		
 		let subs : exp list ref = ref [] in
 		
-		let mustMoveOut : exp -> bool = fun e ->
+		let mustMoveOut : expType -> exp -> bool = fun t e ->
 		  let m = getMeta e in
-		  (isIMLAction e) || (isNondet e && m.refs > 1)
+		  (isIMLAction e) || (isNondet e && m.refs > 1) || (t = Crypt && m.refs > 1 && getSize e > 5)
 		in
 		
+    (* type of context, type of expression *)
 	  let moveOut : expType -> expType -> exp -> exp = fun t t' e ->
 	  let inline = 
-	    if mustMoveOut e then false
+	    if mustMoveOut t' e then false
 	    else if mustInline e then true
 	    else if t = Top || t = t' then true
 	    else false 
@@ -751,7 +768,10 @@ let showIExpTop : exp -> string = fun e ->
 
 		| Sym (("write", _), es, _, _) -> 
 		  "out(c, (" ^ String.concat ", " (map showIExp es) ^ "));";
-		
+
+    | Sym (("yield", _), [], _, _) -> 
+       "yield.";
+    		
 		| Sym ((("IfEq"), _), [e1; e2], _, _) ->
 		  "if " ^ showIExp e1 ^ " = " ^ showIExp e2 ^ " then "
 

@@ -1,0 +1,90 @@
+
+channel c_in, c_out. 
+type mstring.
+
+param N.
+
+(************************
+  Types
+*************************)
+
+type fixed_20 [fixed, large].
+type fixed_21 [fixed, large].
+
+(************************
+  XOR
+*************************)
+
+expand Xor(fixed_21, XOR).
+
+
+(*************************** 
+ Constants 
+***************************)
+
+
+(*************************** 
+  Formatting Functions 
+***************************)
+
+(* conc1/1 := tag(i1)<1>|arg(i0)<lenarg(i0)> *)
+fun conc1(fixed_20): fixed_21 [compos].
+
+
+
+(*************************** 
+  Zero Functions 
+***************************)
+
+fun Zfixed_21(fixed_21): fixed_21.
+fun Zfixed_20(fixed_20): fixed_20.
+
+(*************************** 
+  Length-Regularity 
+***************************)
+
+fun Zconc1(fixed_20): fixed_21.
+forall var1: fixed_20;
+  Zfixed_21(conc1(var1)) = Zconc1(Zfixed_20(var1)).
+
+(*************************** 
+  Typecasting 
+***************************)
+
+
+(************************
+  <Query>
+*************************)
+
+query secret nonce1.
+
+
+(*************************** 
+  Model 
+***************************)
+
+let A = 
+in(c_in, ());
+new nonce1: fixed_20;
+let xor1 = XOR(conc1(nonce1), pad) in
+out(c_out, (xor1)); 0 .
+
+let B = 
+in(c_in, ());
+yield.
+
+(************************
+  <Environment>
+*************************)
+
+
+process
+! N (
+  in(c_in, ());
+
+  (* one-time pad *)
+  new pad: fixed_21;
+
+  out(c_out, ());
+  (A | B)
+)

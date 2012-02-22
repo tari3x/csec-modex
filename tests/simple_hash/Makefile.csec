@@ -4,11 +4,9 @@ CSEC_ROOT = ../..
 include Makefile.common
 
 #everything: orig sym
-everything: iml pv
+everything: iml pv cv
 
 all: orig sym
-
-OUTPUTS = iml.all.out pvmodel.out
 
 include $(CSEC_ROOT)/mk/main.mk
 

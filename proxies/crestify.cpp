@@ -61,8 +61,10 @@ void LoadHeapPtr(int id)
  * The pointer to the function that is being called right now.
  * Used by Call() to detect when the function is invoked from non-instrumented code.
  */
-EXTERN int main(int, char**);
-funPtr calledFun = (funPtr)&main;
+// This doesn't work when we link with a dynamic library
+// but neither are we using it
+// EXTERN int main(int, char**);
+// funPtr calledFun = (funPtr)&main;
 
 void __CrestInit()
 {

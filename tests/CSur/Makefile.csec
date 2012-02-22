@@ -3,10 +3,10 @@ CSEC_ROOT = ../..
 
 include Makefile.common
 
-OUTPUTS = iml.all.out
+OUTPUTS = iml.out
 
 #everything: orig sym
-everything: iml.all.out
+everything: iml.out
 
 all: orig sym
 
