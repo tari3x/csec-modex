@@ -14,6 +14,8 @@ Download
 
     git clone --recursive git://github.com/tari3x/csec-modex.git
 
+Do not use the zip file provided by github, as it breaks symbolic links in the openssl source.
+	
 Dependencies
 ============
 
@@ -26,6 +28,8 @@ The following dependencies require some extra work:
 
     The tools are known to work with version 1.0.28/1.0.29 with dynamically linked GMP which you can obtain from
       http://yices.csl.sri.com/
+	  
+    First make sure that the appropriate version of GMP (static or dynamic, as used by yices) is installed.
     You can then use the script
       deps/ocamlyices/install-yices.sh
     to install yices.
@@ -36,7 +40,7 @@ The following dependencies require some extra work:
         make
         sudo make install
 
-- curses library is required by CIL
+- the curses library (libncurses-devel in Cygwin) is required by CIL
 
 How to use
 ==========
