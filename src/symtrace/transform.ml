@@ -1,969 +1,1206 @@
- 
-open List
+(*
+    Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
+    This file is distributed as part of csec-tools under a BSD license.
+    See LICENSE file for copyright notice.
+*)
 
-open Types
-open Utils
-open Exp
-open Imltypes
-open Solver
+open Common
+
+open Iml
+open Iml.Type.T
+open Iml.Sym.T
+open Iml.Sym.Op.T
+open Iml.Exp.T
+open Iml.Pat.T
+open Iml.Stmt.T
+
+module E = Iml.Exp
+module S = Solver
+
+open Transform_imltrace
+
+open Printf
 
 (*************************************************)
 (** {1 Types} *)
 (*************************************************)
 
-(** Pi function name *)
-type piFun = string
+(**
+  We represent a lambda expression with n arguments by an expression containing variables
+  (mkArg 0) to (mkArg (n - 1)).
+*)
+type symDef = exp
 
-(** Pi function definition, either expressed directly (as IML) or in terms of other functions *) 
-type piFunDef = Basic of exp | Rewrite of exp
+type symDefs = symDef Sym.Map.t
 
 (**
-  Pi functions with their definitions.
+  [parser(concat) = result]
 *)
-type piFunInfo = piFun * piFunDef
+type parsingEq = (sym * sym) * exp
 
-(**
-  [(parser, concat, result)]
-*)
-type parsingRule = (piFun * piFun) * exp
-
-
-(*************************************************)
-(** {1 State} *)
-(*************************************************)
-
-(*
-  Right now these are global, but eventually you might want to make them
-  per process pair.
-*)
-let concats: piFunInfo list ref = ref []
-let parsers: piFunInfo list ref = ref []
-
-(**
-  Function pairs with disjoint value ranges.
-*)
-let disjointPairs: (piFun * piFun) list ref = ref []
-
-let parsingRules : parsingRule list ref = ref []
-
-let arities : (piFun * int) list ref = ref []
-
-(**
-  Safe parsers check that the argument comes from the range of the concat.
-  
-  The list contains the parsers together with their matched concats and the argument number.
-*)
-let safeParsers : (piFun * (piFun * int)) list ref = ref []
-
-let concatId : int ref = ref 0
-let parserId : int ref = ref 0
-
-let verbose : bool ref = ref false
-
-(*************************************************)
-(** {1 Debug Output} *)
-(*************************************************)
-
-let showFun : piFunInfo -> string = function 
-  | (name, Basic def) -> name ^ "/" ^ string_of_int (assoc name !arities) ^ " := " ^ (showIExp def)
-  | (name, Rewrite e) -> name ^ "/" ^ string_of_int (assoc name !arities) ^ " ~> " ^ (showIExp e)
-
-let showFuns : piFunInfo list -> unit = fun cs ->
-  prerr_endline "";
-  iter (fun c -> prerr_endline (showFun c)) cs;
-  prerr_endline ""
+type fact = Solver.fact
 
 (*************************************************)
 (** {1 Formal Arguments} *)
 (*************************************************)
 
-(**
-  Argument must start from 0, because we use it for addressing the actuals array.
-  
-  Must be deterministic because same arguments should match. Also we use structural identity
-*)
-(* TODO: remove len parameter *)
-let mkArg: len -> int -> exp = fun len id ->
-  Sym (("arg", Prefix), [mkInt id], len, NoTag)
-  
-let isArg : exp -> bool = function
-  | Sym (("arg", _), _, _, _) -> true
-  | _ -> false
-
-let argId: exp -> int = function
-  | Sym (("arg", _), i :: _, _, _) -> intVal i
-  | e -> fail ("argId: not an arg: " ^ dump e) 
+let mkArg id = ("arg" ^ string_of_int id)
 
 (** 
-  [len(id) = len(arg(id))]
+  [lenarg(id) = len(arg(id))]
 *)
-let mkLen len id = 
-  let l = Sym (("lenarg", Prefix), [mkInt id], len, NoTag) in
-  addFact (grEq l zero);
+let mkArgLen len id = 
+  let l = Len (Var (mkArg id)) in
+  (* FIXME: remove this *)
+  S.addFact (S.ge l E.zero);
   l
 
-let isArgLen : exp -> bool = function
-  | Sym (("lenarg", _), _, _, _) -> true
-  | _ -> false
+let mkFormalArgs n = List.map mkArg (0 -- (n - 1))
 
-let lenArgId: len -> int = function
-  | Sym (("lenarg", _), i :: _, _, _) -> intVal i
-  | e -> fail ("lenArgId: not a lenarg: " ^ dump e) 
+(*************************************************)
+(** {1 Debug Output} *)
+(*************************************************)
 
-let mkFormalArgs: int -> exp list = fun n ->
-  map (fun i -> mkArg (mkLen Unknown i) i) (0 -- (n - 1))
+let showFun sym def =
+  E.typecheck Bitstring def;
+  Sym.toString sym ^ " := " ^ (E.toString def)
+  (* | (s, Rewrite e) -> Sym.toString s ^ "/" ^ string_of_int (List.assoc s !arities) ^ " ~> " ^ (E.toString e) *)
+
+let showFuns : symDefs -> unit = fun cs ->
+  prerr_endline "";
+  Sym.Map.iter (fun s info -> prerr_endline (showFun s info)) cs;
+  prerr_endline ""
+
 
 (*************************************************)
 (** {1 Helpers} *)
 (*************************************************)
 
-let newConcatName : unit -> string = fun () ->
-  concatId := !concatId + 1;
-  "conc" ^ string_of_int !concatId  
+(* TODO: make these local *)
+let concatId : int ref = ref 0
+let parserId : int ref = ref 0
 
-let newParserName : unit -> string = fun () ->
-  parserId := !parserId + 1;
-  "parse" ^ string_of_int !parserId  
+let newConcatSym ~arity =
+  Fun ("conc" ^ string_of_int (increment concatId), arity)  
 
-let isParser : string -> bool = fun s -> mem_assoc s !parsers 
-  (* List.exists (function ((s', _), _) when s = s' -> true | _ -> false) !parsingRules *) 
+let newParserSym () = 
+  Fun ("parse" ^ string_of_int (increment parserId), 1)  
+
+
+let findDefinition f defs: symDef =
+  match Sym.Map.maybe_find f defs with
+    | Some def -> def
+    | _ -> fail "Could not find definition for %s" (Sym.toString f)
+
+let showParsingEq ?funTypes concats (((p, c), e): parsingEq) =
+  let arity = Sym.arity c in
+  let args = mkFormalArgs arity in
+  let header = match funTypes with
+    | Some funTypes ->
+      let ts, _ = Sym.Map.find c funTypes in
+      List.map2 (fun arg t -> arg ^ ": " ^ Type.toString t) args ts 
+      |> String.concat ", "
+      |> sprintf "forall %s;\n" 
+    | None -> ""
+  in  
+  sprintf "%s%s(%s(%s)) = %s" header (Sym.toString p) (Sym.toString c) (String.concat ", " args) (E.toString e)
+
+
+(*************************************************)
+(** {1 Typing} *)
+(*************************************************)
+
+
+module Typing: sig
+
+  type typeCtx = Type.t Var.Map.t
+  type funTypeCtx = FunType.t Sym.Map.t
+
+  val inferExp: funTypeCtx -> Type.t -> exp -> typeCtx
+  val infer: funTypeCtx -> iml -> typeCtx
+  
+  val deriveUnknownTypes: funTypeCtx -> typeCtx -> iml -> funTypeCtx
+  
+  val check: symDefs -> funTypeCtx -> typeCtx -> fact list -> iml -> iml
+  
+  val merge: typeCtx list -> typeCtx 
+  
+  val mergeFunTypes: funTypeCtx list -> funTypeCtx
+  
+  val dumpTypes: typeCtx -> unit
+  val dumpFunTypes: funTypeCtx -> unit
+  
+  val cast: Type.t -> Type.t -> exp -> exp
+  val casts: iml -> (Type.t * Type.t) list
+
+  (**
+    Check robust safety of concats, as defined in the paper.
+  *)
+  val checkRobustSafety: symDefs -> funTypeCtx -> unit
+  
+  (**
+    Check that all functions for which we don't have a definition have a type.
+  *)
+  val checkMissingTypes: symDefs -> templateTypes:funTypeCtx -> inferredTypes:funTypeCtx -> iml -> unit
+  
+end = struct
+
+  type typeCtx = Type.t Var.Map.t
+  type funTypeCtx = FunType.t Sym.Map.t
+  
+  let merge (ctxs: typeCtx list): typeCtx = 
+    let mergeTypes _ t1 t2 = 
+      match t1, t2 with
+        | Some t, None | None, Some t -> Some t
+        | Some t1, Some t2 -> Some (Type.meet t1 t2)
+        | None, None -> None
+    in
+    List.fold_left (Var.Map.merge mergeTypes) Var.Map.empty ctxs
+
+  let mergeFunTypes (ctxs: funTypeCtx list): funTypeCtx = 
+    let mergeTypes f t1 t2 = 
+      match t1, t2 with
+        | Some t, None | None, Some t -> Some t
+        | Some t1, Some t2 -> 
+          fail "colliding types: %s and %s" (Sym.cvDeclaration f t1) (Sym.cvDeclaration f t2) 
+        | None, None -> None
+    in
+    List.fold_left (Sym.Map.merge mergeTypes) Sym.Map.empty ctxs
+
+  let dumpTypes ctx = 
+    Var.Map.iter (fun v t -> prerr_endline (sprintf "%s:  %s" v (Type.toString t))) ctx;
+    prerr_endline ""
+
+  let dumpFunTypes : funTypeCtx -> unit = fun funTypes ->
+    Sym.Map.iter (fun f t -> prerr_endline (Sym.cvDeclaration f t)) funTypes;
+    prerr_endline ""  
+
+  let expType funTypes varTypes = function
+    | Var v when Var.Map.mem v varTypes -> Var.Map.find v varTypes
+    | Annotation(TypeHint t, _) -> t
+    | Sym(f, es) when Sym.Map.mem f funTypes -> 
+      let(_, t) = Sym.Map.find f funTypes in t
+    | _ -> Bitstring
+  
+  let cast t t' e =
+    if t = t' then e else
+    Sym (Cast (t, t'), [e])
+  
+  let rec casts p = 
+  
+    let rec castsE e =
+      let cs = concat_map castsE (E.children e) in
+      match e with
+      | Sym (Cast (t, t'), _) ->
+        (t, t') :: cs 
+      | _ -> cs
+    in
+    
+    match p with
+      | s :: p -> concat_map castsE (Stmt.children s) @ casts p
+      | [] -> []
+
+
+  let rec inferExp (funTypes: funTypeCtx) t = function 
+    | Var v -> Var.Map.singleton v t
+    
+    | Annotation(TypeHint t, e) -> inferExp funTypes t e
+              
+    | Sym(f, es) when not (Sym.Map.mem f funTypes) -> merge (List.map (inferExp funTypes Bitstring) es) 
+  
+    | Sym(f, es) ->
+      let (ts, _) = Sym.Map.find f funTypes in
+      merge (List.map2 (inferExp funTypes) ts es) 
+      
+    | Annotation(_, e) -> (inferExp funTypes) t e
+    
+    | e -> fail "inferExpTypes: unexpected expression %s" (E.dump e)
+
+            
+  let infer (funTypes: funTypeCtx) (p: iml): typeCtx = 
+  
+    let expType funTypes e = expType funTypes Var.Map.empty e in
+    let inferExp = inferExp funTypes in
    
-let isConcat: string -> bool = fun s -> mem_assoc s !concats
+    let rec infer = function
+      | Let (VPat v, e) :: p ->  
+        let t = expType funTypes e in
+        let ctxE = inferExp t e in
+        let ctxP = infer p in
+        let ctxV = Var.Map.singleton v t in
+        merge [ctxE; ctxP; ctxV]
+        
+      | Let ((FPat _ | Underscore), _) :: _ -> fail "inferTypes: let patterns not supported: %s" (Iml.toString p)
+        
+      | New (v, t) :: p -> 
+        let ctxP = infer p in
+        let ctxV = Var.Map.singleton v t in
+        merge [ctxP; ctxV]
+    
+      | In vs :: p -> 
+        let ctxP = infer p in
+        let ctxV = Var.Map.ofList (List.map (fun vs -> vs, Bitstring) vs) in
+        merge [ctxP; ctxV]
+      
+      | AuxTest _ :: p -> infer p
 
-let isFormatFun: string -> bool = fun s -> isParser s || isConcat s
+      | GenTest e :: p -> 
+        let ctxE = inferExp Bool e in
+        let ctxP = infer p in
+        merge [ctxE; ctxP]        
+                        
+      | TestEq (e1, e2) :: p -> 
+        let ctx1 = inferExp Bitstring e1 in
+        let ctx2 = inferExp Bitstring e2 in
+        let ctxP = infer p in
+        merge [ctx1; ctx2; ctxP]
+        
+      | Assume e :: p ->
+        infer p
+      
+      | Event (ev, es) :: p ->
+        (* Events symbols of type bool in CV *) 
+        let ctxE = inferExp Bool (Sym (Fun (ev, List.length es), es)) in
+        let ctxP = infer p in
+        merge [ctxE; ctxP]
+      
+      | (Comment _ | Out _ | Yield) as s :: p -> 
+        let ctxS = List.map (inferExp Bitstring) (Stmt.children s) in
+        let ctxP = infer p in
+        merge (ctxP :: ctxS)
+        
+      | [] -> Var.Map.empty
+    in
+    
+    infer p
+    
+  (**
+    Returns only the context for formatter functions. Merge with user functions yourself.
+  
+    Assumes that the process is in the formatting-normal form, that is,
+    every formatter application has the form let [x = f(x1, ..., xn)]. 
+    
+    We replace all argument types of auxiliary tests by bitstring. Consider
+    
+      in(c_in, (msg4: bitstring, cipher2: bitstring));
+      if auxiliary11(cipher2, msg4) then 
+      let msg6 = D(cast_bitstring_bounded_1077_ciphertext(cipher2), key2) in ...
+    
+    We cannot require that cipher2 is bounded_1077_ciphertext when auxiliary11 is invoked,
+    because belonging to the type is what auxiliary11 checks in the first place.
+  *)
+  let deriveUnknownTypes funTypes (ctx: typeCtx) (p: iml): funTypeCtx = 
+  
+    let rec derive s = 
+      match s with
+      | Let (VPat v, Sym (f, vs)) when not (Sym.Map.mem f funTypes) ->
+        let ts = 
+          List.map (function | Var v -> Var.Map.find v ctx 
+                             | _ -> fail "formatting-normal form expected: %s" (Stmt.toString s))
+          vs
+        in                   
+        Some (f, (ts, Var.Map.find v ctx))
+        
+      | GenTest (Sym (f, vs)) when not (Sym.Map.mem f funTypes) -> 
+        let ts = 
+          List.map (function | Var v -> Bitstring 
+                             | _ -> fail "malformed test statement: %s" (Stmt.toString s))
+          vs
+        in
+        Some (f, (ts, Bool))
+        
+      | _ -> None 
+        
+    in Sym.Map.ofList (filter_map derive p)
+        
+  let proveType facts ((argTypes, resType): FunType.t) (f: sym) (f_def: exp) (args: exp list): bool =
+  
+    if List.length args <> List.length argTypes then
+      fail "wrong number of arguments: %s(%s)" (Sym.toString f) (E.dumpList args);
 
-let parserName : parsingRule -> string = function ((name, _), _) -> name
+    let formalArgs = mkFormalArgs (List.length args) in
+    let e_f = E.subst formalArgs args f_def in
 
+    (*
+    debug ("typecheck: e_def = " ^ E.dump e_def);
+    debug ("typecheck: context = " ^ dumpList ctx);
+    *)
+
+    let argFacts = List.map2 S.inType args argTypes in
+    let resFact = S.inType e_f resType in
+    
+    debug "proving type %s" (Sym.cvDeclaration f (argTypes, resType));
+    S.implies (argFacts @ facts) [resFact]
+
+
+  let eraseTypeAnnotations p = 
+    let rec erase = function
+      | Annotation (TypeHint _, e) -> erase e
+      | e -> E.descend erase e
+    in
+    Iml.map erase p
+
+
+  let check (defs: symDefs) (funTypes: funTypeCtx) (ctx: typeCtx) (facts: fact list) (p: iml): iml = 
+
+    let typefacts ctx = 
+      Var.Map.bindings ctx 
+      |> List.map (fun (v, t ) -> S.inType (Var v) t)
+    in
+
+    let rec checkExp ctx facts t' e: exp = 
+    match e with
+      | Var v -> 
+        let t = Var.Map.find v ctx in
+        if not (S.implies (facts @ typefacts ctx) [S.inType (Var v) t']) then
+          fail  "cannot prove type: %s: %s" v (Type.toString t');
+        cast t t' e
+    
+      | Sym (f, es) -> 
+        let (ts, t) = Sym.Map.find f funTypes in
+        let es' = List.map2 (checkExp ctx facts) ts es in
+        let tt = Type.meet t t' in
+        begin match Sym.Map.maybe_find f defs with
+          | Some def -> 
+            if not (proveType (facts @ typefacts ctx) (ts, tt) f def es) then
+              fail "typecheck: cannot prove type %s" (Sym.cvDeclaration f (ts, tt))
+          | None -> 
+            if not (Type.subtype t t') then
+              fail "typecheck: cannot prove type %s" (Sym.cvDeclaration f (ts, t'))
+        end;
+        cast t t' (Sym (f, es'))
+        
+        (* Type annotations are only used in inference, and ignored in typechecking *)
+      | Annotation (a, e) -> Annotation (a, checkExp ctx facts t' e) 
+        
+      | e -> fail "checkExp: unexpected expression %s" (E.dump e)
+    in
+  
+    let rec check ctx facts p =
+    match p with
+      | Let (VPat v, e) :: p ->
+        let t = expType funTypes ctx e in
+        let e' = checkExp ctx facts t e in
+        let p' = check (Var.Map.add v t ctx) facts p in
+        Let (VPat v, e') :: p' 
+        
+      | Let (_, _) :: _ -> fail "checkTypes: let patterns not supported: %s" (Iml.toString p)
+        
+      | AuxTest e :: p ->
+        let p' = check ctx (facts @ [e]) p in
+        AuxTest e :: p'
+        
+      | GenTest e :: p ->
+        let e = checkExp ctx facts Bool e in
+        let p = check ctx facts p in
+        GenTest e :: p
+        
+      | TestEq (e1, e2) :: p ->
+        let t1 = expType funTypes ctx e1 in
+        let t2 = expType funTypes ctx e2 in
+        let tt = Type.meet t1 t2 in
+        let e1' = checkExp ctx facts tt e1 in
+        let e2' = checkExp ctx facts tt e2 in
+        (* Not adding a non-auxiliary test to facts *)
+        let p' = check ctx facts p in
+        TestEq(cast t1 tt e1', cast t2 tt e2') :: p'
+        
+      | Assume e :: p ->
+        Assume e :: check ctx (facts @ [e]) p
+    
+      | In vs :: p -> 
+        let ctxV = Var.Map.ofList (List.map (fun vs -> vs, Bitstring) vs) in
+        let p' = check (merge [ctx; ctxV]) facts p in
+        In vs :: p'
+        
+      | New (v, t) :: p ->
+        begin match Type.stripName t with
+        | Fixed _ ->  
+          let p' = check  (Var.Map.add v t ctx) facts p in
+          New (v, t) :: p' 
+        | _ -> fail "fixed type expected in new expression: %s" (Stmt.toString (New (v, t)))
+        end
+            
+      | Out es :: p ->
+        let es' = List.map (fun e -> checkExp ctx facts (expType funTypes ctx e) e) es in
+        let p' = check ctx facts p in
+        Out es' :: p'
+    
+      | Event (ev, es) :: p ->
+        let (ts, t) = Sym.Map.find (Fun (ev, List.length es)) funTypes in 
+        let es' = List.map2 (fun e t -> checkExp ctx facts t e) es ts in
+        let p' = check ctx facts p in
+        Event (ev, es') :: p'
+        
+      | Yield :: p -> Yield :: check ctx facts p
+        
+      | Comment s :: p -> Comment s :: check ctx facts p
+        
+      | [] -> []
+    in
+  
+    check ctx facts (eraseTypeAnnotations p)
+    
+    
+  let checkRobustSafety (concats: symDefs) (funTypes: funTypeCtx) = 
+  
+    let safe f def = 
+      let (ts, t) = Sym.Map.find f funTypes in
+      let args = mkFormalArgs (Sym.arity f) |> List.map E.var in
+      if not (proveType [] (ts, t) f def args && t <> Bitstringbot) then
+        fail "function %s is not robustly safe" (Sym.cvDeclaration f (ts, t));
+    in
+    
+    Sym.Map.iter safe concats
+
+  let checkMissingTypes defs ~templateTypes ~inferredTypes p = 
+    let rec check = function
+      | Sym (f, es) ->
+        if not (Sym.Map.mem f defs) && not (Sym.Map.mem f templateTypes) then
+          begin match Sym.Map.maybe_find f inferredTypes with
+            | Some t -> fail "No type found for function %s, suggested type: %s" (Sym.toString f) (Sym.cvDeclaration f t);
+            | None -> fail "No type found for function %s" (Sym.toString f);
+          end;
+        List.iter check es
+      | e -> List.iter check (E.children e)
+    in
+    Iml.iter check (removeAuxiliary p)
+
+end
+
+
+(*************************************************)
+(** {1 Facts} *)
+(*************************************************)
+
+(* TODO: this will be merged with solver facts *)
+module CVFact = struct
+  type t = Forall of (var * Type.t) list * exp
+  
+  let make funTypes (e: exp): t =
+    let ts = Typing.inferExp funTypes Bool e in
+    Forall (Var.Map.bindings ts, e)
+
+  let toString (Forall (args, e)) =
+    let showVar (v, t) = v ^ ": " ^ Type.toString t in
+    "forall " ^ String.concat ", " (List.map showVar args) ^ ";\n\t" ^ E.toString e ^ "."
+         
+end
+
+(*************************************************)
+(** {1 Crypto rewriting} *)
+(*************************************************)
+
+let rewrite e = 
+  
+  let rec rewrite : exp -> exp = function
+    | Sym (Fun ("HMAC", 3), [String hash; msg; key]) -> Sym (Fun ("HMAC_" ^ hash, 2), [msg; key])
+    | Sym (Fun ("SHA256", 1), [e]) ->
+      (* we cannot use a CV rewrite rule cause the key needs to be freshly generated *)
+      let sha256key = Var "SHA256_key" in 
+      Sym (Fun ("SHA_hash", 2), [sha256key; e]) 
+    (*
+    | Sym (("IfEq", _), [Sym (("DSA_verify", _), es, l, tag); eOne], l', tag') when S.equalLen eOne one -> 
+      Sym (("If", Prefix), [Sym (("DSA_check", Prefix), es, l, tag)], l', tag')
+    *)
+    | e -> E.descend rewrite e
+  in
+
+  let e = rewrite e in 
+  e
+
+let rewriteCrypto p =
+  List.map (Stmt.descend rewrite) p
+
+
+(*************************************************)
+(** {1 Let simplification} *)
+(*************************************************)
+
+let simplifyLets p =
+ 
+  (* Remove width annotations in lets as those are not useful *)
+  let cleanup = function
+    (* | Let (VPat v, Annotation (Width _, e)) -> Let (VPat v, e) *)
+    | s -> s
+  in
+
+  let rec simplify = function
+    | Let (VPat v, Var v') :: p -> simplify (Iml.subst [v] [Var v'] p) 
+    | Let (VPat v, e) :: p when Iml.refcount v p = 0 -> simplify p
+    | s :: p -> s :: simplify p
+    | [] -> []
+  in
+  
+  List.map cleanup p |> simplify
+
+let simplifyDoubleLets p = 
+
+  let rec simplify defs = function
+    | Let (VPat v, Var v') :: p -> Let (VPat v, Var v') :: simplify defs p  
+    | Let (VPat v, e) :: p -> 
+      begin try
+        let v'= List.assoc e defs in
+        Let (VPat v, Var v') :: simplify defs p
+      with Not_found ->
+        Let (VPat v, e) :: simplify ((e, v) :: defs) p
+      end
+    | s :: p -> s :: simplify defs p
+    | [] -> []
+  in
+  
+  simplify [] p
+
+
+(*************************************************)
+(** {1 Name annotations} *)
+(*************************************************)
 
 (**
-  [substMany [a1, ..., an] [b1, ..., bn] e = e[b1/a1, ..., bn/an]]. 
+  Changes things like
+    new var1: fixed_n;
+    let var2 = var1 in
+    let named_var = var2 in P
+  (where there is a name annotation on var2) to 
+    new named_var: fixed_n in P
+  while checking that var1 does not occur in P.
 
-  Applies the substitutions in pararallel.
+  No renaming is done to free variables of course.
+  
+  Name annotations get removed in the end.
 *)
-let substMany: exp list -> exp list -> exp -> exp = 
   
-  let mkFinal e = Sym (("final", Prefix), [e], Unknown, NoTag) in
+let applyNameAnnotations p = 
+
+  let free_vars = Iml.freeVars p in
+
+  (* 
+    Which variable should be renamed to which? No loops.
+  *)
+  let names = ref Var.Map.empty in
   
-  let rec substOne = fun es1 es2 e -> match (es1, es2) with
-      (* Using equalLen because this is used to substitute both lengths and normal subexpressions *)
-    | e1 :: es1', e2 :: es2' -> substOne es1' es2' (if equalLen e1 e then mkFinal e2 else e)
-    | [], [] -> e
-    | _ -> fail "substMany: bad argument"
+  let rec resolve name =
+    match Var.Map.maybe_find name !names with
+      | Some name' -> resolve name'
+      | None -> name 
+  in 
+
+  (* Rename v1 and all members of its equivalence class to v2. *)
+  let rec rename v1 v2 =
+    match Var.Map.maybe_find v1 !names with
+      | None ->
+        (* We are at the top of the chain, add a new element above it *)
+        if v1 <> v2 then
+          names := Var.Map.add v1 v2 !names
+      | Some v1' ->
+        if v1 = v2 then
+          (* v1 will become the new top, so we remove its own renaming *)
+          names := Var.Map.remove v1 !names;
+        rename v1' v2
   in
-  
-  fun es1 es2 -> visitExpPre (substOne es1 es2)
 
+  let rec expName = function
+    | Var v -> Some v
+    | Annotation (Name name, e) -> Some name
+    | Annotation (_, e) -> expName e
+    | e -> None
+  in 
 
-let subst : exp -> exp -> exp -> exp = fun a b e -> substMany [a] [b] e
-
-
-(* Replace application of format functions by their definitions *)
-let expandFormatFuns: exp -> exp = 
-
-  let lookupDef: piFun -> exp = fun name ->
-	  let def = 
-      try if isParser name then assoc name !parsers else assoc name !concats
-      with Not_found -> fail "expandFormatFuns: impossible happened" 
-    in
-	  match def with
-	    | Basic e    -> e 
-	    | Rewrite _ -> fail "lookup def: not a basic definition" 
-	  in
+  let rec collectNamesE = function
+    | Annotation (Name name, e) ->
+      begin match expName e with
+          (* Do not rename free variables *)
+        | Some name' when not (List.mem name' free_vars) -> 
+          rename name' name
+        | _ -> ()
+      end;
+      collectNamesE e
+    | e -> List.iter collectNamesE (E.children e)
+  in
       
-  let expand: exp -> exp = function 
-    | Sym ((f, _), es, _, tag) when isFormatFun f ->
-      let e_def = lookupDef f in
-      let args = mkFormalArgs (length es) in
-      setTag tag (substMany args es e_def)
-    | e -> e
-
-  in visitExpPre expand
-
-(*************************************************)
-(** {1 Constant extraction} *)
-(*************************************************)
-
-let constants: string list ref = ref []
-let constDefs: (string * exp) list ref = ref []
-  
-let mkConst: string -> exp -> exp = fun c e ->
-  if not (List.mem c !constants) then
-  begin 
-    constants := !constants @ [c];
-    constDefs := (c, e) :: !constDefs;
-  end;
-  Sym (("const", Prefix), [String c], Unknown, NoTag)
-
-let extractConstConcats : exp list -> exp list = 
-  
-  let mkConst : exp -> exp = function
-    | Sym ((c, _), [], _, _) when isConcat c ->
-      begin match assoc c !concats with
-        | Basic e -> mkConst ("const_" ^ c) e  
-        | Rewrite e -> fail "extractConstConcats: impossible happened"
+  let collectNames = function
+    | Let (VPat v, e) ->
+      begin match expName e with
+        | Some name -> rename v name 
+        | _ -> ()
       end
-    | e -> e
+    | s -> ()
   in
   
-  List.map (visitExpBodyPre mkConst)
+  (* We do substitution without regard for capture *)
+  let substV vs vs' = Iml.map (E.substV vs vs') in
   
-let extractConstants : exp list -> exp list = 
+  (* Rename variables according to collected names *)
+  let rec renameVars = function
+    | Let (VPat v, e) :: p ->
+      let v' = resolve v in
+      Let (VPat v', e) :: renameVars (substV [v] [v'] p)
+    | New (v, t) :: p ->
+      let v' = resolve v in
+      New (v', t) :: renameVars (substV [v] [v'] p)
+    | In vs :: p ->
+      let vs' = List.map resolve vs in
+      In vs' :: renameVars (substV vs vs' p) 
+    | s :: p -> s :: renameVars p
+    | [] -> []
+  in
+
+  let rec removeNameAnnotations = function
+    | Annotation (Name _, e) -> removeNameAnnotations e
+    | e -> E.descend removeNameAnnotations e
+  in 
+
+  List.iter collectNames p;
+  (* It is important that this comes second, 
+     to make sure annotation renamings override 
+     assignment renamings *)
+  Iml.iter collectNamesE p;
+  renameVars p |> Iml.map removeNameAnnotations |> simplifyLets
+         
+(*************************************************)
+(** {1 Normal Form} *)
+(*************************************************)
+
+let isTag: exp -> bool = fun e -> E.isConcrete e 
+
+let sortDefs defs =
+
+  let gt s s' =
+    match s, s' with
+      | Let (_, e), Let (VPat v, _) -> List.mem v (E.vars e)
+      | _ -> false
+  in
+  topsort gt defs
+
+
+let normalForm p = 
+
+  let rec normalize p = 
   
-	let mkConst : exp -> exp = fun e -> match e with
-    | Int (ival, len) -> mkConst ("integer_" ^ Int64.to_string ival) e
+    let defs = ref [] in
+  
+    let mkVar = function
+      | Var v -> Var v
+      | e ->  
+        let v = Var.fresh "" in
+        defs := Let (VPat v, e) :: !defs;
+        Var v 
+    in
+    
+    (* remove expressions that are themselves lengths of an expression that follows *) 
+    let rec removeLens = function
+      | String s :: es -> String s :: removeLens es
+      | e :: es ->
+        if List.exists (fun e' -> S.equalInt (E.valueUnsigned e) (Len e')) es 
+        then removeLens es
+        else e :: removeLens es
+      | [] -> []
+    in
+  
+    (*
+      This is the heuristic part - we convert an expression like 
+      20 | 20 | x | y, 
+      where len(x) = 20 and len(y) = 20 to
+      len(x) | len(y) | x | y
+      
+      args is the list of arguments that we haven't found a length for yet. 
+    *)
+    let rec explicateLens args = function 
+      | String s :: es -> String s :: explicateLens args es
+      | e :: es ->
+        begin match find_and_remove (fun e' -> S.equalInt (E.valueUnsigned e) (Len e')) args with
+          | Some (e', args) -> 
+            BS (Len e', (IntType.Unsigned, E.width_exn e)) :: explicateLens args es
+          | None -> e :: explicateLens args es
+        end
+      | [] -> []
+    in
+  
+    let rec extractAuxiliary e = 
+      match e with 
+      | e when isAuxiliary e -> E.descend extractAuxiliary e
+      | e -> mkVar (extract e)
+
+    (* Variables for same expressions will later be unified by simplifyLets *)
+    and extractConcat = function
+      | e when isTag e -> e
+      | Len e -> Len (mkVar (extract e))
+      | e -> mkVar (extract e) 
+      
+    and extractParser v m e =
+      match e with
+      | e when Type.subtype (E.typeOf e) Bitstring && S.equalBitstring m e -> v
+      | e when Type.subtype (E.typeOf e) Type.Int && S.equalInt (Len m) e -> Len v
+      | Sym (s, es) when Sym.isArithmetic s -> 
+        E.descend (extractParser v m) e
+      | Sym (Op (CastToInt, _), _) 
+      | Val _
+      | BS _
+      | Range _ 
+      | Int _ -> E.descend (extractParser v m) e
+      | e -> fail "normalForm: unexpected parser subexpression %s" (E.dump e) (* mkVar (extract e) *)
+      
+    and extract e = 
+      match e with
+      | e when isAuxiliary e -> extractAuxiliary e
+              
+      | Concat es ->
+        let args = removeLens (List.filter (non isTag) es) in
+        let es = explicateLens args es in
+        debug "extract concat: args = %s" (E.listToString args);
+        debug "extract concat: es = %s" (E.listToString es);
+        Concat (List.map extractConcat es)
+        
+      | Range (Range _, _, _) ->
+        fail "extractParsers: nested range unsupported: %s" (E.dump e)
+        
+      | Range (m, pos, len) ->
+        let v = mkVar (extract m) in
+        extractParser v m e
+        
+      | e -> E.descend moveOut e
+    
+    and moveOut e = 
+      match e with
+        | Concat _ | Range _ -> mkVar (extract e)
+        | e when isAuxiliary e -> mkVar (extract e)  
+        | _ -> extract e
+    in 
+    
+    match p with
+      | AuxTest e :: p ->
+        S.addFact e; 
+        AuxTest e :: normalize p
+        
+      | Assume e :: p ->
+        S.addFact e;
+        Assume e :: normalize p
+        
+      | Let (VPat v, e) :: p ->
+        S.addFact (S.eqBitstring [Var v; e]);
+        let e = extract e in
+        sortDefs !defs @ (Let (VPat v, e) :: normalize p)
+
+      | Let _ :: _ ->
+        fail "normalForm: impossible: let patterns unexpected"
+                        
+      | In vs as s :: p -> 
+        List.iter (fun v -> S.addFact (S.isDefined (Var v))) vs;
+        s :: normalize p
+        
+      | (GenTest _ | TestEq _ | Out _ | New _ | Event _ | Yield | Comment _ ) as s :: p ->
+        let s = Stmt.descend moveOut s in
+        sortDefs !defs @ (s :: normalize p)
+        
+      | [] -> []
+  in
+  S.resetFacts ();
+  let p = normalize p in
+  S.resetFacts ();
+  simplifyLets p
+
+(*************************************************)
+(** {1 Extraction helper} *)
+(*************************************************)
+
+let extractDef e = 
+  let vs = E.vars e in
+  let args = mkFormalArgs (List.length vs) |> List.map E.var in
+  let e = E.subst vs args e in
+  vs, e
+  
+(*************************************************)
+(** {1 Arithmetic expressions} *)
+(*************************************************)
+
+let extractArithmetic p: iml * symDefs =
+
+  let defs = ref [] in
+
+  let rec extract e = 
+    match e with
+    | e when isAuxiliary e -> 
+      let vs, def = extractDef e in
+      let f = Fun (Var.fresh "arithmetic", List.length vs) in
+      defs := (f, def) :: !defs;
+      let args = List.map E.var vs in
+      Sym (f, args)
+      
+    | e -> E.descend extract e
+  in   
+   
+  let p = mapWithoutAuxiliary extract p in
+  p, Sym.Map.ofList !defs
+
+
+(*************************************************)
+(** {1 Constants} *)
+(*************************************************)
+
+(*
+  TODO: just return Const symbols in a symDef
+*)
+(**
+  Returns definitions of extracted constants. 
+*)
+let extractConstants concats p: iml * exp Var.Map.t = 
+  
+  let defs = ref Var.Map.empty in
+  
+  let mkConst name def =
+    defs := Var.Map.add name def !defs;
+    Var name
+  in
+  
+	let rec extract e =
+    match e with
+    | Int ival -> mkConst ("integer_" ^ Int64.to_string ival) e
     | String s -> mkConst ("string_" ^ s) e
-    | e -> e
+    | Sym (c, []) when Sym.Map.mem c concats ->
+      let def = findDefinition c concats in
+      mkConst ("const_" ^ (Sym.toString c)) def 
+            
+    | e -> E.descend extract e
   in
   
-  List.map (visitExpBodyPre mkConst)
+  let p = mapWithoutAuxiliary extract p in
+  p, !defs
 
-
-(*************************************************)
-(** {1 Concatenation Tags} *)
-(*************************************************)
-
-let mkTag : exp -> exp = fun e ->
-  Sym (("tag", Prefix), [e], getRealLen e, NoTag)
-
-let replaceTags : exp -> exp = fun e -> match e with
-    | (Int _ | String _) -> mkTag e
-    | e -> e
-
-let replaceTagsInConcats : unit -> unit = fun () ->
-
-  let replace = function
-    | (name, Basic (Concat (es, tag))) -> (name, Basic (Concat (map replaceTags es, tag))) 
-    | x -> x 
-  in
-  
-  concats := List.map replace !concats
 
 
 (*************************************************)
 (** {1 Concatenations} *)
 (*************************************************)
 
-(**
-  All args are identified in their expression order. All lenargs have the same id as the corresponding arg. 
-*)
+let extractConcats p: iml * symDefs =
 
-let extractConcats : exp list -> exp list * piFunInfo list = fun events ->
-  
-  let concats : piFunInfo list ref = ref [] in
-  
-  let nextArgId = ref 0 in 
-  let takenLens: int list ref = ref [] in
-  
-  let argLens : len list ref = ref [] in
-  
-  (* 
-    A length field is equal to the length of a field which is neither a tag nor a length field
+  let concats: (sym * symDef) list ref = ref [] in
+
+  (*
+    Check whether the concat definition only consists of formal arguments
+    (no lengths or tags).
   *)
-  let isConcreteArgLen : exp -> bool = fun e -> 
-    List.exists (fun l -> equalLen e l) !argLens && not (List.exists (fun l -> equalLen e (getLen l)) !argLens) 
-  in 
-  
-  let isNotTag: exp -> bool = fun e -> not (isConcrete e || isArithmetic e) in
-  
-  let isConcreteArg: exp -> bool = fun e -> isNotTag e && not (isConcreteArgLen e) in
-
-  let wrapArg: exp -> exp = fun e ->
-    Sym (("arg", Prefix), [mkInt (freshId nextArgId - 1); e], getRealLen e, NoTag)
+  let rec isTrivialConcat: exp list -> bool = function
+    | Var _ :: es -> isTrivialConcat es 
+    | [] -> true
+    | _ :: es -> false
   in
 
-  let rec collectArgs: exp list -> exp list = function
-    | e :: es when isConcreteArg e -> 
-      let e' = wrapArg e in 
-      e' :: collectArgs es
-    | e :: es -> e :: collectArgs es
-    | [] -> []
-  in
-
-  let rec collectArgLens: exp list -> exp list = function
-    | e :: es when isConcreteArgLen e -> 
-      let eArg = find (fun e' -> equalLen e (getLen e') && not (mem (argId e') !takenLens)) es in
-      let id = argId eArg in
-      takenLens := id :: !takenLens;
-      mkLen (getRealLen e) id :: collectArgLens es
-    | Sym (("arg", Prefix), [i; e], l, NoTag) :: es ->
-      Sym (("arg", Prefix), [i; e], mkLen Unknown (intVal i), NoTag) :: collectArgLens es
-    | e :: es -> e :: collectArgLens es
-    | [] -> []
-  in
-
-  let rec extractConcreteArgs: exp list -> exp list = function
-    | Sym (("arg", _), [_; e], _, _) :: es -> e :: extractConcreteArgs es
-    | e :: es -> extractConcreteArgs es
-    | [] -> []
-  in
-  
-  let rec removeConcreteArgs: exp list -> exp list = function
-    | Sym (("arg", Prefix), [id; e], l, tag) :: es -> Sym (("arg", Prefix), [id], l, tag) :: removeConcreteArgs es
-    | e :: es -> e :: removeConcreteArgs es
-    | [] -> []
-  in
-  
   let extract : exp -> exp = function
-    | Concat (es, tag) ->
-      debug ("extract, e = " ^ dump (Concat (es, tag)));
-      nextArgId := 0;
-      takenLens := [];
-      argLens := map getRealLen (filter isNotTag es);
-      let es' = collectArgLens (collectArgs es) in
-      let args = extractConcreteArgs es' in
-      let def = removeConcreteArgs es' in
-      let name = newConcatName () in
-      concats := !concats @ [(name, Basic (concat def))];
-      arities := !arities @ [(name, List.length args)];
-      debug ("extract, e_new = " ^ dump (concat def));
-      Sym ((name, Prefix), args, Unknown, tag)
+    | Concat es as e ->
+      debug "extract, e = %s" (E.dump (Concat es));
+      let vs, def = extractDef e in 
+      let f_c = newConcatSym (List.length vs) in
+      concats := (f_c, def) :: !concats;
+      debug "extract, e_new = %s" (E.dump def);
+      begin match def with
+        | Concat es when isTrivialConcat es ->
+          fail
+            "The concatenation does not contain argument lengths or tags. This may lead to non-termination. %s"
+            (E.dump def)
+        | _ -> ()
+      end;
+      let args = List.map E.var vs in      
+      Sym (f_c, args)
+      
     | e -> e
   in
-  
-  let events' = map (visitExpPre extract) events in
-  (events', !concats)
+      
+  let p = mapWithoutAuxiliary extract p in
+  p, Sym.Map.ofList !concats
 
-
-let isInjectiveConcat: bool -> piFunInfo -> bool = fun useTypeInfo c ->
-  
-  let argsWithoutLen = ref 0 in
-  let increment () = argsWithoutLen := !argsWithoutLen + 1; !argsWithoutLen in
-  
-  let isFixed: imltype -> bool = function
-	  | Fixed _ -> true
-	  | _ -> false
-  in
-
-	let rec check: imltype list -> exp list -> exp list -> bool = fun ts lens -> function
-	  | e :: es when isArgLen e -> check ts (e :: lens) es
-	  | e :: es when isArg e ->
-      let typeFact = if useTypeInfo then not (isFixed (nth ts (argId e))) else true in
-      if typeFact && not (List.exists (fun l -> equalLen l (getRealLen e)) lens) then
-      begin
-        (* debug ("no length found for " ^ dump e);
-        debug ("lens: " ^ dumpList lens); *)
-        if increment () > 1 then false
-        else check ts lens es
-      end
-	    else check ts lens es
-    | e :: es -> check ts lens es
-	  | [] -> true
-   
-	in match c with 
-  | (name, Basic (Concat (es, _))) ->
-    if useTypeInfo then
+(**
+  If [useTypeInfo], we don't require lengths for arguments of fixed-length types. 
+*)
+let isInjectiveConcat sym def =
+  (*
+  debug "isInjectiveConcat: %s" (E.toString def);
+  *)
+	match def with 
+  | Concat es ->
+    (* if useTypeInfo then
+      fail ("useTypeInfo: fix code")
+      (*
 	    let (ts, _) = 
-	      try assoc name !funTypes
+	      try List.assoc name !funTypes
 	      with Not_found -> fail ("isInjectiveConcat: concat " ^ name ^ " has no type") in
 	    check ts [] es
-    else check [] [] es
+      *)
+    else *) begin
+      let args = List.filter (function Var _ -> true | _ -> false) es in
+      let lens = List.filter (function Len _ -> true | _ -> false) es in
+      let argsWithoutLens = 
+        filter_out (fun v -> 
+          List.exists (fun l -> S.equalInt (Len v) l) lens)
+          args
+      in
+      (*
+      debug "args: %s" (E.listToString args);
+      debug "lens: %s" (E.listToString lens);
+      debug "argsWithoutLens: %s" (E.listToString argsWithoutLens);
+      *)
+      
+      List.length argsWithoutLens <= 1
+    end
   | _ -> true
 
 
-(** Thrown by [unify] *)
-exception Disjoint
-exception NoUnify of string
-
-(**
-  [needDisjoint] - should the concats be split into simpler concats when possible to achieve disjointness?  
-  If [needDisjoint] is true, all the resulting concats are disjoint.
-  If [needDisjoint] is false, some of the concats may not be disjoint, refer to {! Transform.disjointPairs}.
-*)
-let rec insertConcats : ?needDisjoint: bool -> piFunInfo list -> unit = fun ?(needDisjoint = true) cs ->
-
-  let newConcats : piFunInfo list ref = ref [] in 
-  
-  let nextArgId = ref 0 in
-  let newArg : unit -> exp = fun () ->
-    let id = freshId nextArgId - 1 in
-    mkArg (mkLen Unknown id) id 
-  in
-  let resetArg () = nextArgId := 0 in
-  
-  (* substitutions unifying the first and the second expression *)
-  let args1: exp list ref = ref [] in
-  let args2: exp list ref = ref [] in
-  
-  (*
-    Sets args1 and args2.
-    Returns a list where all arguments are unified and the rest of the fields are taken from the first concat.
-  *)
-  let rec unifyArgs: exp list * exp list -> exp list = function
-    | ([arg1], es2) when isArg arg1 ->
-      (* FIXME: what if es2 is empty? *)
-      let arg = newArg () in
-      args1 := !args1 @ [arg1];
-      args2 := !args2 @ (match es2 with [e] -> [e] | es2 -> [concat es2]);
-      [arg] 
-
-    | (es1, [arg2]) when isArg arg2 ->
-      let arg = newArg () in
-      args1 := !args1 @ (match es1 with [e] -> [e] | es1 -> [concat es1]);
-      args2 := !args2 @ [arg2];
-      [arg]
-
-    | (arg1 :: es1, arg2 :: es2) when isArg arg1 || isArg arg2 ->
-      let arg = newArg () in
-      args1 := !args1 @ [arg1]; args2 := !args2 @ [arg2];
-      arg :: unifyArgs (es1, es2)
-      
-    | e1 :: es1, e2 :: es2 -> e1 :: unifyArgs (es1, es2)
-      
-    | [], [] -> []
-     
-    | _ -> raise (NoUnify "unifyArgs: cannot unify")
-  in
-
-  (* The first list is assumed to contain new arguments *)
-  let rec unifyRest: exp list * exp list -> exp list = function
-    | [arg1], es2 when isArg arg1 -> [arg1]
+type encoderFact = 
+  | Disjoint of sym * sym
+  | Equal of sym * sym
     
-    | (arg1 :: es1, arg2 :: es2) when isArg arg1 -> arg1 :: unifyRest (es1, es2)
-    
-    | (len1 :: es1, len2 :: es2) when isArgLen len1 || isArgLen len2 ->
-      
-      (*
-      debug ("unifying lengths " ^ dump len1 ^ " and " ^ dump len2);
-      debug ("args1 = " ^ dumpList !args1);
-      debug ("args2 = " ^ dumpList !args2);
-      *)
-      
-      if not (equalLen (getLen len1) (getLen len2)) then
-        raise (NoUnify "length fields not aligned");
+let encoderFact (s, e) (s', e') = 
+  
+  let rec scan es es' =
+    debug "encoderFact: matching %s and %s" (E.dumpList es) (E.dumpList es'); 
+    match es, es' with
+      | e :: es, e' :: es' when S.equalBitstring e e' -> scan es es'
+      | e :: es, e' :: es' when isTag e && isTag e' && S.equalInt (Len e) (Len e') -> Some (Disjoint (s, s'))
+      | [], [] -> Some (Equal (s, s'))
+      | _ -> None
+  in
+  match e, e' with
+    | Concat es, Concat es' -> scan es es'
+    | _ -> failwith "encoderFact: impossible"
 
-      (* can try proving disjointness now *)
-      let es = unifyRest (es1, es2) in 
-
-	    let argNum =
-        try
-	        if isArgLen len1 then findIndex (fun e -> equalLen len1 (getLen e)) !args1 
-	        else findIndex (fun e -> equalLen len2 (getLen e)) !args2
-        with Not_found ->
-          raise (NoUnify "orphan length field");
-      in
-      
-      let arg1 = nth !args1 argNum in
-      let arg2 = nth !args2 argNum in
-      if not (equalLen len1 (getLen arg1)) || not (equalLen len2 (getLen arg2)) then
-         raise (NoUnify "length fields correspond to different arguments");
-      let len = mkLen (getRealLen len1) argNum in
-      len :: es
-
-    | (Int (i1, len1) :: es1, Int (i2, len2) :: es2) ->
-      if not (equalLen len1 len2) then
-        raise (NoUnify "integer fields of different lengths");
-      if i1 <> i2 then
-        raise Disjoint
-      else 
-        Int (i1, len1) :: unifyRest (es1, es2)
         
-    | (String s1 :: es1, String s2 :: es2) ->
-      let len1 = String.length s1 in
-      let len2 = String.length s2 in
-      let minLen = min len1 len2 in
-      let s1' = String.sub s1 0 minLen in
-      let s2' = String.sub s2 0 minLen in
-      if s1' <> s2' then
-        raise Disjoint
-      else if len1 <> len2 then
-        raise (NoUnify "strings have different length but are the same over common prefix")
-      else
-        String s1 :: unifyRest (es1, es2)
-
-    | [], [] -> []
-
-    | _ -> raise (NoUnify "unifyRest: cannot unify")
-  in
-
-  (*
-    Result: (unified expression, substitutions unifying the first expression, substitutions unifying the second expression)
-  *)
-  let unify: exp list * exp list -> exp list * exp list * exp list = fun (es1, es2) ->
-    (* debug ("unifying " ^ dumpList es1 ^ " and " ^ dumpList es2); *)
-    args1 := []; args2 := []; resetArg ();
-    let es1 = unifyArgs (es1, es2) in
-    let es1 = unifyRest (es1, es2) in
-    es1, !args1, !args2
-  in
-
-  let compactArg : exp -> exp = fun e ->
-    match extractConcats [e] with
-      | ([e'], cs) -> newConcats := !newConcats @ cs; e'
-      | _ -> failwith "compactArg: impossible happened"
-  in
+let rec encoderFacts: (sym * symDef) list -> encoderFact list = function
+  | c :: cs -> 
+    filter_map (encoderFact c) cs @ encoderFacts cs
+  | [] -> []
   
-  let rec insert : piFunInfo -> piFunInfo list -> piFunInfo list = fun cNew concats ->
-    match (cNew, concats) with
-    | ((nameNew, Basic (Concat (defNew, _))), ((nameOld, Basic (Concat (defOld, _))) as cOld) :: cs) -> 
-      begin
-      try
-        let (def, argsOldPre, argsNewPre) = unify (defOld, defNew) in
-        let argsOld = map compactArg argsOldPre in
-        let argsNew = map compactArg argsNewPre in
-        if for_all2 equal argsOld argsNew then
-          (* cOld and cNew are the same *)
-          cOld :: (nameNew, Rewrite (Sym ((nameOld, Prefix), argsNew, Unknown, freshDet ()))) :: cs
-        else if not needDisjoint then
-          (* just compare cNew to the rest *)
-          cOld :: insert cNew cs
-        else if defOld = def then
-          (* unifying with cOld *)
-          cOld :: (nameNew, Rewrite (Sym ((nameOld, Prefix), argsNew, Unknown, freshDet ()))) :: cs
-        else if defNew = def then
-          (* unifying with cNew *)
-          (nameOld, Rewrite (Sym ((nameNew, Prefix), argsOld, Unknown, freshDet ()))) :: insert cNew cs
-        else
-          (* unifying with a fresh constructor *)
-          let nameFresh = newConcatName () in
-          let cFresh = (nameFresh, Basic (concat def)) in
-          arities := (nameFresh, length argsOld) :: !arities;
-          newConcats := cFresh :: !newConcats; 
-          (nameOld, Rewrite (Sym ((nameFresh, Prefix), argsOld, Unknown, freshDet ()))) ::
-          (nameNew, Rewrite (Sym ((nameFresh, Prefix), argsNew, Unknown, freshDet ()))) :: cs
-          
-      with 
-      | Disjoint ->
-        (* debug ("disjoint: " ^ nameNew ^ " and " ^ nameOld); *)
-        disjointPairs := (nameOld, nameNew) :: !disjointPairs; 
-        cOld :: insert cNew cs
-      | NoUnify s ->
-        (* debug ("cannot unify " ^ nameNew ^ " with " ^ nameOld ^ ": " ^ s); *)
-        if needDisjoint then
-          failwith ("cannot unify: " ^ s)
-        else
-          cOld :: insert cNew cs 
-          
-      end
 
-    | (_, cOld :: cs) -> cOld :: insert cNew cs (* cOld already rewritten, skip *) 
-    | (_, []) -> [cNew]
-
-  in
-  let insertConcat : piFunInfo -> unit = fun c ->
     
-    (* debug ("inserting: " ^ showFun c); *)
-    
-    concats := insert c !concats;
-    insertConcats !newConcats;
-    
-  in iter insertConcat cs
-  
-(* TODO: this can be rewritten using expandFormatFuns *)
-let rewriteConcats : exp list -> exp list = 
-  
-  let replaceArgs : exp list -> exp -> exp = fun args -> function
-    | Sym (("arg", _), [Int (i, _)], _, _) -> nth args (Int64.to_int i)
-    | e -> e
-  in
-  
-  let rec rewrite : exp -> exp = function
-    | Sym ((sym, _), args, _, tag) as e ->
-      begin try
-      match assoc sym !concats with
-        | Basic _    -> e
-        | Rewrite e' -> visitExpPost rewrite (visitExpPost (replaceArgs args) (setTag tag e'))
-      with
-        Not_found -> e
-      end
-      
-    | e -> e
-    
-  in
-  map (visitExpPost rewrite)
-
-(**
-  Leave only basic concats. Also remove unused concats (those turned into constants).
-*)
-let cleanupConcats : exp list -> unit = fun es ->
-  concats := filter (function (c, Basic _) when exists (containsSym c) es -> true | _ -> false) !concats 
-  (* concats := filter (function (_, Basic _) -> true | _ -> false) !concats *) 
-      
 (*************************************************)
 (** {1 Extracting Parsers} *)
 (*************************************************)
 
-let extractParsers : exp list -> exp list = fun events ->
-    
-  let matchParser : exp -> piFunInfo -> bool = fun e -> function
-    | (name, Basic e') -> equal e e'
-    | _ -> false 
-  in
+let extractParsers p =
 
-  let insertParser : exp -> string = fun e ->
-	  try let (name, _) = List.find (matchParser e) !parsers in name 
-	  with Not_found -> 
-    begin
-      let name = newParserName () in
+  let parsers = ref [] in
+ 
+  let extract e = 
+    match e with
+    | Range (Var v, _, _) ->
+      debug "adding parser for the expression %s" (E.toString e);
       
-      debug ("adding parser, " ^ name ^"(x) = " ^ dump e);
+      let vs, def = extractDef e in
+      if vs <> [v] then fail "extractParsers: impossible";
       
-      parsers := !parsers @ [(name, Basic e)];
-      arities := (name, 1) :: !arities;
-      name
-    end
-  in
-
-  let check : exp -> exp = function 
-    | String _ -> fail "extractParsers: string in a parsing expression"
-    | e when isArithmetic e -> e
-    | Sym ((s, _), _, _, _) as e -> 
-      if not (List.mem s ["arg"; "lenarg"]) then
-      begin
-        debug ("check, unmatched symbol:" ^ dump e);
-        fail "extractParsers: unmatched symbol "
-      end
-      else e
-    | Concat _ -> fail "extractParsers: concat in a parsing expression"
-    | e -> e
-  in
-
-  let extract : exp -> exp = function
-    | Range (x, pos, len, tag) as e ->
+      let f_p = newParserSym () in
       
-      debug ("\n===============================\nextracting parser, e = " ^ dump e);
-      debug ("extracting parser, x = " ^ dump x);
-      
-      let argLen = mkLen Unknown 0 in
-      let arg = mkArg Unknown 0 in
-      let xLen = match getLen x with
-        | Unknown -> failwith "extractParsers: range base without length"
-        | l -> l
-      in
-      (* 
-        We strip deterministic tags because otherwise the following might happen:
-        x{i, j} gets id1
-        x'{i, j} gets id2 and id2 <> id1
-        both expressions yield arg0{i, j}, but because the tags point to different ids,
-        they will not be considered equal.
-        
-        It's important to replace xLen first, because it might contain x.
+      (*
+      debug ("adding parser, " ^ Sym.toString f_p ^"(x) = " ^ E.dump def);
       *)
-      let e' = visitExpPre removeDet (substMany [xLen; x] [argLen; arg] e) in
       
-      debug ("extracting parser, e' = " ^ dump e');
+      parsers := (f_p, def) :: !parsers;
       
-      ignore (visitExpPost check e');  
-      let name = insertParser e' in
-      Sym ((name, Prefix), [x], Unknown, tag)
+      let args = List.map E.var vs in
+      Sym (f_p, args)
       
     | e -> e
   in
-  
-  map (visitExpPre extract) events   
+      
+  let p = mapWithoutAuxiliary extract p in
+  p, Sym.Map.ofList !parsers
 
-let cleanupParsers : exp list -> unit = fun es ->
 
-  parsingRules := filter (fun p -> exists (containsSym (parserName p)) es) !parsingRules;
-  parsers := filter (fun (p, _) -> exists (containsSym p) es) !parsers
+(*************************************************)
+(** {1 Extracting Auxiliary Test Conditions} *)
+(*************************************************)
+
+(**
+  Returns arities of extracted expressions.
+*)
+let extractAuxiliary p: iml * symDefs =
+
+  let arities = ref [] in
+
+  let rec extract = function
+    | AuxTest e :: p ->  
+      let vs, def = extractDef e in
+      let f = Fun (Var.fresh "auxiliary", List.length vs) in
+      arities := (f, def) :: !arities;
+      let args = List.map E.var vs in
+      GenTest (Sym (f, args)) :: AuxTest e :: extract p
+      
+    | s :: p -> s :: extract p
+    | [] -> []
+  in   
+   
+  let p = extract p in
+  p, Sym.Map.ofList !arities
+
+
 
 (*************************************************)
 (** {1 Parsing Rules} *)
 (*************************************************)
 
-let computeParsingRules : piFunInfo list -> unit = fun ps ->
+let computeParsingRules funTypes (parsers: symDefs) (concats: symDefs): parsingEq list =
   
-  let applyParser : piFunInfo -> piFunInfo -> unit = fun parser concat ->
-
+  let parsingEqs = ref [] in
+  
+  let checkType nargs p c e =
+    let (pts, pt) = Sym.Map.find p funTypes in
+    let (cts, ct) = Sym.Map.find c funTypes in
+    if pts <> [ct] then false else
+    begin
+      let args = mkFormalArgs nargs |> List.map E.var in 
+      List2.any (List.map2 (fun arg t -> arg = e && t = pt) args cts) 
+    end
+  in
+    
+  let applyParser f_p parserDef f_c concatDef =
+    (*
     debug ("applyParser, parser: " ^ showFun parser);
     debug ("applyParser, concat: " ^ showFun concat);
+    *)
+    let arg = mkArg 0 in
+
+    let e = E.subst [arg] [concatDef] parserDef in 
     
-    match (parser, concat) with
-      | ((parserFun, Basic parserDef), (concatFun, Basic concatDef)) ->
-        let argLen = mkLen Unknown 0 in
-        let arg = mkArg Unknown 0 in
-        let concatLen = match getLen concatDef with
-          | Unknown -> failwith "applyParser: cannot compute concat def length"
-          | l -> l
-        in
+    debug "applyParser: e after subst arg = %s" (E.dump e);
 
-        (* debug ("applyParser: replacing " ^ dump argLen ^ " by " ^ dump concatLen);
+    S.addFact (S.isDefined concatDef);    
+    let e' = Simplify.deepSimplify e in
+    S.resetFacts ();
+    
+    debug "applyParser %s to %s: \n %s \n ~> %s \n" (Sym.toString f_p) (Sym.toString f_c)  
+                                                    (E.dump e) (E.dump e');
 
-        let e = subst argLen concatLen parserDef in
-        
-        debug ("applyParser: replacing " ^ dump arg ^ " by " ^ dump concatDef);
-        
-        let e = subst arg concatDef e in
-        *)
-                          
-        let e = substMany [argLen; arg] [concatLen; concatDef] parserDef in 
-        
-        (* debug ("applyParser: e after subst arg = " ^ dump e); *)
-        
-        let e' = visitExpPost simplify e in
-        
-        if !verbose then prerr_endline ("applyParser " ^ parserFun ^ " to " ^ concatFun ^ ": \n  " 
-                                                       ^ dump e ^ "\n  ~> " ^ dump e' ^ "\n");
-        parsingRules := !parsingRules @ [((parserFun, concatFun), e')]
-        
-      | _ -> () (* not a basic concat, skip it *)
-          
+    if checkType (Sym.arity f_c) f_p f_c e' then
+      parsingEqs := !parsingEqs @ [((f_p, f_c), e')]
   in 
   
-  replaceTagsInConcats ();
-  iter (fun parser -> iter (applyParser parser) !concats) ps
-
-(*************************************************)
-(** {1 Traversal with Context} *)
-(*************************************************)
-
-type pCtx = exp list
-
-let mkFact : exp -> exp = function
-  | Sym ((("IfEq"), _), args, _, _) -> eq args
-  | Sym ((("If"), _), [e], _, _) -> e
-  | _ -> failwith "mkFact: unexpected exression"
-
-
-let iterWithCtx: (pCtx -> exp -> unit) -> exp list -> unit = fun f -> 
-  
-  let rec doIter: pCtx -> exp list -> unit = fun ctx -> function
-    (* a somewhat arbitrary choice not do descend into an auxiliary if itself, let's see *)
-  | e :: es when isAuxiliaryIf e -> doIter (mkFact e :: ctx) es
-  | e :: es -> f ctx e; doIter ctx es
-  | [] -> ()
-  
-  in doIter []
-
-
-let mapWithCtx: (pCtx -> exp -> exp) -> exp list -> exp list = fun f -> 
-
-  let rec doMap: pCtx -> exp list -> exp list = fun ctx -> function
-    (* a somewhat arbitrary choice not do descend into an auxiliary if itself, let's see *)
-  | e :: es when isAuxiliaryIf e -> e :: doMap (mkFact e :: ctx) es
-  | e :: es -> f ctx e :: doMap ctx es
-  | [] -> []
-  
-  in doMap []
+  (* replaceTagsInConcats (); *)
+  Sym.Map.iter (fun f_p parser -> Sym.Map.iter (applyParser f_p parser) concats) parsers;
+  !parsingEqs
 
 
 (*************************************************)
 (** {1 Parsing Safety} *)
 (*************************************************)
 
-(*
-  FIXME: used by the output functions, but remove later 
-*)
-let isValidParse : exp -> bool = function
-  | Sym (("arg", _), _, _, _) -> true
-  | Concat _                  -> false
-	| e when isConcrete e       -> true
-	| _                         -> false
+let wellFormed e_c = 
+  let args = List.filter (function Var _ -> true | _ -> false) e_c in
+  let lens = List.filter (function Len _ -> true | _ -> false) e_c in
+  (* debug "wellFormed: %s, args = %s, lens = %s" (E.listToString e_c) (E.listToString args) (E.listToString lens); *)
+  if not (distinct args) || not (distinct lens) then false
+  else 
+    let argsWithLens = List.map (function Len v -> v | _ -> fail "wellFormed: impossible") lens in
+    (* debug "wellFormed: argsWithLens = %s" (E.listToString argsWithLens); *)
+    match multidiff (=) args argsWithLens with
+      | [e] -> e = last e_c
+      | _ -> false
 
-let checkParsers : pCtx -> exp -> unit = fun ctx -> 
-
-  let mkConcatExpr : piFun -> exp = fun cname ->
-    Sym ((cname, Prefix), [], Unknown, NoTag)
-  in
-  
-  (* Could possibly just give rewrite rules to SMT, but don't want to mess with foralls yet *)
-  let rewriteParsers : piFun -> exp -> exp = fun cname e -> 
-    let c = mkConcatExpr cname in
-    match e with
-    | Sym ((p, _), [c'], _, _) when c = c' -> 
-      begin
-          try List.assoc (p, cname) !parsingRules
-          with Not_found -> e
-      end
-    | e -> e
-  in
-
-  let rec checkTags : exp list -> bool = function
-    | [] -> true
-    | e :: es ->
-      match e with 
-        | Sym (("tag", _), [t], _, _) -> 
-          if not (equal e t) then
-          begin
-            debug ("checkParsingSafety: tag " ^ dump e ^ " not checked");
-            false
-          end
-          else checkTags es
-        | _ -> checkTags es
-  in
-
-  let rec getMinLen : exp list -> exp = function
-    | (Sym (("lenarg", _), _, l, _)) as e :: es -> addLen l (addLen e (getMinLen es))
-    | Sym (("tag", _), _, l, _) :: es -> addLen l (getMinLen es)
-    | e :: es -> getMinLen es
-    | [] -> zero
-  in
-  
-  (* check an application of a parser to specific concat *)
-  let checkConcat : piFun -> exp -> piFunInfo -> bool = fun p e -> function
-    | (cname, Basic (Concat (es_c, _))) ->
+let rec mkParsers ls ps es e_c = 
+  let x = Var (mkArg 0) in
+  match e_c with
+    | e_i :: e_c ->
+      let l = 
+        match e_i, e_c with
+          | _, [] ->
+            Sym(MinusInt, [Len x; Simplify.sum ls])
+          | Var _ as v, _ ->
+            (* debug "looking for %s in %s" (E.dump v) (E.dumpList es); *) 
+            (* Need comparison in this order as es will contain lengths of lengths *)
+            List.nth ps (find_index_exn (function Len v' when v = v' -> true | _ -> false) es) 
+          | e_i, _ -> 
+            Len e_i
+      in
+      let p = Range(x, Simplify.sum ls, l) in
+      mkParsers (ls @ [l]) (ps @ [p]) (es @ [e_i]) e_c
       
-      debug ("\ncheckParsingSafety: trying concat " ^ cname);
-      solver_debug := false;
+    | [] -> ps
+
+let rec tagFacts ps e_c =
+  match ps, e_c with
+    | p :: ps, (Len _ | Var _) :: e_c ->
+      tagFacts ps e_c
+    | p :: ps, e_t :: e_c ->
+      S.eqBitstring [p; e_t] :: tagFacts ps e_c
+    | [], [] -> []
+    | _ -> failwith "tagFacts: impossible"
       
-      resetFacts ();
-      let c = mkConcatExpr cname in
-      let ctx = List.map (subst e c) ctx in
-      let ctx = List.map (visitExpPre (rewriteParsers cname)) ctx in
-      (* debug ("checkParsingSafety: ctx = " ^ dumpList ctx); *)
-      let minLen = getMinLen es_c in
-      
-      solver_debug := true;
-      addFact (eq [getLen c; getRealLen e]);
-      List.iter addFact ctx;
-      if not (checkTags es_c) then false
-      else if not (greaterEqual (getLen c) minLen) then
-      begin
-        debug ("checkParsingSafety: lengths in " ^ dump c ^ " not checked");
-        false
-      end
-      else true
-      
-    | _ -> true
-  in
-      
-  (* check an application of a parser to all possible concats *)
-  let checkParse : exp -> unit = fun a -> match a with
-    | Sym ((p, _), [e], _, _) when isParser p -> 
-      debug ("\n==============================\ncheckParsingSafety: checking the application " ^ dump a);
-      begin try 
-        let (c, _) = List.find (checkConcat p e) !concats in
-        solver_debug := false;
-        (* cannot fail *)
-        match List.assoc (p, c) !parsingRules with
-          | Sym (("arg", _), [Int (i64, _)], _, _) ->
-            begin 
-            let i = Int64.to_int i64 in
-            try 
-              let p' = inverse_assoc (c, i) !safeParsers in
-              if p <> p' then fail ("two different forms of the same safe parser encountered: c = " ^ c ^ ", i = " ^ string_of_int i)
-            with
-              Not_found -> safeParsers := (p, (c, i)) :: !safeParsers
-            end
-          | _ -> debug ("checkParsingSafety: the parser is not an inverse in " ^ dump a);
-      with 
-        Not_found -> 
-          solver_debug := false;
-          debug ("checkParsingSafety: no concat satisfies the application " ^ dump a);
-      end
-        
-    | _ -> ()
 
-  in visitAllSubexp checkParse
-
-
-let computeSafeParsers : exp list -> unit = iterWithCtx checkParsers
-
-
-let isSafeParser : piFun -> bool = fun p -> isParser p && List.mem_assoc p !safeParsers
-
-(*************************************************)
-(** {1 Filtering} *)
-(*************************************************)
-
-
-let rec containsPtr : exp -> bool = function
-  | Int _ -> false
-  | String _ -> false
-  | Range (e, _, _, _) -> containsPtr e
-  | Sym (_, es, _, _) -> exists containsPtr es
-  | Ptr _ -> true
-  | _ -> false
-
-(*
-let isComparison : exp -> bool = function
-  | Sym ((("branchT" | "branchF"), _), [Sym (((">" | "<" | "<=" | ">=" | "=="), _), _, _, _)], _, _) -> true
-  | _ -> false
-*)
-
-let isArithmeticWrite : exp -> bool = function
-  | Sym (("write", _), [e], _, _) -> isArithmetic e
-  | _ -> false
-
-let isArithmeticEq : exp -> bool = function
-  | Sym ((("IfEq"), _), [e1; e2], _, _) when isArithmetic e1 || isArithmetic e2 -> true
-  | _ -> false
-
-let isLenWrite : exp -> bool = function
-  | Sym (("write", _), [e], _, _) when isLength e -> true
-  | _ -> false
-
-(*
-  FIXME: need to carefully justify why we can remove arithmetic writes.
-*)
-let boringEvent : exp -> bool = fun e ->
-  (containsPtr e) || (isCastEq e) || (isBoringComparison e) || (isLenWrite e)
- 
-let interestingEvent e = not (boringEvent e)
-
-let cryptographicEvent e = not ((isAuxiliaryIf e) || (isArithmeticWrite e) || (isArithmeticEq e))
-
-let preprocess e = 
-  
-  let rec stripCast : exp -> exp = function
-      (* FIXME: need to preserve identity? *)
-    | (Sym (("castToInt", _), [a; _], _, _)) as e ->
-      (* debug ("stripping cast from e = " ^ dump e); *)
-      addFact (eq [e; a]);
-      stripCast a
-    | e -> (* debug ("not stripping cast from e = " ^ dump e); *) e
-  in
-  
-  let rewriteCrypto : exp -> exp = function
-    | Sym (("HMAC", fixity), [String hash; msg; key], l, tag) -> Sym (("HMAC_" ^ hash, fixity), [msg; key], l, tag)
-    | Sym (("SHA256", fixity), [e], l, tag) ->
-      (* we cannot use a CV rewrite rule cause the key needs to be freshly generated *)
-      let sha256key = Sym (("var", Prefix), [String "SHA256_key"], Unknown, NoTag) in 
-      Sym (("SHA_hash", fixity), [sha256key; e], l, tag) 
-    | Sym (("IfEq", _), [Sym (("DSA_verify", _), es, l, tag); eOne], l', tag') when equalLen eOne one -> 
-      Sym (("If", Prefix), [Sym (("DSA_check", Prefix), es, l, tag)], l', tag')
-    | e -> e
-  in
-
-  let e = visitExpPost Exp.preprocess e in
-  let e = visitArithPre stripCast e in
-  let e = visitExpPre rewriteCrypto e in (*if cryptographicEvent e then visitExpPre rewriteCrypto e else e in *) 
-  e
-
-let procAndFilter es = filter interestingEvent (map preprocess es)
-
-let postprocess = filter cryptographicEvent
-
+let inrange facts e c c_def = 
+  let x = mkArg 0 in
+  match c_def with
+  | Concat e_c when wellFormed e_c ->
     
+    increase_debug_depth ();
+    
+    let ps = mkParsers [] [] [] e_c in
+    debug ~raise_by:1 "inrange: parsers: %s\n" (E.listToString ps);
+    let fields = List.map (with_debug ~depth:1 S.isDefined) ps in
+    let tags = tagFacts ps e_c in
+    
+    let parse_facts = List.map (E.subst [x] [e]) (fields @ tags) in
+
+    decrease_debug_depth ();
+
+    S.implies facts parse_facts
+    
+  | _ -> false
+
+let matchConcat parsingEqs facts p e (c, c_def) =
+  debug "\nmatchConcat: checking %s(%s) against concat %s" (Sym.toString p) (E.toString e) (Sym.toString c);
+  (*
+    debug (sprintf "checkParsingSafety: the parser %s is not an inverse of %s" p c); 
+    debug (sprintf "checkParsingSafety: no concat satisfies the application of %s to %s" p (dump e));
+  *) 
+  if not (silent ~depth:10 (isInjectiveConcat c) c_def) || not (inrange facts e c c_def) then None
+  else 
+    match maybe_assoc (p, c) parsingEqs with
+      | Some (Var v) ->
+        let vs = mkFormalArgs (Sym.arity c) in
+        Some (c, find_index_exn ((=) v) vs)
+      | _ -> None 
+
+let safeParse (concats: symDefs) parsingEqs facts f_p e =
+   first_some (matchConcat parsingEqs facts f_p e) (Sym.Map.bindings concats)
+
+
 (*************************************************)
-(** {1 User Input} *)
+(** {1 Trailing computation} *)
 (*************************************************)
-
-let crypto : string list ref = ref []
-
-(** Printed after the automatically generated facts *)
-let crypto2 : string list ref = ref []
-
-let query : string list ref = ref []
-
-let envp : string list ref = ref []
 
 (**
-  These are used for typechecking, but are not repeated in the actual model output.
+  Remove unobservable computations at the end of a process.
 *)
-let typehints: string list ref = ref []
+let removeTrailingComputations p =
 
+  let rec remove p = 
+    match p with
+    | (Out _ | Event _) :: _ -> p 
+    | s :: p -> remove p
+    | [] -> []
+  in
+  
+  List.rev (remove (List.rev p))       
+
+(*************************************************)
+(** {1 Cleanup} *)
+(*************************************************)
+
+(*
 (**
-  This part is dropped.
+  Leave only basic concats. Also remove unused concats (those turned into constants).
 *)
-let model: string list ref = ref []
+*)
+let cleanupDefs p (defs: symDefs): symDefs =
 
-(* let keys : string list ref = ref [] *)
+  let containsSym c s = List.exists (E.containsSym c) (Stmt.children s) in
 
-(* FIXME: try in recursive function bad, will exceed stack for very long files *)
-let rec readFile : in_channel -> string list = fun file ->
-  try
-    let line = input_line file in
-    line :: readFile file
-  with End_of_file -> []
+  Sym.Map.filter (fun s _ -> List.exists (containsSym s) p) defs
+  
+  
+let cleanupParsingEqs p (eqs: parsingEq list): parsingEq list =
 
-let rec splitTemplate: string list ref -> string list -> unit = fun dest -> function
-  | l1 :: l2 :: ls' when trim l2 = "<Environment>" -> splitTemplate envp (((l1 ^ "\n" ^ l2) :: ls'))
-  | l1 :: l2 :: ls' when trim l2 = "<Query>" -> splitTemplate query (((l1 ^ "\n" ^ l2) :: ls'))
-  | l1 :: l2 :: ls' when trim l2 = "<Model>" -> splitTemplate model (((l1 ^ "\n" ^ l2) :: ls'))
-  | l1 :: l2 :: ls' when trim l2 = "<Type hints>" -> splitTemplate typehints (((l1 ^ "\n" ^ l2) :: ls'))
-  | l1 :: l2 :: ls' when trim l2 = "<Crypto2>" -> splitTemplate crypto2 (((l1 ^ "\n" ^ l2) :: ls'))
-  | l :: ls'  -> dest := !dest @ [l]; splitTemplate dest ls'   
-  | [] -> ()
+  let containsSym sym stmt = List.exists (E.containsSym sym) (Stmt.children stmt) in
 
-let readTemplate: in_channel -> unit = fun file -> splitTemplate crypto (readFile file)
+  List.filter (fun ((f_p, _), _) -> List.exists (containsSym f_p) p) eqs
 
+
+(* 680 lines *)

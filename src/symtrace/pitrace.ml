@@ -42,7 +42,7 @@ let prove : unit -> unit = function _ -> failwith "prove: undefined"
 let showPiExp : exp -> string = fun e ->
 
   let rec showExpBody : exp -> string = function 
-    | Sym (("var", _), [String s], _, _) -> s
+    | Var (s, _) -> s
     | Sym (("const", _), [String s], _, _) -> s ^ "()"            
 	  | Sym ((s, Prefix), es, len, id) ->
 	    s ^ "(" ^ String.concat ", " (map showExp es) ^ ")"
@@ -59,12 +59,13 @@ let showPiExp : exp -> string = fun e ->
 	
 	    | Sym (("write", _), [e], _, _) -> 
 	      "out(c, " ^ showExp e ^ ");"
-	                                                                                       
+	                                                         
+        (* The thesis allows if statements now, previously this was let =true = ... in *)
 	    | Sym ((("IfEq"), _), [e1; e2], _, _) ->
 	      "if " ^ showExp e1 ^ " = " ^ showExp e2 ^ " then "
 	
 	    | Sym ((("If"), _), [e], _, _) ->
-	      "let =true = " ^ showExp e ^ " in "
+	      "if " ^ showExp e ^ " = true then "
   
 	    | Sym ((("event"), _), [e], _, _) ->
 	      "event " ^ showExp e ^ ";"
@@ -261,4 +262,4 @@ begin
   writePi client server;
 end;
 
-
+(* 260 lines *)

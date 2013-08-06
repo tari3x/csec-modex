@@ -1,608 +1,755 @@
 
-open List
+open Common
 
-open Types
-open Execute
-open Exp
-open Utils
+open Iml
+open Iml.Type.T
+open Iml.Sym.T
+open Iml.Exp.T
+open Iml.Pat.T
+open Iml.Stmt.T
+
+module E = Iml.Exp
+module S = Solver
+
+open Transform_imltrace
 open Transform
-open Imltypes
-open Solver
 
-open Cryptoverif.Types
-open Cryptoverif.Syntax
-open Cryptoverif.Stringmap
+open Printf
 
+type cvfact = CVFact.t
 
+module Template: sig
 
-(*************************************************)
-(** {1 Typechecking} *)
-(*************************************************)
-
-let templateFile = ref ""
-
-(** {2 Collecting Types from the Environment} *)
-(*****************************)
-
-let convertFunType: typet list * typet -> ftype = fun (ts, t) ->
-  map (fun t -> parseType t.tname) ts, parseType t.tname 
-
-let collectEnvTypes : unit -> unit = fun () -> 
+  type t 
   
-  let doEntry : string -> env_entry -> unit = fun k -> function
-	  | EFunc f -> funTypes := (f.f_name, convertFunType f.f_type) :: !funTypes 
-    | EEvent f ->
-      (* for some reason it adds an extra bitstring parameter in front of the ones I define *)
-      let (atypes, rtype) = f.f_type in
-      funTypes := (f.f_name, convertFunType (tl atypes, rtype)) :: !funTypes
-	  | EVar b -> funTypes := (b.sname, convertFunType ([], b.btype)) :: !funTypes
-	  | _ -> ()
-  in
+  val crypto: t -> string list
+  val crypto2: t -> string list
+  val query: t -> string list
+  val envp: t -> string list
+  val typehints: t -> string list
+  val model: t -> string list
+
+  val readFile: cv_lib_name:string -> name:string -> t
+
+  val collectTypes: t -> Typing.typeCtx * Typing.funTypeCtx
   
-  StringMap.iter doEntry !env
+end = struct
 
-let rec collectInputProcessTypes : inputprocess -> unit = fun q -> 
+  module CV = Cryptoverif
+
+  open CV.Types
+  open CV.Syntax
+  open CV.Stringmap
   
-  let rec collectPattern : pattern -> unit = function
-    | PatVar b -> funTypes := (b.sname, convertFunType ([], b.btype)) :: !funTypes
-    | PatTuple (_, pats) -> iter collectPattern pats 
-    | PatEqual _ -> ()
-  in
-  
-  match q.i_desc with
-	  | Nil -> ()
-	  | Par (q, q') -> collectInputProcessTypes q; collectInputProcessTypes q'
-	  | Repl (_, q) -> collectInputProcessTypes q
-	  | Input (_, pat, q) -> collectPattern pat; collectOutputProcessTypes q
-
-and collectOutputProcessTypes : process -> unit = fun p ->
-  match p.p_desc with
-	  | Yield -> ()
-	  | Restr (b, p) ->
-      funTypes  := (b.sname, convertFunType ([], b.btype)) :: !funTypes;
-      collectOutputProcessTypes p
-	  | Test (_, p, p') -> collectOutputProcessTypes p; collectOutputProcessTypes p'
-	  | Find _ -> fail "collectTypes: unexpected find construct"
-	  | Output (_, _, q) -> collectInputProcessTypes q
-	  | Let (pat, _, p, p') ->
-      collectPatternTypes pat;  
-      collectOutputProcessTypes p; collectOutputProcessTypes p'
-	  | EventP (_, p) -> collectOutputProcessTypes p
-
-and collectPatternTypes: pattern -> unit = function
-  | PatVar b -> funTypes := (b.sname, convertFunType ([], b.btype)) :: !funTypes 
-  | PatTuple (_, pats) -> iter collectPatternTypes pats
-  | PatEqual _ -> ()
-
-let collectConstTypes : unit -> unit = fun () ->
-  let collect : string -> unit = fun c ->
-    funTypes := (c, ([], mstring)) :: !funTypes
-  in
-  List.iter collect !constants
-
-let collectFunTypes : piFunInfo list -> unit = fun fs ->
-  let collect : piFunInfo -> unit = fun (fname, _) ->
-    let arity = assoc fname !arities in
-    funTypes := (fname, (replicate arity mstring, mstring)) :: !funTypes
-  in
-  List.iter collect fs
-
-let collectTypes : unit -> unit = fun () ->
-  let (_, _, _, _, queries, _, q) = read_file !templateFile in
-  collectEnvTypes ();
-  collectInputProcessTypes q;
-  collectConstTypes ()
-  (* collectFunTypes !concats;
-  collectFunTypes !parsers; *)
-
-
-(** {2 Checking types} *)
-(*****************************)
-
-
-let subtype: imltype -> imltype -> bool = fun t t' ->
-  match t, t' with
-    | _, MStringBot -> true
-    | MStringBot, _ -> false
-    | _, MString _  -> true
-    | MString _, _  -> false 
-    | _, Named _    -> t = t'
-	  | Named _, _    -> false
-	  | Bounded (i, _), Bounded (i', _) -> i <= i'
-	  | Fixed (i, _), Bounded (i', _)   -> i <= i'
-	  | Fixed (i, _), Fixed (i', _)     -> i = i'
-	  | _ -> false
-
-let meet : imltype -> imltype -> imltype = fun t t' ->
-  if subtype t t' then t
-  else if subtype t' t then t'
-  else fail ("cannot compute intersection of types " ^ showType t ^ " and " ^ showType t')
-
-
-let checkType : pCtx -> exp -> exp = fun ctx ->
-  let mkTypeFact : exp -> imltype -> exp = fun e -> function
-    | MStringBot -> tt
-    | MString _  -> tt
-    | Fixed (n, _)    -> eq [mkInt n; getLen e]
-    | Bounded (n, _)  -> grEq (mkInt n) (getLen e)
-    | Named n         -> unknown () (* fail ("checkType: generic named type: e = " ^ dump e ^ ", t = " ^ n) *)
-  in
-
-  let proveType: ftype -> exp -> unit = function (argTypes, resType) -> function
-    | Sym ((f, _), es, _, _) as e when isFormatFun f || f = "read" ->
-
-      let args = mkFormalArgs (length es) in
-      
-      (* replace es with formal argument expressions and expand all format function definitions *)
-      let rewrite: exp -> exp = fun e -> expandFormatFuns (substMany es args e) in 
-
-      let eDef = rewrite e in
-      let ctx = map rewrite ctx in
-
-      (*
-      debug ("typecheck: e_def = " ^ dump e_def);
-      debug ("typecheck: context = " ^ dumpList ctx);
-      *)
-
-      let argFacts = map2 mkTypeFact args argTypes in
-      let resFact = mkTypeFact eDef resType in
-      
-      debug ("proving type " ^ showFtype f (argTypes, resType));
-      solver_debug := true;
-      resetFacts ();
-      iter addFact argFacts;
-      iter addFact ctx;
-      if not (isTrue resFact) then
-        fail ("typecheck: cannot prove type " ^ showFtype f (argTypes, resType));
-      solver_debug := false;
-   
-    | _ -> fail "proveType: unexpected expression"
-  in
-
-  let cast: imltype -> imltype -> exp -> exp = fun t t_e e ->
-      if t = t_e then e
-    else if subtype t_e t then
-      mkCast t_e t e
-    (*
-       Inverse casts should not be allowed, functions should not be forced to check their argument type.
-      (* sometimes unequal types may be equivalent (like mstring with alias), so we need to orient them somehow *)
-    else if subtype t_e t && t_e < t then
-      mkCast t_e t e
-    else if subtype t t_e && t < t_e then
-      (* 
-        We don't want cast functions to be pattern-matched, because it makes writing
-        some rewrite rules more difficult (like in RPC-enc). 
-      *)
-      (* mkInverseCast t t_e e *)
-      mkCast t_e t e
+  type t = {
+    crypto: string list;
+    (** Printed after the automatically generated facts *)
+    crypto2: string list;
+    query : string list;
+    envp: string list;
+    (**
+      These are used for typechecking, but are not repeated in the actual model output.
     *)
-    else 
-      fail ("typecheck: cannot introduce a typecast for " ^ dump e ^ " from " ^ showType t_e ^ " to " ^ showType t)
-  in
+    typehints: string list;
+    (**
+      This part is dropped.
+    *)
+    model: string list; 
+    q: CV.Types.inputprocess;
+    env: CV.Types.env_entry CV.Stringmap.StringMap.t }
     
-  let rec check: imltype -> exp -> exp = fun t e ->
-    debug ("\n==============================\nchecking type of " ^ dump e);
-    match e with
-    | Sym (("If", _), [e'], _, _) -> replaceArgs [check boolType e'] e
-    | Sym ((("write"), _), _, _, _) when isArithmeticWrite e -> e
-      (* being liberal with what we write *)
-    | Sym ((("write"), _), [e'], _, _) -> replaceArgs [check (getType e') e'] e (* (map (check mstring) es) *) 
-      (* for some reason CV considers events to be of bool type *)
-    | Sym ((("event"), _), es, _, _) -> replaceArgs (map (check boolType) es) e
-    
-    | Sym (("IfEq", _), [e1; e2], _, _) ->
-      let t1 = getType e1 in
-      let t2 = getType e2 in
-      let t = meet t1 t2 in
-      replaceArgs [check t e1; check t e2] e
-      
-    | Sym ((("new" | "newT" | "var" | "const"), _), _, _, _) -> 
-      let t_e = getType e in
-      cast t t_e e
+  let crypto t = t.crypto
+  let crypto2 t = t.crypto2
+  let query t = t.query
+  let envp t = t.envp
+  let typehints t = t.typehints
+  let model t = t.model
+ 
 
-    | Sym (("read", _), _, _, _) when mem_assoc (expId e) !readTypes -> 
-      debug ("has type: " ^ dump e);
-      let t_e = getType e in
-      debug ("the type is " ^ showType t_e);      
-      cast t t_e e
-                  
-    | Sym (("read", _), _, _, _) -> 
-      debug ("checking typeless: " ^ dump e);
-      proveType ([], t) e; 
-      debug ("type proved: " ^ showType t);
-      readTypes := (expId e, t) :: !readTypes;
-      e
-                  
-    | Sym ((f, _), es, _, _) when mem_assoc f !funTypes ->
-      let (argTypes, t_e) = assoc f !funTypes in
-            
-      if isFormatFun f then proveType (argTypes, t_e) e;
-
-      let es' = 
-        try map2 check argTypes es 
-        with Invalid_argument _ -> fail ("wrong number of arguments in " ^ dump e);
-      in
-      let e' = replaceArgs es' e in
-
-      cast t t_e e'
-
-    | Sym ((f, _), es, _, _) ->
-      let (argTypes, t_e) = (map getType es, t) in
-      
-      if isFormatFun f then proveType (argTypes, t_e) e;
-
-      funTypes := (f, (argTypes, t_e)) :: !funTypes;
-      let es' = 
-        try map2 check argTypes es 
-        with Invalid_argument _ -> fail ("wrong number of arguments in " ^ dump e);
-      in
-      replaceArgs es' e
-      
-    | e -> fail ("typecheck: unexpected expression: " ^ dump e)
-  in
+  let readFile ~cv_lib_name ~name = 
   
-  check mstring
-  (* List.map (visitAllSubexp check) *) (* visitExpBodyPost *) 
+    let crypto = ref [] in
+    let crypto2 = ref [] in
+    let query = ref [] in
+    let envp = ref [] in
+    let typehints = ref [] in
+    let model = ref [] in
+  
+    let rec splitTemplate: string list ref -> string list -> unit = fun dest -> function
+      | l1 :: l2 :: ls' when trim l2 = "<Environment>" -> splitTemplate envp (((l1 ^ "\n" ^ l2) :: ls'))
+      | l1 :: l2 :: ls' when trim l2 = "<Query>" -> splitTemplate query (((l1 ^ "\n" ^ l2) :: ls'))
+      | l1 :: l2 :: ls' when trim l2 = "<Model>" -> splitTemplate model (((l1 ^ "\n" ^ l2) :: ls'))
+      | l1 :: l2 :: ls' when trim l2 = "<Type hints>" -> splitTemplate typehints (((l1 ^ "\n" ^ l2) :: ls'))
+      | l1 :: l2 :: ls' when trim l2 = "<Crypto2>" -> splitTemplate crypto2 (((l1 ^ "\n" ^ l2) :: ls'))
+      | l :: ls'  -> dest := !dest @ [l]; splitTemplate dest ls'   
+      | [] -> ()  
+    in
+  
+    let c = open_in name in
+    splitTemplate crypto (readFile c);
+    Cryptoverif.Settings.lib_name := cv_lib_name;
+    let (_, _, _, _, _, _, q) = read_file name in
+    {crypto = !crypto; crypto2 = !crypto2; query = !query; envp = !envp; typehints = !typehints; model = !model; 
+     q; env = !CV.Stringmap.env }
+  
+  
+  let collectTypes t =
+  
+    let types = ref [] in
+    let funTypes = ref [] in
+  
+    let convertFunType: typet list * typet -> FunType.t = fun (ts, t) ->
+      List.map (fun t -> Type.ofString t.tname) ts, Type.ofString t.tname 
+    in
+  
+    let collectEnvTypes env =
+    
+      let doEntry : string -> env_entry -> unit = fun k -> function
+        | EFunc f ->
+          (* Constants are encoded as functions with no arguments, but we want to treat them as variables *)
+          let (ts, t) = convertFunType f.f_type in
+          if ts = [] then
+            types := (f.f_name, t) :: !types
+          else
+            funTypes := (f.f_name, (ts, t)) :: !funTypes 
+        | EEvent f ->
+          (* for some reason it adds an extra bitstring parameter in front of the ones I define *)
+          let (atypes, rtype) = f.f_type in
+          funTypes := (f.f_name, convertFunType (List.tl atypes, rtype)) :: !funTypes
+        | EVar b -> types := (b.sname, Type.ofString b.btype.tname) :: !types
+        | _ -> ()
+      in
+    StringMap.iter doEntry env
+    in
+    
+    let rec collectInputProcessTypes : inputprocess -> unit = fun q -> 
+    
+      let rec collectPattern : pattern -> unit = function
+        | PatVar b -> types := (b.sname, Type.ofString b.btype.tname) :: !types
+        | PatTuple (_, pats) -> List.iter collectPattern pats 
+        | PatEqual _ -> ()
+      in
+      
+      match q.i_desc with
+          | Nil -> ()
+          | Par (q, q') -> collectInputProcessTypes q; collectInputProcessTypes q'
+          | Repl (_, q) -> collectInputProcessTypes q
+          | Input (_, pat, q) -> collectPattern pat; collectOutputProcessTypes q
+  
+    and collectOutputProcessTypes : process -> unit = fun p ->
+      match p.p_desc with
+          | Yield -> ()
+          | Restr (b, p) ->
+            types  := (b.sname, Type.ofString b.btype.tname) :: !types;
+            collectOutputProcessTypes p
+          | Test (_, p, p') -> collectOutputProcessTypes p; collectOutputProcessTypes p'
+          | Find _ -> fail "collectTypes: unexpected find construct"
+          | Output (_, _, q) -> collectInputProcessTypes q
+          | Let (pat, _, p, p') ->
+            collectPatternTypes pat;  
+            collectOutputProcessTypes p; collectOutputProcessTypes p'
+          | EventP (_, p) -> collectOutputProcessTypes p
+  
+    and collectPatternTypes: pattern -> unit = function
+      | PatVar b -> types := (b.sname, Type.ofString b.btype.tname) :: !types 
+      | PatTuple (_, pats) -> List.iter collectPatternTypes pats
+      | PatEqual _ -> ()
+    in
+        
+    collectEnvTypes t.env;
+    collectInputProcessTypes t.q;
+    Var.Map.ofList !types,
+    Sym.Map.ofList (List.map (fun (f, (ts, t)) -> (Sym.T.Fun (f, List.length ts), (ts, t))) !funTypes)
+end
 
+(********************************************************)
+(** {1 Replace inverse functions by pattern matching} *)
+(********************************************************)
 
-let typecheck: exp list -> exp list = mapWithCtx checkType
-
-
-(*************************************************)
-(** {1 Use pattern matching where possible} *)
-(*************************************************)
-
-(**
-    Using pattern matching is only possible when the encoder is injective, and we actually don't check that,
-    as this is not necessarily implied by having a safe parser.
-    We rely on the fact that CV will reject the pattern matching if encoder is not marked as [compos].
-*)
-
-type cvprocess = exp list * pMeta
-
-(** Safe inverses fail on anything outside the range of the function. *)
-let isSafeInverse: piFun -> bool = fun f ->
-  isSafeParser f ||
+let isInverse f = 
   match Str.split (Str.regexp "_") f with
     | "inverse" :: _ -> true
     | _ -> false 
 
-let inverseOf: piFun -> piFun * int = fun f ->
-  try List.assoc f !safeParsers with
-  Not_found -> (Str.replace_first (Str.regexp "inverse_") "" f, 0)
+let inverseOf f = Fun (Str.replace_first (Str.regexp "inverse_") "" f, 1)
 
-let usePatterns: cvprocess -> cvprocess = function (p, meta) ->
+let rec checkNoInverse e = 
+  match e with
+  | Sym (Fun (f, _), _) when isInverse f -> 
+    fail "inverse function not directly in let-bindig: %s" (E.toString e)
+  | e -> List.iter checkNoInverse (E.children e)
+
+let rec matchInverse p =
+  match p with
+    | Let (VPat v, Sym (Fun (f, _), [e])) :: p when isInverse f ->
+      Let (FPat (inverseOf f, [VPat v]), e) :: matchInverse p
+
+    | s :: p -> 
+      List.iter checkNoInverse (Stmt.children s);
+      s :: matchInverse p
+          
+    | [] -> []
+
+
+(*************************************************)
+(** {1 Use pattern matching for safe parsing} *)
+(*************************************************)
+
+let mkPattern f_c arity v i =
+  let pat = replicate arity Underscore in
+  FPat (f_c, set_element i (VPat v) pat) 
   
-  (* Pairs (c, e) for which we have inserted 
-     let c(x_1, ..., x_n) = e in *)
-  let matched: (piFun * exp) list ref = ref [] in
 
-  let isMatched : (piFun * exp) -> bool = fun (c, e) ->
-    exists (fun (c', e') -> c = c' && equal e e') !matched
-  in
+(**
+  Expects formatting-normal form.
+*)
+let matchSafeParsers (parsers: symDefs) (concats: symDefs) parsingEqs facts p =
 
-  (* return the variable corresponding to p_i(e) where p_i is the ith inverse of c *)
-  let mkPatVar: piFun -> exp -> int -> exp = fun c e i ->
-	  let p_e = Sym (("inverse_" ^ c, Prefix), [e; mkInt i], Unknown, freshDet ()) in
-    
-    (* debug ("making a pattern variable for " ^ dump p_e); *)
-    
-	  let m = getMeta p_e in
-	  m.defined <- true;
-	  mkVar (giveName p_e) p_e
-  in
-  
-  let mkPatternMatch: piFun * exp -> exp list = fun (c, e) ->
-    if isMatched (c, e) then []
-    else
-    begin
+  let rec doMatch facts = function 
+    | (Let (VPat v, Sym (f_p, [e])) as s) :: p when Sym.Map.mem f_p parsers ->
+      begin match safeParse concats parsingEqs facts f_p e with
+        | Some (f_c, i) -> 
+          Let (mkPattern f_c (Sym.arity f_c) v i, e) :: doMatch facts p
+        | None -> 
+          s :: doMatch facts p
+      end
+
+    | AuxTest e :: p -> 
+      AuxTest e :: doMatch (facts @ [e]) p
       
-      (* debug ("making a pattern match for c = " ^ c ^ ", e = " ^ dump e); *)
-      
-	    let arity = 
-        try List.assoc c !arities
-        with Not_found -> 1 in
-	    let vars = List.map (mkPatVar c e) (0 -- (arity - 1)) in
-	    let pat = Sym ((c, Prefix), vars, Unknown, NoTag) in 
-	    matched := (c, e) :: !matched;
-	    [mkLet pat e]
-    end
-  in
-
-  (* collect all (c, e), s.t. the expression contains p(e) and p is safe on c *)
-  let collectMatches : exp -> (piFun * exp) list = fun e ->
-    
-    let matches: (piFun * exp) list ref = ref [] in 
-    
-    let collect : exp -> unit = function
-      | Sym ((p, _), [e], _, _) when isSafeInverse p ->
-        let (c, _) = inverseOf p in
-        matches := (c, e) :: !matches;
-      | _ -> ()
-    in
-    visitAllSubexp collect e; !matches
-  in
-
-  (* for every expression that contains p(e) with safe p insert let c(...) = e at the front *)
-  let rec insert : exp list -> exp list = function
-    | e :: es ->
-      let matches = collectMatches e in
-      let pats = map mkPatternMatch matches in
-      List.concat pats @ [e] @ insert es 
+    | s :: p -> s :: doMatch facts p
+                              
     | [] -> []
   in
-  
-  let replace: exp -> exp = fun e -> match e with
-    | Sym ((p, _), [e], _, _) when isSafeInverse p ->
-      let (c, i) = inverseOf p in
-      mkPatVar c e i
-    | e -> e
-  in
-  
-  (* remove let x = p(e) in, replace all p(e) with safe p by variables defined in pattern decompositions *)
-  (* pre-order is important because otherwise we might replace e before replacing p(e) and that leads to naming inconsistencies *)
-  let cleanup: exp list -> exp list = map (visitExpPre replace) in
+  doMatch facts p
 
-  setActiveMeta meta;
-  let p' = cleanup (insert p) in 
-  p', getActiveMeta ()
+
+let rec mergePatterns p =
+
+  let merge vpat vpat' = 
+    match vpat, vpat' with
+      | VPat v, _ | _, VPat v  -> VPat v
+      | Underscore, Underscore -> Underscore
+      | _ -> failwith "mergePatterns: impossible"
+  in
+
+  let rec mergePattern = List.map2 merge in
+  
+  let rec matchVars pat pat' =
+    match pat, pat' with
+      | VPat v :: pat, VPat v' :: pat' -> (v', Var v) :: matchVars pat pat'
+      | _ :: pat, _ :: pat' -> matchVars pat pat'
+      | [], [] -> []
+      | _ -> failwith "matchVars: impossible"
+  in
+
+  let rec collectPattern f pat e p = 
+    match p with
+    | Let (FPat (f', pat'), e') :: p when f = f' && e = e' ->
+      let pat = mergePattern pat pat' in
+      let vs, vs' = List.split (matchVars pat pat') in 
+      let p = Iml.subst vs vs' p in
+      collectPattern f pat e p
+      
+    | s :: p -> 
+      let p, pat = collectPattern f pat e p in
+      s :: p, pat
+     
+    | [] -> [], pat
+  in
+
+  match p with 
+    | Let (FPat (f, pat), e) :: p ->
+      let p, pat = collectPattern f pat e p in
+      Let (FPat (f, pat), e) :: mergePatterns p
+      
+    | s :: p -> s :: mergePatterns p
+      
+    | [] -> [] 
 
 (*************************************************)
 (** {1 Regularity Properties} *)
 (*************************************************)
 
-let zeroTypes: unit -> imltype list = fun () ->
-
+let zeroFunSym t = Fun ("Z" ^ Type.toString t, 1) 
+let zeroFunPrimeSym t = Fun ("Z" ^ Type.toString t ^ "_prime", 1) 
+let zeroSym t = Const ("zero_" ^ Type.toString t)
+      
+(**
+  Return the zero equations, zero function definitions and types 
+  (including definitions and types for zero constants of fixed types).
+  
+  Generate the following equations:
+  
+    - for each conc: T1 x ... x Tn -> T
+      ZT(conc(x1, ..., xn)) = ZT'(conc(ZT1(x1), ..., ZTn(xn)))
+      
+    - for each cast_T1_T2:
+      ZT2(cast_T1_T2(x)) = ZT2'(cast_T1_T2(ZT1(x)))
+      
+    - for each fixed type T that occurs anywhere in argument types in funTypes:
+      ZT(x) = ZeroT
+*)
+let zeroFacts (concats: symDefs) 
+              (casts: (Type.t * Type.t) list) 
+              (funTypes: Typing.funTypeCtx): cvfact list * symDefs * Typing.funTypeCtx = 
+              
+  (* Types for which we need to generate ZT, ZT', and possibly ZeroT *)
   let zts: imltype list ref = ref [] in
   
-  let addType: (string * ftype) -> unit = fun (c, (ts, t)) ->
-    if isConcat c then zts := t :: ts @ !zts;
+  let zeroFun t =
+    zts := t :: !zts;
+    zeroFunSym t  
+  in
+
+  (* Assume that zeroFun will be called for all of these, so no need to add to zts. *)
+  let zeroFunPrime t = zeroFunPrimeSym t in
+  
+  let zeroOf e t = Sym (zeroFun t, [e]) in
+  
+  (* Suitable for generating symDefs and Typing.funTypeCtx *)
+  let zFunInfo t = 
+    let zt = zeroFunSym t in
+    let zt' = zeroFunPrimeSym t in
+    let zero_t = zeroSym t in
+    [(zt,  Unknown), (zt,  ([t], t)); 
+     (zt', Unknown), (zt', ([t], t));
+     (zero_t, Unknown), (zero_t, ([], t))]
+  in    
+  
+  let concatFact c = 
+    let ts, t = Sym.Map.find c funTypes in
+    let args = mkFormalArgs (Sym.arity c) |> List.map E.var in
+    let zt = zeroFun t in
+    let zt' = zeroFunPrime t in
+    S.eqBitstring [Sym (zt, [Sym (c, args)]); 
+                   Sym (zt', [Sym (c, List.map2 zeroOf args ts)])]
+  in
+  
+  let castFact (t1, t2) =
+    let sym = Cast (t1, t2) in
+    let x = Var "x" in
+    let zt2 = zeroFun t2 in
+    let zt2' = zeroFunPrime t2 in
+    S.eqBitstring [Sym (zt2,  [Sym (sym, [x])]); 
+                   Sym (zt2', [Sym (sym, [zeroOf x t1])])]
   in 
   
-  iter addType !funTypes;
-  nub !zts
+  let constFact t =
+    let zt = zeroFun t in
+    let zero_t = Sym (zeroSym t, []) in 
+    let x = Var "x" in 
+    S.eqBitstring [Sym (zt, [x]); zero_t]
+  in
+  
+  (*
+    Remove information for symbols that are already present in the template 
+    (such as the zero function in the definition of the encryption).
+  *)
+  let cleanup bindings = 
+    List.filter (fun (sym, _) -> not (Sym.Map.mem sym funTypes)) bindings
+  in
+  
+  let concat_facts = List.map concatFact (Sym.Map.keys concats) in
+  let cast_facts = List.map castFact casts in
+  let fixed_types =
+    Sym.Map.values funTypes
+    |> List2.concat_map (fun (ts, _) -> ts) 
+    |> List.filter (function Fixed _ -> true | _ -> false) 
+    |> List2.nub
+  in
+  let const_facts = List.map constFact fixed_types in
+  let z_defs, z_types = List2.concat_map zFunInfo (List2.nub !zts) |> List.split in
+  let z_defs = cleanup z_defs |> Sym.Map.ofList in
+  let z_types = cleanup z_types |> Sym.Map.ofList in
+  let facts = List.map (CVFact.make (Sym.Map.disjointUnion [funTypes; z_types])) 
+                       (concat_facts @ cast_facts @ const_facts) 
+  in
+  facts, z_defs, z_types
 
-let zeroFunName: imltype -> string = fun t -> "Z" ^ showType t
+(********************************************************)
+(** {1 Auxiliary Test Properties} *)
+(********************************************************)
+
+let prime = function
+  | Fun (s, n) -> Fun (s ^ "_prime", n) 
+  | sym -> fail "auxiliaryFacts: impossible auxiliary symbol: %s" (Sym.toString sym)
+    
+let addAuxiliaryPrimed auxiliary funTypes = 
+  let auxiliary_primed = 
+    Sym.Map.bindings auxiliary
+    |> List.map (fun (sym, def) -> (prime sym, def))
+    |> Sym.Map.ofList
+  in 
+  let types_primed =
+    Sym.Map.bindings auxiliary
+    |> List.map (fun (sym, _) -> (prime sym, Sym.Map.find sym funTypes))
+    |> Sym.Map.ofList
+  in
+  Sym.Map.disjointUnion [auxiliary; auxiliary_primed], Sym.Map.disjointUnion [funTypes; types_primed] 
+    
+(*
+  There are two ways to check 
+    len(x) = len(y) /\ def[x/arg] => def[y/arg].
+  
+  The first way is to do length substitutions and then check syntactic equality. 
+  One needs to expand lengths because of things like
+    !(castToInt[false,4,false,8](len("p"|len54|x92|x93)) <= (i5 + castToInt[false,4,false,8](len55)))     
+  
+  The other way is to use the solver directly, but then you need to show overflow safety as well.
+  When formalising, you need to replace auxiliary facts by hardened facts that check overflow safety.
+  
+  The second option bis conceptually simpler, but less efficient.
+  Another problem with the second option is that it is tricky to tell the solver to assume overflow
+  safety for an expression. One cannot just extract the overflow safety fact, because that itself
+  may not be overflow safe. For these reasons I'm using the first option now.
+*)
+let auxiliaryFacts (concats: symDefs) (auxiliary: symDefs) (funTypes: Typing.funTypeCtx): cvfact list =
+
+  (* facts for a single auxiliary test *)
+  let facts sym def argTypes = 
+
+    let num_args = List.length argTypes in
+    
+    let zeroOf v t = Sym (zeroFunSym t, [Var v]) in
+  
+    let rec replaceLen v = function
+      | Len (Var v') when v' = v -> Var (Var.fresh "len") 
+      | e -> E.descend (replaceLen v) e
+    in
+
+    let rec expandLens = function
+      | Len (Concat es) -> 
+        List.map E.len es |> E.sum |> expandLens
+      | e -> E.descend expandLens e
+    in
+
+    let canErase arg =
+      let x = Var (Var.fresh "x") in
+      let y = Var (Var.fresh "y") in
+      let def = replaceLen arg def in
+      let def_x = E.subst [arg] [x] def in
+      let def_y = E.subst [arg] [y] def in
+      debug "canErase: comparing \n%s and \n%s" (E.toString def_x) (E.toString def_y);
+      def_x = def_y
+    in
+  
+    (* FIXME: looks like t isn't being used any more *)
+    let concatPairs arg t =
+      let pair c = 
+        match Sym.Map.maybe_find c funTypes with
+          | Some (ts, t') (* when t = t' *) -> 
+            let c_def = Sym.Map.find c concats in
+
+            (* Rename args of c_def to avoid collision with args of def. *)
+            let c_args = List.map (fun _ -> Var.fresh "c_arg") (1 -- (Sym.arity c)) in
+            let c_def = E.substV (mkFormalArgs (Sym.arity c)) c_args c_def in 
+            
+            let def = 
+              E.subst [arg] [c_def] def 
+                (* We may be substituting an encoder inside a parser, so we need to simplify. *)
+              |> silent Simplify.deepSimplify
+                (* Deal with stuff like 
+                   !(castToInt[false,4,false,8](len("p"|len54|x92|x93)) <= (i5 + castToInt[false,4,false,8](len55))) 
+                *)
+              |> expandLens 
+                (* Replace all argument lengths by fresh variables *)
+              |> List.fold_right replaceLen c_args 
+            in
+                
+            let xs = List.map (fun _ -> Var.fresh "x") (1 -- (Sym.arity c)) in
+            let ys = List.map (fun _ -> Var.fresh "y") (1 -- (Sym.arity c)) in
+            let def_x = E.substV c_args xs def in
+            let def_y = E.substV c_args ys def in
+            debug "concatPairs: comparing \n%s and \n%s" (E.toString def_x) (E.toString def_y);
+            if def_x = def_y then
+                let zxs = List.map2 zeroOf xs ts in
+                let xs = List.map E.var xs in
+                Some (Typing.cast t' Bitstring (Sym (c, xs)), 
+                      Typing.cast t' Bitstring (Sym (c, zxs)))
+            else None
+          | _ -> None
+      in
+      List2.filter_map pair (Sym.Map.keys concats)
+     in 
+        
+    let rec argPairs xs ts: (exp * exp) list list =
+      match xs, ts with
+        | [], [] -> [[]]
+        | x :: xs, t :: ts when canErase x ->
+          List.map (fun args -> (Var x, zeroOf x t) :: args) (argPairs xs ts)
+        | x :: xs, t :: ts ->
+          let pairs = (Var x, Var x) :: concatPairs x t in
+          List2.cross_product (fun pair args -> pair :: args) pairs (argPairs xs ts)
+        | _ -> fail "argPairs: impossible"
+    in
+    
+    let mkFact (args1, args2) =
+      S.eqBitstring [Sym (sym, args1); Sym (prime sym, args2)] |> CVFact.make funTypes
+    in
+  
+    argPairs (mkFormalArgs num_args) argTypes
+      (* remove trivial equations *)
+    |> List.map List.split 
+    |> List.filter (fun (args1, args2) -> args1 <> args2)
+    |> List.map mkFact 
+  in
+  
+  Sym.Map.bindings auxiliary
+  |> List2.concat_map (fun (sym, def) -> 
+    debug "Auxiliary facts: checking %s: %s" (Sym.toString sym) (E.toString def);
+    let (ts, _) = Sym.Map.find sym funTypes in
+    facts sym def ts)
+
 
 (*************************************************)
 (** {1 Input and Output Merging} *)
 (*************************************************)
 
-let mergeInOut : exp list -> exp list = fun es ->
+let mergeInOut p =
 
-  (* let dummy = mkVar "dummy" (concat []) in *) 
-
-  let rec mergeIn : exp list -> exp list -> exp list = fun vs es -> match (vs, es) with
-    | vs, Sym (("read", _), [v], _, _) :: es' -> mergeIn (v :: vs) es'
-    | [], e :: es' -> e :: mergeIn [] es'
-    | vs, ((Sym (("write", _), _, _, _)) as e) :: es' ->
-      Sym (("read", Prefix), vs, Unknown, freshNondet ()) :: e :: mergeIn [] es' 
-    | vs, e :: es' -> e :: mergeIn vs es'
-    | [], [] -> 
-      [Sym (("read", Prefix), [], Unknown, freshNondet ())] 
-    | vs, [] -> 
-      [Sym (("read", Prefix), vs, Unknown, freshNondet ())]
+  let rec mergeIn (vs: var list) p = 
+  match (vs, p) with
+    | vs, In [v] :: p -> mergeIn (v :: vs) p
+    | [], s :: p -> s :: mergeIn [] p
+    | vs, (Out _ as s) :: p ->
+      In vs :: s :: mergeIn [] p 
+    | vs, s :: p -> s :: mergeIn vs p
+    | vs, [] -> [In vs] (* including vs =  [] *)
   in
 
-  let rec mergeOut : exp list -> exp list -> exp list = fun vs es -> match (vs, es) with
-    | vs, Sym (("write", _), [v], _, _) :: es' -> mergeOut (v :: vs) es'
-    | [], e :: es' -> e :: mergeOut [] es'
-    | vs, ((Sym (("read", _), _, _, _)) as e) :: es' ->
-      Sym (("write", Prefix), vs, Unknown, freshNondet ()) :: e :: mergeOut [] es' 
-    | vs, e :: es' -> e :: mergeOut vs es'
-    | [], [] -> 
-      [Sym (("yield", Prefix), [], Unknown, freshNondet ())] 
-    | vs, [] -> 
-      [Sym (("write", Prefix), vs, Unknown, freshNondet ())]
+  (*
+    Requires only-variables-in-write form.
+  *)
+  let rec mergeOut es p = 
+  match (es, p) with
+    | es, Out [e] :: p -> mergeOut (e :: es) p
+    | [], s :: p -> s :: mergeOut [] p
+    | es, (In _ as s) :: p ->
+      Out es :: s :: mergeOut [] p 
+    | es, s :: p -> s :: mergeOut es p
+    | [], [] -> [Yield] 
+    | es, [] -> [Out es]
   in
       
-  List.rev (mergeIn [] (List.rev (mergeOut [] es)))
+  List.rev (mergeIn [] (List.rev (mergeOut [] p)))  
+
+(*************************************************)
+(** {1 The full model} *)
+(*************************************************)
+
+module Model = struct
+  type t = {
+    client: iml;
+    server: iml;
+    constants: exp Var.Map.t;
+    template: Template.t;
+    varTypes: Typing.typeCtx;
+    funTypes: Typing.funTypeCtx;
+    
+    concats: symDefs;
+    parsers: symDefs;
+    arith: symDefs;
+    auxiliary: symDefs;
+    zeroFuns: symDefs;
+    
+    auxiliaryFacts: cvfact list;
+    zeroFacts: cvfact list;
+    parsingEqs: parsingEq list;
+    encoderFacts: encoderFact list;
+  }
+end
+  
+open Model
 
 (*************************************************)
 (** {1 CV Output} *)
 (*************************************************)
-  
-let showCVExp : exp -> string = fun e ->
+
+let printf a = fprintf Common.out_channel a
+
+let showCVStmt: Stmt.t -> string = fun s ->
 
   let rec showExpBody : exp -> string = function 
-    | Sym (("const", _), [String c], _, _) -> c
-    | Sym (("var", _), [String s], _, _) -> s
-    | Sym ((s, _), es, len, id) ->
-      s ^ "(" ^ String.concat ", " (map showExp es) ^ ")"
-    | e -> "unexpected{" ^ dump e ^ "}"
+    | Var v -> v
+    | Sym (Const s, []) -> s
+    | Sym (s, es) ->
+      Sym.toString s ^ "(" ^ String.concat ", " (List.map showExpBody es) ^ ")"
+    | Annotation (_, e) -> showExpBody e
+    | e -> "unexpected{" ^ E.dump e ^ "}"
 
-  and showInVar : imltype -> exp -> string = fun t -> function
-	  | Sym (("var", _), [String name], l, _) -> name ^ ": " ^ showType t
-	  | _ -> failwith "showInVar: not a var"
-
-  and showExp : exp -> string = function e ->
-    (* debug ("showing " ^ dump e); *)
-    match e with
-	    | Sym (("read", _), vs, _, _) -> 
-	      "in(c_in, (" ^ String.concat ", " (map (fun v -> showInVar (getType v) v) vs) ^ "));";
-	
-	    | Sym (("new", _), [v], l, _) -> 
-        let t = lenToType l in
-	      "new " ^ showInVar t v ^ ";";
-
-      | Sym (("newT", _), [v; String t], l, _) -> 
-        "new " ^ showInVar (parseType t) v ^ ";";
-    	
-	    | Sym (("write", _), es, _, _) -> 
-	      "out(c_out, (" ^ String.concat ", " (map showIExp es) ^ "));";
-
-      | Sym (("yield", _), [], _, _) -> 
-        "yield.";
-                                                                                                                                                                                	                                                                                       
-	    | Sym ((("IfEq"), _), [e1; e2], _, _) ->
-	      "if " ^ showExp e1 ^ " = " ^ showExp e2 ^ " then "
-
-	    | Sym ((("If"), _), [e], _, _) ->
-	      "if " ^ showExp e ^ " then "
-    	
-	    | Sym ((("event"), _), [e'], _, _) ->
-	      "event " ^ showExp e' ^ ";"
-	
-	    | Sym ((("let"), _), [pat; rhs], _, _) ->
-	      "let " ^ showExp pat ^ " = " ^ showExp rhs ^ " in"
-	
-	    | _ -> showExpBody e
-
+  and showInVar t name = name ^ ": " ^ Type.toString t
   in
-  showExp e
 
-let containsSym : string -> exp -> bool = fun s e ->
-  
-  let contains : exp -> exp = function
-    | Sym ((s', _), _, _, _) when s' = s -> raise Exit
-    | e -> e
-  in
-  
-  try ignore (visitExpPost contains e); false with Exit -> true
+  match s with
+    | In [v] -> 
+      "in(c_in, " ^ showInVar Bitstring v ^ ");";
+    
+    | In vs -> 
+      "in(c_in, (" ^ String.concat ", " (List.map (showInVar Bitstring) vs) ^ "));";
 
-let cleanupParsingRules : parsingRule list -> exp list -> parsingRule list = fun ps es ->
-  filter (fun p -> exists (containsSym (parserName p)) es) ps
+    | New (v, t) -> 
+      "new " ^ showInVar t v ^ ";";
 
-let showCVProcess : cvprocess -> string = function (es, (m, t)) ->
-  meta := m;
-  nameTags := t; 
-  (* let es = splitByType es in *)
-  (* let es = elimCommonSubs es in *)
+    | Out [e] -> 
+      "out(c_out, " ^ showExpBody e ^ ");";
+
+    | Out es -> 
+      "out(c_out, (" ^ String.concat ", " (List.map showExpBody es) ^ "));";
+
+    | TestEq (e1, e2) ->
+      "if " ^ showExpBody e1 ^ " = " ^ showExpBody e2 ^ " then "
+
+    | AuxTest e ->
+      "if " ^ showExpBody e ^ " then "
+
+    | Assume e ->
+      Printf.sprintf "assume %s in" (showExpBody e)
+
+    | GenTest e ->
+      "if " ^ showExpBody e ^ " then "
+                                                
+    | Event (name, es) -> 
+      "event " ^ name ^ "(" ^ String.concat ", " (List.map showExpBody es) ^ ");"
+        
+    | Let (pat, e) ->
+      "let " ^ Pat.dump pat ^ " = " ^ showExpBody e ^ " in"
+      
+    | Yield -> "yield ."
+      
+    | Comment s -> sprintf "(* %s *)" s 
+
+let showCVProcess p =
   let zero = 
-    if es = [] then " 0 .\n" else
-    match last es with
-      | Sym (("yield", _), [], _, _) -> "\n"
+    if p = [] then " 0 .\n" else
+    match last p with
+      | Yield -> "\n"
       | _ -> " 0 .\n"
   in
-  let result = String.concat "\n" (map showCVExp es) ^ zero in
+  let result = String.concat "\n" (List.map showCVStmt p) ^ zero in
   result
 
 let print_indent s = print_endline ("  " ^ s)
 
-let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
-  
-  let printConcatRaw: piFun -> bool -> unit = fun name isInjective -> 
+(*
+  FIXME: we aren't even printing the parsing rules, are we?
+*)
+let writeCV model =
+
+  let casts = nub (Typing.casts model.client @ Typing.casts model.server) in
+
+  let printFunDef isInjective sym def =
+    if def <> Unknown then 
+      print_endline ("(* " ^ showFun sym def ^ " *)");
     let compos = if isInjective then " [compos]." else "." in
-    print_endline ("fun " ^ showFtype name (assoc name !funTypes) ^ compos)
+    match sym with
+      | Const s -> 
+        let _, t = Sym.Map.find sym model.funTypes in
+        print_endline ("const " ^ s ^ ": " ^ Type.toString t ^ ".");
+        print_endline ""
+      | sym -> 
+        print_endline ("fun " ^ Sym.cvDeclaration sym (Sym.Map.find sym model.funTypes) ^ compos);
+        print_endline ""
   in
     
-  let printConcat : piFunInfo -> unit = function (name, _) as c ->
-    debug ("printing " ^ name);
-    print_endline ("(* " ^ showFun c ^ " *)");
-    printConcatRaw name (isInjectiveConcat true c);
-    print_endline ""
-  in
-
-  let printParser : piFunInfo -> unit = function
-    | (name, Basic _) as p -> 
-      print_endline ("(* " ^ showFun p ^ " *)");
-      print_endline ("fun " ^ showFtype name (assoc name !funTypes) ^ ".");
-      print_endline "";
-      (* print_endline ("fun " ^ name ^ "(mstring): mstring.") *)
-    | _ -> ()
+  let printConcat sym def =
+    printFunDef (isInjectiveConcat sym def) sym def;
   in
   
 	let printCast: imltype * imltype -> unit = fun (t, t') ->
-	  print_endline ("fun " ^ castFun t t' ^ "(" ^ showType t ^ "): " ^ showType t' ^ " [compos].")
+	  print_endline ("fun " ^ Sym.toString (Cast (t, t')) ^ "(" ^ Type.toString t ^ "): " ^ Type.toString t' ^ " [compos].")
   in
-  
+
+  (* TODO: most of these can now be printed by converting to CVFacts *)  
   let printCastEq: imltype * imltype -> unit = fun (t, t') ->
-    if List.mem (t', t) !casts then 
+    (* check that the inverse function is defined at all *)
+    if List.mem (t', t) casts && Type.subtype t t' then 
     begin
-      (* this is a cast between two equal (aliased) types *)
-      print_endline ("forall x: " ^ showType t ^ ";");
-      print_endline ("  " ^ castFun t' t ^ "(" ^ castFun t t' ^ "(x)) = x.")
+      print_endline ("forall x: " ^ Type.toString t ^ ";");
+      print_endline ("  " ^ Sym.toString (Cast (t', t)) ^ "(" ^ Sym.toString (Cast (t, t')) ^ "(x)) = x.")
     end
   in
   
-  let printConstant : string -> unit = fun s ->
-    let e = try assoc s !constDefs with Not_found -> fail "impossible: printConstant" in
-    print_endline ("(* " ^ dump e ^ " *)");
-    print_endline ("const " ^ s ^ ": mstring.") 
+  let printConstant name def =
+    let t = Var.Map.find name model.varTypes in 
+    print_endline ("(* " ^ E.dump def ^ " *)");
+    print_endline ("const " ^ name ^ ": " ^ Type.toString t ^ ".") 
   in
 
-  let printDisjoint: piFun * piFun -> unit = fun (c1, c2) ->
-    debug ("printing" ^ c1 ^ " " ^ c2);
+  let printRelation c1 c2 op =
     try
     begin    
-	    let id = ref 0 in
-	
-	    let formalArg: imltype -> string = fun _ -> id := !id + 1; "var" ^ string_of_int !id in
-	    let showArg: string -> imltype -> string = fun v t -> v ^ ": " ^ showType t in
-	
-	    let (argTypes1, t1) = assoc c1 !funTypes in
-	    let (argTypes2, t2) = assoc c2 !funTypes in
-	
-	    if t1 = t2 then
-	    begin
-		    let args1 = map formalArg argTypes1 in
-		    let args2 = map formalArg argTypes2 in
-		    
-		    print_endline ("forall " ^ String.concat ", " (map2 showArg args1 argTypes1) ^ ", " ^ 
-		                               String.concat ", " (map2 showArg args2 argTypes2) ^ ";");
-		    print_endline ("  " ^ c1 ^ "(" ^ String.concat ", " args1 ^ ") <> " ^ c2 ^ "(" ^ String.concat ", " args2 ^ ").");
-	    end
+        let id = ref 0 in
+    
+        let formalArg: imltype -> string = fun _ -> id := !id + 1; "var" ^ string_of_int !id in
+        let showArg: string -> imltype -> string = fun v t -> v ^ ": " ^ Type.toString t in
+    
+        let (argTypes1, t1) = Sym.Map.find c1 model.funTypes in
+        let (argTypes2, t2) = Sym.Map.find c2 model.funTypes in
+    
+        (* FIXME: should this be made part of transformations? *)
+        if t1 = t2 && (op = "<>" || argTypes1 = argTypes2) then
+        begin
+            let args1 = List.map formalArg argTypes1 in
+            let args2 = 
+              if op = "<>" then List.map formalArg argTypes2 
+              else args1 
+            in
+            let all_args = nub (List.map2 showArg args1 argTypes1 @ List.map2 showArg args2 argTypes2) in
+            
+            printf "forall %s;\n" (String.concat ", " all_args); 
+            printf "  %s(%s) %s %s(%s).\n\n" 
+              (Sym.toString c1) (String.concat ", " args1) 
+              op
+              (Sym.toString c2) (String.concat ", " args2);
+        end
     end with Not_found -> ()
+  in  
+
+  let printEncoderFact = function
+    | Disjoint (s, s') -> printRelation s s' "<>"
+    | Equal    (s, s') -> printRelation s s' "="
   in
+  
+  let printCVFact fact = print_endline (CVFact.toString fact) in
 
-  let printZeroFun: imltype -> unit = fun t ->
-    let tname = showType t in
-    print_endline ("fun " ^ zeroFunName t ^ "(" ^ tname ^ "): " ^ tname ^ ".")
-  in
+  let clientProc = showCVProcess model.client in
+  let serverProc = showCVProcess model.server in
 
-  let printConcatRegular: piFun -> unit = fun c ->
-    let (ts, t) = assoc c !funTypes in
-    
-    let zc = "Z" ^ c in
-    funTypes := (zc, (ts, t)) :: !funTypes;
-    printConcatRaw zc false;
-    
-    let id = ref 0 in
-
-    let formalArg: imltype -> string = fun _ -> id := !id + 1; "var" ^ string_of_int !id in
-    let showArg: string -> imltype -> string = fun v t -> v ^ ": " ^ showType t in
-    let applyZero: string -> imltype -> string  = fun v t -> zeroFunName t ^ "(" ^ v ^ ")" in
-
-    let args = map formalArg ts in
-
-    print_endline ("forall " ^ String.concat ", " (map2 showArg args ts) ^ ";");
-    print_endline ("  " ^ zeroFunName t ^ "(" ^ c  ^ "(" ^ String.concat ", " args ^ ")) = " 
-                    ^ zc ^ "(" ^ String.concat ", " (map2 applyZero args ts) ^ ").");
-  in        
-
-  let clientProc = showCVProcess client in
-  let serverProc = showCVProcess server in
-
-  (*
-  print_endline "channel c_in, c_out.";
-  print_endline "type mstring.";
-  *)
-
-  iter print_endline !crypto;
+  List.iter print_endline (Template.crypto model.template);
 
   print_endline "\n(*************************** \n Constants \n***************************)\n";
-  iter printConstant !constants;
+  Var.Map.iter printConstant model.constants;
 
   print_endline "\n(*************************** \n  Formatting Functions \n***************************)\n";
-  iter printConcat !concats;
-  iter printParser !parsers;
+  Sym.Map.iter printConcat model.concats;
+  Sym.Map.iter (printFunDef false) model.parsers;
   print_endline "";
-  iter printDisjoint !disjointPairs;
+  List.iter printEncoderFact model.encoderFacts;
+
+  print_endline "\n(*************************** \n  Arithmetic Functions \n***************************)\n";
+  Sym.Map.iter (printFunDef false) model.arith;
+
+  print_endline "\n(*************************** \n  Auxiliary Tests \n***************************)\n";
+  Sym.Map.iter (printFunDef false) model.auxiliary;
 
   print_endline "\n(*************************** \n  Zero Functions \n***************************)\n";
-  iter printZeroFun (zeroTypes ()); 
+  Sym.Map.iter (printFunDef false) model.zeroFuns; 
 
-  print_endline "\n(*************************** \n  Length-Regularity \n***************************)\n";
-  iter printConcatRegular (assoc_keys !concats);
-                  
   print_endline "\n(*************************** \n  Typecasting \n***************************)\n";
-  iter printCast !casts;
-  iter printCastEq !casts; 
+  List.iter printCast casts;
+  List.iter printCastEq casts; 
+
+  print_endline "\n(*************************** \n  Auxiliary Facts \n***************************)\n";
+  List.iter printCVFact model.auxiliaryFacts;
+
+  print_endline "\n(*************************** \n  Zero Facts \n***************************)\n";
+  List.iter printCVFact model.zeroFacts;
   
   print_endline "";
 
-  iter print_endline !crypto2;
-  iter print_endline !query;
+  List.iter print_endline (Template.crypto2 model.template);
+  List.iter print_endline (Template.query model.template);
   
   print_endline "\n(*************************** \n  Model \n***************************)\n";
   print_endline "let A = ";
@@ -610,150 +757,211 @@ let writeCV : cvprocess -> cvprocess -> unit = fun client server ->
   print_endline "let B = ";
   print_endline serverProc;
 
-  iter print_endline !envp  
+  List.iter print_endline (Template.envp model.template)
   
-  (*
-  print_endline "process !";
-  (* iter printKey !keys; *)
-  print_indent "new keyAB;";
-  print_indent "(!A | !B)"
-  *)
-
 (*************************************************)
 (** {1 Main} *)
 (*************************************************)
 
-;;
-begin
-  inlineAll := false;
+let verbose = true
 
+let rec removeCasts = function
+  | Sym (Op (Sym.Op.T.CastToInt, _), [e]) -> removeCasts e
+  | e -> E.descend removeCasts e
+
+let debugIML client server title = 
+  if verbose then prerr_title title;
+  if verbose then prerr_endline "Client = ";
+  if verbose then prerr_endline (Iml.toString (Iml.map removeCasts client));
+  if verbose then prerr_endline "Server = ";
+  if verbose then prerr_endline (Iml.toString (Iml.map removeCasts server))
+ 
+
+let main () =  
   (*
   let server = input_value (open_in_bin Sys.argv.(1)) in
   let client = input_value (open_in_bin Sys.argv.(2)) in
   *)
-  let (client, server) = rawIn (open_in_bin Sys.argv.(1)) in
+  let (client, server) = Symex.rawIn (open_in_bin Sys.argv.(1)) in
 
-  verbose := true;
-  debugEnabled := true;
+  let server = server |> removeComments |> rewriteCrypto in
+  let client = client |> removeComments |> rewriteCrypto in
 
-  if !verbose then prerr_endline "\nraw IML:";
-  if !verbose then prerr_endline (showSimpleIMLRaw client);
-  if !verbose then prerr_endline (showSimpleIMLRaw server);
+  debugIML client server "initial IML";
 
-  let server = procAndFilter server in
-  let client = procAndFilter client in
+  let server = removeTrailingComputations server in
+  let client = removeTrailingComputations client in
+  debugIML client server "IML after removing trailing computations";
 
-  if !verbose then prerr_endline "\nfiltered IML:";
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
+  let server = normalForm server in
+  let client = normalForm client in
+  debugIML client server "IML in normal form";
 
-  let (client, clientConcats) = extractConcats client in
-  let (server, serverConcats) = extractConcats server in
-  let allConcats = clientConcats @ serverConcats in
+  let server = simplifyDoubleLets server in
+  let client = simplifyDoubleLets client in
+  debugIML client server "IML after simplifying double lets";
 
-  if !verbose then showFuns allConcats;
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
+  let client = applyNameAnnotations client in
+  let server = applyNameAnnotations server in
+  debugIML client server "IML after applying all name annotations";
 
-  (* 
-    Don't try splitting concats to achieve full disjointness.
-    First, it is not always possible (metering).
-    Second, processes are easier to typecheck without nested concats.
-  *)
-  insertConcats ~needDisjoint:false allConcats;
+  let client, clientConcats = extractConcats client in
+  let server, serverConcats = extractConcats server in
+  let concats = Sym.Map.disjointUnion [clientConcats; serverConcats] in
 
-  if !verbose then showFuns !concats;
+  debugIML client server "IML after concat extraction";
+  if verbose then showFuns concats;
+ 
+  let client, clientParsers = extractParsers client in
+  let server, serverParsers = extractParsers server in
+  let parsers = Sym.Map.disjointUnion [clientParsers; serverParsers] in
 
-  let client = rewriteConcats client in
-  let server = rewriteConcats server in
+  debugIML client server "IML after parser extraction";
+  if verbose then showFuns parsers;
 
-  let client = extractConstConcats client in
-  let server = extractConstConcats server in
+  let server, serverArith = extractArithmetic server in
+  let client, clientArith = extractArithmetic client in
+  let arith = Sym.Map.disjointUnion [serverArith; clientArith] in
+  debugIML client server "IML after replacing arithmetic expressions";
+  if verbose then showFuns arith;
 
-  if !verbose then prerr_endline "\nIML after constant concats extraction:";
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
+  let server, serverAuxiliary = extractAuxiliary server in
+  let client, clientAuxiliary = extractAuxiliary client in
+  let auxiliary = Sym.Map.disjointUnion [serverAuxiliary; clientAuxiliary] in
+  debugIML client server "IML after adding formal versions of auxiliary tests";
 
-  cleanupConcats (client @ server);
-      
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
+  let client, clientConstants = extractConstants concats client in
+  let server, serverConstants = extractConstants concats server in
+  let constants = Var.Map.disjointUnion [serverConstants; clientConstants] in
+  debugIML client server "IML after constant extraction";
 
-  let client = extractParsers client in
-  let server = extractParsers server in
-
-  if !verbose then prerr_endline "\nafter parsing extraction:";
-  if !verbose then showFuns !parsers;
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
-
-  computeParsingRules !parsers;
-
-  if !verbose then prerr_endline "\nafter parsing extraction (reminder):";
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
-
-  computeSafeParsers client;
-  computeSafeParsers server;
-
-  if !verbose then prerr_endline "\nafter parsing extraction (reminder):";
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
-
-  (* Typechecking *)
-  Cryptoverif.Settings.lib_name := Sys.argv.(2);
-  templateFile := Sys.argv.(3);
-  readTemplate (open_in !templateFile);
-  collectTypes ();
-  dumpTypes ();
-  let client = typecheck client in
-  let server = typecheck server in
-  if !verbose then prerr_endline "\nIML after typechecking:";
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
-
-  let client = postprocess client in
-  let server = postprocess server in
-  if !verbose then prerr_endline "\npostprocessed IML:";
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
-
-  let client = extractConstants client in
-  let server = extractConstants server in
-
-  if !verbose then prerr_endline "\nIML after constant extraction:";
-  if !verbose then prerr_endline (showSimpleIML client);
-  if !verbose then prerr_endline (showSimpleIML server);
-
-  let (client, clientMeta) = usePatterns (client, emptyMeta ()) in
-  let (server, serverMeta) = usePatterns (server, emptyMeta ()) in
-
-  if !verbose then prerr_endline "\nafter inserting pattern matching:\n";
-  if !verbose then prerr_endline (showStructuredIML client clientMeta);
-  if !verbose then prerr_endline (showStructuredIML server serverMeta);
-
-  cleanupParsers (client @ server);
-
-  let (client, clientMeta) = splitByType (client, clientMeta) in
-  let (server, serverMeta) = splitByType (server, serverMeta) in
+  let concats = cleanupDefs (client @ server) concats in
+  let parsers = cleanupDefs (client @ server) parsers in
   
-  if !verbose then prerr_endline "\nafter splitting expressions:\n";
-  if !verbose then prerr_endline (showStructuredIML client clientMeta);
-  if !verbose then prerr_endline (showStructuredIML server serverMeta);
+  (************************
+    Typechecking
+  *************************)
+  
+  let template = Template.readFile ~cv_lib_name:Sys.argv.(2) ~name:Sys.argv.(3) in
+  let templateVarTypes, funTypes = Template.collectTypes template in
+  prerr_title "Template Function Types: ";
+  Typing.dumpFunTypes funTypes;
+  prerr_title "Template Variable Types: ";
+  Typing.dumpTypes templateVarTypes;
+  
+  let inferredVarTypes = Typing.merge [Typing.infer funTypes client; Typing.infer funTypes server] in
+  prerr_title "Inferred Variable Types";
+  Typing.dumpTypes inferredVarTypes;
+  let varTypes = Typing.merge [templateVarTypes; inferredVarTypes] in 
+  
+  let clientFormatterTypes = Typing.deriveUnknownTypes funTypes varTypes client in
+  let serverFormatterTypes = Typing.deriveUnknownTypes funTypes varTypes server in
+  
+  let defs = Sym.Map.disjointUnion [concats; parsers; auxiliary; arith] in
+  Typing.checkMissingTypes defs ~templateTypes:funTypes ~inferredTypes:clientFormatterTypes client;
+  Typing.checkMissingTypes defs ~templateTypes:funTypes ~inferredTypes:serverFormatterTypes server;
 
-  (*
-  if !verbose then prerr_endline "\nafter splitting expressions twice:\n";
-  if !verbose then prerr_endline (showIML (splitByType client));
-  if !verbose then prerr_endline (showIML (splitByType server));
-  *)
+  prerr_title "Inferred Client Types";
+  Typing.dumpFunTypes clientFormatterTypes;
+
+  prerr_title "Inferred Server Types";
+  Typing.dumpFunTypes serverFormatterTypes;
+      
+  let funTypes = Typing.mergeFunTypes [funTypes; clientFormatterTypes; serverFormatterTypes] in
+
+  let client = with_debug (Typing.check defs funTypes templateVarTypes []) client in 
+  let server = with_debug (Typing.check defs funTypes templateVarTypes []) server in
+  
+  debugIML client server "IML after typechecking";
+
+  Typing.checkRobustSafety concats funTypes;
+
+  (************************
+    Formatting facts
+  *************************)
+
+  let parsingEqs = computeParsingRules funTypes parsers concats in
+  
+  prerr_title "Parsing Equations";
+  List.iter (fun eq -> prerr_endline (showParsingEq ~funTypes concats eq)) parsingEqs;
+  
+  let parsers = cleanupDefs (client @ server) parsers in
+  let parsingEqs = cleanupParsingEqs (client @ server) parsingEqs in
+  
+  let encoderFacts = encoderFacts (Sym.Map.bindings concats) in
+  
+  (************************
+    Pattern matching
+  *************************)
+
+  let client = matchInverse client in
+  let server = matchInverse server in
+
+  let client = matchSafeParsers parsers concats parsingEqs [] client in
+  let server = matchSafeParsers parsers concats parsingEqs [] server in
+
+  let client = mergePatterns client in
+  let server = mergePatterns server in
+  
+  debugIML client server "IML after inserting pattern matching";
+
+  (********************************************
+    Bring the process into IO-alternating form
+  *********************************************)
 
   let client = mergeInOut client in
   let server = mergeInOut server in
 
-  if !verbose then prerr_endline "\nafter merging inputs and outputs:";
-  if !verbose then prerr_endline (showStructuredIML client clientMeta);
-  if !verbose then prerr_endline (showStructuredIML server serverMeta);
+  debugIML client server "IML after merging inputs and outputs";
 
-  writeCV (client, clientMeta) (server, serverMeta);
-end;
+  (************************
+    Auxiliary tests
+  *************************)
+
+  let auxiliaryFacts = auxiliaryFacts concats auxiliary funTypes in
+  let auxiliary, funTypes = addAuxiliaryPrimed auxiliary funTypes in
+  let client = removeAuxiliary client in
+  let server = removeAuxiliary server in
+  debugIML client server "IML after removing auxiliary ifs";
+
+
+  (************************
+    Zero facts
+  *************************)
+
+  let casts = List2.nub (Typing.casts client @ Typing.casts server) in
+  let zeroFacts, zeroFuns, zeroTypes = zeroFacts concats casts funTypes in 
+  let funTypes = Sym.Map.disjointUnion [funTypes; zeroTypes] in
+
+  writeCV {
+    client; server;
+    template;
+    constants;
+    varTypes; 
+    funTypes; 
+    parsers; 
+    concats; 
+    arith; 
+    auxiliary;
+    zeroFuns;
+    auxiliaryFacts;
+    zeroFacts; 
+    parsingEqs; 
+    encoderFacts }
+
+
+;;
+
+(* 
+  Trying to get both the full text of the exception and
+  the backtrace. Waiting for a fix for 
+  http://caml.inria.fr/mantis/view.php?id=5040
+*)
+
+Printexc.register_printer (function 
+  | Failure s -> Some s
+  | _ -> None);
+;;
+
+Printexc.print main () 
 
