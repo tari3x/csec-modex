@@ -1,0 +1,758 @@
+
+(**********************************
+  RPC-enc protocol.
+***********************************)
+
+param N.
+
+channel c_in, c_out.
+
+(********************************
+  IND-CPA INT-CTXT encryption
+*********************************)
+
+type fixed_16_keyseed [fixed, large].
+(*
+  Must be bounded because the security definition refers
+  to time(kgen).
+*)
+type fixed_16_key [bounded].
+type fixed_16_seed [fixed, large].
+
+(* 1049 = 1024 for payload + 16 for key + 4 for payload length + 1 for tag *)
+type bounded_1045_plaintext [bounded].
+(*
+  Encryption adds 32 bytes to the message.
+*)
+type bounded_1077_ciphertext  [bounded].
+
+proba Penc.
+proba Pencptxt.
+proba Pencctxt.
+
+expand IND_CPA_INT_CTXT_sym_enc(fixed_16_keyseed, fixed_16_key, bounded_1045_plaintext, bounded_1077_ciphertext, fixed_16_seed, 
+                                kgen, E, D, injbot, Zbounded_1045_plaintext, Penc, Pencctxt). 
+
+fun inverse_injbot(bitstringbot): bounded_1045_plaintext.
+
+(*************************** 
+  Key lookup
+***************************)
+
+type keydb.
+type bounded_1024_id.
+
+(* the ids of a designated pair of honest participants *)
+const clientID: bounded_1024_id.
+const serverID: bounded_1024_id. 
+
+(* key database operations *)
+fun add_honest(fixed_16_key, keydb): keydb.
+(* Returns some fixed default value if key not in the database. *)
+fun lookup(bounded_1024_id, bounded_1024_id, keydb): fixed_16_key.
+
+forall k: fixed_16_key, db: keydb;
+  lookup(clientID, serverID, add_honest(k, db)) = k.
+
+(* a host id that carries along the fact that it is compromised *)
+fun badHost(bounded_1024_id): bounded_1024_id [compos].
+
+(*
+  It is important that in the bad host branch we remove the mention of the honest key,
+  so we can show that it isn't leaked anywhere.
+*)
+forall h:bounded_1024_id, k: fixed_16_key, db: keydb;
+  lookup(badHost(h), serverID, add_honest(k, db)) = lookup(badHost(h), serverID, db).
+
+(********************************
+  Misc
+*********************************)
+
+type fixed_1024_payload [fixed, large]. 
+
+(* The port that the server is listening to. *)
+const port: bitstring.
+
+
+(*************************** 
+ Constants 
+***************************)
+
+
+(*************************** 
+  Formatting Functions 
+***************************)
+
+(* conc1 := "p"|(len(arg0))^[u,4]|arg0|arg1 *)
+fun conc1(fixed_1024_payload, fixed_16_key): bounded_1045_plaintext [compos].
+
+(* conc2 := "p"|(len(arg0))^[u,4]|arg0|arg1 *)
+fun conc2(bounded_1024_id, bounded_1077_ciphertext): bitstring [compos].
+
+(* parse1 := arg0{5, (arg0{1, 4})_[u,4]} *)
+fun parse1(bitstring): bounded_1024_id.
+
+(* parse2 := arg0{5 + (arg0{1, 4})_[u,4], len(arg0) - (5 + (arg0{1, 4})_[u,4])} *)
+fun parse2(bitstring): bounded_1077_ciphertext.
+
+(* parse3 := arg0{5, (arg0{1, 4})_[u,4]} *)
+fun parse3(bounded_1045_plaintext): fixed_1024_payload.
+
+(* parse4 := arg0{5 + (arg0{1, 4})_[u,4], len(arg0) - (5 + (arg0{1, 4})_[u,4])} *)
+fun parse4(bounded_1045_plaintext): fixed_16_key.
+
+
+
+(*************************** 
+  Arithmetic Functions 
+***************************)
+
+(* arithmetic1 := (CastToInt : [u,8] -> [u,4])((((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (len(arg0))^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (len(arg1))^[u,8]) *)
+fun arithmetic1(bounded_1024_id, bounded_1077_ciphertext): bitstring.
+
+(* arithmetic2 := (len(arg0))^[u,4] *)
+fun arithmetic2(bounded_1077_ciphertext): bitstring.
+
+
+(*************************** 
+  Auxiliary Tests 
+***************************)
+
+(* auxiliary1 := ¬((len(arg0))^[u,8] (> : [u,8] * [u,8] -> bool) (1024)^[u,8]) *)
+fun auxiliary1(bitstring): bool.
+
+(* auxiliary10 := (len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (len(arg1))^[u,4] *)
+fun auxiliary10(bitstring, bitstring): bool.
+
+(* auxiliary10_prime := (len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (len(arg1))^[u,4] *)
+fun auxiliary10_prime(bitstring, bitstring): bool.
+
+(* auxiliary11 := (len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (16)^[u,4] *)
+fun auxiliary11(bitstring): bool.
+
+(* auxiliary11_prime := (len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (16)^[u,4] *)
+fun auxiliary11_prime(bitstring): bool.
+
+(* auxiliary12 := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) ((32)^[u,4] (+ : [u,4] * [u,4] -> [u,4]) ((CastToInt : [u,8] -> [u,4])((((CastToInt : [u,4] -> [u,8])((1)^[u,4] (+ : [u,4] * [u,4] -> [u,4]) (len(arg1))^[u,4])) (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (len(arg2))^[u,8])))) *)
+fun auxiliary12(bitstring, bitstring, bitstring): bool.
+
+(* auxiliary12_prime := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) ((32)^[u,4] (+ : [u,4] * [u,4] -> [u,4]) ((CastToInt : [u,8] -> [u,4])((((CastToInt : [u,4] -> [u,8])((1)^[u,4] (+ : [u,4] * [u,4] -> [u,4]) (len(arg1))^[u,4])) (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (len(arg2))^[u,8])))) *)
+fun auxiliary12_prime(bitstring, bitstring, bitstring): bool.
+
+(* auxiliary13 := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary13(bitstring): bool.
+
+(* auxiliary13_prime := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary13_prime(bitstring): bool.
+
+(* auxiliary14 := len(arg0) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary14(bitstring): bool.
+
+(* auxiliary14_prime := len(arg0) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary14_prime(bitstring): bool.
+
+(* auxiliary15 := ¬(arg0 (< : [u,4] * [u,4] -> bool) (1056)^[u,4]) *)
+fun auxiliary15(bitstring): bool.
+
+(* auxiliary15_prime := ¬(arg0 (< : [u,4] * [u,4] -> bool) (1056)^[u,4]) *)
+fun auxiliary15_prime(bitstring): bool.
+
+(* auxiliary16 := ¬(arg0 (> : [u,4] * [u,4] -> bool) (1056)^[u,4]) *)
+fun auxiliary16(bitstring): bool.
+
+(* auxiliary16_prime := ¬(arg0 (> : [u,4] * [u,4] -> bool) (1056)^[u,4]) *)
+fun auxiliary16_prime(bitstring): bool.
+
+(* auxiliary17 := len(arg0) = (((CastToInt : [u,4] -> [u,8])(arg1)) (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary17(bitstring, bitstring): bool.
+
+(* auxiliary17_prime := len(arg0) = (((CastToInt : [u,4] -> [u,8])(arg1)) (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary17_prime(bitstring, bitstring): bool.
+
+(* auxiliary18 := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (arg1 (- : [u,4] * [u,4] -> [u,4]) (32)^[u,4])) *)
+fun auxiliary18(bitstring, bitstring): bool.
+
+(* auxiliary18_prime := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (arg1 (- : [u,4] * [u,4] -> [u,4]) (32)^[u,4])) *)
+fun auxiliary18_prime(bitstring, bitstring): bool.
+
+(* auxiliary19 := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary19(bitstring): bool.
+
+(* auxiliary19_prime := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary19_prime(bitstring): bool.
+
+(* auxiliary1_prime := ¬((len(arg0))^[u,8] (> : [u,8] * [u,8] -> bool) (1024)^[u,8]) *)
+fun auxiliary1_prime(bitstring): bool.
+
+(* auxiliary2 := ¬((len(arg0))^[u,8] (> : [u,8] * [u,8] -> bool) (1024)^[u,8]) *)
+fun auxiliary2(bitstring): bool.
+
+(* auxiliary20 := ¬((len(arg0))^[u,4] (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary20(bitstring): bool.
+
+(* auxiliary20_prime := ¬((len(arg0))^[u,4] (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary20_prime(bitstring): bool.
+
+(* auxiliary21 := ¬((len(arg0))^[u,4] (>= : [u,4] * [u,4] -> bool) (256)^[u,4]) *)
+fun auxiliary21(bitstring): bool.
+
+(* auxiliary21_prime := ¬((len(arg0))^[u,4] (>= : [u,4] * [u,4] -> bool) (256)^[u,4]) *)
+fun auxiliary21_prime(bitstring): bool.
+
+(* auxiliary22 := len(arg0) = 4 *)
+fun auxiliary22(bitstring): bool.
+
+(* auxiliary22_prime := len(arg0) = 4 *)
+fun auxiliary22_prime(bitstring): bool.
+
+(* auxiliary23 := arg0 (== : [s,4] * [s,4] -> bool) (0)^[s,4] *)
+fun auxiliary23(bitstring): bool.
+
+(* auxiliary23_prime := arg0 (== : [s,4] * [s,4] -> bool) (0)^[s,4] *)
+fun auxiliary23_prime(bitstring): bool.
+
+(* auxiliary24 := len(arg0) = 1024 *)
+fun auxiliary24(bitstring): bool.
+
+(* auxiliary24_prime := len(arg0) = 1024 *)
+fun auxiliary24_prime(bitstring): bool.
+
+(* auxiliary25 := len(arg0) = 4 *)
+fun auxiliary25(bitstring): bool.
+
+(* auxiliary25_prime := len(arg0) = 4 *)
+fun auxiliary25_prime(bitstring): bool.
+
+(* auxiliary26 := arg0 (== : [s,4] * [s,4] -> bool) (0)^[s,4] *)
+fun auxiliary26(bitstring): bool.
+
+(* auxiliary26_prime := arg0 (== : [s,4] * [s,4] -> bool) (0)^[s,4] *)
+fun auxiliary26_prime(bitstring): bool.
+
+(* auxiliary27 := len(arg0) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary27(bitstring): bool.
+
+(* auxiliary27_prime := len(arg0) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary27_prime(bitstring): bool.
+
+(* auxiliary28 := ¬(((CastToInt : [u,4] -> [u,8])(arg0)) (< : [u,8] * [u,8] -> bool) ((((1040)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8])) (+ : [u,8] * [u,8] -> [u,8]) (32)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8]))) *)
+fun auxiliary28(bitstring): bool.
+
+(* auxiliary28_prime := ¬(((CastToInt : [u,4] -> [u,8])(arg0)) (< : [u,8] * [u,8] -> bool) ((((1040)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8])) (+ : [u,8] * [u,8] -> [u,8]) (32)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8]))) *)
+fun auxiliary28_prime(bitstring): bool.
+
+(* auxiliary29 := ¬(((CastToInt : [u,4] -> [u,8])(arg0)) (> : [u,8] * [u,8] -> bool) (((((1040)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8])) (+ : [u,8] * [u,8] -> [u,8]) (32)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (1024)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8]))) *)
+fun auxiliary29(bitstring): bool.
+
+(* auxiliary29_prime := ¬(((CastToInt : [u,4] -> [u,8])(arg0)) (> : [u,8] * [u,8] -> bool) (((((1040)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8])) (+ : [u,8] * [u,8] -> [u,8]) (32)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (1024)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8]))) *)
+fun auxiliary29_prime(bitstring): bool.
+
+(* auxiliary2_prime := ¬((len(arg0))^[u,8] (> : [u,8] * [u,8] -> bool) (1024)^[u,8]) *)
+fun auxiliary2_prime(bitstring): bool.
+
+(* auxiliary3 := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary3(bitstring): bool.
+
+(* auxiliary30 := len(arg0) = (((CastToInt : [u,4] -> [u,8])(arg1)) (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary30(bitstring, bitstring): bool.
+
+(* auxiliary30_prime := len(arg0) = (((CastToInt : [u,4] -> [u,8])(arg1)) (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] *)
+fun auxiliary30_prime(bitstring, bitstring): bool.
+
+(* auxiliary31 := "p" = arg0{0, 1} *)
+fun auxiliary31(bitstring): bool.
+
+(* auxiliary31_prime := "p" = arg0{0, 1} *)
+fun auxiliary31_prime(bitstring): bool.
+
+(* auxiliary32 := ¬(arg0{1, 4} (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary32(bitstring): bool.
+
+(* auxiliary32_prime := ¬(arg0{1, 4} (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary32_prime(bitstring): bool.
+
+(* auxiliary33 := arg0{1, 4} (== : [u,4] * [u,4] -> bool) (len(arg1))^[u,4] *)
+fun auxiliary33(bitstring, bitstring): bool.
+
+(* auxiliary33_prime := arg0{1, 4} (== : [u,4] * [u,4] -> bool) (len(arg1))^[u,4] *)
+fun auxiliary33_prime(bitstring, bitstring): bool.
+
+(* auxiliary34 := ¬(((CastToInt : [u,4] -> [u,8])(((CastToInt : [u,8] -> [u,4])(((CastToInt : [u,4] -> [u,8])(arg0)) (- : [u,8] * [u,8] -> [u,8]) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg1{1, 4}))))) (- : [u,4] * [u,4] -> [u,4]) (32)^[u,4])) (> : [u,8] * [u,8] -> bool) ((1040)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8]))) *)
+fun auxiliary34(bitstring, bitstring): bool.
+
+(* auxiliary34_prime := ¬(((CastToInt : [u,4] -> [u,8])(((CastToInt : [u,8] -> [u,4])(((CastToInt : [u,4] -> [u,8])(arg0)) (- : [u,8] * [u,8] -> [u,8]) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg1{1, 4}))))) (- : [u,4] * [u,4] -> [u,4]) (32)^[u,4])) (> : [u,8] * [u,8] -> bool) ((1040)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) ((4)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8]))) *)
+fun auxiliary34_prime(bitstring, bitstring): bool.
+
+(* auxiliary35 := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (((CastToInt : [u,8] -> [u,4])(((CastToInt : [u,4] -> [u,8])(arg1)) (- : [u,8] * [u,8] -> [u,8]) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg2{1, 4}))))) (- : [u,4] * [u,4] -> [u,4]) (32)^[u,4])) *)
+fun auxiliary35(bitstring, bitstring, bitstring): bool.
+
+(* auxiliary35_prime := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (((CastToInt : [u,8] -> [u,4])(((CastToInt : [u,4] -> [u,8])(arg1)) (- : [u,8] * [u,8] -> [u,8]) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg2{1, 4}))))) (- : [u,4] * [u,4] -> [u,4]) (32)^[u,4])) *)
+fun auxiliary35_prime(bitstring, bitstring, bitstring): bool.
+
+(* auxiliary36 := ¬((len(arg0))^[u,8] (< : [u,8] * [u,8] -> bool) ((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8])) *)
+fun auxiliary36(bitstring): bool.
+
+(* auxiliary36_prime := ¬((len(arg0))^[u,8] (< : [u,8] * [u,8] -> bool) ((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8])) *)
+fun auxiliary36_prime(bitstring): bool.
+
+(* auxiliary37 := ¬(arg0{1, 4} (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary37(bitstring): bool.
+
+(* auxiliary37_prime := ¬(arg0{1, 4} (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary37_prime(bitstring): bool.
+
+(* auxiliary38 := ¬(arg0{1, 4} (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary38(bitstring): bool.
+
+(* auxiliary38_prime := ¬(arg0{1, 4} (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary38_prime(bitstring): bool.
+
+(* auxiliary39 := ¬((len(arg0))^[u,8] (<= : [u,8] * [u,8] -> bool) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg0{1, 4})))) *)
+fun auxiliary39(bitstring): bool.
+
+(* auxiliary39_prime := ¬((len(arg0))^[u,8] (<= : [u,8] * [u,8] -> bool) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg0{1, 4})))) *)
+fun auxiliary39_prime(bitstring): bool.
+
+(* auxiliary3_prime := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary3_prime(bitstring): bool.
+
+(* auxiliary4 := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary4(bitstring): bool.
+
+(* auxiliary40 := "p" = arg0{0, 1} *)
+fun auxiliary40(bitstring): bool.
+
+(* auxiliary40_prime := "p" = arg0{0, 1} *)
+fun auxiliary40_prime(bitstring): bool.
+
+(* auxiliary41 := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary41(bitstring): bool.
+
+(* auxiliary41_prime := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary41_prime(bitstring): bool.
+
+(* auxiliary42 := ¬((len(arg0))^[u,4] (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary42(bitstring): bool.
+
+(* auxiliary42_prime := ¬((len(arg0))^[u,4] (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary42_prime(bitstring): bool.
+
+(* auxiliary43 := ((CastToInt : [u,8] -> [u,4])((len(arg0))^[u,8] (- : [u,8] * [u,8] -> [u,8]) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg0{1, 4}))))) (== : [u,4] * [u,4] -> bool) (16)^[u,4] *)
+fun auxiliary43(bitstring): bool.
+
+(* auxiliary43_prime := ((CastToInt : [u,8] -> [u,4])((len(arg0))^[u,8] (- : [u,8] * [u,8] -> [u,8]) (((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) ((CastToInt : [u,4] -> [u,8])(arg0{1, 4}))))) (== : [u,4] * [u,4] -> bool) (16)^[u,4] *)
+fun auxiliary43_prime(bitstring): bool.
+
+(* auxiliary44 := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) ((32)^[u,4] (+ : [u,4] * [u,4] -> [u,4]) (len(arg1))^[u,4])) *)
+fun auxiliary44(bitstring, bitstring): bool.
+
+(* auxiliary44_prime := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) ((32)^[u,4] (+ : [u,4] * [u,4] -> [u,4]) (len(arg1))^[u,4])) *)
+fun auxiliary44_prime(bitstring, bitstring): bool.
+
+(* auxiliary45 := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary45(bitstring): bool.
+
+(* auxiliary45_prime := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary45_prime(bitstring): bool.
+
+(* auxiliary4_prime := ¬((len(arg0))^[u,4] (== : [u,4] * [u,4] -> bool) (0)^[u,4]) *)
+fun auxiliary4_prime(bitstring): bool.
+
+(* auxiliary5 := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary5(bitstring): bool.
+
+(* auxiliary5_prime := ¬((len(arg0))^[u,4] (> : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary5_prime(bitstring): bool.
+
+(* auxiliary6 := ¬((len(arg0))^[u,4] (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary6(bitstring): bool.
+
+(* auxiliary6_prime := ¬((len(arg0))^[u,4] (< : [u,4] * [u,4] -> bool) (1024)^[u,4]) *)
+fun auxiliary6_prime(bitstring): bool.
+
+(* auxiliary7 := len(arg0) = 4 *)
+fun auxiliary7(bitstring): bool.
+
+(* auxiliary7_prime := len(arg0) = 4 *)
+fun auxiliary7_prime(bitstring): bool.
+
+(* auxiliary8 := arg0 (== : [s,4] * [s,4] -> bool) (0)^[s,4] *)
+fun auxiliary8(bitstring): bool.
+
+(* auxiliary8_prime := arg0 (== : [s,4] * [s,4] -> bool) (0)^[s,4] *)
+fun auxiliary8_prime(bitstring): bool.
+
+(* auxiliary9 := ¬(truth(arg0)) *)
+fun auxiliary9(bitstring): bool.
+
+(* auxiliary9_prime := ¬(truth(arg0)) *)
+fun auxiliary9_prime(bitstring): bool.
+
+
+(*************************** 
+  Zero Functions 
+***************************)
+
+const zero_bitstring: bitstring.
+
+const zero_bounded_1024_id: bounded_1024_id.
+
+const zero_bounded_1045_plaintext: bounded_1045_plaintext.
+
+const zero_bounded_1077_ciphertext: bounded_1077_ciphertext.
+
+const zero_fixed_1024_payload: fixed_1024_payload.
+
+const zero_fixed_16_key: fixed_16_key.
+
+const zero_fixed_16_keyseed: fixed_16_keyseed.
+
+const zero_fixed_16_seed: fixed_16_seed.
+
+fun Zbitstring(bitstring): bitstring.
+
+fun Zbitstring_prime(bitstring): bitstring.
+
+fun Zbounded_1024_id(bounded_1024_id): bounded_1024_id.
+
+fun Zbounded_1024_id_prime(bounded_1024_id): bounded_1024_id.
+
+fun Zbounded_1045_plaintext_prime(bounded_1045_plaintext): bounded_1045_plaintext.
+
+fun Zbounded_1077_ciphertext(bounded_1077_ciphertext): bounded_1077_ciphertext.
+
+fun Zbounded_1077_ciphertext_prime(bounded_1077_ciphertext): bounded_1077_ciphertext.
+
+fun Zfixed_1024_payload(fixed_1024_payload): fixed_1024_payload.
+
+fun Zfixed_1024_payload_prime(fixed_1024_payload): fixed_1024_payload.
+
+fun Zfixed_16_key(fixed_16_key): fixed_16_key.
+
+fun Zfixed_16_key_prime(fixed_16_key): fixed_16_key.
+
+fun Zfixed_16_keyseed(fixed_16_keyseed): fixed_16_keyseed.
+
+fun Zfixed_16_keyseed_prime(fixed_16_keyseed): fixed_16_keyseed.
+
+fun Zfixed_16_seed(fixed_16_seed): fixed_16_seed.
+
+fun Zfixed_16_seed_prime(fixed_16_seed): fixed_16_seed.
+
+
+(*************************** 
+  Typecasting 
+***************************)
+
+fun cast_bounded_1024_id_bitstring(bounded_1024_id): bitstring [compos].
+fun cast_bounded_1045_plaintext_bitstring(bounded_1045_plaintext): bitstring [compos].
+fun cast_fixed_1024_payload_bitstring(fixed_1024_payload): bitstring [compos].
+fun cast_fixed_1024_payload_bounded_1045_plaintext(fixed_1024_payload): bounded_1045_plaintext [compos].
+fun cast_bounded_1077_ciphertext_bitstring(bounded_1077_ciphertext): bitstring [compos].
+fun cast_fixed_16_key_bitstring(fixed_16_key): bitstring [compos].
+fun cast_bitstring_bounded_1077_ciphertext(bitstring): bounded_1077_ciphertext [compos].
+fun cast_bounded_1045_plaintext_fixed_1024_payload(bounded_1045_plaintext): fixed_1024_payload [compos].
+forall x: fixed_1024_payload;
+  cast_bounded_1045_plaintext_fixed_1024_payload(cast_fixed_1024_payload_bounded_1045_plaintext(x)) = x.
+forall x: bounded_1077_ciphertext;
+  cast_bitstring_bounded_1077_ciphertext(cast_bounded_1077_ciphertext_bitstring(x)) = x.
+
+(*************************** 
+  Auxiliary Facts 
+***************************)
+
+forall arg0: bitstring;
+	auxiliary1(arg0) = auxiliary1_prime(Zbitstring(arg0)).
+forall arg0: bitstring, arg1: bitstring;
+	auxiliary10(arg0, arg1) = auxiliary10_prime(Zbitstring(arg0), Zbitstring(arg1)).
+forall arg0: bitstring;
+	auxiliary11(arg0) = auxiliary11_prime(Zbitstring(arg0)).
+forall arg0: bitstring, arg1: bitstring, arg2: bitstring;
+	auxiliary12(arg0, arg1, arg2) = auxiliary12_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2)).
+forall arg0: bitstring;
+	auxiliary13(arg0) = auxiliary13_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary14(arg0) = auxiliary14_prime(Zbitstring(arg0)).
+forall arg0: bitstring, arg1: bitstring;
+	auxiliary17(arg0, arg1) = auxiliary17_prime(Zbitstring(arg0), arg1).
+forall arg0: bitstring, arg1: bitstring;
+	auxiliary18(arg0, arg1) = auxiliary18_prime(Zbitstring(arg0), arg1).
+forall arg0: bitstring;
+	auxiliary19(arg0) = auxiliary19_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary2(arg0) = auxiliary2_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary20(arg0) = auxiliary20_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary21(arg0) = auxiliary21_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary22(arg0) = auxiliary22_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary24(arg0) = auxiliary24_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary25(arg0) = auxiliary25_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary27(arg0) = auxiliary27_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary3(arg0) = auxiliary3_prime(Zbitstring(arg0)).
+forall arg0: bitstring, arg1: bitstring;
+	auxiliary30(arg0, arg1) = auxiliary30_prime(Zbitstring(arg0), arg1).
+forall x68: fixed_1024_payload, x69: fixed_16_key;
+	auxiliary31(cast_bounded_1045_plaintext_bitstring(conc1(x68, x69))) = auxiliary31_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x68), Zfixed_16_key(x69)))).
+forall x70: bounded_1024_id, x71: bounded_1077_ciphertext;
+	auxiliary31(conc2(x70, x71)) = auxiliary31_prime(conc2(Zbounded_1024_id(x70), Zbounded_1077_ciphertext(x71))).
+forall x73: fixed_1024_payload, x74: fixed_16_key;
+	auxiliary32(cast_bounded_1045_plaintext_bitstring(conc1(x73, x74))) = auxiliary32_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x73), Zfixed_16_key(x74)))).
+forall x75: bounded_1024_id, x76: bounded_1077_ciphertext;
+	auxiliary32(conc2(x75, x76)) = auxiliary32_prime(conc2(Zbounded_1024_id(x75), Zbounded_1077_ciphertext(x76))).
+forall arg0: bitstring, arg1: bitstring;
+	auxiliary33(arg0, arg1) = auxiliary33_prime(arg0, Zbitstring(arg1)).
+forall arg1: bitstring, x78: fixed_1024_payload, x79: fixed_16_key;
+	auxiliary33(cast_bounded_1045_plaintext_bitstring(conc1(x78, x79)), arg1) = auxiliary33_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x78), Zfixed_16_key(x79))), Zbitstring(arg1)).
+forall arg1: bitstring, x80: bounded_1024_id, x81: bounded_1077_ciphertext;
+	auxiliary33(conc2(x80, x81), arg1) = auxiliary33_prime(conc2(Zbounded_1024_id(x80), Zbounded_1077_ciphertext(x81)), Zbitstring(arg1)).
+forall arg0: bitstring, x89: fixed_1024_payload, x90: fixed_16_key;
+	auxiliary34(arg0, cast_bounded_1045_plaintext_bitstring(conc1(x89, x90))) = auxiliary34_prime(arg0, cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x89), Zfixed_16_key(x90)))).
+forall arg0: bitstring, x91: bounded_1024_id, x92: bounded_1077_ciphertext;
+	auxiliary34(arg0, conc2(x91, x92)) = auxiliary34_prime(arg0, conc2(Zbounded_1024_id(x91), Zbounded_1077_ciphertext(x92))).
+forall arg0: bitstring, arg1: bitstring, arg2: bitstring;
+	auxiliary35(arg0, arg1, arg2) = auxiliary35_prime(Zbitstring(arg0), arg1, arg2).
+forall arg0: bitstring, arg1: bitstring, x100: fixed_1024_payload, x101: fixed_16_key;
+	auxiliary35(arg0, arg1, cast_bounded_1045_plaintext_bitstring(conc1(x100, x101))) = auxiliary35_prime(Zbitstring(arg0), arg1, cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x100), Zfixed_16_key(x101)))).
+forall arg0: bitstring, arg1: bitstring, x102: bounded_1024_id, x103: bounded_1077_ciphertext;
+	auxiliary35(arg0, arg1, conc2(x102, x103)) = auxiliary35_prime(Zbitstring(arg0), arg1, conc2(Zbounded_1024_id(x102), Zbounded_1077_ciphertext(x103))).
+forall arg0: bitstring;
+	auxiliary36(arg0) = auxiliary36_prime(Zbitstring(arg0)).
+forall x106: fixed_1024_payload, x107: fixed_16_key;
+	auxiliary37(cast_bounded_1045_plaintext_bitstring(conc1(x106, x107))) = auxiliary37_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x106), Zfixed_16_key(x107)))).
+forall x108: bounded_1024_id, x109: bounded_1077_ciphertext;
+	auxiliary37(conc2(x108, x109)) = auxiliary37_prime(conc2(Zbounded_1024_id(x108), Zbounded_1077_ciphertext(x109))).
+forall x111: fixed_1024_payload, x112: fixed_16_key;
+	auxiliary38(cast_bounded_1045_plaintext_bitstring(conc1(x111, x112))) = auxiliary38_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x111), Zfixed_16_key(x112)))).
+forall x113: bounded_1024_id, x114: bounded_1077_ciphertext;
+	auxiliary38(conc2(x113, x114)) = auxiliary38_prime(conc2(Zbounded_1024_id(x113), Zbounded_1077_ciphertext(x114))).
+forall x116: fixed_1024_payload, x117: fixed_16_key;
+	auxiliary39(cast_bounded_1045_plaintext_bitstring(conc1(x116, x117))) = auxiliary39_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x116), Zfixed_16_key(x117)))).
+forall x118: bounded_1024_id, x119: bounded_1077_ciphertext;
+	auxiliary39(conc2(x118, x119)) = auxiliary39_prime(conc2(Zbounded_1024_id(x118), Zbounded_1077_ciphertext(x119))).
+forall arg0: bitstring;
+	auxiliary4(arg0) = auxiliary4_prime(Zbitstring(arg0)).
+forall x122: fixed_1024_payload, x123: fixed_16_key;
+	auxiliary40(cast_bounded_1045_plaintext_bitstring(conc1(x122, x123))) = auxiliary40_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x122), Zfixed_16_key(x123)))).
+forall x124: bounded_1024_id, x125: bounded_1077_ciphertext;
+	auxiliary40(conc2(x124, x125)) = auxiliary40_prime(conc2(Zbounded_1024_id(x124), Zbounded_1077_ciphertext(x125))).
+forall arg0: bitstring;
+	auxiliary41(arg0) = auxiliary41_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary42(arg0) = auxiliary42_prime(Zbitstring(arg0)).
+forall x129: fixed_1024_payload, x130: fixed_16_key;
+	auxiliary43(cast_bounded_1045_plaintext_bitstring(conc1(x129, x130))) = auxiliary43_prime(cast_bounded_1045_plaintext_bitstring(conc1(Zfixed_1024_payload(x129), Zfixed_16_key(x130)))).
+forall x131: bounded_1024_id, x132: bounded_1077_ciphertext;
+	auxiliary43(conc2(x131, x132)) = auxiliary43_prime(conc2(Zbounded_1024_id(x131), Zbounded_1077_ciphertext(x132))).
+forall arg0: bitstring, arg1: bitstring;
+	auxiliary44(arg0, arg1) = auxiliary44_prime(Zbitstring(arg0), Zbitstring(arg1)).
+forall arg0: bitstring;
+	auxiliary45(arg0) = auxiliary45_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary5(arg0) = auxiliary5_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary6(arg0) = auxiliary6_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary7(arg0) = auxiliary7_prime(Zbitstring(arg0)).
+
+(*************************** 
+  Zero Facts 
+***************************)
+
+forall arg0: fixed_1024_payload, arg1: fixed_16_key;
+	Zbounded_1045_plaintext(conc1(arg0, arg1)) = Zbounded_1045_plaintext_prime(conc1(Zfixed_1024_payload(arg0), Zfixed_16_key(arg1))).
+forall arg0: bounded_1024_id, arg1: bounded_1077_ciphertext;
+	Zbitstring(conc2(arg0, arg1)) = Zbitstring_prime(conc2(Zbounded_1024_id(arg0), Zbounded_1077_ciphertext(arg1))).
+forall x: bounded_1024_id;
+	Zbitstring(cast_bounded_1024_id_bitstring(x)) = Zbitstring_prime(cast_bounded_1024_id_bitstring(Zbounded_1024_id(x))).
+forall x: bounded_1045_plaintext;
+	Zbitstring(cast_bounded_1045_plaintext_bitstring(x)) = Zbitstring_prime(cast_bounded_1045_plaintext_bitstring(Zbounded_1045_plaintext(x))).
+forall x: fixed_1024_payload;
+	Zbitstring(cast_fixed_1024_payload_bitstring(x)) = Zbitstring_prime(cast_fixed_1024_payload_bitstring(Zfixed_1024_payload(x))).
+forall x: fixed_1024_payload;
+	Zbounded_1045_plaintext(cast_fixed_1024_payload_bounded_1045_plaintext(x)) = Zbounded_1045_plaintext_prime(cast_fixed_1024_payload_bounded_1045_plaintext(Zfixed_1024_payload(x))).
+forall x: bounded_1077_ciphertext;
+	Zbitstring(cast_bounded_1077_ciphertext_bitstring(x)) = Zbitstring_prime(cast_bounded_1077_ciphertext_bitstring(Zbounded_1077_ciphertext(x))).
+forall x: fixed_16_key;
+	Zbitstring(cast_fixed_16_key_bitstring(x)) = Zbitstring_prime(cast_fixed_16_key_bitstring(Zfixed_16_key(x))).
+forall x: bitstring;
+	Zbounded_1077_ciphertext(cast_bitstring_bounded_1077_ciphertext(x)) = Zbounded_1077_ciphertext_prime(cast_bitstring_bounded_1077_ciphertext(Zbitstring(x))).
+forall x: bounded_1045_plaintext;
+	Zfixed_1024_payload(cast_bounded_1045_plaintext_fixed_1024_payload(x)) = Zfixed_1024_payload_prime(cast_bounded_1045_plaintext_fixed_1024_payload(Zbounded_1045_plaintext(x))).
+forall x: fixed_16_key;
+	Zfixed_16_key(x) = zero_fixed_16_key.
+forall x: fixed_16_seed;
+	Zfixed_16_seed(x) = zero_fixed_16_seed.
+forall x: fixed_16_keyseed;
+	Zfixed_16_keyseed(x) = zero_fixed_16_keyseed.
+forall x: fixed_1024_payload;
+	Zfixed_1024_payload(x) = zero_fixed_1024_payload.
+
+(********************************
+  <Query>
+*********************************)
+
+event client_begin(bounded_1024_id, bounded_1024_id, fixed_1024_payload).
+event client_accept(bounded_1024_id, bounded_1024_id, fixed_1024_payload, fixed_1024_payload).
+event server_reply(bounded_1024_id, bounded_1024_id, fixed_1024_payload, fixed_1024_payload).
+event bad(bounded_1024_id).
+
+(* Authentication of the server to the client *)
+query hClient: bounded_1024_id, hServer: bounded_1024_id, x: fixed_1024_payload, y: fixed_1024_payload;
+  event client_accept(hClient, hServer, x, y) ==> server_reply(hClient, hServer, x, y).
+
+(* Authentication of the client to the server *)
+query hClient: bounded_1024_id, hServer: bounded_1024_id, x: fixed_1024_payload, y: fixed_1024_payload;
+  event server_reply(hClient, hServer, x, y) ==> client_begin(hClient, hServer, x) || bad(hClient).
+
+(* Strong secrecy of the request *)
+query secret request.
+
+(* Weak conditional secrecy of the response *)
+event leaked(bounded_1024_id, fixed_1024_payload).
+query hClient: bounded_1024_id, resp: fixed_1024_payload;
+  event leaked(hClient, resp) ==> bad(hClient).
+
+
+(*************************** 
+  Model 
+***************************)
+
+let A = 
+in(c_in, ());
+if auxiliary21(cast_bounded_1024_id_bitstring(serverID)) then 
+out(c_out, (port, serverID));
+in(c_in, (net_bind_result1: bitstring, var7: bitstring, net_accept_result1: bitstring, msg8: bitstring, msg9: bitstring));
+if auxiliary22(net_bind_result1) then 
+if auxiliary23(net_bind_result1) then 
+if auxiliary24(var7) then 
+if auxiliary25(net_accept_result1) then 
+if auxiliary26(net_accept_result1) then 
+if auxiliary27(msg8) then 
+if auxiliary28(msg8) then 
+if auxiliary29(msg8) then 
+if auxiliary30(msg9, msg8) then 
+if auxiliary31(msg9) then 
+if auxiliary32(msg9) then 
+if auxiliary33(msg9, cast_bounded_1024_id_bitstring(xClient)) then 
+let conc2(client2, cipher3) = msg9 in
+if client2 = xClient then 
+let key3 = lookup(client2, serverID, db) in
+if auxiliary34(msg8, msg9) then 
+let msg10 = D(cipher3, key3) in
+let injbot(msg11) = msg10 in
+if auxiliary35(cast_bounded_1045_plaintext_bitstring(msg11), msg8, msg9) then 
+if auxiliary36(cast_bounded_1045_plaintext_bitstring(msg11)) then 
+if auxiliary37(cast_bounded_1045_plaintext_bitstring(msg11)) then 
+if auxiliary38(cast_bounded_1045_plaintext_bitstring(msg11)) then 
+if auxiliary39(cast_bounded_1045_plaintext_bitstring(msg11)) then 
+if auxiliary40(cast_bounded_1045_plaintext_bitstring(msg11)) then 
+if auxiliary41(cast_fixed_1024_payload_bitstring(response)) then 
+if auxiliary42(cast_fixed_1024_payload_bitstring(response)) then 
+let conc1(var26, key4) = msg11 in
+event server_reply(client2, serverID, var26, response);
+if auxiliary43(cast_bounded_1045_plaintext_bitstring(msg11)) then 
+new nonce2: fixed_16_seed;
+let msg14 = E(cast_fixed_1024_payload_bounded_1045_plaintext(response), key4, nonce2) in
+if auxiliary44(cast_bounded_1077_ciphertext_bitstring(msg14), cast_fixed_1024_payload_bitstring(response)) then 
+if auxiliary45(cast_bounded_1077_ciphertext_bitstring(msg14)) then 
+let msg13 = arithmetic2(msg14) in
+out(c_out, (msg14, msg13)); 0 .
+
+let B = 
+in(c_in, ());
+if auxiliary1(cast_bounded_1024_id_bitstring(clientID)) then 
+if auxiliary2(cast_bounded_1024_id_bitstring(serverID)) then 
+if auxiliary3(cast_bounded_1024_id_bitstring(clientID)) then 
+if auxiliary4(cast_bounded_1024_id_bitstring(serverID)) then 
+if auxiliary5(cast_fixed_1024_payload_bitstring(request)) then 
+if auxiliary6(cast_fixed_1024_payload_bitstring(request)) then 
+out(c_out, (port, serverID));
+in(c_in, net_connect_result1: bitstring);
+if auxiliary7(net_connect_result1) then 
+if auxiliary8(net_connect_result1) then 
+if auxiliary9(net_connect_result1) then 
+if auxiliary10(cast_bounded_1024_id_bitstring(clientID), cast_bounded_1024_id_bitstring(xClient)) then 
+if clientID = xClient then 
+let key1 = lookup(clientID, serverID, db) in
+new kS_seed1: fixed_16_keyseed;
+let key2 = kgen(kS_seed1) in
+if auxiliary11(cast_fixed_16_key_bitstring(key2)) then 
+event client_begin(clientID, serverID, request);
+let msg1 = conc1(request, key2) in
+new nonce1: fixed_16_seed;
+let cipher1 = E(msg1, key1, nonce1) in
+if auxiliary12(cast_bounded_1077_ciphertext_bitstring(cipher1), cast_fixed_16_key_bitstring(key2), cast_fixed_1024_payload_bitstring(request)) then 
+if auxiliary13(cast_bounded_1077_ciphertext_bitstring(cipher1)) then 
+let msg2 = arithmetic1(clientID, cipher1) in
+let msg3 = conc2(clientID, cipher1) in
+out(c_out, (msg3, msg2));
+in(c_in, (msg4: bitstring, cipher2: bitstring));
+if auxiliary14(msg4) then 
+if auxiliary15(msg4) then 
+if auxiliary16(msg4) then 
+if auxiliary17(cipher2, msg4) then 
+let msg6 = D(cast_bitstring_bounded_1077_ciphertext(cipher2), key2) in
+let injbot(msg7) = msg6 in
+if auxiliary18(cast_bounded_1045_plaintext_bitstring(msg7), msg4) then 
+if auxiliary19(cast_bounded_1045_plaintext_bitstring(msg7)) then 
+if auxiliary20(cast_bounded_1045_plaintext_bitstring(msg7)) then 
+event client_accept(clientID, serverID, request, cast_bounded_1045_plaintext_fixed_1024_payload(msg7));
+yield .
+
+(********************************
+  <Environment>
+*********************************)
+
+let client =
+  in(c_in, xClient: bounded_1024_id);
+  
+  (*
+    For proving correspondences it may be more convincing to let the attacker choose
+    the payloads, but we need to generate them randomly to check secrecy.
+  *)
+  new request: fixed_1024_payload;
+  
+  out(c_out, ());
+  B .
+
+(* The sentinel used in formulating weak secrecy of the response *)
+let sentinel =
+  in(c_in, response': fixed_1024_payload);
+  if response' = response then
+  event leaked(xClient, response);
+  yield .
+
+let server = 
+  in(c_in, xClient: bounded_1024_id);
+
+  new response: fixed_1024_payload;
+
+  if xClient = clientID then
+    out(c_out, ());  
+    ( A | sentinel )
+  else
+    let badHost(xClient') = xClient in
+    event bad(xClient);
+    out(c_out, ());
+    ( A | sentinel ) .
+
+
+process 
+! N(
+  (* get a key database and the payloads from the attacker *)
+  in(c_in, adb: keydb);
+    
+  (* generate and insert the honest key *)
+  new kAB_seed: fixed_16_keyseed;
+  let kAB = kgen(kAB_seed) in
+  let db = add_honest(kAB, adb) in
+
+  out(c_out, ());
+  ((! N client) | (! N server))
+)
