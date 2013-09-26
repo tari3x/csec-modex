@@ -34,9 +34,8 @@ let main () =
   if debugEnabled () then prerr_endline "";
   decrease_debug_view();
 
-  let client = client |> procAndFilter |> simplifyCasts in
-  let server = server |> procAndFilter |> simplifyCasts in
-
+  let client = client |> procAndFilter in
+  let server = server |> procAndFilter in
 
   print_endline "let A = ";
   print_endline (Iml.toString client);

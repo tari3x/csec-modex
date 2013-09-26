@@ -1,6 +1,5 @@
 
 channel c_in, c_out. 
-type mstring.
 
 param N.
 
@@ -14,9 +13,9 @@ type macinput.
 (* type macres. *)
 proba Pmac.
 
-expand UF_CMA_mac(mkeyseed, mkey, mstring, mstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+expand UF_CMA_mac(mkeyseed, mkey, bitstring, bitstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
 
-forall m: mstring, k: mkey, r: mstring;
+forall m: bitstring, k: mkey, r: bitstring;
   ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
 
 
@@ -29,38 +28,38 @@ forall m: mstring, k: mkey, r: mstring;
   Formatting Functions 
 ***************************)
 
-(* conc1/2 := lenarg(i0)<8>|tag(7c)<1>|arg(i0)<lenarg(i0)>|arg(i1)<lenarg(i1)> *)
-fun conc1(mstring, mstring): mstring [compos].
+(* conc1/1 := tag(i7)<8>|tag("|")<1>|tag("Request")<7>|arg(i0)<lenarg(i0)> *)
+fun conc1(bitstring): bitstring [compos].
 
-(* conc2/1 := tag(i7)<8>|tag(7c)<1>|tag(52657175657374)<7>|arg(i0)<lenarg(i0)> *)
-fun conc2(mstring): mstring [compos].
+(* conc2/2 := lenarg(i0)<8>|tag("|")<1>|arg(i0)<lenarg(i0)>|arg(i1)<lenarg(i1)> *)
+fun conc2(bitstring, bitstring): bitstring [compos].
 
-(* conc3/2 := tag(i8)<8>|tag(7c)<1>|tag(526573706f6e7365)<8>|lenarg(i0)<8>|tag(7c)<1>|arg(i0)<lenarg(i0)>|arg(i1)<lenarg(i1)> *)
-fun conc3(mstring, mstring): mstring [compos].
+(* conc3/2 := tag(i8)<8>|tag("|")<1>|tag("Response")<8>|lenarg(i0)<8>|tag("|")<1>|arg(i0)<lenarg(i0)>|arg(i1)<lenarg(i1)> *)
+fun conc3(bitstring, bitstring): bitstring [compos].
 
 
-forall var1: mstring, var2: mstring, var3: mstring;
-  conc2(var1) <> conc3(var2, var3).
+forall var1: bitstring, var2: bitstring, var3: bitstring;
+  conc1(var1) <> conc3(var2, var3).
 
 (*************************** 
   Zero Functions 
 ***************************)
 
-fun Zmstring(mstring): mstring.
+fun Zbitstring(bitstring): bitstring.
 
 (*************************** 
   Length-Regularity 
 ***************************)
 
-fun Zconc1(mstring, mstring): mstring.
-forall var1: mstring, var2: mstring;
-  Zmstring(conc1(var1, var2)) = Zconc1(Zmstring(var1), Zmstring(var2)).
-fun Zconc2(mstring): mstring.
-forall var1: mstring;
-  Zmstring(conc2(var1)) = Zconc2(Zmstring(var1)).
-fun Zconc3(mstring, mstring): mstring.
-forall var1: mstring, var2: mstring;
-  Zmstring(conc3(var1, var2)) = Zconc3(Zmstring(var1), Zmstring(var2)).
+fun Zconc1(bitstring): bitstring.
+forall var1: bitstring;
+  Zbitstring(conc1(var1)) = Zconc1(Zbitstring(var1)).
+fun Zconc2(bitstring, bitstring): bitstring.
+forall var1: bitstring, var2: bitstring;
+  Zbitstring(conc2(var1, var2)) = Zconc2(Zbitstring(var1), Zbitstring(var2)).
+fun Zconc3(bitstring, bitstring): bitstring.
+forall var1: bitstring, var2: bitstring;
+  Zbitstring(conc3(var1, var2)) = Zconc3(Zbitstring(var1), Zbitstring(var2)).
 
 (*************************** 
   Typecasting 
@@ -71,18 +70,18 @@ forall var1: mstring, var2: mstring;
   <Query>
 ********************)
  
-event client_begin(mstring).
-event client_accept(mstring, mstring).
-event server_reply(mstring, mstring).
+event client_begin(bitstring).
+event client_accept(bitstring, bitstring).
+event server_reply(bitstring, bitstring).
 
-query x: mstring, y:mstring;
+query x: bitstring, y:bitstring;
   event client_accept(x, y) ==> server_reply(x, y).
 
-query x: mstring, y:mstring;
+query x: bitstring, y:bitstring;
   event server_reply(x, y) ==> client_begin(x).
 
 (*
-query x: mstring, y:mstring;
+query x: bitstring, y:bitstring;
   event client_accept(x, y).
 *)
 
@@ -92,25 +91,25 @@ query x: mstring, y:mstring;
 ***************************)
 
 let A = 
+in(c_in, (msg1: bitstring, msg2: bitstring));
+let conc2(var1, var2) = msg2 in
+let hash1 = HMAC_sha1(conc1(var1), keyAB) in
+if var2 = hash1 then 
+event server_reply(var1, response);
+let msg3 = conc2(response, HMAC_sha1(conc3(var1, response), keyAB)) in
+out(c_out, (msg3)); 0 .
+
+let B = 
 in(c_in, ());
 event client_begin(request);
-let msg1 = conc1(request, HMAC_sha1(conc2(request), keyAB)) in
+let msg1 = conc2(request, HMAC_sha1(conc1(request), keyAB)) in
 out(c_out, (msg1));
-in(c_in, (msg2: mstring, msg3: mstring));
-let conc1(var1, var2) = msg3 in
+in(c_in, (msg2: bitstring, msg3: bitstring));
+let conc2(var1, var2) = msg3 in
 let hash1 = HMAC_sha1(conc3(request, var1), keyAB) in
 if var2 = hash1 then 
 event client_accept(request, var1);
 yield.
-
-let B = 
-in(c_in, (msg1: mstring, msg2: mstring));
-let conc1(var1, var2) = msg2 in
-let hash1 = HMAC_sha1(conc2(var1), keyAB) in
-if var2 = hash1 then 
-event server_reply(var1, response);
-let msg3 = conc1(response, HMAC_sha1(conc3(var1, response), keyAB)) in
-out(c_out, (msg3)); 0 .
 
 (******************** 
   <Environment>
@@ -118,7 +117,7 @@ out(c_out, (msg3)); 0 .
 
 process
 ! N (
-  in(c_in, (request: mstring, response: mstring));
+  in(c_in, (request: bitstring, response: bitstring));
   new keyseed: mkeyseed; 
   let keyAB = mkgen(keyseed) in
   out(c_out, ());

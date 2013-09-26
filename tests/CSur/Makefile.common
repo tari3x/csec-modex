@@ -1,4 +1,7 @@
 
+CFLAGS += -DVERBOSE 
+LDLIBS += -lssl -lcrypto
+
 P1 = bob
 P2 = alice
 

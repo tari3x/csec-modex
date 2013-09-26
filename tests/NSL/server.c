@@ -61,6 +61,10 @@ int main(int argc, char ** argv)
 
   recv(bio, dummy, 4);
   recv(bio, (unsigned char*) &m1_e_len, sizeof(m1_e_len));
+
+  if(m1_e_len > MAX_SIZE_CIPHER)
+    fail("Server: cipher in message 1 too long");
+
   m1_e = malloc(m1_e_len);
   recv(bio, m1_e, m1_e_len);
 
@@ -119,6 +123,7 @@ int main(int argc, char ** argv)
   */
 
   xNa = m1 + 4 + sizeof(size_t);
+  typehint(xNa, m1_l, "fixed_20_nonce");
 
 #ifdef VERBOSE
     fprintf(stderr, "B: m1 received and checked");
@@ -153,6 +158,10 @@ int main(int argc, char ** argv)
   memcpy(p, host, host_len);
 
   m2_e_len = encrypt_len(xkey, xkey_len, m2, m2_len);
+
+  if(m2_e_len > MAX_SIZE_CIPHER)
+    fail("Server: cipher in message 2 too long");
+
   m2_e = malloc(m2_e_len + sizeof(size_t) + 4);
   memcpy(m2_e, "encr", 4);
   m2_e_len = encrypt(xkey, xkey_len, m2, m2_len, m2_e + sizeof(m2_e_len) + 4);
@@ -171,6 +180,10 @@ int main(int argc, char ** argv)
 
   recv(bio, dummy, 4);
   recv(bio, (unsigned char*) &m3_e_len, sizeof(m3_e_len));
+
+  if(m3_e_len > MAX_SIZE_CIPHER)
+    fail("Server: cipher in message 3 too long");
+
   m3_e = malloc(m3_e_len);
   recv(bio, m3_e, m3_e_len);
 

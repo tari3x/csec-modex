@@ -6,6 +6,11 @@ fun true/0.
   Public-key encryption
 **************************)
 
+(*
+  NB! The soundness result in CoSP assumes that we can encrypt messages of any length,
+  which means that a correct implementation of E must use hybrid encryption.
+*)
+
 fun ek/1.
 fun dk/1.
 fun E/3.
@@ -45,27 +50,27 @@ fun hostB/0.
   Concatenation and Parsing 
 ********************)
 
-data conc1/2.
+data conc1/3.
 
 data conc3/1.
 
-data conc8/1.
+data conc8/2.
 
-data conc15/3.
+data conc15/1.
 
 reduc 
-  parse4(conc15(x0, x1, x2)) = x0.
+  parse3(conc8(x0, x1)) = x1.
 reduc 
-  parse5(conc15(x0, x1, x2)) = x2.
+  parse4(conc3(x0)) = x0;
+  parse4(conc8(x0, x1)) = x0.
 reduc 
-  parse6(conc15(x0, x1, x2)) = x1.
+  parse5(conc15(x0)) = x0.
 reduc 
-  parse7(conc1(x0, x1)) = x1.
+  parse7(conc1(x0, x1, x2)) = x0.
 reduc 
-  parse8(conc1(x0, x1)) = x0;
-  parse8(conc3(x0)) = x0.
+  parse8(conc1(x0, x1, x2)) = x2.
 reduc 
-  parse9(conc8(x0)) = x0.
+  parse9(conc1(x0, x1, x2)) = x1.
 
 (******************** 
   <Query>
@@ -90,39 +95,39 @@ query
 ***************************)
 
 let A = 
+in(c, msg1);
+in(c, msg2);
+let msg3 = inverse_injbot(D(msg2, skB)) in
+let =true = check_key(parse3(msg3), pkX, sigX, pkS) in 
+event beginB(parse3(msg3), hostB);
+new nonce1;
+new nonce2;
+let msg4 = conc3(E(conc1(parse4(msg3), nonce1, hostB), isek(pkX), nonce2)) in
+out(c, msg4);
+in(c, msg5);
+in(c, msg6);
+let var1 = parse5(inverse_injbot(D(msg6, skB))) in
+if var1 = nonce1 then 
+event endB(parse3(msg3), hostB); 0.
+
+let B = 
 let =true = check_key(hostX, pkX, sigX, pkS) in 
 event beginA(hostA, hostX);
 new nonce1;
 new nonce2;
-let msg1 = conc3(E(conc1(nonce1, hostA), isek(pkX), nonce2)) in
+let msg1 = conc3(E(conc8(nonce1, hostA), isek(pkX), nonce2)) in
 out(c, msg1);
 in(c, msg2);
 in(c, msg3);
 let msg4 = inverse_injbot(D(msg3, skA)) in
-let var1 = parse4(msg4) in
+let var1 = parse7(msg4) in
 if var1 = nonce1 then 
-let var2 = parse5(msg4) in
+let var2 = parse8(msg4) in
 if var2 = hostX then 
 new nonce3;
-let msg5 = conc3(E(conc8(parse6(msg4)), isek(pkX), nonce3)) in
+let msg5 = conc3(E(conc15(parse9(msg4)), isek(pkX), nonce3)) in
 out(c, msg5);
 event endA(hostA, hostX); 0.
-
-let B = 
-in(c, msg1);
-in(c, msg2);
-let msg3 = inverse_injbot(D(msg2, skB)) in
-let =true = check_key(parse7(msg3), pkX, sigX, pkS) in 
-event beginB(parse7(msg3), hostB);
-new nonce1;
-new nonce2;
-let msg4 = conc3(E(conc15(parse8(msg3), nonce1, hostB), isek(pkX), nonce2)) in
-out(c, msg4);
-in(c, msg5);
-in(c, msg6);
-let var1 = parse9(inverse_injbot(D(msg6, skB))) in
-if var1 = nonce1 then 
-event endB(parse7(msg3), hostB); 0.
 
 (*************************** 
   <Environment>
@@ -138,6 +143,7 @@ let B' =
 
 let keyServer = 
   in(c, (h, k));
+  new r3;
   if h = hostA then
     out(c, (pkA, h, sign(cert(pkA, h), skS, r3)))
   else if h = hostB then 

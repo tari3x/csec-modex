@@ -4,14 +4,8 @@
 
 include $(CSEC_ROOT)/mk/common.mk
 
-#CPATH += $(PROXIES) $(OPENSSL)/include
-#CFLAGS += -I$(OPENSSL)/include
-
-CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(OPENSSL)/include -I$(CSEC_ROOT)/include
-
-# need to use filename instead of -lcrypto because the linker tends to pick up the system version
-LDLIBS += $(BASE_LIB) $(PROXY_LIB) $(BASE_LIB) $(EXTRA_DEPS)
-LDLIBS += -lstdc++
+# Switch to absolute path
+CSEC_ROOT = $(CSEC_ROOT_ABS)
 
 SSL_LIB = $(OPENSSL)/libssl.a
 #BIN_SSL_LIB = $(OPENSSL)/libssl_bin.a
@@ -19,6 +13,7 @@ CRYPTO_LIB = $(OPENSSL)/libcrypto.a
 #BIN_CRYPTO_LIB = $(OPENSSL)/libcrypto_bin.a
 BIN_PROXY_LIB += $(PROXIES)/libssl_proxy_bin.a
 SYM_PROXY_LIB += $(PROXIES)/libssl_proxy_sym.a
+CRESTIFY_LIB = $(PROXIES)/libcrestify.a
 
 ifdef USE_CRESTIFIED_OPENSSL
 	SYM_SSL_LIB = $(OPENSSL_CRESTIFIED)/libssl_sym.a
@@ -28,65 +23,98 @@ else
 	SYM_CRYPTO_LIB = $(CRYPTO_LIB)
 endif
 
-PROXY_CONF_BIN = $(PROXIES)/openssl_proxies.bin.conf
-ifndef PROXY_CONF_SYM
-	PROXY_CONF_SYM = $(PROXIES)/openssl_proxies.sym.conf
-endif
-PROXY_OUT = $(PROXIES)/proxies.out
 
-BIN_CILLY = $(CILLY) --dofunreplace --csec-config=$(PROXY_CONF_BIN) --funreplaceoutput=$(PROXY_OUT) $(CILLY_FLAGS)
-SYM_CILLY = $(CILLY) --dofunreplace --csec-config=$(PROXY_CONF_SYM) --funreplaceoutput=$(PROXY_OUT) $(CILLY_FLAGS) --doCrestInstrument --save-temps --commPrintLn
+#CPATH += $(PROXIES) $(OPENSSL)/include
+#CFLAGS += -I$(OPENSSL)/include
+
+ifndef PROXY_LIBS
+  PROXY_LIBS = $(CRESTIFY_LIB)
+endif 
+
+ifndef COMPILATION_ROOT
+  COMPILATION_ROOT = $(PWD)
+endif
+
+CSEC_CONF_OUT = $(COMPILATION_ROOT)/csec.conf.out
+
+PROXY_OUT = $(COMPILATION_ROOT)/proxies.out
+
+CILLY_FLAGS = --dofunreplace --csec-config=$(CSEC_CONF_OUT) --funreplaceoutput=$(PROXY_OUT) --root=$(COMPILATION_ROOT) --doCrestInstrument --save-temps --commPrintLn
+
+# We want to keep these separate for cmake because it checks for existence of CC.
+# At the same time openssl compilation breaks if you overwrite CFLAGS, so there I pass CC="$(CC) $(CFLAGS)".
+CC = $(CILLY)
+CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(OPENSSL)/include -I$(CSEC_ROOT)/include $(CILLY_FLAGS) -DCSEC_VERIFY
+
+# need to use filename instead of -lcrypto because the linker tends to pick up the system version
+# LDLIBS += $(BASE_LIB) $(PROXY_LIB) $(BASE_LIB) $(EXTRA_DEPS)
+LDLIBS := $(PROXY_OBJ) $(PROXY_LIBS) $(LDLIBS) -lstdc++
+
+############################
+## Compile with CIL
+############################
+
+# FIXME: you want to remove duplicates but preserve order
+ifndef PROGS
+  PROGS = ${sort $(P1) $(P2) $(P3) }
+endif
+
+compile: $(PROGS)
+
+ifndef CSEC_CONF
+  # CSEC_CONF = $(PROXIES)/openssl_proxies.sym.conf
+  CSEC_CONF = $(COMPILATION_ROOT)/csec.conf
+endif
+
+PROXY_CONF = $(PROXY_LIBS:.a=.conf)
+
+$(CSEC_CONF_OUT): $(CSEC_CONF) $(PROXY_CONF)
+	cat $^ > $@
 
 ifndef BUILD_CMD
-	BUILD_CMD = $(CC) $(CFLAGS) $(CPPFLAGS) $(BUILD_SRC) $(LDFLAGS) $(LDLIBS) -o $@
+   $(error "must define BUILD_CMD")
 endif
 
-ORIG = ${sort $(P1) $(P2) $(P3)}
-BIN = ${foreach P,$(ORIG),$(P).bin}
-SYM = ${foreach P,$(ORIG),$(P).sym}
+$(PROXY_OBJ): $(CSEC_CONF_OUT) $(CIL_LIB) $(PROXY_LIBS)
 
-BINTRACES = bintrace.P1.out
-CVM = cvm.P1.out
-IML = iml.P1.out
+$(PROGS): $(CSEC_CONF_OUT) $(CIL_LIB) $(PROXY_LIBS) $(PROXY_OBJ) $(BUILD_DEPS)
+	$(BUILD_CMD)
 
-ifdef P2 
-	BINTRACES += bintrace.P2.out
-	CVM += cvm.P2.out
-	IML += iml.P2.out
+
+############################
+## CVM
+############################
+
+# This requires that the client and the server are separate files
+CVM = ${foreach P,$(PROGS),$(P).cvm.out}
+
+# ${foreach P,$(ORIG),$(P).cvm.out}
+
+cvm: $(CVM)
+
+# FIXME: generalise
+$(CVM): $(PROGS) $(RUN_DEPS)
+	if [ -e "$(P1)" ]; then          CVM_OUTPUT=$(P1).cvm.out ./$(P1) $(P1_CMD); fi & \
+	if [ -e "$(P2)" ]; then sleep 1; CVM_OUTPUT=$(P2).cvm.out ./$(P2) $(P2_CMD); fi & \
+	wait
+
+############################
+## IML
+############################
+
+ifndef IML_OUTPUTS 
+  IML_OUTPUTS = iml.out
 endif
 
-ifdef P3 
-	BINTRACES += bintrace.P3.out
-	CVM += cvm.P3.out
-	IML += iml.P3.out
-endif
+copy: iml.debug.copy.out
 
-
-copy: $(IML:.out=.debug.copy.out)
-
-iml.%.debug.copy.out: iml.%.out
-	cp iml.$*.debug.out $@
+iml.debug.copy.out: iml.debug.out
+	cp $^ $@
 
 mark:
 	grep "(mark)" iml.debug.out > mark.out
 
 iml: iml.out
-bin_traces: $(BINTRACES)
-cvm: $(CVM)
-
-compile: orig sym
-
-orig: $(ORIG)
-bin: $(BIN)
-sym: $(SYM)
-
-run: SHELL = /bin/bash
-run: orig
-	if [ -e "$(P1)" ]; then ./$(P1) $(P1_CMD); fi &  \
-	if [ -e "$(P2)" ]; then sleep 1; ./$(P2) $(P2_CMD); fi & \
-	if [ -e "$(P3)" ]; then sleep 2; ./$(P3) $(P3_CMD); fi & \
-	wait
-
 
 ifdef DEBUG_IML
 iml.out iml.raw.out: $(CVM) $(IMLTRACE)
@@ -97,76 +125,25 @@ iml.out iml.raw.out: $(CVM) $(IMLTRACE)
 endif
 
 
-#annot:
-#	rename bin.res.txt bin.annot.txt *.bin.res.txt
-
-#%.bin.res.txt: %.bin.out.txt $(BINTRACE)
-#	bintrace $< > $@
-
-$(CVM): $(SYM)
-	if [ -e "$(P1).sym" ]; then ./$(P1).sym $(P1_CMD) > cvm.P1.out; fi & \
-	if [ -e "$(P2).sym" ]; then sleep 1; ./$(P2).sym $(P2_CMD) > cvm.P2.out; fi & \
-	if [ -e "$(P3).sym" ]; then sleep 2; ./$(P3).sym $(P3_CMD) > cvm.P3.out; fi & \
-	wait
-
-$(ORIG): BASE_LIB = $(SSL_LIB) $(CRYPTO_LIB)
-$(ORIG): CFLAGS += -DVERBOSE
-$(ORIG): $(SSL_LIB) $(CRYPTO_LIB)
-	$(BUILD_CMD)
-
-%.bin: CFLAGS += -DCSEC_VERIFY
-%.bin: CC = $(BIN_CILLY)
-%.bin: BASE_LIB = $(BIN_SSL_LIB) $(BIN_CRYPTO_LIB)
-%.bin: PROXY_LIB = $(BIN_PROXY_LIB)
-%.bin: $(PROXY_CONF_BIN) $(BIN_PROXY_LIB) $(BIN_SSL_LIB) $(BIN_CRYPTO_LIB) 
-	$(BUILD_CMD)
-
-%.sym: CFLAGS += -DCSEC_VERIFY
-%.sym: CC = $(SYM_CILLY)
-%.sym: BASE_LIB = $(SYM_SSL_LIB) $(SYM_CRYPTO_LIB)
-%.sym: PROXY_LIB = $(SYM_PROXY_LIB)
-%.sym: $(PROXY_CONF_SYM) $(SYM_PROXY_LIB) $(SYM_SSL_LIB) $(SYM_CRYPTO_LIB) 
-	$(BUILD_CMD)
-
-# Can't say $(CLIENT).%, because $(CLIENT).c would also match.
-# Should work with mpp, see multiple targets in sandbox
-$(P1) $(P1).bin $(P1).sym: BUILD_SRC = $(P1_SRC)
-$(P1) $(P1).bin $(P1).sym: $(P1_SRC) $(CIL_LIB)
-
-ifneq ($(P1), $(P2))
-$(P2) $(P2).bin $(P2).sym: BUILD_SRC = $(P2_SRC)
-$(P2) $(P2).bin $(P2).sym: $(P2_SRC) $(CIL_LIB)
-endif
-
-ifneq ($(P2), $(P3))
-$(P3) $(P3).bin $(P3).sym: BUILD_SRC = $(P3_SRC)
-$(P3) $(P3).bin $(P3).sym: $(P3_SRC) $(CIL_LIB)
-endif
-
-# can't use an implicit rule due to a bug in make (https://savannah.gnu.org/bugs/index.php?29104)
-# makepp doesn't understand this, but do use makepp as soon as bug
-# https://sourceforge.net/tracker/?func=detail&aid=2961995&group_id=138953&atid=742140
-# is fixed and you can just add libraries to SLL_LIB without fear of cilly mangling them
-#$(sort $(CLIENT).bin $(SERVER).bin $(CLIENT).sym $(SERVER).sym $(CLIENT) $(SERVER)): 
-#	$(BUILD_CMD)
 
 ############################
 ## ProVerif
 ############################
 
 ifndef PV_OUTPUTS 
-  PV_OUTPUTS = model.pv.out
+  PV_INPUTS = $(shell find . -name "*.pv.in")
+  PV_OUTPUTS = $(PV_INPUTS:.in=.out)
 endif
 
 pv: $(PV_OUTPUTS)
-	for f in $(CV_OUTPUTS); do\
-		$(PROVERIF) -in pi $^ | grep RESULT;\
+	for f in $(PV_OUTPUTS); do\
+		$(PROVERIF) -in pi $$f | grep "RESULT\|queries";\
 	done
 
 
 pv_full: $(PV_OUTPUTS)
-	for f in $(CV_OUTPUTS); do\
-		$(PROVERIF) -in pi $^;\
+	for f in $(PV_OUTPUTS); do\
+		$(PROVERIF) -in pi $$f;\
 	done
 
 
@@ -179,12 +156,13 @@ pv_full: $(PV_OUTPUTS)
 ############################
 
 ifndef CV_OUTPUTS 
-  CV_OUTPUTS = model.cv.out
+  CV_INPUTS = $(shell find . -name "*.cv.in")
+  CV_OUTPUTS = $(CV_INPUTS:.in=.out)
 endif
 
 cv: $(CV_OUTPUTS)
 	for f in $(CV_OUTPUTS); do\
-		$(CRYPTOVERIF) -lib $(CV_DEFAULT) $$f | grep RESULT;\
+		$(CRYPTOVERIF) -lib $(CV_DEFAULT) $$f | grep "RESULT\|queries";\
 	done
 
 cv_full: $(CV_OUTPUTS)
@@ -203,7 +181,7 @@ cv_full: $(CV_OUTPUTS)
 ############################
 
 ifndef OUTPUTS
-  OUTPUTS = iml.out $(PV_OUTPUTS) $(CV_OUTPUTS)
+  OUTPUTS = $(IML_OUTPUTS) $(PV_OUTPUTS) $(CV_OUTPUTS)
 endif
 GOOD_OUTPUTS = $(OUTPUTS:.out=.good.txt)
 
@@ -242,8 +220,11 @@ LOCAL_GLOBS = $(shell find . -name "*.globs.out")
 #$(LOCAL_GLOBS): sym
 endif
 
-PROXY_CALLGRAPH = $(shell find $(PROXIES) -name "*.callgraph.out")
-PROXY_GLOBS = $(shell find $(PROXIES) -name "*.globs.out")
+# PROXY_CALLGRAPH = $(shell find $(PROXIES) -name "*.callgraph.out")
+# PROXY_GLOBS = $(shell find $(PROXIES) -name "*.globs.out")
+
+LIB_CALLGRAPH = $(PROXY_LIBS:.a=.callgraph.out)
+LIB_GLOBS = $(PROXY_LIBS:.a=.globs.out)
 
 filegraph: sym
 	cat *.callgraph.out $(PROXIES)/openssl.fullgraph.out | sort -u > fullgraph.out
@@ -254,21 +235,38 @@ filegraph: sym
 	cat filegraph.out | sort -u | graph2dot > filegraph.dot
 	time dot -Tpdf filegraph.dot > filegraph.pdf
 
-callgraph.out: $(LOCAL_CALLGRAPH) $(PROXY_CALLGRAPH) $(OPENSSL_CALLGRAPH)
+# $(PROXY_CALLGRAPH) $(OPENSSL_CALLGRAPH)
+callgraph.out: $(LOCAL_CALLGRAPH) $(LIB_CALLGRAPH)
 	cat $^ > callgraph.out
 
-globs.out: $(LOCAL_GLOBS) $(PROXY_GLOBS) $(OPENSSL_GLOBS)
+# $(PROXY_GLOBS) $(OPENSSL_GLOBS)
+globs.out: $(LOCAL_GLOBS) $(LIB_GLOBS)
 	cat $^ > globs.out
 
-funlist: callgraph.out globs.out
+# The list of called functions produced by symbolic execution.
+called.out: iml
+
+funlist: funlist_compile funlist_run
+
+# This one depends on compilation only.
+# We want this to work even if funlist_run fails, so that we can tell the user to instrument main().
+# Make sure to call leaves first, as it gives better diagnostics.
+funlist_compile: callgraph.out globs.out
 	@echo "==== Reachable functions not proxied, opaque or crestified:"
-	@leaves
+	@$(CSEC_ROOT)/src/CIL/leaves
 	@echo "==== Bad pairs:"
-	@badpairs
+	@$(CSEC_ROOT)/src/CIL/badpairs
+	@echo "==== Unreachable boring functions:"
+	@$(CSEC_ROOT)/src/CIL/unreachable $(CSEC_CONF)
 	@#echo "==== Instrumented boring functions:"
 	@#comm -12 boring.out crestified.out
 	@#echo "==== Unreachable boring functions:"
 	@#comm -23 boring.out leaves.out
+
+# This one depends on running the program.
+funlist_run: called.out
+	@echo "==== Called boring functions:"
+	@$(CSEC_ROOT)/src/CIL/calledOpaque $(CSEC_CONF) "called.out"
 
 ############################
 ## Misc
@@ -276,7 +274,7 @@ funlist: callgraph.out globs.out
 
 
 clean::
-	$(RM) *.bin *.sym *.exe *.o *.cil.c *.i *.out
+	$(RM) *.exe *.o *.cil.c *.i *.out
 
 phony:
 

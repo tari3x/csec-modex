@@ -44,6 +44,7 @@ type glob =
     or if it needs to be proxied.
   *)
 
+  mutable is_proxy: bool;
   mutable needs_proxy: bool;
   mutable proxied: bool;
   mutable crestified: bool;
@@ -61,11 +62,19 @@ type glob =
 module StrSet = Set.Make (String)
 module StrMap = Map.Make (String)
 
-(** The root folder of the compilation *)
+(** 
+    The root folder of the compilation.
+    Ends with a trailing directory separator.
+*)
 let compilationRoot = ref ""
+(* 
 (** The source file name *)
-let srcName = ref ""
-(** The path of the current source file relative to [compilationRoot], including the file name itself. *)
+let srcName = ref "" 
+*)
+(** 
+  The path of the current source file relative to [compilationRoot], including the file name itself.
+  We use the name of the .c file even when we are called with .i file as argument.
+*)
 let srcPath = ref ""
 
 (*
@@ -118,28 +127,94 @@ let fail : string -> 'a = fun s -> failwith s
 let some: 'a option -> 'a = function
   | Some a -> a
   | None   -> failwith "some called with None"
+    
+let readFile : string -> string list = fun name ->
+  let f = open_in name in
+
+  let rec read : unit -> string list = fun () ->
+    (* Stay tail-recursive, make sure not to create nested exception handlers at runtime. *)
+    match 
+      try Some (trim (input_line f)) 
+      with End_of_file -> None with
+    | Some s -> s :: read ()
+    | None   -> [] 
+  in
+  read()
+
+
+(*************************************************)
+(** {2 Lists} *)
+(*************************************************)
+
+
+let filter_out : ('a -> bool) -> 'a list -> 'a list = fun p -> filter (fun a -> not (p a))
+
+let remove : 'a -> 'a list -> 'a list = fun a -> filter_out (fun b -> a = b)
+
+(** Set difference *)
+let rec diff : 'a list -> 'a list -> 'a list = fun xs -> function
+  | []      -> xs
+  | y :: ys -> diff (remove y xs) ys
+
+let intersect: 'a list -> 'a list -> 'a list = fun xs ys -> filter (fun y -> mem y xs) ys
+
+let nub: 'a list -> 'a list = fun l -> 
+  let rec nub' = fun ls ->
+    function
+      | (x::xs) when mem x ls -> nub' ls xs
+      | (x::xs) -> x :: nub' (x::ls) xs
+      | [] -> []
+  in
+  nub' [] l
 
 
 (*************************************************)
 (** {1 Misc} *)
 (*************************************************)
 
+(*
+  FIXME: Have a __proxy__ attribute on interface functions.
+*)
 let isInterfaceFun : string -> bool = fun s -> 
-  mem s ["event0"; "event1"; "event2"; "event3"; "readenv"; "readenvL"; "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail"]
+  mem s ["event0"; "event1"; "event2"; "event3"; "event4"; "readenv"; "readenvE"; "readenvL";  
+         "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail";
+         (* Internal interface functions: *)
+         "load_buf"; "load_alll"; "load_ctx"; "load_int"; "load_str";
+         "symL"; "symN"; "symNE"; "input"; "newTN"; "newTL"; "newL";
+         "varsym"; "var"; "varWithBUfInit"; "varL"; "output";  
+         "store_buf"; "store_all"; "store_ctx"; "event"; 
+         "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int"; 
+         "get_attr_int"; "copy_ctx"; "copy_attr_ex"; "copy_attr";
+         "clear_attr"; "concrete_val"; "fresh_ptr"; "append_zero"]
+
 
 (*************************************************)
 (** {1 Configuration} *)
 (*************************************************)
 
+let setRootPath: string -> unit = fun path ->
+  if Filename.check_suffix "/" path then 
+    compilationRoot := path 
+  else  
+    compilationRoot := path ^ "/" 
+     
+
 let setSrcPath : file -> unit = fun f ->
-  (* if !compilationRoot = "" then
-    fail "setSrcPath: compilation root not set"; *)
-  srcName := basename f.fileName;
-  let fullPath = Filename.concat (getcwd ()) !srcName in
   if !compilationRoot = "" then
-    srcPath := !srcName
-  else
-    srcPath := global_replace (regexp_string !compilationRoot) "" fullPath
+    fail "setSrcPath: compilation root not set";
+    
+  let cName = try chop_extension f.fileName ^ ".c" 
+              with Invalid_argument _ -> failwith "setSrcPath: source name without extension" in
+
+  (* there should be a library function to compute canonical file names *)
+  let cName = global_replace (regexp "^\\./") "" cName in
+  
+  let fullPath =
+    if Filename.is_relative cName then
+      Filename.concat (getcwd ()) cName
+    else cName in
+
+  srcPath := global_replace (regexp_string !compilationRoot) "" fullPath
 
 (*************************************************)
 (** {1 Information Gathering} *)
@@ -151,15 +226,18 @@ let setSrcPath : file -> unit = fun f ->
   Generates a descriptive global (across the whole compilation) unique identifier for a variable. 
   One identifer corresponds to one physical variable in the linked executable.
 
-  Using a single global name might be problematic for static functions. 
+  We use a single global name for static functions. This makes it easier to designate them
+  in configuration files. At the same time this makes it problematic to have two static functions of the same
+  name in different files.   
+  
   This is addressed in {!readGlobs} by checking that no two globs have same names but different locdefs.
 *)
 (*   
   This is also called from crestInstrument to give names to stack locations.
 *)
 let mkUniqueName : varinfo -> string = fun v ->
-  if not v.vglob || v.vstorage = Static then 
-    !srcName ^ ":" ^ v.vname ^ "[" ^ string_of_int v.vid ^ "]"
+  if not v.vglob (* || v.vstorage = Static *) then 
+    !srcPath ^ ":" ^ v.vname ^ "[" ^ string_of_int v.vid ^ "]"
   else
     v.vname 
 
@@ -174,6 +252,7 @@ let addGlob : varinfo -> glob = fun v ->
         name = v.vname;
         opaque = false;
         needs_proxy = false;
+        is_proxy = false;
         proxied = false;
         crestified = false;
         is_fun = isFunctionType v.vtype;
@@ -197,7 +276,11 @@ let addChild : global -> varinfo -> unit = fun parentG child ->
 let markNeedsProxy : varinfo -> unit = fun v ->
   let g = addGlob v in
   g.needs_proxy <- true
-  
+
+let markIsProxy : varinfo -> unit = fun v ->
+  let g = addGlob v in
+  g.is_proxy <- true
+
 let markProxied : varinfo -> unit = fun v ->
   let g = addGlob v in
   g.proxied <- true
@@ -246,6 +329,22 @@ let isProxied : varinfo -> bool = fun v ->
       g.proxied
   with Not_found -> false
 
+(*
+let isProxy : varinfo -> bool = fun v -> 
+  let result = 
+  try let g = getGlob v in
+      g.is_proxy
+  with Not_found -> false in
+  Printf.printf "isProxy: %s,  result: %b\n" v.vname result;
+  result
+*)
+
+(* This should do the job for now *)
+let isProxy: varinfo -> bool = function v ->
+  string_match (regexp ".*_proxy$") v.vname 0
+
+
+
 (*************************************************)
 (** {1 Information Input and Output} *)
 (*************************************************)
@@ -265,6 +364,7 @@ let writeGlob : out_channel -> string -> glob -> unit = fun c key g ->
   if g.opaque then writePair key "opaque";
   if g.needs_proxy then writePair key "needs_proxy";
   if g.proxied then writePair key "proxied";
+  if g.is_proxy then writePair key "is_proxy";
   if g.crestified then writePair key "crestified";
   if g.is_fun then writePair key "is_fun";
   
@@ -289,15 +389,21 @@ let writeGlobs : glob StrMap.t -> string -> unit = fun globs outname ->
   StrMap.iter (writeGlob c) globs;
   close_out c
 
-let writeInfo : unit -> unit = fun () ->  
+let writeInfo : file -> unit = fun f ->  
   (* output the call relation *)
-  writeGraph !callgraph (!srcName ^ ".callgraph.out");
+  writeGraph !callgraph (f.fileName ^ ".callgraph.out");
   (* output the defined and referenced globals list *)
-  writeGlobs !globs (!srcName ^ ".globs.out")
+  writeGlobs !globs (f.fileName ^ ".globs.out")
+
+
+let rec nextNonemptyLine: in_channel -> string = fun file ->
+  let line = input_line file in
+  if trim line = "" then nextNonemptyLine file else line
+
 
 let rec readGraph : in_channel -> graph = fun file ->
   try
-    let line = input_line file in
+    let line = nextNonemptyLine file in
     let toks = words line in
     (nth toks 0, nth toks 1) :: readGraph file
   with
@@ -315,6 +421,7 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
         name = "";
         opaque = false;
         needs_proxy = false;
+        is_proxy = false;
         proxied = false;
         crestified = false;
         is_fun = false;
@@ -326,36 +433,38 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
     g
   in
 
-	let rec readField : unit -> unit = fun () ->
+  let rec readField : unit -> unit = fun () ->
     
-    let line = input_line file in
+    let line = nextNonemptyLine file in
     let toks = words line in
     let (key, field) = 
-    if nth toks 1 = "~" then (nth toks 0, nth toks 2)
-      else fail "readGlobField: unexpected format" in
-	  let g = globByKey key in
-	  begin match field with
-	    | "name" ->
-	      let name = input_line file in g.name <- name
-	    | "opaque" -> g.opaque <- true
-	    | "needs_proxy" -> g.needs_proxy <- true
-	    | "proxied" -> g.proxied <- true
-	    | "crestified" -> g.crestified <- true
-	    | "is_fun" -> g.is_fun <- true
-	    | "locdef" -> 
-	      let locdef = input_line file in 
+      if nth toks 1 = "~" then (nth toks 0, nth toks 2)
+        else fail (Printf.sprintf "readGlobField: unexpected format %s" line) in
+    let g = globByKey key in
+    begin match field with
+      | "name" ->
+        let name = input_line file in g.name <- name
+      | "opaque" -> g.opaque <- true
+      | "needs_proxy" -> g.needs_proxy <- true
+      | "is_proxy" -> g.is_proxy <- true
+      | "proxied" -> g.proxied <- true
+      | "crestified" -> g.crestified <- true
+      | "is_fun" -> g.is_fun <- true
+      | "locdef" -> 
+        let locdef = input_line file in 
         if g.locdef = None then
           g.locdef <- Some locdef
         else if (g.locdef <> Some locdef) && (g.stor = Static) then
           fail ("readGlobs: two different source files define two static functions of the same name, this is unsupported: " 
                  ^ key ^ ", " ^ locdef ^ ", " ^ some g.locdef)
-	    | "NoStorage" -> g.stor <- NoStorage
-	    | "Static" -> g.stor <- Static
-	    | "Register" -> g.stor <- Register
-	    | "Extern" -> g.stor <- Extern
-	    | _ -> fail "readGlobField: unrecognized field"
+      | "NoStorage" -> g.stor <- NoStorage
+      | "Static" -> g.stor <- Static
+      | "Register" -> g.stor <- Register
+      | "Extern" -> g.stor <- Extern
+      | _ -> fail "readGlobField: unrecognized field"
     end;
-    readField ()
+      
+  readField ()
   in
 
   begin try readField (); with End_of_file -> () end;

@@ -3,15 +3,15 @@ CSEC_ROOT = ../..
 
 include Makefile.common
 
-#everything: orig sym
-everything: iml pv cv
+all: iml cv pv
 
-all: orig sym
+eclipse-all: compile
+
+PROXY_LIBS = $(PROXIES)/libcrestify.a $(PROXIES)/libsystem-proxies.a $(PROXIES)/libopenssl-proxies.a
+
+BUILD_CMD = $(MAKE) -f Makefile.run compile CC="$(CC)" CFLAGS="$(CFLAGS)" LDLIBS="$(LDLIBS)"
 
 include $(CSEC_ROOT)/mk/main.mk
-
-# don't compile lib with CIL cause fail has varargs
-CILLY_FLAGS += --leavealone=lib
 
 clean::
 	$(RM) client server

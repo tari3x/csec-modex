@@ -324,7 +324,7 @@ let debug ?(raise_by = 0) a =
   let debug s = 
     debug_depth := !debug_depth - raise_by;
     if debugEnabled () then prerr_endline (decorateDebug s);
-    debug_depth := !debug_depth - raise_by
+    debug_depth := !debug_depth + raise_by
   in
 
   Printf.ksprintf debug a
@@ -465,3 +465,10 @@ let option_to_string to_string = function
   | Some a -> "Some " ^ to_string a
   | None -> "None"
     
+module Option2 = struct
+  let try_with f = try Some (f ()) with _ -> None
+  
+  let value_exn = function
+    | Some a -> a
+    | None -> fail "value_exn"
+end

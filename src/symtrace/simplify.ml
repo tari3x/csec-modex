@@ -103,12 +103,6 @@ let isFieldOffsetVal : offsetVal -> bool = function
   | Field _ -> true
   | _ -> false
     
-(* FIXME: we loose precision converting from Int64. *)
-let rec getIntVal : exp -> int option = fun e -> match arithFold e with
-  | Int ival -> Some (Int64.to_int ival)
-  (* | Range (e', _, _) -> getIntVal e' *)
-  | _ -> None
-
 (*************************************************)
 (** {1 Simplification} *)
 (*************************************************)
@@ -189,7 +183,11 @@ let rec simplify : exp -> exp =
     match pos with
     | [Flat b, step] -> [(Flat (sum [b; (prod [step; e_o])]), step)]
     | [Index i, step] -> 
-      begin match getIntVal e_o with
+      (* Should not be too eager to concretise because in the parser we may not
+         be able to restore the correct general form again. *)
+      (* TODO: this should not actually affect parser correctness, think more about this. *)
+      let int_value = if E.isConcrete e_o then S.eval e_o else None in 
+      begin match int_value with
         | Some j -> [Index (i + j), step]
         | None -> addPI e_o [Flat (prod [step; (E.int i)]), step]
                     (* fail "addPI: only concrete integers can be added to index offsets" *)
@@ -234,6 +232,7 @@ let rec simplify : exp -> exp =
     | e -> e
   in 
 
+  (* TODO: lot of this could be merged with a rewriting step in the solver. *)
   let simplify e_orig =
     match e_orig with
      
@@ -244,25 +243,54 @@ let rec simplify : exp -> exp =
         | Int i   -> Ptr (Abs i, [Index 0, Unknown])
         | _ -> fail "simplify: cast to pointer of non-zero expression: %s" (E.toString e)
       end
-  
-    (* 
-    | Sym (CastToInt, [e], l) when S.equalLen l (Len e) -> e
-    *)
+
+    | Sym (Op (CastToInt, ([t2], t3)), [e2]) ->
+      let contains t e =
+        match t with
+        | BsInt itype -> 
+          List.for_all S.isTrue (S.Range.contains itype e)
+        | _ -> assert false
+      in 
+      if t2 = t3 then simplify e2 else
+      begin match e2 with 
+        | Sym (Op (CastToInt, ([BsInt t1],  t2')), [e1]) ->
+          assert (t2 = t2');
+          if contains t2 (Val (e1, t1)) 
+          then Sym (Op (CastToInt, ([BsInt t1], t3)), [e1]) |> simplify
+          else e_orig
+        | BS (e1, t) ->
+          assert (t2 = BsInt t);
+          if contains t2 e1 
+          then begin
+            match t3 with
+            | BsInt t3 -> BS (e1, t3) |> simplify
+            | _ -> assert false
+          end
+          else e_orig
+        | _ -> e_orig
+      end
    
-    | Sym (Op (PlusPI,  ([_; BsInt itype], _)), [Ptr (b, pos); e_o]) -> 
-      Ptr (b, addPI (Val (e_o, itype)) pos)
+    | Val (e2, itype) ->
+      begin match e2 with
+        | Sym (Op (CastToInt, ([BsInt t1], (BsInt t2))), [e1]) when S.Range.subset t1 t2 ->
+          assert (itype = t2);
+          Val (e1, t1) |> simplify
+        | BS (e1, itype) when List.for_all S.isTrue (S.Range.contains itype e1) -> e1
+        | _ -> e_orig
+      end
+  
+    | Sym (Op (PlusPI,  ([_; BsInt itype], _)), [Ptr (b, pos); e_o]) ->
+      let shift = simplify (Val (e_o, itype)) in
+      Ptr (b, addPI shift pos)
       
     | Sym (Op (MinusPI, ([_; BsInt itype], _)), [Ptr (b, pos); e_o]) -> 
-      Ptr (b, addPI (op MinusInt [E.zero; (Val (e_o, itype))]) pos)
+      let shift = simplify (Val (e_o, itype)) in
+      Ptr (b, addPI (op MinusInt [E.zero; shift]) pos)
   
     | Sym (Op (MinusPP, _), [Ptr (b1, pos1); Ptr (b2, pos2)]) -> 
       if b1 <> b2 then
         fail "simplify: trying to subtract pointers with different bases";
       subtractPP pos1 pos2
-  
-    (*
-    | Len (e, ll) -> setLen (Len e) ll
-    *)
   
     | Sym (sym, _) when Sym.isArithmetic sym -> arithSimplify e_orig
       
@@ -291,7 +319,7 @@ let rec simplify : exp -> exp =
           | e when S.greaterEqualLen E.zero new_len -> Concat []
           | String s -> 
             begin
-              match (getIntVal pos, getIntVal new_len) with
+              match (S.eval pos, S.eval new_len) with
                 | (Some pos_val, Some len_val) ->
                   let s_len_val = String.length s / 2 in
                   if pos_val + len_val <= s_len_val then

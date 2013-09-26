@@ -1,4 +1,8 @@
-/* */
+
+#ifdef CSEC_VERIFY
+  // redefine BN_num_bytes:
+  #include <proxies/openssl_proxies.h>
+#endif
 
 #define PORT_ALICE     12344
 #define PORT_BOB       12345

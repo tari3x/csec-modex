@@ -6,13 +6,14 @@
 
 #include <proxies/common.h>
 #include <proxies/interface.h>
+// Temporary
+#include <crest.h>
 
 extern void nonce_proxy(unsigned char * N)
 {
   nonce(N);
 
-  newTL("fixed_20_nonce", "nonce", SIZE_NONCE);
-  // symL("new", "nonce", SIZE_NONCE, FALSE);
+  newTL(SIZE_NONCE, "nonce", "nonce");
   store_buf(N);
 }
 
@@ -20,7 +21,13 @@ extern size_t encrypt_len_proxy(unsigned char * key, size_t keylen, unsigned cha
 {
   size_t ret = encrypt_len(key, keylen, in, inlen);
 
-  symL("encrypt_len", "len", sizeof(ret), FALSE);
+  // No hint, to avoid term duplication.
+  load_buf(in, inlen, "");
+  symL("encrypt_len", "", sizeof(ret), TRUE);
+
+  duplicate();
+  assume_intype("bitstring");
+
   store_buf(&ret);
 
   if(ret < 0) exit(1);
@@ -36,7 +43,8 @@ extern size_t encrypt_proxy(unsigned char * key, size_t keylen, unsigned char * 
       load_buf(key, keylen, "key");
       // hm, it would be sensible to set length to keylen here, but right now I don't allow len() inside lens
     symNE("isek", "key", NULL, 0, TRUE, 1);
-    newTN("seed_T", "nonce", NULL);
+    // FIXME: what's the actual seed length?
+    newTL(256, "seed_T", "nonce");
   symN("E", "cipher", &ret, TRUE);
   store_buf(out);
 
@@ -50,10 +58,21 @@ extern size_t decrypt_len_proxy(unsigned char * key, size_t keylen, unsigned cha
 {
   size_t ret = decrypt_len(key, keylen, in, inlen);
 
-  symL("decrypt_len", "len", sizeof(ret), FALSE);
+  // No hint, to avoid term duplication.
+  load_buf(in, inlen, "");
+  //  symL("decrypt_len", "", sizeof(ret), TRUE);
+  SymN("decrypt_len", 1);
+
+  duplicate();
+  test_intype("bitstring");
+
+  SetLen(sizeof(ret));
+  Done();
+
   store_buf(&ret);
 
-  if(ret < 0) exit(1);
+  // Assume that the length of the decryption is at most the length of the ciphertext.
+  if(ret < 0 || ret > inlen) exit(1);
 
   return ret;
 }

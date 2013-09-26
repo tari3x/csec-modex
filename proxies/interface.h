@@ -15,7 +15,9 @@
 #define PROXY_INTERFACE
 
 #include "common.h"
+#include "crest.h"
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 /**
@@ -35,38 +37,86 @@ EXTERN void unmute();
  */
 EXTERN void load_buf(const unsigned char * buf, size_t len, const char * hint);
 // can be used for zero-terminated strings, loads everything in the allocated buffer.
-EXTERN void load_all(const char * buf, const char * hint);
+EXTERN void load_all(const unsigned char * buf, const char * hint);
 EXTERN void load_ctx(const void * ctx, const char * attr, const char * hint);
-EXTERN void load_int(int n, const char * hint);
+EXTERN void load_int(long n, bool is_signed, size_t width, const char * hint);
 EXTERN void load_str(const char * str);
 
 /**
- * Apply an operation to the top of the stack.
- * Deterministic or non-deterministic.
+ * TODO: once length treatment in symex is simplified and there is no need for setlength, change the interface:
+ * sym("f");
+ * duplicate();
+ * assume_intype("bitstring");
+ * duplicate();
+ * len(&len, sizeof(len)); // with implicit assumption about length of length
+ * assume(len == xlen); // or assume(len == 8);
  *
- * The first version sets a known length, the second sets a fresh length and writes it into len.
+ * alternatively:
+ * assume_intype("fixed_4");
+ *
  */
-EXTERN void symL(const char * sym, const char * hint, size_t len, int deterministic);
-EXTERN void symN(const char * sym, const char * hint, size_t * len, int deterministic);
-EXTERN void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenlen, int deterministic, int nargs);
+
+
+/**
+ * Consumes the stack top.
+ */
+EXTERN void len(size_t lenlen);
+
+/**
+ * Does not consume the stack top.
+ */
+EXTERN void test_intype(const char * type);
+EXTERN void assume_intype(const char * type);
+
+/**
+ * Consumes the stack top.
+ */
+EXTERN void assume(int fact);
+
+/**
+ * Does not consume the stack top.
+ */
+EXTERN void assume_len(size_t len);
+
+EXTERN void duplicate();
+EXTERN void clear(int n);
+
+EXTERN void input(const char * hint, size_t len);
+
+/**
+ * Create a nonce, given length and optional type alias (pass type = NULL to omit).
+ * Pass -1 as len to create a nonce of an unknown length, having type (Named type).
+ */
+EXTERN void newTL(size_t len, const char * type, const char * hint);
 
 /**
  * Create a nonce, of a given type and unknown length
  */
-EXTERN void newTN(const char * type, const char * hint, size_t * len);
-/**
- * Create a nonce, of a given type and known length
- */
-EXTERN void newTL(const char * type, const char * hint, size_t len);
+// EXTERN void newTN(const char * type, const char * hint, size_t * len);
 /**
  * Create a nonce, of known length l and type fixed_l
  */
-EXTERN void newL(const char * hint, size_t len);
-
+// EXTERN void newL(const char * hint, size_t len);
 
 EXTERN void varsym(const char * name);
-EXTERN void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen);
+
+EXTERN void fresh_var(const char * name_stem);
+
+/**
+ * len may be NULL.
+ */
+// Use readenv in common.c.
+// EXTERN void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen);
+/**
+ * Initialises the buffer pointer before placing the variable.
+ */
+EXTERN void varWithBufInit(const char * name, const unsigned char ** buf, const unsigned char * len, size_t lenlen);
 EXTERN void varL(const char * name, const unsigned char * buf, size_t len);
+
+EXTERN void store_len(const unsigned char * buf, size_t width, bool is_signed);
+
+EXTERN void output();
+
 
 /**
  * Add a left hand side. Same versions as for the right hand side.
@@ -75,14 +125,14 @@ EXTERN void varL(const char * name, const unsigned char * buf, size_t len);
  */
 EXTERN void store_buf(const unsigned char * buf);
 // Replace completely the contents of buf with what is on top of stack
-EXTERN void store_all(const char * buf);
+EXTERN void store_all(const unsigned char * buf);
 EXTERN void store_ctx(const void * ctx, const char * attr);
 // EXTERN long int lhs_int(long int n, const char * hint);
 
 /**
  * Call instead of store_buf for an equation with an empty left hand side.
  */
-EXTERN void event();
+EXTERN void event(const char * sym, int nargs);
 
 /**
  * Append contents of a memory buffer to a bitstring attribute.
@@ -132,7 +182,12 @@ EXTERN long int concrete_val(long int n);
 /**
  * Put a fresh heap pointer value on the stack.
  */
-void fresh_ptr(int size);
+EXTERN void fresh_ptr(size_t size);
+
+/**
+ * Put a stack pointer (with step 1) on the stack.
+ */
+EXTERN void stack_ptr(const char * name);
 
 /**
  * Specify that the function return value is what's on top of the symbolic stack.

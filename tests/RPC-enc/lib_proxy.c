@@ -10,10 +10,14 @@
 
 #include <string.h>
 
+#include "rpc-enc.h"
+
+/*
 extern uint32_t encrypt_len_proxy(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen)
 {
   uint32_t ret = encrypt_len(key, keylen, in, inlen);
 
+  // Don't use "len"
   symL("encrypt_len", "len", sizeof(ret), FALSE);
   store_buf(&ret);
 
@@ -21,23 +25,32 @@ extern uint32_t encrypt_len_proxy(unsigned char * key, uint32_t keylen, unsigned
 
   return ret;
 }
+*/
 
 extern uint32_t encrypt_proxy(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen, unsigned char * out)
 {
+  mute();
   uint32_t ret = encrypt(key, keylen, in, inlen, out);
+  unmute();
 
   load_buf(in, inlen, "msg");
   load_buf(key, keylen, "key");
-  newTN("seed", "nonce", NULL);
-  symNE("E", "cipher", &ret, sizeof(ret), TRUE, -1);
+  // FIXME: is the seed really 16 bytes?
+  newTL(16, "seed", "nonce");
+
+  SymN("E", 3);
+  Hint("cipher");
+  store_len(&ret, sizeof(ret), FALSE);
+
   store_buf(out);
 
-  if(ret > encrypt_len_proxy(key, keylen, in, inlen))
+  if(ret > encrypt_len(key, keylen, in, inlen))
     fail("encrypt_proxy: bad length");
 
   return ret;
 }
 
+/*
 extern uint32_t decrypt_len_proxy(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen)
 {
   uint32_t ret = decrypt_len(key, keylen, in, inlen);
@@ -49,18 +62,27 @@ extern uint32_t decrypt_len_proxy(unsigned char * key, uint32_t keylen, unsigned
 
   return ret;
 }
+*/
 
 extern uint32_t decrypt_proxy(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen, unsigned char * out)
 {
+  mute();
   uint32_t ret = decrypt(key, keylen, in, inlen, out);
+  unmute();
 
   load_buf(in, inlen, "cipher");
   load_buf(key, keylen, "key");
-  symN("D", "msg", NULL, TRUE);
-  symNE("inverse_injbot", "msg", &ret, sizeof(ret), TRUE, -1);
+
+  SymN("D", 2);
+  Hint("msg");
+
+  SymN("inverse_injbot", 1);
+  Hint("msg");
+  store_len(&ret, sizeof(ret), FALSE);
+
   store_buf(out);
 
-  if(ret > decrypt_len_proxy(key, keylen, in, inlen))
+  if(ret > decrypt_len(key, keylen, in, inlen))
     fail("decrypt_proxy: bad length");
 
   return ret;
@@ -68,15 +90,20 @@ extern uint32_t decrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
 
 unsigned char * get_shared_key_proxy(unsigned char* client, uint32_t client_len, unsigned char* server, uint32_t server_len, uint32_t * len)
 {
+  mute();
   unsigned char * ret = get_shared_key(client, client_len, server, server_len, len);
+  unmute();
+
+  stack_ptr("shared_key_ptr");
+  StoreBuf(&ret);
 
   // We only provide the service for one identity of attacker's choice (xClient).
   // This can be improved with multipath, because then we can just inline the case split
   // bad client / good client.
-  size_t xclient_len = client_len;
-  unsigned char * xclient = malloc(xclient_len);
-  memcpy(xclient, client, xclient_len);
-  readenv(xclient, &xclient_len, "xClient");
+  uint32_t xclient_len = client_len;
+  unsigned char * xclient = malloc_proxy(xclient_len);
+  memcpy_proxy(xclient, client, xclient_len);
+  readenvE(xclient, &xclient_len, sizeof(xclient_len), "xClient");
 
   if((client_len != xclient_len) || memcmp_proxy(client, xclient, xclient_len))
     fail("trying to look up key for unknown host");
@@ -84,7 +111,12 @@ unsigned char * get_shared_key_proxy(unsigned char* client, uint32_t client_len,
   load_buf(client, client_len, "client");
   load_buf(server, server_len, "server");
   varsym("db");
-  symNE("lookup", "kAB", len, sizeof(*len), TRUE, -1);
+
+  SymN("lookup", 3);
+  assume_intype("bitstring");
+  Hint("kAB");
+  store_len(len, sizeof(*len), FALSE);
+
   store_buf(ret);
   //readenv(ret, len, "kAB");
 
@@ -93,11 +125,23 @@ unsigned char * get_shared_key_proxy(unsigned char* client, uint32_t client_len,
 
 unsigned char * mk_session_key_proxy(uint32_t * len)
 {
+  mute();
   unsigned char * ret = mk_session_key(len);
+  unmute();
 
-  newTN("keyseed", "kS_seed", NULL);
-  symN("kgen", "kS", len, FALSE);
+  stack_ptr("session_key_ptr");
+  StoreBuf(&ret);
+
+  newTL(16, "keyseed", "kS_seed");
+
+  SymN("kgen", 1);
+  Hint("kS");
+  store_len(len, sizeof(*len), FALSE);
+
   store_buf(ret);
+
+  if(*len != 16)
+    fail("The session key is wrong (impossible)");
 
   return ret;
 }
@@ -114,18 +158,52 @@ unsigned char * get_request_proxy(uint32_t * len)
 }
 */
 
-unsigned char * get_response_proxy(uint32_t * len)
+
+unsigned char * get_request_proxy(uint32_t * len, const char * request)
 {
-  unsigned char * ret = get_response(len);
+  mute();
+  unsigned char * ret = get_request(len, request);
+  unmute();
 
-  // symNE("new", "response", len, sizeof(*len), FALSE, -1);
-  // store_buf(ret);
+  stack_ptr("request_ptr");
+  StoreBuf(&ret);
 
-  // newTN("mstring_payload", "response", len);
-  // store_buf(ret);
+  readenvE(ret, (unsigned char *) len, sizeof(*len), "request");
 
-  readenv(ret, len, "response");
+  if(*len > MAX_PAYLOAD_LENGTH || *len < MIN_PAYLOAD_LENGTH)
+    fail("Server: reuqest of wrong  size");
 
   return ret;
 }
 
+
+unsigned char * get_response_proxy(uint32_t * len)
+{
+  mute();
+  unsigned char * ret = get_response(len);
+  unmute();
+
+  stack_ptr("response_ptr");
+  StoreBuf(&ret);
+
+  readenvE(ret, (unsigned char *) len, sizeof(*len), "response");
+
+  if(*len > MAX_PAYLOAD_LENGTH || *len < MIN_PAYLOAD_LENGTH)
+    fail("Server: response of wrong  size");
+
+  return ret;
+}
+
+void print_buffer_proxy(const unsigned char * buf, int len)
+{
+  mute();
+  print_buffer(buf, len);
+  unmute();
+}
+
+void print_text_buffer_proxy(const unsigned char * buf, int len)
+{
+  mute();
+  print_text_buffer(buf, len);
+  unmute();
+}

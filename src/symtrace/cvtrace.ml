@@ -199,7 +199,6 @@ let mkPattern f_c arity v i =
   let pat = replicate arity Underscore in
   FPat (f_c, set_element i (VPat v) pat) 
   
-
 (**
   Expects formatting-normal form.
 *)
@@ -216,6 +215,9 @@ let matchSafeParsers (parsers: symDefs) (concats: symDefs) parsingEqs facts p =
 
     | AuxTest e :: p -> 
       AuxTest e :: doMatch (facts @ [e]) p
+      
+    | Assume e :: p ->
+      Assume e :: doMatch (facts @ [e]) p 
       
     | s :: p -> s :: doMatch facts p
                               
@@ -281,7 +283,7 @@ let zeroSym t = Const ("zero_" ^ Type.toString t)
   
   Generate the following equations:
   
-    - for each conc: T1 x ... x Tn -> T
+    - for each conc : T1 x ... x Tn -> T
       ZT(conc(x1, ..., xn)) = ZT'(conc(ZT1(x1), ..., ZTn(xn)))
       
     - for each cast_T1_T2:
@@ -355,7 +357,7 @@ let zeroFacts (concats: symDefs)
   let fixed_types =
     Sym.Map.values funTypes
     |> List2.concat_map (fun (ts, _) -> ts) 
-    |> List.filter (function Fixed _ -> true | _ -> false) 
+    |> List.filter Type.hasFixedLength
     |> List2.nub
   in
   let const_facts = List.map constFact fixed_types in
@@ -390,7 +392,7 @@ let addAuxiliaryPrimed auxiliary funTypes =
     
 (*
   There are two ways to check 
-    len(x) = len(y) /\ def[x/arg] => def[y/arg].
+    (len(x) = len(y)) => (def[x/arg] = def[y/arg]).
   
   The first way is to do length substitutions and then check syntactic equality. 
   One needs to expand lengths because of things like
@@ -399,7 +401,7 @@ let addAuxiliaryPrimed auxiliary funTypes =
   The other way is to use the solver directly, but then you need to show overflow safety as well.
   When formalising, you need to replace auxiliary facts by hardened facts that check overflow safety.
   
-  The second option bis conceptually simpler, but less efficient.
+  The second option is conceptually simpler, but less efficient.
   Another problem with the second option is that it is tricky to tell the solver to assume overflow
   safety for an expression. One cannot just extract the overflow safety fact, because that itself
   may not be overflow safe. For these reasons I'm using the first option now.
@@ -434,8 +436,7 @@ let auxiliaryFacts (concats: symDefs) (auxiliary: symDefs) (funTypes: Typing.fun
       def_x = def_y
     in
   
-    (* FIXME: looks like t isn't being used any more *)
-    let concatPairs arg t =
+    let concatPairs arg =
       let pair c = 
         match Sym.Map.maybe_find c funTypes with
           | Some (ts, t') (* when t = t' *) -> 
@@ -443,12 +444,14 @@ let auxiliaryFacts (concats: symDefs) (auxiliary: symDefs) (funTypes: Typing.fun
 
             (* Rename args of c_def to avoid collision with args of def. *)
             let c_args = List.map (fun _ -> Var.fresh "c_arg") (1 -- (Sym.arity c)) in
-            let c_def = E.substV (mkFormalArgs (Sym.arity c)) c_args c_def in 
-            
+            let c_def = E.substV (mkFormalArgs (Sym.arity c)) c_args c_def in
+            (* For simplifcation. *) 
+            S.addFact (S.isDefined c_def);
+
             let def = 
               E.subst [arg] [c_def] def 
                 (* We may be substituting an encoder inside a parser, so we need to simplify. *)
-              |> silent Simplify.deepSimplify
+              |> Simplify.deepSimplify
                 (* Deal with stuff like 
                    !(castToInt[false,4,false,8](len("p"|len54|x92|x93)) <= (i5 + castToInt[false,4,false,8](len55))) 
                 *)
@@ -479,7 +482,7 @@ let auxiliaryFacts (concats: symDefs) (auxiliary: symDefs) (funTypes: Typing.fun
         | x :: xs, t :: ts when canErase x ->
           List.map (fun args -> (Var x, zeroOf x t) :: args) (argPairs xs ts)
         | x :: xs, t :: ts ->
-          let pairs = (Var x, Var x) :: concatPairs x t in
+          let pairs = (Var x, Var x) :: concatPairs x in
           List2.cross_product (fun pair args -> pair :: args) pairs (argPairs xs ts)
         | _ -> fail "argPairs: impossible"
     in
@@ -495,6 +498,7 @@ let auxiliaryFacts (concats: symDefs) (auxiliary: symDefs) (funTypes: Typing.fun
     |> List.map mkFact 
   in
   
+  S.resetFacts ();
   Sym.Map.bindings auxiliary
   |> List2.concat_map (fun (sym, def) -> 
     debug "Auxiliary facts: checking %s: %s" (Sym.toString sym) (E.toString def);
@@ -606,7 +610,7 @@ let showCVStmt: Stmt.t -> string = fun s ->
     | Assume e ->
       Printf.sprintf "assume %s in" (showExpBody e)
 
-    | GenTest e ->
+    | Test e ->
       "if " ^ showExpBody e ^ " then "
                                                 
     | Event (name, es) -> 
@@ -772,9 +776,9 @@ let rec removeCasts = function
 let debugIML client server title = 
   if verbose then prerr_title title;
   if verbose then prerr_endline "Client = ";
-  if verbose then prerr_endline (Iml.toString (Iml.map removeCasts client));
+  if verbose then prerr_endline (Iml.toString client);
   if verbose then prerr_endline "Server = ";
-  if verbose then prerr_endline (Iml.toString (Iml.map removeCasts server))
+  if verbose then prerr_endline (Iml.toString server)
  
 
 let main () =  
@@ -793,8 +797,8 @@ let main () =
   let client = removeTrailingComputations client in
   debugIML client server "IML after removing trailing computations";
 
-  let server = normalForm server in
-  let client = normalForm client in
+  let server = with_debug ~depth:0 normalForm server in
+  let client = with_debug ~depth:0 normalForm client in
   debugIML client server "IML in normal form";
 
   let server = simplifyDoubleLets server in
@@ -869,8 +873,8 @@ let main () =
       
   let funTypes = Typing.mergeFunTypes [funTypes; clientFormatterTypes; serverFormatterTypes] in
 
-  let client = with_debug (Typing.check defs funTypes templateVarTypes []) client in 
-  let server = with_debug (Typing.check defs funTypes templateVarTypes []) server in
+  let client = with_debug ~depth:0 (Typing.check defs funTypes templateVarTypes []) client in 
+  let server = with_debug ~depth:0 (Typing.check defs funTypes templateVarTypes []) server in
   
   debugIML client server "IML after typechecking";
 
@@ -897,8 +901,8 @@ let main () =
   let client = matchInverse client in
   let server = matchInverse server in
 
-  let client = matchSafeParsers parsers concats parsingEqs [] client in
-  let server = matchSafeParsers parsers concats parsingEqs [] server in
+  let client = with_debug ~depth:1 (matchSafeParsers parsers concats parsingEqs []) client in
+  let server = with_debug (matchSafeParsers parsers concats parsingEqs []) server in
 
   let client = mergePatterns client in
   let server = mergePatterns server in
@@ -918,12 +922,11 @@ let main () =
     Auxiliary tests
   *************************)
 
-  let auxiliaryFacts = auxiliaryFacts concats auxiliary funTypes in
+  let auxiliaryFacts = with_debug (auxiliaryFacts concats auxiliary) funTypes in
   let auxiliary, funTypes = addAuxiliaryPrimed auxiliary funTypes in
   let client = removeAuxiliary client in
   let server = removeAuxiliary server in
   debugIML client server "IML after removing auxiliary ifs";
-
 
   (************************
     Zero facts

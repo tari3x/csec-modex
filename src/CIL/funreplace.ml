@@ -45,29 +45,42 @@ class funReplaceVisitorClass = object
 
   method vglob : global -> global list visitAction = function
 
-	  (* FIXME: need to check definitions as well, otherwise tls1_P_hash_proxy remains undefined *)
-	  | GVarDecl (f, _) as g when needsProxy f ->
+    | GVarDecl (f, _) as g when needsProxy f ->
       (* let f' = { f with vname = f.vname ^ "_proxy" } in *)
       ChangeTo [g; GVarDecl (proxy f, locUnknown)] 
         
       (* do nothing about opaque declarations, they are handled in crestify *)
 
-    | GFun (f, _) ->
+    | GFun (f, _) as g ->
       (* turn off static storage for functions to be proxied *)
       if f.svar.vstorage = Static then
         f.svar.vstorage <- NoStorage;
-      DoChildren
+        
+      (* no replacing in proxy functions themselves *)
+      if isProxy f.svar then
+        SkipChildren
+      (* 
+        Make sure things like tls1_prof_proxy get defined.
+        FIXME: does it lead to multiple definitions?
+      *)
+      else if needsProxy f.svar then
+        ChangeTo [GVarDecl (proxy f.svar, locUnknown); g] 
+      else
+        DoChildren
 
-	  | _ -> DoChildren
+    | _ -> DoChildren
 
 end
 
 let funReplace (f: file) : unit =
   (* iterGlobals f (fun g -> ignore (E.log "%a\n" (printGlobal plainCilPrinter) g)); *)
   setSrcPath f;
-  Mark.markGlobals f;
-  visitCilFile (new funReplaceVisitorClass) f;
-  writeInfo ()
+  if not (Mark.shouldSkip f) then
+  begin
+	  Mark.markGlobals f;
+	  visitCilFile (new funReplaceVisitorClass) f;
+	  writeInfo f
+  end
 
 let feature : featureDescr =
   { fd_name = "funreplace";
@@ -80,7 +93,7 @@ let feature : featureDescr =
           Arg.String (fun s -> E.logChannel := open_append s), (* see open_append in crest *)
         " The file to write proxy function definitions to.");
       ("--root", 
-          Arg.String (fun s -> compilationRoot := s), 
+          Arg.String setRootPath, 
         " The root folder of the compilation.")
       ];
     fd_doit = funReplace;

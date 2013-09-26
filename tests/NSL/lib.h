@@ -11,6 +11,7 @@
 #define SIZE_NONCE 20
 #define MAX_SIZE_KEY 100
 #define MAX_SIZE_HOST 40
+#define MAX_SIZE_CIPHER 1000
 
 // shall we include parameters with events?
 #define USE_EVENT_PARAMS

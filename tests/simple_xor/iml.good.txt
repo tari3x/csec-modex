@@ -1,9 +1,9 @@
 let A = 
+
+
+let B = 
 new nonce1<20>;
 let var1 = i1|nonce1 in
 let xor1 = XOR(var1, pad)<21> in
 out(c, xor1);
-
-let B = 
-
 

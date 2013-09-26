@@ -14,10 +14,13 @@ open Iml.Exp.T
 open Iml.Pat.T
 open Iml.Stmt.T
 
-module E = Iml.Exp
-module S = Solver
-
 open Transform_imltrace
+
+module E = struct 
+  include Iml.Exp
+  include Iml.Exp.T
+end
+module S = Solver
 
 open Printf
 
@@ -62,7 +65,8 @@ let mkFormalArgs n = List.map mkArg (0 -- (n - 1))
 (*************************************************)
 
 let showFun sym def =
-  E.typecheck Bitstring def;
+  (* This is called for boolean conditions as well. *)
+  (* E.typecheck Bitstring def; *)
   Sym.toString sym ^ " := " ^ (E.toString def)
   (* | (s, Rewrite e) -> Sym.toString s ^ "/" ^ string_of_int (List.assoc s !arities) ^ " ~> " ^ (E.toString e) *)
 
@@ -105,6 +109,12 @@ let showParsingEq ?funTypes concats (((p, c), e): parsingEq) =
   in  
   sprintf "%s%s(%s(%s)) = %s" header (Sym.toString p) (Sym.toString c) (String.concat ", " args) (E.toString e)
 
+(*
+let valueUnsigned e = 
+  match S.eval (E.Len e) with
+  | None   -> fail "cannot determine width of %s" (E.toString e)
+  | Some w -> E.Val (e, (IntType.Unsigned, w))
+*)
 
 (*************************************************)
 (** {1 Typing} *)
@@ -244,10 +254,10 @@ end = struct
       
       | AuxTest _ :: p -> infer p
 
-      | GenTest e :: p -> 
+      | Test e :: p -> 
         let ctxE = inferExp Bool e in
         let ctxP = infer p in
-        merge [ctxE; ctxP]        
+        merge [ctxE; ctxP]
                         
       | TestEq (e1, e2) :: p -> 
         let ctx1 = inferExp Bitstring e1 in
@@ -301,7 +311,7 @@ end = struct
         in                   
         Some (f, (ts, Var.Map.find v ctx))
         
-      | GenTest (Sym (f, vs)) when not (Sym.Map.mem f funTypes) -> 
+      | Test (Sym (f, vs)) when not (Sym.Map.mem f funTypes) -> 
         let ts = 
           List.map (function | Var v -> Bitstring 
                              | _ -> fail "malformed test statement: %s" (Stmt.toString s))
@@ -390,10 +400,10 @@ end = struct
         let p' = check ctx (facts @ [e]) p in
         AuxTest e :: p'
         
-      | GenTest e :: p ->
+      | Test e :: p ->
         let e = checkExp ctx facts Bool e in
         let p = check ctx facts p in
-        GenTest e :: p
+        Test e :: p
         
       | TestEq (e1, e2) :: p ->
         let t1 = expType funTypes ctx e1 in
@@ -689,11 +699,11 @@ let normalForm p =
     
     (* remove expressions that are themselves lengths of an expression that follows *) 
     let rec removeLens = function
-      | String s :: es -> String s :: removeLens es
-      | e :: es ->
-        if List.exists (fun e' -> S.equalInt (E.valueUnsigned e) (Len e')) es 
+      | BS (e, _) :: es ->
+        if List.exists (fun e' -> S.equalInt e (Len e')) es
         then removeLens es
         else e :: removeLens es
+      | e :: es -> e :: removeLens es
       | [] -> []
     in
   
@@ -706,25 +716,25 @@ let normalForm p =
       args is the list of arguments that we haven't found a length for yet. 
     *)
     let rec explicateLens args = function 
-      | String s :: es -> String s :: explicateLens args es
-      | e :: es ->
-        begin match find_and_remove (fun e' -> S.equalInt (E.valueUnsigned e) (Len e')) args with
+      | [] -> []
+      | BS (e, itype) :: es ->
+        begin match find_and_remove (fun e' -> S.equalInt e (Len e')) args with
           | Some (e', args) -> 
-            BS (Len e', (IntType.Unsigned, E.width_exn e)) :: explicateLens args es
+            BS (Len e', itype) :: explicateLens args es
           | None -> e :: explicateLens args es
         end
-      | [] -> []
+      | e :: es -> e :: explicateLens args es
     in
   
-    let rec extractAuxiliary e = 
+    let rec extractNonCryptographic e = 
       match e with 
-      | e when isAuxiliary e -> E.descend extractAuxiliary e
+      | e when not (isCryptographic e) -> E.descend extractNonCryptographic e
       | e -> mkVar (extract e)
 
     (* Variables for same expressions will later be unified by simplifyLets *)
     and extractConcat = function
       | e when isTag e -> e
-      | Len e -> Len (mkVar (extract e))
+      | BS (Len e, itype) -> BS (Len (mkVar (extract e)), itype)
       | e -> mkVar (extract e) 
       
     and extractParser v m e =
@@ -742,8 +752,6 @@ let normalForm p =
       
     and extract e = 
       match e with
-      | e when isAuxiliary e -> extractAuxiliary e
-              
       | Concat es ->
         let args = removeLens (List.filter (non isTag) es) in
         let es = explicateLens args es in
@@ -752,19 +760,19 @@ let normalForm p =
         Concat (List.map extractConcat es)
         
       | Range (Range _, _, _) ->
-        fail "extractParsers: nested range unsupported: %s" (E.dump e)
+        fail "extractParsers: nested ranges not supported: %s" (E.dump e)
         
       | Range (m, pos, len) ->
         let v = mkVar (extract m) in
         extractParser v m e
+
+      | Var v -> Var v
         
-      | e -> E.descend moveOut e
-    
-    and moveOut e = 
-      match e with
-        | Concat _ | Range _ -> mkVar (extract e)
-        | e when isAuxiliary e -> mkVar (extract e)  
-        | _ -> extract e
+      | Sym (Fun _, _) -> E.descend extract e
+
+      | e when not (isCryptographic e) -> extractNonCryptographic e
+                        
+      | _ -> assert false
     in 
     
     match p with
@@ -788,7 +796,13 @@ let normalForm p =
         List.iter (fun v -> S.addFact (S.isDefined (Var v))) vs;
         s :: normalize p
         
-      | (GenTest _ | TestEq _ | Out _ | New _ | Event _ | Yield | Comment _ ) as s :: p ->
+      | (Test _ | TestEq _ | Out _ | New _ | Event _ | Yield | Comment _ ) as s :: p ->
+        let moveOut e = match e with
+          | Concat _ | Range _ -> mkVar (extract e)
+          | Var _ | Sym (Fun _, _) -> extract e
+          | e when not (isCryptographic e) -> mkVar (extract e)  
+          | _ -> assert false
+        in
         let s = Stmt.descend moveOut s in
         sortDefs !defs @ (s :: normalize p)
         
@@ -819,7 +833,7 @@ let extractArithmetic p: iml * symDefs =
 
   let rec extract e = 
     match e with
-    | e when isAuxiliary e -> 
+    | e when not (isCryptographic e) -> 
       let vs, def = extractDef e in
       let f = Fun (Var.fresh "arithmetic", List.length vs) in
       defs := (f, def) :: !defs;
@@ -928,22 +942,16 @@ let isInjectiveConcat sym def =
       *)
     else *) begin
       let args = List.filter (function Var _ -> true | _ -> false) es in
-      let lens = List.filter (function Len _ -> true | _ -> false) es in
-      let argsWithoutLens = 
-        filter_out (fun v -> 
-          List.exists (fun l -> S.equalInt (Len v) l) lens)
-          args
-      in
+      let args_with_lens = List2.filter_map (function BS (Len v, _) -> Some v | _ -> None) es in
+      let args_without_lens = List2.diff args args_with_lens in 
       (*
       debug "args: %s" (E.listToString args);
       debug "lens: %s" (E.listToString lens);
       debug "argsWithoutLens: %s" (E.listToString argsWithoutLens);
       *)
-      
-      List.length argsWithoutLens <= 1
+      List.length args_without_lens <= 1
     end
-  | _ -> true
-
+  | _ -> false
 
 type encoderFact = 
   | Disjoint of sym * sym
@@ -1022,7 +1030,7 @@ let extractAuxiliary p: iml * symDefs =
       let f = Fun (Var.fresh "auxiliary", List.length vs) in
       arities := (f, def) :: !arities;
       let args = List.map E.var vs in
-      GenTest (Sym (f, args)) :: AuxTest e :: extract p
+      Test (Sym (f, args)) :: AuxTest e :: extract p
       
     | s :: p -> s :: extract p
     | [] -> []
@@ -1083,12 +1091,12 @@ let computeParsingRules funTypes (parsers: symDefs) (concats: symDefs): parsingE
 (*************************************************)
 
 let wellFormed e_c = 
-  let args = List.filter (function Var _ -> true | _ -> false) e_c in
-  let lens = List.filter (function Len _ -> true | _ -> false) e_c in
+  let args = List.filter (function Var _         -> true | _ -> false) e_c in
+  let lens = List.filter (function BS (Len _, _) -> true | _ -> false) e_c in
   (* debug "wellFormed: %s, args = %s, lens = %s" (E.listToString e_c) (E.listToString args) (E.listToString lens); *)
   if not (distinct args) || not (distinct lens) then false
   else 
-    let argsWithLens = List.map (function Len v -> v | _ -> fail "wellFormed: impossible") lens in
+    let argsWithLens = List.map (function BS (Len v, _) -> v | _ -> fail "wellFormed: impossible") lens in
     (* debug "wellFormed: argsWithLens = %s" (E.listToString argsWithLens); *)
     match multidiff (=) args argsWithLens with
       | [e] -> e = last e_c
@@ -1101,22 +1109,26 @@ let rec mkParsers ls ps es e_c =
       let l = 
         match e_i, e_c with
           | _, [] ->
-            Sym(MinusInt, [Len x; Simplify.sum ls])
+            Sym (MinusInt, [Len x; Simplify.sum ls])
           | Var _ as v, _ ->
             (* debug "looking for %s in %s" (E.dump v) (E.dumpList es); *) 
             (* Need comparison in this order as es will contain lengths of lengths *)
-            List.nth ps (find_index_exn (function Len v' when v = v' -> true | _ -> false) es) 
+            List.combine es ps
+            |> List2.first_some (function
+                | (BS (Len v', itype), p) when v = v' -> Some (Val (p, itype)) 
+                | _ -> None)
+            |> Option2.value_exn
           | e_i, _ -> 
             Len e_i
       in
-      let p = Range(x, Simplify.sum ls, l) in
+      let p = Range (x, Simplify.sum ls, l) in
       mkParsers (ls @ [l]) (ps @ [p]) (es @ [e_i]) e_c
       
     | [] -> ps
 
 let rec tagFacts ps e_c =
   match ps, e_c with
-    | p :: ps, (Len _ | Var _) :: e_c ->
+    | p :: ps, (BS (Len _, _) | Var _) :: e_c ->
       tagFacts ps e_c
     | p :: ps, e_t :: e_c ->
       S.eqBitstring [p; e_t] :: tagFacts ps e_c
@@ -1150,7 +1162,7 @@ let matchConcat parsingEqs facts p e (c, c_def) =
     debug (sprintf "checkParsingSafety: the parser %s is not an inverse of %s" p c); 
     debug (sprintf "checkParsingSafety: no concat satisfies the application of %s to %s" p (dump e));
   *) 
-  if not (silent ~depth:10 (isInjectiveConcat c) c_def) || not (inrange facts e c c_def) then None
+  if not (isInjectiveConcat c c_def) || not (inrange facts e c c_def) then None
   else 
     match maybe_assoc (p, c) parsingEqs with
       | Some (Var v) ->
@@ -1159,7 +1171,8 @@ let matchConcat parsingEqs facts p e (c, c_def) =
       | _ -> None 
 
 let safeParse (concats: symDefs) parsingEqs facts f_p e =
-   first_some (matchConcat parsingEqs facts f_p e) (Sym.Map.bindings concats)
+  debug "safeParse, facts = %s" (E.listToString facts); 
+  first_some (matchConcat parsingEqs facts f_p e) (Sym.Map.bindings concats)
 
 
 (*************************************************)

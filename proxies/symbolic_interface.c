@@ -9,13 +9,52 @@
 // Things implemented in crestify.cpp:
 // mute, unmute
 
+void test_intype(const char * type)
+{
+  Dup();
+  InType(type);
+  Done();
+  Test();
+}
+
+void assume_intype(const char * type)
+{
+  Dup();
+  InType(type);
+  Done();
+  Assume();
+}
+
+void assume(int fact)
+{
+  if(!fact)
+  {
+    printf("assumption violated\n");
+    exit(1);
+  }
+
+  LoadAll(&fact);
+  Assume();
+}
+
+void assume_len(size_t len)
+{
+  Dup();
+  Len();
+  LoadBuf(&len, sizeof(len));
+  Val(FALSE, sizeof(len));
+  SymN("EqInt", 2);
+  Assume();
+}
+
+
 void load_buf(const unsigned char * buf, size_t len, const char * hint)
 {
   LoadBuf(buf, len);
   if(hint != NULL) Hint(hint);
 }
 
-void load_all(const char * buf, const char * hint)
+void load_all(const unsigned char * buf, const char * hint)
 {
   LoadAll(buf);
   if(hint != NULL) Hint(hint);
@@ -27,9 +66,10 @@ void load_ctx(const void * ctx, const char * attr, const char * hint)
   if(hint != NULL) Hint(hint);
 }
 
-void load_int(int n, const char * hint)
+void load_int(long n, bool is_signed, size_t len, const char * hint)
 {
   LoadInt(n);
+  BS(is_signed, len);
   if(hint != NULL) Hint(hint);
 }
 
@@ -38,121 +78,149 @@ void load_str(const char * str)
   LoadStr(str);
 }
 
-void symL(const char * sym, const char * hint, size_t len, int deterministic)
+void len(size_t lenlen)
 {
-  Sym(sym);
-  SetLen(len);
-  if(!deterministic) Nondet();
+  Len();
+  BS(FALSE, lenlen);
+  Done();
+}
+
+
+void input(const char * hint, size_t len)
+{
+  In(len);
+  if (hint != NULL) Hint(hint);
+}
+
+
+void newTL(size_t len, const char * type, const char * hint)
+{
+  LoadInt(len);
+  if(type == NULL) LoadStr("");
+  else LoadStr(type);
+  New();
   Done();
   if(hint != NULL) Hint(hint);
 }
 
-void symNE(const char * sym, const char * hint, unsigned char * len, size_t lenlen, int deterministic, int nargs)
-{
-  if(nargs == -1)
-    Sym(sym);
-  else
-    SymN(sym, nargs);
-  if(!deterministic) Nondet();
-  Done();
-  if(hint != NULL) Hint(hint);
-
-  if(len != NULL)
-  {
-    Dup();
-    SymN("len", 1);
-    SetLen(lenlen);
-    Done();
-    Hint("len");
-    StoreBuf(len);
-  }
-}
-
-void symN(const char * sym, const char * hint, size_t * len, int deterministic)
-{
-  symNE(sym, hint, len, sizeof(*len), deterministic, -1);
-}
-
-void newTL(const char * type, const char * hint, size_t len)
-{
-  LoadStr(type);
-  SymN("newT", 1);
-  Nondet();
-  SetLen(len);
-  Done();
-  if(hint != NULL) Hint(hint);
-}
-
-
+/*
 void newTN(const char * type, const char * hint, size_t * len)
 {
   LoadStr(type);
-  SymN("newT", 1);
-  Nondet();
+  New();
   Done();
   if(hint != NULL) Hint(hint);
 
   if(len != NULL)
   {
     Dup();
-    SymN("len", 1);
+    Len();
     SetLen(sizeof(*len));
     Done();
-    Hint("len");
-    StoreBuf(len);
+    // Hint("len");
+    StoreBuf((unsigned char *) len);
   }
 }
 
 void newL(const char * hint, size_t len)
 {
-  SymN("new", 0);
-  Nondet();
+  LoadInt(len);
+  New();
   SetLen(len);
   Done();
   if(hint != NULL) Hint(hint);
 }
+*/
 
+void store_len(const unsigned char * buf, size_t width, bool is_signed)
+{
+  Dup();
+  Len();
+  BS(is_signed, width);
+  assume_intype("bitstring");
+  StoreBuf(buf);
+}
 
 void varsym(const char * name)
 {
-  LoadStr(name);
-  SymN("var", 1);
-  Done();
-  Hint(name);
+  Env(name);
 }
 
+void fresh_var(const char * name_stem)
+{
+  FreshVar(name_stem);
+}
+
+/*
 void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen)
 {
   varsym(name);
 
+  if(len != NULL){
+    Dup();
+    Len();
+    BS(FALSE, lenlen);
+    Done();
+    // Hint("len");
+
+    StoreBuf(len);
+  }
+
+  // len will most probably be incomparable with the length of the buffer contents,
+  // so we use StoreAll.
+  StoreAll(buf);
+}
+*/
+
+void varWithBufInit(const char * name, const unsigned char ** buf, const unsigned char * len, size_t lenlen)
+{
+  varsym(name);
+  // stack -> name
+
   Dup();
-  SymN("len", 1);
-  SetLen(lenlen);
+  // stack -> name, name
+  Len();
+  BS(FALSE, lenlen);
   Done();
-  Hint("len");
+  // Hint("len");
+
+  // stack -> len(name), name
 
   StoreBuf(len);
+  fresh_ptr(*len);
   StoreBuf(buf);
+  StoreBuf(*buf);
 }
 
+/*
 void varL(const char * name, const unsigned char * buf, size_t len)
 {
-  LoadStr(name);
-  SymN("var", 1);
-  SetLen(len);
+  varsym(name);
+  assume_len(len);
   Done();
-  Hint(name);
+  // Hint(name);
 
-  StoreBuf(buf);
+  // See var for why we use StoreAll
+  StoreAll(buf);
+}
+*/
+
+void duplicate()
+{
+  Dup();
 }
 
+void clear(int n)
+{
+  Clear(n);
+}
 
 void store_buf(const unsigned char * buf)
 {
   StoreBuf(buf);
 }
 
-void store_all(const char * buf)
+void store_all(const unsigned char * buf)
 {
   StoreAll(buf);
 }
@@ -169,9 +237,14 @@ void store_ctx(const void * ctx, const char * attr)
   return n;
 }*/
 
-void event()
+void event(const char * sym, int nargs)
 {
-  Event();
+  Event(sym, nargs);
+}
+
+void output()
+{
+  Out();
 }
 
 void add_to_attr(const void * ctx, const char * attr, const unsigned char * buf, size_t len)
@@ -236,6 +309,7 @@ void copy_attr(const void * to, const void * from, const char * attr)
 long int concrete_val(long int n)
 {
   __CrestLoadInt(n);
+  BS(TRUE, sizeof(n));
   CustomReturn();
   return n;
 }
@@ -247,9 +321,16 @@ long int concrete_val(long int n)
 //  return p;
 //}
 
-void fresh_ptr(int size)
+void fresh_ptr(size_t size)
 {
   NewHeapPtr(size);
+}
+
+void stack_ptr(const char * name)
+{
+  LoadStackPtr(name);
+  LoadInt(1);
+  SetPtrStep();
 }
 
 

@@ -27,6 +27,7 @@ module Type: sig
       Not using CV typet, because it contains options that we don't care about,
       and so is not equatable. 
     *)
+    (* TODO: use polymorphic variants to prove to the compiler that CastToInt may only contain BsInt *)
     type t = 
       | Bitstringbot               (** All strings and bottom. *)
       | Bitstring                  (** All machine-representable strings *)
@@ -61,6 +62,8 @@ module Type: sig
   val meet : t -> t -> t
   
   val stripName: t -> t
+
+  val hasFixedLength: t -> bool
 end
 
 type imltype = Type.t
@@ -208,6 +211,7 @@ module Sym: sig
   val isArithmetic: t -> bool
   val isBinaryArithmetic: t -> bool
   val isBinaryComparison: t -> bool
+  val isIntegerComparison: t -> bool
   (** A symbol that takes boolean arguments and returns a boolean result. *)
   val isLogical: t -> bool
 
@@ -525,12 +529,11 @@ module Stmt: sig
       | Let of pat * exp
       | AuxTest of exp
         (** 
-          [GenTest e; P = if e then P else 0]
+          [Test e; P = if e then P else 0]
           
-          [GenTest] is never auxiliary after symex postprocessing. 
+          [Test] is never auxiliary after symex postprocessing. 
         *)
-        (* FIXME: rename GenTest to Test after it stabilises *)
-      | GenTest of exp
+      | Test of exp
         (**
           [TestEq] is never auxiliary after symex postprocessing.
         *)

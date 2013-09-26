@@ -6,72 +6,90 @@
 #include "common.h"
 
 #include "interface.h"
+#include "crest.h"
 
 #include <stdio.h>
 
-void readenv(const unsigned char * buf, const size_t * len, const char * s)
+// void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen)
+
+void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * name)
 {
-//  char s_len[100] = "test";
-//  mute();
-//  if(snprintf(s_len, 100, "%s_len", s) == 100) proxy_fail("make_sym: symbol too long: %s", s);
-//  unmute();
-//
-//  sym("user_len", s_len, TRUE, sizeof(*len), FALSE);
-//  store_buf((void*) len);
-  //*len = lhs_int(*len, s_len);
+  if(lenlen == 0)
+  {
+    proxy_fail("readenvE: you certainly don't want lenlen = 0\n");
+  }
 
-  //if(*len < 0) proxy_fail("make_sym: len is negative: %s", s);
-  // if((int) *len != *len) error("make_sym: len doesn't fit into int: %s", s);
+  Env(name);
+  assume_intype("bitstring");
 
-  var(s, buf, len, sizeof(*len));
+  Dup();
+  Len();
+  BS(FALSE, lenlen);
+  Done();
+  // Assume that variable length fits in its bitstring representation.
+  assume_intype("bitstring");
+
+  if(len != NULL)
+    StoreBuf(len);
+  else
+    Clear(1);
+
+  // len will most probably be incomparable with the length of the buffer contents,
+  // so we use StoreAll.
+  StoreAll(buf);
 }
 
-void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * s)
+void readenv(const unsigned char * buf, const size_t * len, const char * name)
 {
-  var(s, buf, len, lenlen);
+  readenvE(buf, len, sizeof(*len), name);
 }
 
-void readenvL(const unsigned char * buf, size_t len, const char * s)
+
+void readenvL(const unsigned char * buf, size_t len, const char * name)
 {
-  varL(s, buf, len);
+  Env(name);
+  assume_intype("bitstring");
+  assume_len(len);
+
+  // See readenv for why we use StoreAll
+  StoreAll(buf);
 }
 
 void make_sym(const unsigned char * buf, size_t len, const char * s)
 {
-  symL(s, s, len, FALSE);
+  SymN(s, 0);
+  assume_len(len);
+  Hint(s);
+  Nondet();
   store_buf(buf);
 }
 
 void make_str_sym(const char * str, const char * s)
 {
-  // Length value not really used so far, but might be if someone calls strlen for instance.
+  // OLD: Length value not really used so far, but might be if someone calls strlen for instance.
   // But then need a non-zero assumption anyway, so will wait what becomes necessary
-  symN(s, s, NULL, FALSE);
-  store_all(str);
+  SymN(s, 0);
+  Hint(s);
+  Nondet();
+  store_all((unsigned char *) str);
 }
 
 void event0(const char * s)
 {
-  symL(s, s, 0, FALSE);
-  symL("event", "event", 0, FALSE);
-  event();
+  event(s, 0);
 }
 
 void event1(const char * s, const unsigned char * buf, size_t len)
 {
   load_buf(buf, len, "");
-  symL(s, s, 0, FALSE);
-  symL("event", "event", 0, FALSE);
-  event();
+  event(s, 1);
 }
 
 void event2(const char * s, const unsigned char * buf1, size_t len1, const unsigned char * buf2, size_t len2)
 {
   load_buf(buf1, len1, "");
   load_buf(buf2, len2, "");
-  symL(s, s, 0, FALSE);
-  symL("event", "event", 0, FALSE);
-  event();
+  event(s, 2);
 }
 
 void event3(const char * s, const unsigned char * buf1, size_t len1,
@@ -81,9 +99,7 @@ void event3(const char * s, const unsigned char * buf1, size_t len1,
   load_buf(buf1, len1, "");
   load_buf(buf2, len2, "");
   load_buf(buf3, len3, "");
-  symL(s, s, 0, FALSE);
-  symL("event", "event", 0, FALSE);
-  event();
+  event(s, 3);
 }
 
 void event4(const char * s, const unsigned char * buf1, size_t len1,
@@ -95,7 +111,27 @@ void event4(const char * s, const unsigned char * buf1, size_t len1,
   load_buf(buf2, len2, "");
   load_buf(buf3, len3, "");
   load_buf(buf4, len4, "");
-  symL(s, s, 0, FALSE);
-  symL("event", "event", 0, FALSE);
-  event();
+  event(s, 4);
+}
+
+void typehint(const unsigned char * buf, size_t len, const char * type)
+{
+  load_buf(buf, len, "");
+  TypeHint(type);
+  store_buf(buf);
+}
+
+void append_zero(const unsigned char * buf)
+{
+  load_all(buf, "");
+  SymN("ztpSafe", 1);
+  load_all(buf, "");
+  SymN("=", 2);
+  Assume();
+
+  load_all(buf, "");
+  load_int(0, TRUE, sizeof(char), "");
+  // load_str("00");
+  Append();
+  store_all(buf);
 }

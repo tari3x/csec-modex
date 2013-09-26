@@ -11,19 +11,26 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <netdb.h>
+
 #include "interface.h"
 
 #include "common_internal.h"
 
 EXTERN int ( __attribute__((__cdecl__)) memcmp_proxy)(void const * a, void const * b, size_t len)
 {
+  mute();
   int ret = memcmp(a, b, len);
+  unmute();
 
   load_buf((const unsigned char*) a, len, "");
   load_buf((const unsigned char*) b, len, "");
-  symL("cmp", "cmp", sizeof(ret), TRUE);
 
-  CustomReturn();
+  SymN("cmp", 2);
+  assume_intype("bitstring");
+  assume_len(sizeof(ret));
+  StoreBuf(&ret);
+
   return ret;
 }
 
@@ -31,12 +38,11 @@ EXTERN void *( __attribute__((__cdecl__)) memcpy_proxy)(void * dest, void const 
 {
   void * ret = dest;
 
-  load_buf((const unsigned char*) src, len, "");
-
   mute();
   ret = memcpy(dest, src, len);
   unmute();
 
+  load_buf((const unsigned char*) src, len, "");
   store_buf((const unsigned char*) dest);
 
   return ret;
@@ -57,39 +63,14 @@ EXTERN void *( __attribute__((__cdecl__)) memmove_proxy)(void * dest, void const
   return ret;
 }
 
-int strcmp_proxy(char const   *a , char const   *b )
-{
-  int ret = strcmp(a, b);
-
-  load_all((const unsigned char*) a, "");
-  __CrestApplyN("ztp", 1); // FIXME: allow sym to take number of params
-  load_all((const unsigned char*) b, "");
-  __CrestApplyN("ztp", 1);
-  symL("cmp", "cmp", sizeof(ret), TRUE);
-
-  CustomReturn();
-  return ret;
-}
-
-extern int strncmp_proxy(char const *a, char const *b, size_t n)
-{
-  int ret = strncmp(a, b, n);
-
-  load_buf((const unsigned char*) a, n, "");
-  __CrestApplyN("ztp", 1); // FIXME: allow sym to take number of params
-  load_buf((const unsigned char*) b, n, "");
-  __CrestApplyN("ztp", 1);
-  symL("cmp", "cmp", sizeof(ret), TRUE);
-
-  CustomReturn();
-  return ret;
-}
 
 extern void *malloc_proxy(size_t size)
 {
   void * ret = NULL;
 
+  mute();
   ret = malloc(size);
+  unmute();
 
   NewHeapPtr(size);
 
@@ -115,11 +96,13 @@ extern  void *realloc_proxy(void *ptr , size_t size )
 {
   void * ret = NULL;
 
+  mute();
   ret = realloc(ptr, size);
+  unmute();
 
   NewHeapPtr(size);
 
-  store_buf(&ret);
+  store_buf((unsigned char *) &ret);
   load_all(ptr, "");
   store_buf(ret);
 
@@ -132,12 +115,18 @@ extern  void *realloc_proxy(void *ptr , size_t size )
  */
 extern void *memset_proxy(void *s , int c , size_t n )
 {
+  mute();
   void * ret = memset(s, c, n);
+  unmute();
 
   ret = s;
 
-  load_int(c, "");
-  symL("replicate", "replicate", n, TRUE);
+  load_int(c, FALSE, sizeof(char), "");
+
+  // FIXME: this is wrong, n should go on stack
+  SymN("replicate", 1);
+  assume_len(n);
+
   store_buf(s);
 
   return ret;
@@ -158,7 +147,9 @@ extern void *memset_proxy(void *s , int c , size_t n )
  */
 extern ssize_t read_proxy(int fd , void *buf , size_t nbytes )
 {
+  mute();
   ssize_t ret = read(fd, buf, nbytes);
+  unmute();
 
   if(ret != nbytes)
   {
@@ -167,7 +158,7 @@ extern ssize_t read_proxy(int fd , void *buf , size_t nbytes )
 
   ret = nbytes;
 
-  symL("read", "msg", ret, FALSE);
+  input("msg", ret);
   store_buf(buf);
 
   return ret;
@@ -175,7 +166,9 @@ extern ssize_t read_proxy(int fd , void *buf , size_t nbytes )
 
 extern ssize_t write_proxy(int fd , void const   *buf , size_t n )
 {
+  mute();
   ssize_t ret = write(fd, buf, n);
+  unmute();
 
   if(ret != n)
   {
@@ -185,24 +178,112 @@ extern ssize_t write_proxy(int fd , void const   *buf , size_t n )
   ret = n;
 
   load_buf(buf, ret, "msg");
-  symN("write", "write", NULL, FALSE);
-  event();
+  output();
+
+  return ret;
+}
+
+int strcmp_proxy(char const   *a , char const   *b )
+{
+  mute();
+  int ret = strcmp(a, b);
+  unmute();
+
+  load_all((const unsigned char*) a, "");
+  SymN("ztp", 1);
+  load_all((const unsigned char*) b, "");
+  SymN("ztp", 1);
+  // No hint, we expect cmp to be rewritten
+  SymN("cmp", 2);
+  assume_len(sizeof(ret));
+
+  CustomReturn();
+  return ret;
+}
+
+int strncmp_proxy(char const *a, char const *b, size_t n)
+{
+  mute();
+  int ret = strncmp(a, b, n);
+  unmute();
+
+  load_buf((const unsigned char*) a, n, "");
+  SymN("ztp", 1);
+  load_buf((const unsigned char*) b, n, "");
+  SymN("ztp", 1);
+  SymN("cmp", 2);
+  assume_len(sizeof(ret));
+
+  CustomReturn();
+  return ret;
+}
+
+
+/*
+ * The strcpy() and strncpy() functions return a pointer to the destination string dest.
+ */
+char *strcpy_proxy(char * dest , char const * src )
+{
+  mute();
+  void * ret = strcpy(dest, src);
+  unmute();
+
+  ret = dest;
+
+  load_all((const unsigned char*) src, "");
+  SymN("ztp", 1);
+  duplicate();
+  test_intype("bitstring");
+  load_int(0, FALSE, sizeof(char), "");
+  Append();
+  store_all((const unsigned char*) dest);
+
+  return ret;
+}
+
+size_t strlen_proxy(const char *s)
+{
+  mute();
+  size_t ret = strlen(s);
+  unmute();
+
+  load_all((const unsigned char*) s, "");
+  SymN("ztp", 1);
+  // Expect to be simplified to ztpSafe when possible.
+  Done();
+  test_intype("bitstring");
+  len(sizeof(ret));
+  store_buf((const unsigned char*) &ret);
 
   return ret;
 }
 
 /*
- * The strcpy() and strncpy() functions return a pointer to the destination string dest.
- */
-extern  char *strcpy_proxy(char * dest , char const * src )
+    struct hostent
+    {
+      char *h_name;                 // Official name of host.
+      char **h_aliases;             // Alias list.
+      int h_addrtype;               // Host address type.
+      int h_length;                 // Length of address.
+      char **h_addr_list;           // List of addresses from name server.
+    #if defined __USE_MISC || defined __USE_GNU
+    # define        h_addr  h_addr_list[0] // Address, for backward compatibility.
+    #endif
+    };
+*/
+struct hostent *gethostbyname_proxy(const char *name)
 {
-  void * ret = strcpy(dest, src);
+  mute();
+  struct hostent * ret = gethostbyname(name);
+  unmute();
 
-  ret = dest;
+  char * varname = (char *) malloc(strlen(name) + strlen("host_address_") + 1);
+  sprintf(varname, "host_address_%s", name);
 
-  load_all((const unsigned char*) src, "");
-  symN("ztp", "ztp", NULL, TRUE);
-  store_all((const unsigned char*) dest);
+  fresh_ptr(sizeof(char*));
+  StoreBuf(&ret->h_addr_list);
+  varWithBufInit(varname, (unsigned char *) &ret->h_addr, (unsigned char *) &ret->h_length, sizeof(ret->h_length));
 
   return ret;
 }
+

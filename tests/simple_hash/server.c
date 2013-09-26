@@ -14,17 +14,19 @@
   #include <proxies/common.h>
 #endif
 
-#define SHA1_LEN 20
-
 void server(unsigned char * key, ulong key_len)
 {
+  if(key_len > MAX_KEY_LEN) fail("Server: key too long.");
+
   ulong msg_len;
+  ulong payload_len;
 
   BIO * b = socket_listen();
 
   // receive the message length
   recv(b, (unsigned char*) &msg_len, sizeof(msg_len));
-  if(msg_len < 0) fail ("payload_len < 0");
+  if(msg_len < sizeof(payload_len)) fail("Server: message too short");
+  if(msg_len > sizeof(payload_len) + 1 + MAX_PAYLOAD_LEN + SHA1_LEN) fail("Server: message too long");
 
   // allocate the message and the hash buffers
   unsigned char * buf = malloc(msg_len);
@@ -36,11 +38,12 @@ void server(unsigned char * key, ulong key_len)
   recv(b, buf, msg_len);
 
   // extract the payload length
-  ulong payload_len = * (ulong *) p;
+  payload_len = * (ulong *) p;
   p += sizeof(payload_len);
 
-  // check the payload length
-  if(sizeof(payload_len) + 1 + payload_len + SHA1_LEN != msg_len)
+  // Check the payload length.
+  // The first condition is not implied by the second because of overflow possibility.
+  if((payload_len > MAX_PAYLOAD_LEN) || (sizeof(payload_len) + 1 + payload_len + SHA1_LEN != msg_len))
     fail("payload_len wrong");
 
   // check the tag
@@ -59,6 +62,10 @@ void server(unsigned char * key, ulong key_len)
 
   unsigned int md_len;
   HMAC(EVP_sha1(), key, key_len, body, body_len, hmac, &md_len);
+
+  #ifdef CSEC_VERIFY
+    typehint(msg_hmac, SHA1_LEN, "fixed_20_hash");
+  #endif
 
   if(!memcmp(hmac, msg_hmac, SHA1_LEN))
   // if(1)

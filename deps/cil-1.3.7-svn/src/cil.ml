@@ -6654,6 +6654,7 @@ let computeCFGInfo (f : fundec) (global_numbering : bool) : unit =
   ()
 
 let initCIL () = 
+  (* https://sourceforge.net/tracker/?func=detail&aid=3521803&group_id=138953&atid=742140 *)
   if not !initCIL_called then begin 
     (* Set the machine *)
     begin
@@ -6697,11 +6698,11 @@ let initCIL () =
 (*     nextGlobalVID := 1; *)
 (*     nextCompinfoKey := 1; *)
 
-    initCIL_called := true;
-    if !msvcMode then
-      initMsvcBuiltins ()
-    else
-      initGccBuiltins ();
+      initCIL_called := true;
+	    if !msvcMode then
+	      initMsvcBuiltins ()
+	    else
+	      initGccBuiltins ();
     ()
   end
     

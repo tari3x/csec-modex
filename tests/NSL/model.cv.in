@@ -1,6 +1,39 @@
 
+(*
+conc1(bitstring, fixed_20_nonce, bounded_40_host): bounded_200_cleartext
+conc2(bitstring): bitstring
+conc3(fixed_20_nonce, bounded_40_host): bounded_200_cleartext
+conc4(bitstring): bitstring
+conc5(bitstring): bounded_200_cleartext
+conc6(bitstring): bitstring
+
+Should be:
+conc1(fixed_20_nonce, fixed_20_nonce, bounded_40_host): bounded_200_cleartext !!!
+conc2(bitstring): bitstring
+conc3(fixed_20_nonce, bounded_40_host): bounded_200_cleartext
+conc4(bitstring): bitstring
+conc5(fixed_20_nonce): bounded_200_cleartext  !!! 
+conc6(bitstring): bitstring
+*)
+
+(*
+conc1/3 := "msg2"|len(arg0)|len(arg1)|arg0|arg1|arg2
+conc2/1 := "encr"|len(arg0)|arg0
+conc3/2 := "msg1"|len(arg0)|arg0|arg1
+conc4/1 := "encr"|len(arg0)|arg0
+conc5/1 := "msg3"|arg0
+conc6/1 := "encr"|len(arg0)|arg0
+
+parse1/1 := arg0{i8 +_N arg0{4, 8} +_N i4, len(arg0) -_N (i8 +_N arg0{4, 8} +_N i4)}
+parse2/1 := arg0{12, arg0{4, 8}}
+parse3/1 := arg0{4, len(arg0) -_N i4}
+parse4/1 := arg0{20, arg0{4, 8}}
+parse5/1 := arg0{arg0{4, 8} +_N arg0{12, 8} +_N i16 +_N i4, len(arg0) -_N (arg0{4, 8} +_N arg0{12, 8} +_N i16 +_N i4)}
+parse6/1 := arg0{arg0{4, 8} +_N i16 +_N i4, arg0{12, 8}}
+
+*)
+
 channel c_in, c_out. 
-type mstring.
 
 param N.
 
@@ -38,12 +71,12 @@ const hostB: bounded_40_host.
 type keyseed_T [fixed, large].
 type key_T [bounded].
 type bounded_200_cleartext [bounded].
-type seed_T [fixed].
+type fixed_256_seed_T [fixed].
 
 proba Penc.
 proba Penccoll.
 
-expand IND_CCA2_public_key_enc(keyseed_T, key_T, key_T, bounded_200_cleartext, mstring, seed_T, dk, ek, E, D, injbot, Z, Penc, Penccoll).
+expand IND_CCA2_public_key_enc(keyseed_T, key_T, key_T, bounded_200_cleartext, bitstring, fixed_256_seed_T, dk, ek, E, D, injbot, Z, Penc, Penccoll).
 
 fun inverse_injbot(bitstringbot): bounded_200_cleartext.
 
@@ -52,6 +85,9 @@ fun isek(key_T): key_T.
 forall x: key_T;
   isek(x) = x.
 
+fun decrypt_len(bitstring): bitstring.
+fun encrypt_len(bounded_200_cleartext): bitstring.
+  
 (*************************** 
  Signatures
 ***************************)
@@ -97,10 +133,10 @@ query x: bounded_40_host, y: bounded_40_host;
 *************************)
 
 (* first field of the first message *)
-fun parse8(bounded_200_cleartext): fixed_20_nonce.
+fun parse4(bounded_200_cleartext): fixed_20_nonce.
 
 (* second field of the second message *)
-fun parse6(bounded_200_cleartext): fixed_20_nonce.
+fun parse9(bounded_200_cleartext): fixed_20_nonce.
 
 (*************************** 
   <Model>
@@ -112,15 +148,15 @@ let A = 0 . let B = 0 .
   <Environment>
 ***************************)
 
-let A' = 
+let client = 
   in(c_in, (pkX: key_T, hostX: bounded_40_host, sigX: signature));
   out(c_out, ());
-  A .
+  B .
 
-let B' = 
+let server = 
   in(c_in, (pkX: key_T, sigX: signature));
   out(c_out, ());
-  B .
+  A .
 
 let keyServer = 
   in(c_in, (h: bounded_40_host, k: key_T));
@@ -151,6 +187,6 @@ process
   let skS = sk(rkS) in
   
   out(c_out, (pkA, pkB, pkS));
-  ((! N A') | (! N B') | (! N keyServer))
+  ((! N client) | (! N server) | (! N keyServer))
 )
 

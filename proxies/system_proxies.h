@@ -36,3 +36,5 @@ extern ssize_t write_proxy(int __fd , void const   *__buf , size_t __n ) ;
 
 extern  __attribute__((__nothrow__)) char *strcpy_proxy(char * __restrict  __dest ,
                                                         char const   * __restrict  __src )  __attribute__((__nonnull__(1,2))) ;
+
+extern size_t strlen_proxy(const char *s);

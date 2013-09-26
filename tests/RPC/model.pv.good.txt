@@ -18,12 +18,12 @@ fun string_526573706f6e7365/0.
   Concatenation and Parsing 
 ********************)
 
-data conc1/2.
+data conc7/2.
 
 reduc 
-  parse3(conc1(x0, x1)) = x1.
+  parse3(conc7(x0, x1)) = x1.
 reduc 
-  parse4(conc1(x0, x1)) = x0.
+  parse4(conc7(x0, x1)) = x0.
 
 (******************** 
   <Query>
@@ -41,25 +41,25 @@ query ev:client_accept(x, y).
 ***************************)
 
 let A = 
-event client_begin(request);
-let msg1 = conc1(request, HMAC_sha1(conc1(string_52657175657374(), request), keyAB)) in
-out(c, msg1);
-in(c, msg2);
-in(c, msg3);
-let hash1 = HMAC_sha1(conc1(string_526573706f6e7365(), conc1(request, parse4(msg3))), keyAB) in
-let var1 = parse3(msg3) in
-if var1 = hash1 then 
-event client_accept(request, parse4(msg3)); 0.
-
-let B = 
 in(c, msg1);
 in(c, msg2);
-let hash1 = HMAC_sha1(conc1(string_52657175657374(), parse4(msg2)), keyAB) in
+let hash1 = HMAC_sha1(conc7(string_52657175657374(), parse4(msg2)), keyAB) in
 let var1 = parse3(msg2) in
 if var1 = hash1 then 
 event server_reply(parse4(msg2), response);
-let msg3 = conc1(response, HMAC_sha1(conc1(string_526573706f6e7365(), conc1(parse4(msg2), response)), keyAB)) in
+let msg3 = conc7(response, HMAC_sha1(conc7(string_526573706f6e7365(), conc7(parse4(msg2), response)), keyAB)) in
 out(c, msg3); 0.
+
+let B = 
+event client_begin(request);
+let msg1 = conc7(request, HMAC_sha1(conc7(string_52657175657374(), request), keyAB)) in
+out(c, msg1);
+in(c, msg2);
+in(c, msg3);
+let hash1 = HMAC_sha1(conc7(string_526573706f6e7365(), conc7(request, parse4(msg3))), keyAB) in
+let var1 = parse3(msg3) in
+if var1 = hash1 then 
+event client_accept(request, parse4(msg3)); 0.
 
 (******************** 
   <Environment>

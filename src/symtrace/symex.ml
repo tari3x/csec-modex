@@ -658,13 +658,18 @@ let store : cvm -> unit = fun flag ->
 
     | _ -> fail "store: pointer expected"
 
+let valueUnsigned e = 
+  match S.eval (E.Len e) with
+  | None   -> fail "cannot determine width of %s" (E.toString e)
+  | Some w -> E.Val (e, (IntType.Unsigned, w)) |> Simplify.simplify
+
 let rec execute = function
 
   | LoadBuf ->
     begin try
       let l = takeStack () in
       let p = takeStack () in
-      load (Some (E.Val (l, IntType.Unsigned))) p
+      load (Some (valueUnsigned l)) p
     with
       | Not_found   -> fail "loadBuf: reading uninitialised memory"
       | Stack.Empty -> fail "loadBuf: not enough elements on stack"
@@ -690,11 +695,11 @@ let rec execute = function
     let l = takeStack () in
     let vname = Var.fresh "" in
     let v = Var vname in
-    let fact = S.eqInt [E.Len v; E.Val (l, IntType.Unsigned)] in
+    let fact = S.eqInt [E.Len v; valueUnsigned l] in
     (* Inputs are defined in IML. *)
     S.addFact (S.isDefined v);
     S.addFact fact;
-    iml := !iml @ [Stmt.In [vname]; GenTest fact];
+    iml := !iml @ [Stmt.In [vname]; Test fact];
     toStack v
 
   | New ->
@@ -758,9 +763,9 @@ let rec execute = function
     let e = takeStack() in
     toStack (E.BS (e, itype))
 
-  | Val (s, _) ->
+  | Val (s, w) ->
     let e = takeStack() in
-    toStack (E.Val (e, s))
+    toStack (Simplify.simplify (E.Val (e, (s, w))))
             
   | InType tname ->
     let t = Type.ofString tname in
@@ -809,13 +814,13 @@ let rec execute = function
     debug "branch: %s" (E.dump e);
     if not (E.isConcrete e) then
     begin
-      debug "  branch is not concrete";
+      debug "branch is not concrete";
       let e = E.truth e in
       let e = if bdir = 1L then e else S.not e in
       if not (S.isTrue e) then
       begin
-        debug "  branch is non-trivial, adding test statement"; 
-        addStmt (GenTest e);
+        debug "branch has non-constant condition, adding test statement"; 
+        addStmt (Test e);
         S.addFact e
       end
     end
@@ -1036,7 +1041,7 @@ let executeFile : in_channel -> iml = fun file ->
   in
   
   makeAssumptions ();
-  try with_debug ~depth:0 execute' () with End_of_file -> ();
+  try with_debug ~depth:3 execute' () with End_of_file -> ();
   
   if Stack.length stack <> 1 then
     fail "Expecting a single element on stack (return of main)";

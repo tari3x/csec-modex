@@ -5,6 +5,7 @@
 #include <openssl/hmac.h>
 
 #include "net.h"
+#include "lib.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -14,10 +15,11 @@
 #endif
 
 
-#define SHA1_LEN 20
-
 void client(unsigned char * payload, ulong payload_len, unsigned char * key, ulong key_len)
 {
+  if(payload_len > MAX_PAYLOAD_LEN) fail("Client: payload too long.");
+  if(key_len > MAX_KEY_LEN) fail("Client: key too long.");
+
   ulong body_len = sizeof(payload_len) + 1 + payload_len;
   ulong msg_len = body_len + SHA1_LEN;
   unsigned char * msg = malloc(msg_len);

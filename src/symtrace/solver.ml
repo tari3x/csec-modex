@@ -58,13 +58,16 @@ let warnCache = ref E.Set.empty
   we want the names to persist continuously, no reset.
   
   At the same time this ending may, if necessary, be made to respect
-  output names when they are availablE.
+  output names when they are available.
 *)
 
-let mkExpName e id = 
-  match e with
+let mkExpName e = 
+  let result = match e with
     | Var v -> "var_" ^ v
-    | _ -> "var" ^ (string_of_int id)
+    | String s -> "string" ^ s
+    | _ -> "var" ^ (string_of_int (E.id e))
+  in
+  `Mangled result
 
 (*************************************************)
 (** {1 Yices theory} *)
@@ -139,7 +142,9 @@ let defined () =
 
 let eqBitstring es = Sym (BsEq, es)
 let eqInt es = Sym (EqInt, es)
-let notE e = Sym (Not, [e])
+let notE = function
+  | Sym (Not, [e]) -> e
+  | e -> Sym (Not, [e])
 let gt a b = Sym (GtInt, [a; b])
 let ge a b = Sym (GeInt, [a; b])
 
@@ -163,6 +168,30 @@ let rec inType e t =
     | T.Named (name, Some t) -> inType e t 
     | T.Named (name, None) -> Sym (InType t, [e])
 
+(*
+  We don't represent integer ranges directly because they are too big for OCaml int64.
+*)
+module Range = struct
+  type t = IntType.t 
+  
+  (* Don't raise to the power explicitly, to avoid overflow *)
+  let pow a n =
+    if n = 0 then E.one else  
+    E.prod (replicate n (E.int a))
+    
+  let contains (sd, w) e =
+    match E.typeOf e with 
+    | BsInt (sd', w') when sd = sd' && w' <= w -> [trueFact]
+    | _ ->  
+      let a, b = match sd with
+        | IntType.Unsigned -> E.zero,                          Sym (MinusInt, [pow 256 w;       E.int 1])
+        | IntType.Signed   -> Sym (NegInt, [pow 256 (w - 1)]), Sym (MinusInt, [pow 256 (w - 1); E.int 1])
+      in
+      [Sym (GeInt, [e; a]); Sym (LeInt, [e; b])]
+      
+  let subset (sd, w) (sd', w') = (sd = sd') && w <= w'
+end
+
 (*************************************************)
 (** {1 Debug} *)
 (*************************************************)
@@ -182,19 +211,6 @@ let debug_expr ?(raise_by = 0) s e =
 Yices.enable_type_checker true
 ;;
 
-
-let addFactRaw: Yices.expr -> unit = fun y_e ->
-  debug_expr "asserting_y " y_e;
-  Yices.assert_simple ctx y_e;
-    
-  if Yices.inconsistent ctx = 1 then
-  begin
-    (* dump_context ctx; *)
-    debug_expr "addFact: the context has become inconsistent: " y_e;
-    fail "inconsistent context";
-  end
-
-
 let rec rewritePtr e = 
   (* 
     To deal with 
@@ -210,32 +226,12 @@ let rec rewritePtr e =
   | Ptr (pb, eo) -> Var ("ptr_" ^ E.toString (Ptr (pb, List.filter notZero eo)))
   | e -> E.descend rewritePtr e
 
+let rec splitAnd = function
+  | Sym (And _, es) -> List2.concat_map splitAnd es
+  | e -> [e]
 
-let rewrite es: fact list * fact list =
-  (*
-    We don't represent integer ranges directly because they are too big for OCaml int64.
-  *)
-  let module Range = struct
-    type t = IntType.t 
-    
-    (* Don't raise to the power explicitly, to avoid overflow *)
-    let pow a n =
-      if n = 0 then E.one else  
-      E.prod (replicate n (E.int a))
-      
-    let contains (sd, w) e =
-      match E.typeOf e with 
-      | BsInt (sd', w') when sd = sd' && w' <= w -> [trueFact]
-      | _ ->  
-        let a, b = match sd with
-          | IntType.Unsigned -> E.zero,                          Sym (MinusInt, [pow 256 w;       E.int 1])
-          | IntType.Signed   -> Sym (NegInt, [pow 256 (w - 1)]), Sym (MinusInt, [pow 256 (w - 1); E.int 1])
-        in
-        [Sym (GeInt, [e; a]); Sym (LeInt, [e; b])]
-        
-    let subset (sd, w) (sd', w') = (sd = sd') && w <= w'
-  end in
-
+let rewrite e: exp * fact list =
+  (* List of conditions that are already accounted for and don't need to be added again. *) 
   let seen = ref [] in
   
   let rewriteOnce e =
@@ -244,6 +240,16 @@ let rewrite es: fact list * fact list =
     let rec collect e =  
       let facts, e' =
         let eTop = e in
+        (* This is fine by the chaining rule: if the expression itself contains the condition,
+           then we don't need to add the condition in any subsequent rewritings.
+        
+           This implies that the order of subexpressions generation in the matching below matters.
+           For instance, in (e <= e') clause we genereate and rewrite the defined(e), defined(e') 
+           clauses first, so they can be reused when rewriting e and e'.
+          
+           Of course, no order would violate soundness.
+        *)
+        seen := e :: !seen;
         debug "collect: e = %s" (E.toString e); 
         match e with 
         
@@ -264,7 +270,13 @@ let rewrite es: fact list * fact list =
           in
           [isDefined e1; isDefined e2],
           Sym (sym', [Val (e1, t1); Val (e2, t2)]) |> collect
-          
+
+        | Sym (sym, [e1; e2]) when Sym.isIntegerComparison sym ->
+          (* Enforce order of evaluation. *)
+          let defined = [isDefined e1; isDefined e2] |> List.map collect in
+          let e' = E.descend collect e in
+          [], E.conj (defined @ [e'])
+
         | Val ((Sym (sym, [e1; e2])) as e, itype) when Sym.isBinaryArithmetic sym ->
           let sym' = 
             begin match sym with
@@ -315,7 +327,7 @@ let rewrite es: fact list * fact list =
           [isDefined eTop], collect l
 
         | Len (String b) ->
-          [], E.int (String.length b)
+          [], E.int (String.length b / 2)
 
           (* This will become unnecessary once pointers are rewritten into vanilla expressions, as per thesis *)          
         | Len (Ptr _) ->
@@ -335,8 +347,8 @@ let rewrite es: fact list * fact list =
         | Sym (Defined, [BS (e, itype)]) ->
           [], E.conj (Range.contains itype e) |> collect
 
-        | Sym (Defined, [Val (e, itype)]) ->
-          [], E.conj (Range.contains itype e) |> collect
+        | Sym (Defined, [Val (e, (_, w))]) ->
+          [], eqInt [E.int w; E.len e] |> collect
 
         | Sym (Defined, [Sym (Op (_, (ts, _)), es)]) ->
           let conds =
@@ -414,37 +426,32 @@ let rewrite es: fact list * fact list =
     e, conds
   in
 
-  let rec splitAnd = function
-    | Sym (And _, es) -> List2.concat_map splitAnd es
-    | e -> [e]
-  in
-
   let rec rewriteDeep e = 
     let e, es = rewriteOnce e in
     splitAnd e @ List2.concat_map rewriteDeep es 
   in
 
-  debug "rewriting %s" (E.listToString es);
+  debug "rewriting %s" (E.toString e);
   increase_debug_depth ();
-  let es, conds = List.map rewriteOnce es |> List.split in
+  let e, conds = rewriteOnce e in
   let conds = 
     conds 
-    |> List.concat 
     |> List2.concat_map rewriteDeep 
     |> List2.nub 
     |> List.map rewritePtr 
   in
-  let es = 
-    es 
-    |> List2.concat_map splitAnd 
-    |> List2.nub 
-    |> List.map rewritePtr 
-  in
+  let e = rewritePtr e in
   decrease_debug_depth ();
-  debug "resulting es = %s" (E.listToString es);
+  debug "resulting e = %s" (E.toString e);
   debug "resulting conds = %s" (E.listToString conds);
-  es, conds
+  e, conds
 
+let rewriteFacts es: fact list * fact list =
+  let es, conds = List.map rewrite es |> List.split in
+  let es = List2.nub (List2.concat_map splitAnd es) in
+  let conds = List2.nub (List.concat conds) in
+  List.iter (E.typecheck Bool) (es @ conds);
+  es, conds
 
 module Type = struct
   include Type
@@ -458,31 +465,46 @@ module Type = struct
     | t              -> fail "toYicesType: unexpected type: %s" (toString t)
 end  
 
+let addFactRaw ?(check_consistent = true) y_e =
+  debug_expr "asserting_y " y_e;
+  Yices.assert_simple ctx y_e;
     
-let translate: exp -> Yices.expr = fun eTop ->
+  if check_consistent && Yices.inconsistent ctx = 1 then
+  begin
+    (* dump_context ctx; *)
+    debug_expr "addFact: the context has become inconsistent: " y_e;
+    fail "inconsistent context";
+  end
+
+let resetCache () =
+  cache := IntMap.empty;
+  eqCache := PairMap.empty
+  
+
+let resetFacts : unit -> unit = fun () -> 
+  Yices.reset ctx;
+  Yices.parse_command ctx theory; 
+  resetCache ()
+
+let getDecl t (`Mangled name) =
+  try Yices.get_var_decl_from_name ctx name 
+  with Failure _ -> Yices.mk_var_decl ctx name (Type.toYicesType t)
+        
+let translate eTop =
 
   let module A = Array in
                       
-  let getDecl t name =
-    try Yices.get_var_decl_from_name ctx name 
-    with Failure _ -> Yices.mk_var_decl ctx name (Type.toYicesType t)
-  in
-  
   let mkVar t e =
-    let id = E.id e in
-    Yices.mk_var_from_decl ctx (getDecl t (mkExpName e id))
-  in
-
-  let mkString s =
-    Yices.mk_var_from_decl ctx (getDecl Bitstring ("string_" ^ s))
+    Yices.mk_var_from_decl ctx (getDecl t (mkExpName e))
   in
   
   let rec tr t e =
     debug "translating %s" (E.dump e);
     match e, t with
       | Int i,                   Type.Int       -> Yices.mk_num ctx (Int64.to_int i)
-      | String s,                Bitstringbot   -> mkString s
-      | Var _,                   Bitstringbot   -> mkVar Bitstringbot e
+      | String s,                Bitstringbot   -> mkVar Bitstring e
+        (* All variables are Bitstringbot except for in eval *)
+      | Var _,                   t              -> mkVar t e
       (* TODO: mkVar Bool *)
       (* | Var _,                   Bool           -> Yices.mk_app ctx (truth ()) [| tr Bitstringbot e |] *)          
       | Sym (sym, es), Bool ->
@@ -544,18 +566,17 @@ let translate: exp -> Yices.expr = fun eTop ->
         fail "Solver.translate: unexpected type %s of expression %s in fact %s" (Type.toString t) (E.dump e) (E.dump eTop)
 
   in 
-  E.typecheck Bool eTop;
   tr Bool eTop
 
 
-let isTrueRaw : exp -> pbool = fun e ->
+let isTrueRaw ?warnIfFalse e = 
   (* get id before adding extra clauses *)
   let id = E.id e in
   let result = 
     try 
       let result = IntMap.find id !cache in
       (* This debug is 25 % performance penalty: *)
-      debug "checking %s, result = %s" (E.toString e) (string_of_bool result);
+      debug "checking %s, result (from cache) = %s" (E.toString e) (string_of_bool result);
       result
     with Not_found -> 
       debug ~raise_by:0 "checking (with auxiliary facts) %s" (E.toString e);
@@ -572,25 +593,28 @@ let isTrueRaw : exp -> pbool = fun e ->
       in
       Yices.pop ctx;
       debug ~raise_by:0 "check result = %s" (string_of_bool result);
+      begin match warnIfFalse with
+      | None -> ()
+      | Some err ->  
+        if not result && not (E.Set.mem e !warnCache) then
+          begin
+            warn "cannot prove %s %s" (E.toString e) err;
+            (*
+              Returns NULL model:
+              push ctx;
+              assert_simple ctx (silent translate (notE e));
+              let model = get_model ctx in
+              display_model model;
+              pop ctx; 
+            *)
+            warnCache := E.Set.add e !warnCache;
+          end;
+      end;
       result
   in
   cache := IntMap.add id result !cache;
   result
 
-let warnIfFalse eTop e =
-  if not (E.Set.mem e !warnCache) && not (isTrueRaw e) then
-  begin
-    warn "cannot prove auxiliary fact %s arising from fact %s" (E.toString e) (E.toString eTop);
-    (*
-      Returns NULL model:
-      push ctx;
-      assert_simple ctx (silent translate (notE e));
-      let model = get_model ctx in
-      display_model model;
-      pop ctx; 
-    *)
-    warnCache := E.Set.add e !warnCache;
-  end
 
 let rec simplifyBool = 
   let isTrue = function
@@ -605,11 +629,11 @@ let rec simplifyBool =
 
 let addFact : exp -> unit = fun e ->
   increase_debug_depth (); 
-  let defined_facts, defined_conds = rewrite [isDefined e] in
-  let es', e_conds = rewrite [e] in
-  let conds = defined_conds @ e_conds in
-  List.iter (silent (warnIfFalse e)) conds;
-  let e = Sym (Implies, [E.conj conds; E.conj (defined_facts @ es')] ) |> simplifyBool in
+  resetCache ();
+  let es', conds = rewriteFacts [e] in
+  let warnIfFalse = Printf.sprintf "arising from %s" (E.toString e) in
+  List.iter (fun cond -> isTrueRaw ~warnIfFalse cond |> ignore) conds;
+  let e = Sym (Implies, [E.conj conds; E.conj es'] ) |> simplifyBool in
   decrease_debug_depth (); 
   debug "asserting %s" (E.toString e);
   addFactRaw (translate e)
@@ -617,13 +641,14 @@ let addFact : exp -> unit = fun e ->
 let isTrue e: pbool =
   debug "checking (before rewriting): %s" (E.toString e);
   increase_debug_depth (); 
-  let defined_facts, defined_conds = rewrite [isDefined e] in
-  let es', e_conds = rewrite [e] in
-  let conds = defined_facts @ defined_conds @ e_conds in
-  List.iter (warnIfFalse e) conds;
-  let e = E.conj (List2.nub (es' @ conds)) |> simplifyBool in
-  let result = isTrueRaw e in
+  let es', conds = rewriteFacts [e] in
+  let warnIfFalse = Printf.sprintf "arising from %s" (E.toString e) in
+  let result = 
+       List.for_all (isTrueRaw ~warnIfFalse) conds
+    && List.for_all (isTrueRaw) es'
+  in
   decrease_debug_depth ();
+  debug "result: %b" result;
   result
 
 
@@ -679,30 +704,59 @@ let greaterEqualLenAnswer : len -> len -> answer = fun a b ->
   else
     Maybe
   
-let resetFacts : unit -> unit = fun () -> 
-  Yices.reset ctx;
-  Yices.parse_command ctx theory; 
-  cache := IntMap.empty;
-  eqCache := PairMap.empty
-
-let not = notE
-
 (*************************************************)
 (** {1 Evaluation.} *)
 (*************************************************)
 
-(*
 let eval e =
   increase_debug_depth (); 
-  
-  let es, conds = rewrite [e] in
-  let es', e_conds = rewrite [e] in
-  let conds = defined_conds @ e_conds in
-  List.iter (silent (warnIfFalse e)) conds;
-  let e = Sym (Implies, [E.conj conds; E.conj (defined_facts @ es')] ) |> simplifyBool in
-  decrease_debug_depth (); 
-  debug "asserting %s" (E.toString e);
-  addFactRaw (translate e)
-*)
-  
-(* 640 lines *)
+
+  let warnIfFalse = Printf.sprintf "arising from %s" (E.toString e) in  
+  let e, conds = rewrite e in
+  let result = 
+    if not (List.for_all (isTrueRaw ~warnIfFalse) conds) 
+    then None
+    else begin
+      Yices.push ctx;
+      let v = Var.fresh "int_val" in
+      Yices.assert_simple ctx (translate (eqInt [Var v; e]));
+      let result = 
+        match Yices.check ctx with
+        | Yices.False | Yices.Undef -> None
+        | Yices.True ->
+          let model = Yices.get_model ctx in
+          let vy = getDecl Type.Int (mkExpName (Var v)) in
+          (*
+          debug "eval: got a model:";
+          increase_debug_depth (); 
+          if debugEnabled () then Yices.display_model model;
+          decrease_debug_depth ();
+          *)
+          match Option2.try_with (fun () -> Yices.get_int_value model vy) with 
+          | None -> None
+          | Some value ->
+            let value = Int32.to_int value in
+            debug "eval: a possible value is %d" value;
+            (* Make sure the value is unique *)
+            addFactRaw ~check_consistent:false (translate (notE (eqInt [Var v; E.int value])));
+            (*
+            increase_debug_depth (); 
+            debug "eval: context for checking uniqueness:";
+            if debugEnabled () then Yices.dump_context ctx;
+            decrease_debug_depth ();
+            *)
+            match Yices.check ctx with
+            | Yices.False -> Some value
+            | Yices.Undef -> None
+            | Yices.True  -> None
+      in
+      Yices.pop ctx;
+      result
+    end
+  in
+  decrease_debug_depth ();
+  result 
+
+let not = notE
+      
+(* 730 lines *)

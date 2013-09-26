@@ -3,6 +3,7 @@
 #include <string.h>  
 
 #include "needham_type.h"
+#include "primitives_crypt.h"
 
 /* Une fonction de g�n�ration de cl�s pub/priv */
 

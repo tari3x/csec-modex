@@ -55,6 +55,6 @@ let A = 0 . let B = 0 .
 
 process
   ! ( new db; in(c, xClient); (* not used in PV *)
-    ! (in(c, clientID); in(c, serverID); !A)
-  | ! (in(c, serverID); !B)
+    ! (in(c, clientID); in(c, serverID); !B)
+  | ! (in(c, serverID); !A)
   | ! (in(c, (clientID, serverID)); event bad(clientID, serverID); out(c, lookup(clientID, serverID, db))))

@@ -1,11 +1,59 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required(VERSION 2.8)
 
+set(CSEC_ROOT ${CMAKE_BINARY_DIR} CACHE PATH "The root folder of the compilation")
+
+######## deps/CIL and src/CIL  ##############################
+
+set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.3.7-svn)
+
+# find ARCHOS as configured by CIL
+if(NOT EXISTS ${CIL_ROOT}/config.mk)
+  execute_process(COMMAND ./configure WORKING_DIRECTORY ${CIL_ROOT})
+endif(NOT EXISTS ${CIL_ROOT}/config.mk)
+
+execute_process(COMMAND sed -n "s/.*ARCHOS=\\(.*\\)/\\1/p" ${CIL_ROOT}/config.mk
+                OUTPUT_VARIABLE ARCHOS
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+                
+#configure_file (mk/archos.mk.in mk/archos.mk)
+# execute_process(COMMAND make -sf mk/archos.mk
+#                 OUTPUT_VARIABLE ARCHOS 
+#                 OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set(CIL_OBJDIR ${CIL_ROOT}/obj/${ARCHOS} CACHE PATH "CIL object folder")
+set(CIL_LIB ${CIL_OBJDIR}/cil.a CACHE FILEPATH "Location of the CIL library")
+set(CILLY ${CIL_ROOT}/bin/cilly CACHE FILEPATH "Location of the CIL front-end")
+
+set(CIL_DIR ${CSEC_ROOT}/src/CIL)
+
+set(CIL_SRC ${CIL_DIR}/crestInstrument.ml ${CIL_DIR}/funreplace.ml ${CIL_DIR}/mark.ml)
+
+add_custom_command(OUTPUT ${CIL_ROOT}/Makefile
+                     COMMAND ./configure
+                     WORKING_DIRECTORY ${CIL_ROOT}
+                     VERBATIM)
+
+add_custom_command(OUTPUT ${CIL_LIB} 
+                     COMMAND make
+                     DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
+                     WORKING_DIRECTORY ${CIL_DIR}
+                     VERBATIM)
+
+add_custom_target(src_CIL 
+                    COMMAND make
+                    DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
+                    WORKING_DIRECTORY ${CIL_DIR}
+                    VERBATIM)
+
+set(CMAKE_C_COMPILER ${CILLY})
+
+
+######## test CIL as compiler ###########################
+
 project (csec-modex)
 
 # set(CMAKE_VERBOSE_MAKEFILE true)
-
-set(CSEC_ROOT ${CMAKE_BINARY_DIR})
 
 # 32 or 64 bit?
 
@@ -95,12 +143,12 @@ add_custom_command(OUTPUT ${PROVERIF}
 
 ######## include ################################
 
-set(PROXIES ${CSEC_ROOT}/proxies)
+set(PROXIES ${CSEC_ROOT}/proxies CACHE PATH "The proxy libraries location")
 
 set(HEADERS include/crest.h include/proxies/common.h include/proxies/interface.h
-            include/proxies/openssl-proxies-1.0.0.h
-            include/proxies/openssl-proxies.h
-            include/proxies/system-proxies.h)
+            include/proxies/openssl_proxies-1.0.0.h
+            include/proxies/openssl_proxies.h
+            include/proxies/system_proxies.h)
 
 # include/proxies/openssl-proxies-0.9.8o.h 
 
@@ -132,48 +180,6 @@ endforeach(I RANGE NUM_HEADERS)
 add_custom_target(include 
                     DEPENDS ${HEADERS})
                     
-######## deps/CIL and src/CIL  ##############################
-
-set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.3.7-svn)
-
-# find ARCHOS as configured by CIL
-if(NOT EXISTS ${CIL_ROOT}/config.mk)
-  execute_process(COMMAND ./configure WORKING_DIRECTORY ${CIL_ROOT})
-endif(NOT EXISTS ${CIL_ROOT}/config.mk)
-
-execute_process(COMMAND sed -n "s/.*ARCHOS=\\(.*\\)/\\1/p" ${CIL_ROOT}/config.mk
-                OUTPUT_VARIABLE ARCHOS
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-                
-#configure_file (mk/archos.mk.in mk/archos.mk)
-# execute_process(COMMAND make -sf mk/archos.mk
-#                 OUTPUT_VARIABLE ARCHOS 
-#                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-set(CIL_OBJDIR ${CIL_ROOT}/obj/${ARCHOS})
-set(CIL_LIB ${CIL_OBJDIR}/cil.a)
-set(CILLY ${CIL_ROOT}/bin/cilly)
-
-set(CIL_DIR ${CSEC_ROOT}/src/CIL)
-
-set(CIL_SRC ${CIL_DIR}/crestInstrument.ml ${CIL_DIR}/funreplace.ml ${CIL_DIR}/mark.ml)
-
-add_custom_command(OUTPUT ${CIL_ROOT}/Makefile
-                     COMMAND ./configure
-                     WORKING_DIRECTORY ${CIL_ROOT}
-                     VERBATIM)
-
-add_custom_command(OUTPUT ${CIL_LIB} 
-                     COMMAND make
-                     DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
-                     WORKING_DIRECTORY ${CIL_DIR}
-                     VERBATIM)
-
-add_custom_target(src_CIL 
-                    COMMAND make
-                    DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
-                    WORKING_DIRECTORY ${CIL_DIR}
-                    VERBATIM)
 
 ######## src/symtrace ##############################
 
@@ -200,13 +206,15 @@ add_custom_target(src_symtrace
                 
 ######## proxies ##############################
 
+add_subdirectory(proxies)
+
 set(LIBSSL_PROXY_SYM ${PROXIES}/libssl_proxy_sym.a)
 
-add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
-                    COMMAND make
-                    WORKING_DIRECTORY ${PROXIES}
-                    DEPENDS ${CIL_LIB} include/crest.h 
-                    VERBATIM)
+#add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
+#                    COMMAND make
+#                    WORKING_DIRECTORY ${PROXIES}
+#                    DEPENDS ${CIL_LIB} include/crest.h 
+#                    VERBATIM)
                 
 ######## tests ##############################
 
@@ -356,3 +364,4 @@ endforeach(DIR)
 ######## CONFIG ##############################
 
 configure_file (mk/common.mk.in mk/common.mk)
+# configure_file (mk/common.cmake.in mk/common.cmake)

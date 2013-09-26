@@ -24,16 +24,19 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
 
   load_buf(dgst, dlen, "dgst");
   load_ctx(dsa, "skey", "skey");
-  newTN("DSA_seed", "seed", NULL);
-  symN("DSA_sign", "dsa_sig", NULL, TRUE);
+  newTL(-1, "DSA_seed", "seed");
+  SymN("DSA_sign", 3);
+  Hint("dsa_sig");
   store_ctx(ret, "sig");
 
   load_ctx(ret, "sig", NULL);
-  symN("DSA_r", "dsa_sig_r", NULL, TRUE);
+  SymN("DSA_r", 1);
+  Hint("dsa_sig_r");
   store_ctx(ret->r, "val");
 
   load_ctx(ret, "sig", NULL);
-  symN("DSA_s", "dsa_sig_s", NULL, TRUE);
+  SymN("DSA_s", 1);
+  Hint("dsa_sig_s");
   store_ctx(ret->s, "val");
 
   return ret;
@@ -48,17 +51,26 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *si
   // FIXME: only do it if no sig is present already
   load_ctx(sig->r, "val", "dsa_sig_r");
   load_ctx(sig->s, "val", "dsa_sig_s");
-  symN("DSA_combine", "dsa_sig", NULL, TRUE);
+
+  SymN("DSA_combine", 2);
+  Hint("dsa_sig");
+
   store_ctx(sig, "sig");
 
   load_buf(dgst, dgst_len, "dgst");
   load_ctx(dsa, "pkey", "pkey");
   load_ctx(sig, "sig", "sig");
-  symL("DSA_verify", "sig_verification", sizeof(ret), TRUE);
+  SymN("DSA_verify", 3);
+  Hint("sig_verification");
+  assume_len(sizeof(ret));
   store_buf((unsigned char *) &ret);
 
   return ret;
 }
+
+/*
+
+// Bring back when you are crestifying OpenSSL as well.
 
 #if OPENSSL_MAJOR == 0
 
@@ -152,3 +164,5 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *si
     store_buf(out);
   }
 #endif
+
+*/

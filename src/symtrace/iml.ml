@@ -119,6 +119,12 @@ module Type = struct
     if subtype t t' then t
     else if subtype t' t then t'
     else failwith (Printf.sprintf "cannot compute intersection of types " ^ toString t ^ " and " ^ toString t')
+
+  (* Could return true for more types, but this is enough for now. *)
+  let hasFixedLength t =
+    match stripName t with
+    | Fixed _ -> true
+    | _ -> false
 end
 
 type imltype = Type.t
@@ -336,6 +342,15 @@ module Sym = struct
     | Op (op, _) -> Op.isBinaryComparison op
     | _    -> false 
 
+  let isIntegerComparison = function
+    | LtInt                               
+    | GtInt                                 
+    | LeInt                               
+    | GeInt                               
+    | EqInt                               
+    | NeInt -> true
+    | _ -> false            
+
   let isLogical = function
     | Not | And _ | Or _ | Implies -> true
     | _ -> false 
@@ -400,8 +415,8 @@ module Sym = struct
 
     | Truth -> "truth"
       
-    | LenY -> "len_y"
-    | ValY t -> sprintf "vak_y[%s]" (IntType.toString t)
+    | LenY -> "lenY"
+    | ValY t -> sprintf "valY%s" (IntType.toString t)
       
     | Cmp -> "cmp"
                   
@@ -1193,7 +1208,7 @@ module Exp = struct
     | Annotation(_, e) -> removeAnnotations e
     | e -> descend removeAnnotations e
 
-  (* Consider making this part of Solver.rewrite *)
+  (* TODO: Consider making this part of Solver.rewrite *)
   let rec truth = function
     | Sym (Op (LAnd, _), es) -> conj (List.map truth es)
     | Sym (Op (LOr, _), es) -> disj (List.map truth es)
@@ -1204,7 +1219,7 @@ module Exp = struct
     | e when typeOf e = Bool -> e
     | Sym (Op (op, (ts, t)), es) when Sym.Op.isBinaryComparison op ->
       Sym (Op (op, (ts, Bool)), es)
-    | Sym (Cmp, es) -> Sym (BsEq, es)
+    | Sym (Cmp, [e1; e2]) -> Sym (Not, [Sym (BsEq, [e1; e2])])
     | Var v as e -> Sym (Truth, [e]) 
     | e -> fail "Exp.truth: unexpected: %s" (toString e) 
       
@@ -1247,7 +1262,7 @@ module Stmt = struct
       | Let of pat * exp
         (** [Test e; P = if e then P else 0] *)
       | AuxTest of exp
-      | GenTest of exp
+      | Test of exp
       | TestEq of exp * exp
       | Assume of exp
       | In of var list
@@ -1279,9 +1294,9 @@ module Stmt = struct
         "out(c, (" ^ String.concat ", " (List.map Exp.showIExp es) ^ "));";
   
       | TestEq (e1, e2) ->
-        "if " ^ Exp.showIExp e1 ^ " = " ^ Exp.showIExp e2 ^ " then "
+        "ifeq " ^ Exp.showIExp e1 ^ " = " ^ Exp.showIExp e2 ^ " then "
   
-      | GenTest e ->
+      | Test e ->
         "if " ^ Exp.showIExp e ^ " then "
 
       | AuxTest e ->
@@ -1304,7 +1319,7 @@ module Stmt = struct
   let children: t -> exp list = function
     | Let (_, e) -> [e]
     | AuxTest e -> [e]
-    | GenTest e -> [e]
+    | Test e -> [e]
     | TestEq (e1, e2) -> [e1; e2]
     | Assume e -> [e]
     | In vs -> []
@@ -1318,7 +1333,7 @@ module Stmt = struct
   let descend: (exp -> exp) -> t -> t = fun f -> function
     | Let (pat, e) -> Let(pat, f e) 
     | AuxTest e -> AuxTest (f e)
-    | GenTest e -> GenTest (f e)      
+    | Test e -> Test (f e)      
     | TestEq (e1, e2) -> TestEq (f e1, f e2)
     | Assume e -> Assume (f e)
     | In vs -> In vs

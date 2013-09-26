@@ -1,34 +1,20 @@
 
 CSEC_ROOT = ../..
 
-everything: compile sym
-everything: iml pv cv
+all: iml cv_full pv
 
-all: iml pv cv_full
+eclipse-all: compile
 
 include Makefile.common
 
-SYM_PROXY_LIB += lib_proxy.o net_proxy.o
-# does this preserve the dependency on the source?
-lib_proxy.o net_proxy.o: CC = $(PROXY_SYM_CILLY)
+PROXY_LIBS = $(PROXIES)/libcrestify.a $(PROXIES)/libsystem-proxies.a
+PROXY_OBJ = lib_proxy.o net_proxy.o
 
-PROXY_CONF_SYM = proxies.conf.out
-
-CV_OUTPUTS = model.full.cv.out model.paper.cv.out
-# $(CVM)
-
-csec-verify-log: csec-verify.log
-csec-verify.log:
-	$(MAKE) -f Makefile.csec iml pv > $@ 2>&1
+BUILD_DEPS = $(P1_SRC) $(P2_SRC)
+BUILD_CMD = $(MAKE) -f Makefile.run compile CC="$(CC)" CFLAGS="$(CFLAGS)" LDLIBS="$(LDLIBS)"
 
 include $(CSEC_ROOT)/mk/main.mk
 
-# we actually use compile target instead of orig
-$(ORIG) $(SYM): BASE_LIB = -lminimal -lgcm
-$(ORIG) $(SYM): polarssl gcm
-
-$(PROXY_CONF_SYM): proxies.conf $(PROXIES)/openssl_proxies.sym.conf
-	cat $^ > $@
-
-# don't compile lib with CIL cause fail has varargs
-# CILLY_FLAGS += --leavealone=lib
+csec-verify-log: csec-verify.log
+csec-verify.log:
+	$(MAKE) -f Makefile.csec > $@ 2>&1

@@ -28,7 +28,8 @@ EXTERN void proxy_fail(const char * fmt, ...);
 
 void readenv(const unsigned char * buf, const size_t * len, const char * s);
 /**
- * A version that does not assume a particular length size
+ * A version that does not assume a particular length size.
+ * lenlen should be an appropriate value even if len is NULL.
  */
 void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * s);
 /**
@@ -52,12 +53,12 @@ void event4(const char * s, const unsigned char * buf1, size_t len1,
                             const unsigned char * buf3, size_t len3,
                             const unsigned char * buf4, size_t len4);
 
+void typehint(const unsigned char * buf, size_t len, const char * type);
 
-// TODO: remove later when using the patcher
-#ifdef CSEC_VERIFY
-  #undef BN_num_bytes
-  extern int BN_num_bytes(BIGNUM const *a);
-#endif
+/**
+ * Adds an assumption that buf does not contain zero and appends zero to buf.
+ */
+void append_zero(const unsigned char * buf);
 
 #define FALSE 0
 #define TRUE  1

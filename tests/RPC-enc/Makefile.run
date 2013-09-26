@@ -13,9 +13,9 @@ logs: compile # $(P1) $(P2)
 	sleep 1; ./$(P2) $(P2_CMD) > client.log &\
 	wait
 
-$(P1) $(P2): polarssl gcm $(P1_SRC)
-	$(CC) $(DFLAGS) -Wall $(INCS) $(P1_SRC) $(LIBLOCS) $(LIBS) -o $(P1)
-	$(CC) $(DFLAGS) -Wall $(INCS) $(P2_SRC) $(LIBLOCS) $(LIBS) -o $(P2)
+$(P1) $(P2): polarssl gcm $(P1_SRC) $(P2_SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(P1_SRC) $(LDLIBS) -o $(P1)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(P2_SRC) $(LDLIBS) -o $(P2)
 
 compile: $(P1) $(P2)
 

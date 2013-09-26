@@ -1,6 +1,5 @@
 
 channel c_in, c_out. 
-type mstring.
 
 param N.
 
@@ -65,13 +64,13 @@ query secret nonce1.
 
 let A = 
 in(c_in, ());
-new nonce1: fixed_20;
-let xor1 = XOR(conc1(nonce1), pad) in
-out(c_out, (xor1)); 0 .
+yield.
 
 let B = 
 in(c_in, ());
-yield.
+new nonce1: fixed_20;
+let xor1 = XOR(conc1(nonce1), pad) in
+out(c_out, (xor1)); 0 .
 
 (************************
   <Environment>

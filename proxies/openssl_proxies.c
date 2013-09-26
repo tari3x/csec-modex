@@ -64,7 +64,10 @@ int EVP_Cipher_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned cha
   load_buf(in, inl, "plain");
   load_ctx(ctx, "key", "key");
   // FIXME: output the IV as well!
-  symL("EVP_Cipher", "enc", inl, FALSE);
+  SymN("EVP_Cipher", 3);
+  Hint("enc");
+  assume_len(inl);
+  Nondet();
 
   int ret = EVP_Cipher(ctx, out, in, inl);
 
@@ -100,8 +103,7 @@ int BIO_write_proxy(BIO *b, const void *in, int inl)
   else
   {
     load_buf((unsigned char*) in, inl, "msg");
-    symL("write", NULL, 0, TRUE);
-    event();
+    output();
 
     return ret;
   }
@@ -125,8 +127,22 @@ int BIO_read_proxy(BIO *b, void *out, int outl)
 
   // if(outl < 0) error("BIO_read: outl < 0");
 
-  symL("read", "msg", ret, FALSE);
+  input("msg", ret);
   store_buf((unsigned char*) out);
+
+  return ret;
+}
+
+extern long BIO_ctrl_proxy(BIO *bp , int cmd , long larg , void *parg )
+{
+  long ret = BIO_ctrl(bp, cmd, larg, parg);
+
+  // Let the attacker decide decide the result
+  input("BIO_ctrl_result", sizeof(ret));
+  store_buf(&ret);
+
+  // Some BIO_ctrl calls may leak more information to the attacker,
+  // but the API is too complex, so I can't be bothered figuring out.
 
   return ret;
 }
@@ -183,7 +199,9 @@ int EVP_VerifyFinal_proxy(EVP_MD_CTX *ctx , unsigned char const   *sigbuf ,
 
   int ret = EVP_VerifyFinal(ctx, sigbuf, siglen, pkey);
 
-  symL("EVP_VerifyFinal", "sig", siglen, TRUE);
+  SymN("EVP_VerifyFinal", 2);
+  Hint("sig");
+  assume_len(siglen);
 
   store_buf(sigbuf);
 
@@ -204,7 +222,10 @@ int EVP_SignFinal_proxy(EVP_MD_CTX *ctx , unsigned char *md , unsigned int *s ,
   int ret = EVP_SignFinal(ctx, md, s, pkey);
 
   // FIXME: relying on concrete value of s?
-  symL("EVP_SignFinal", "sig", *s, FALSE);
+  SymN("EVP_SignFinal", 2);
+  Hint("sig");
+  assume_len(*s);
+  Nondet();
 
   store_buf(md);
 
@@ -220,7 +241,11 @@ int EVP_DigestFinal_ex_proxy(EVP_MD_CTX *ctx , unsigned char *md ,
   int ret = EVP_DigestFinal_ex(ctx, md, s);
 
   // FIXME: relying on concrete value of s?
-  symL("EVP_DigestFinal_ex", "hash", *s, FALSE);
+  SymN("EVP_DigestFinal_ex", 2);
+  Hint(2);
+  assume_len(*s);
+  Nondet();
+
   store_buf(md);
 
   return ret;
@@ -270,7 +295,10 @@ EVP_MD const *EVP_MD_CTX_md_proxy(EVP_MD_CTX const   *ctx )
     load_ctx(ctx, "type", "type");
     load_ctx(ctx, "msg", "msg");
     load_ctx(ctx, "key", "key");
-    symL("EVP_DigestSign", "sig", *siglen, FALSE);
+    SymN("EVP_DigestSign", 3);
+    Hint("sig");
+    assume_len(*siglen);
+    Nondet();
     store_buf(sigret);
 
     return ret;
@@ -298,7 +326,9 @@ extern int i2d_X509_proxy(X509 *a , unsigned char **out )
   {
     load_ctx(a, "id", "cert");
 
-    symL("i2d_X509", "DER", ret, TRUE);
+    SymN("i2d_X509", 1);
+    Hint("DER");
+    assume_len(ret);
 
     if(notnull)
       store_buf(*out - ret);
@@ -328,7 +358,10 @@ extern X509 *d2i_X509_proxy(X509 **a , unsigned char const   **in , long len )
   if(ret != NULL)
   {
     load_buf(oldin, len, "DER");
-    symN("d2i_X509", "cert", NULL, TRUE);
+
+    SymN("d2i_X509", 1);
+    Hint("cert");
+
     store_ctx(ret, "id");
   }
 
@@ -341,7 +374,10 @@ extern EVP_PKEY *X509_get_pubkey_proxy(X509 *x )
   EVP_PKEY * ret = X509_get_pubkey(x);
 
   load_ctx(x, "id", "X509");
-  symN("X509_get_pubkey", "pkey", NULL, TRUE);
+
+  SymN("X509_get_pubkey", 1);
+  Hint("pkey");
+
   store_ctx(ret, "id");
 
   // fight the abstraction breaking in ssl lib:
@@ -602,10 +638,14 @@ extern HMAC_RET_TYPE HMAC_Final_proxy(HMAC_CTX *ctx , unsigned char *md , unsign
     int ret = HMAC_Final(ctx, md, len);
   #endif
 
-  load_ctx(ctx, "type", "type");
+  load_ctx(ctx, "type", "");
   load_ctx(ctx, "msg", "msg");
   load_ctx(ctx, "key", "key");
-  symL("HMAC", "hash", *len, TRUE);
+
+  SymN("HMAC", 3);
+  Hint("hash");
+  assume_len(*len);
+
   store_buf(md);
 
   #if OPENSSL_MAJOR == 1
@@ -639,10 +679,14 @@ extern unsigned char *HMAC_proxy(EVP_MD const   *evp_md , void const   *key ,
   if(md_len != NULL)
     *md_len = concrete_val(*md_len);
 
-  load_ctx(evp_md, "type", "type");
+  load_ctx(evp_md, "type", "");
   load_buf(d, n, "msg");
   load_buf((unsigned char *) key, key_len, "key");
-  symL("HMAC", "hash", *md_len, TRUE);
+
+  SymN("HMAC", 3);
+  Hint("hash");
+  assume_len(*md_len);
+
   store_buf(ret);
 
   return ret;
@@ -674,7 +718,11 @@ int SHA256_Final_proxy(unsigned char *md, SHA256_CTX *c)
   int ret = SHA256_Final(md, c);
 
   load_ctx(c, "msg", "msg");
-  symL("SHA256", "hash", 32, TRUE);
+
+  SymN("SHA256", 1);
+  Hint("hash");
+  assume_len(32);
+
   store_buf(md);
 
   return ret;
@@ -699,9 +747,14 @@ extern int EVP_EncryptUpdate_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, int 
   load_ctx(ctx, "enc_in", "partial_plain");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, "pos");
+  load_int(pos, TRUE, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
-  symL("encPart", "partial_enc", *outl, FALSE);
+
+  SymN("encPart", 5);
+  Hint("partial_enc");
+  assume_len(*outl);
+  Nondet();
+
   store_buf(out);
 
   pos += *outl;
@@ -732,9 +785,14 @@ extern int EVP_EncryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , int
   load_ctx(ctx, "enc_in", "partial_plain");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, "pos");
+  load_int(pos, TRUE, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
-  symL("encFin", "partial_enc", *outl, FALSE);
+
+  SymN("encFin", 5);
+  Hint("partial_enc");
+  assume_len(*outl);
+  Nondet();
+
   store_buf(out);
 
   // lhs(ctx, "enc_out", "enc");
@@ -762,9 +820,14 @@ extern int EVP_DecryptUpdate_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , in
   load_ctx(ctx, "dec_in", "partial_enc");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, "pos");
+  load_int(pos, TRUE, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
-  symL("decPart", "partial_dec", *outl, FALSE);
+
+  SymN("decPart", 5);
+  Hint("partial_dec");
+  assume_len(*outl);
+  Nondet();
+
   store_buf(out);
 
   pos += *outl;
@@ -782,9 +845,14 @@ extern int EVP_DecryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *outm , in
   load_ctx(ctx, "dec_in", "partial_enc");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, "pos");
+  load_int(pos, TRUE, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
-  symL("decFin", "partial_dec", *outl, FALSE);
+
+  SymN("decFin", 5);
+  Hint("partial_dec");
+  assume_len(*outl);
+  Nondet();
+
   store_buf(outm);
 
   clear_attr(ctx, "dec_in");
@@ -840,7 +908,11 @@ extern int EVP_DecryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *outm , in
     EVP_PKEY * ret = EVP_PKEY_new_mac_key(type, e, key, keylen);
 
     load_buf(key, keylen, "keybits");
-    symN("EVP_PKEY_new_mac_key", "key", NULL, FALSE);
+
+    SymN("EVP_PKEY_new_mac_key", 1);
+    Hint("key");
+    Nondet();
+
     store_ctx(ret, "id");
 
     // fighting abstraction breaking in ssl lib:
@@ -855,7 +927,10 @@ extern X509 *PEM_read_bio_X509_proxy(BIO *bp , X509 **x , pem_password_cb *cb , 
 {
   X509 * ret = PEM_read_bio_X509(bp, x, cb, u);
 
-  symN("PEM_read_bio_X509", "cert", NULL, FALSE);
+  SymN("PEM_read_bio_X509", 0);
+  Hint("cert");
+  Nondet();
+
   store_ctx(ret, "id");
 
   return ret;
@@ -886,7 +961,10 @@ extern X509 *d2i_X509_bio_proxy(BIO *bp , X509 **x509 )
 {
   X509 * ret = d2i_X509_bio(bp, x509);
 
-  symN("d2i_X509_bio", "cert", NULL, FALSE);
+  SymN("d2i_X509_bio", 0);
+  Hint("cert");
+  Nondet();
+
   store_ctx(ret, "id");
 
   return ret;
@@ -919,7 +997,10 @@ extern EVP_PKEY *PEM_read_bio_PrivateKey_proxy(BIO *bp , EVP_PKEY **x , pem_pass
 {
   EVP_PKEY * ret = PEM_read_bio_PrivateKey(bp, x, cb, u);
 
-  symN("PEM_read_bio_PrivateKey", "pkey", NULL, FALSE);
+  SymN("PEM_read_bio_PrivateKey", 0);
+  Hint("pkey");
+  Nondet();
+
   store_ctx(ret, "key");
 
   copy_ctx(ret->pkey.ptr, ret);
@@ -932,7 +1013,10 @@ extern EVP_PKEY *d2i_PrivateKey_bio_proxy(BIO *bp , EVP_PKEY **a )
 {
   EVP_PKEY * ret = d2i_PrivateKey_bio(bp, a);
 
-  symN("d2i_PrivateKey_bio", "pkey", NULL, FALSE);
+  SymN("d2i_PrivateKey_bio", 0);
+  Hint("pkey");
+  Nondet();
+
   store_ctx(ret, "id");
 
   copy_ctx(ret->pkey.ptr, ret);
@@ -948,7 +1032,11 @@ extern EVP_PKEY *d2i_PrivateKey_proxy(int type , EVP_PKEY **a , unsigned char co
 
   // TODO: is this right?
   load_buf(*pp, length, "keystring");
-  symN("d2i_PrivateKey", "pkey", NULL, FALSE);
+
+  SymN("d2i_PrivateKey", 1);
+  Hint("pkey");
+  Nondet();
+
   store_ctx(ret, "id");
 
   copy_ctx(ret->pkey.ptr, ret);
@@ -975,6 +1063,7 @@ extern EVP_CIPHER const   *EVP_des_ede3_cbc_proxy(void)
   return ret;
 }
 
+/*
 extern EVP_CIPHER const   *EVP_idea_cbc_proxy(void)
 {
   EVP_CIPHER const * ret = EVP_idea_cbc();
@@ -983,6 +1072,7 @@ extern EVP_CIPHER const   *EVP_idea_cbc_proxy(void)
 
   return ret;
 }
+*/
 
 
 extern EVP_CIPHER const   *EVP_rc4_proxy(void)
@@ -1075,7 +1165,7 @@ extern int RAND_bytes_proxy(unsigned char *buf , int num )
 {
   int ret = RAND_bytes(buf, num);
 
-  newL("nonce", num);
+  newTL(num, NULL, "nonce");
   store_buf(buf);
 
   return ret;
@@ -1094,7 +1184,11 @@ extern int RAND_pseudo_bytes_proxy(unsigned char *buf , int num )
 {
   int ret = RAND_pseudo_bytes(buf, num);
 
-  symL("RAND_pseudo_bytes", "nonce", num, FALSE);
+  SymN("RAND_pseudo_bytes", 0);
+  Hint("nonce");
+  assume_len(num);
+  Nondet();
+
   store_buf(buf);
 
   return ret;
@@ -1105,7 +1199,10 @@ extern RSA *d2i_RSAPrivateKey_bio_proxy(BIO *bp , RSA **rsa )
 {
   RSA * ret = d2i_RSAPrivateKey_bio(bp, rsa);
 
-  symN("d2i_RSAPrivateKey_bio", "rsa_key", NULL, FALSE);
+  SymN("d2i_RSAPrivateKey_bio", 0);
+  Hint("rsa_key");
+  Nondet();
+
   store_ctx(ret, "id");
 
   return ret;
@@ -1117,7 +1214,10 @@ extern RSA *PEM_read_bio_RSAPrivateKey_proxy(BIO *bp , RSA **x , pem_password_cb
 {
   RSA * ret = PEM_read_bio_RSAPrivateKey(bp, x, cb, u);
 
-  symN("PEM_read_bio_RSAPrivateKey", "rsa_key", NULL, FALSE);
+  SymN("PEM_read_bio_RSAPrivateKey", 0);
+  Hint("rsa_key");
+  Nondet();
+
   store_ctx(ret, "id");
 
   return ret;
@@ -1128,7 +1228,10 @@ extern RSA *d2i_RSAPrivateKey_proxy(RSA **a , unsigned char const   **in , long 
   // FIXME: do as in DSA
   RSA * ret = d2i_RSAPrivateKey(a, in, len);
 
-  symN("d2i_RSAPrivateKey", "rsa_key", NULL, FALSE);
+  SymN("d2i_RSAPrivateKey", 0);
+  Hint("rsa_key");
+  Nondet();
+
   store_ctx(ret, "id");
 
   return ret;
@@ -1182,6 +1285,10 @@ extern RSA *d2i_RSAPrivateKey_proxy(RSA **a , unsigned char const   **in , long 
 
 #endif
 
+/*
+
+  Bring back when crestifying OpenSSL
+
 #if OPENSSL_MAJOR == 1
 int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char *p,
 	     int len)
@@ -1194,6 +1301,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
   return ret;
 }
 #endif
+*/
 
 #if OPENSSL_MAJOR == 0
   extern int check_srvr_ecc_cert_and_alg(X509 *x , SSL_CIPHER *cs );
@@ -1250,7 +1358,10 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
     {
       load_buf(in, inlen, "enc");
       load_ctx(ctx, "key", "pkey");
-      symL("EVP_PKEY_decrypt", "dec", *outlen, TRUE);
+
+      SymN("EVP_PKEY_decrypt", 2);
+      Hint("dec");
+      assume_len(*outlen);
 
       store_buf(out);
     }
@@ -1309,7 +1420,10 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
     {
       load_buf(tbs, tbslen, "msg");
       load_ctx(ctx, "key", "pkey");
-      symL("EVP_PKEY_verify", "sig", siglen, TRUE);
+
+      SymN("EVP_PKEY_verify", 2);
+      Hint("sig");
+      assume_len(siglen);
 
       store_buf(sig);
     }
@@ -1336,12 +1450,20 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
 
     if(out != NULL)
     {
-      symL("lenvar", "enc_len", sizeof(*outlen), FALSE);
+      SymN("lenvar", 0);
+      Hint("enc_len");
+      assume_len(sizeof(*outlen));
+      Nondet();
+
       store_buf((unsigned char *) outlen);
 
       load_buf(in, inlen, "plain");
       load_ctx(ctx, "key", "pkey");
-      symL("EVP_PKEY_encrypt", "penc", *outlen, FALSE);
+
+      SymN("EVP_PKEY_encrypt", 2);
+      Hint("penc");
+      Nondet();
+      assume_len(*outlen);
 
       store_buf(out);
     }
@@ -1364,12 +1486,20 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
 
     if(sig != NULL)
     {
-      symL("lenvar", "sig_len", sizeof(*siglen), FALSE);
+      SymN("lenvar", 0);
+      Hint("sig_len");
+      assume_len(sizeof(*siglen));
+      Nondet();
+
       store_buf((unsigned char *) siglen);
 
       load_buf(tbs, tbslen, "msg");
       load_ctx(ctx, "key", "pkey");
-      symL("EVP_PKEY_sign", "sig", *siglen, FALSE);
+
+      SymN("EVP_PKEY_sign", 2);
+      assume_len(*siglen);
+      Nondet();
+
       store_buf(sig);
     }
 
@@ -1395,7 +1525,11 @@ int BN_num_bytes_proxy(const BIGNUM *a)
   int ret = (BN_num_bits(a)+7)/8;
 
   load_ctx(a, "val", "bignum");
-  symL("len", "len", sizeof(ret), TRUE);
+
+  SymN("len", 1);
+  assume_len(sizeof(ret));
+  Hint("len");
+
   store_buf((void*) &ret);
 
   return ret;
@@ -1432,7 +1566,11 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   size_t ret = BN_bn2bin(a, to);
 
   load_ctx(a, "val", "val");
-  symL("len", "len", sizeof(ret), TRUE);
+
+  SymN("len", 1);
+  assume_len(sizeof(ret));
+  Hint("len");
+
   store_buf((void *)&ret);
 
   load_ctx(a, "val", "val");
@@ -1453,7 +1591,10 @@ extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , 
   load_ctx(a, "val", "bignum");
   load_ctx(p, "val", "bignum");
   load_ctx(m, "val", "bignum");
-  symN("mod_exp", "bignum", NULL, TRUE);
+
+  SymN("mod_exp", 3);
+  Hint("bignum");
+
   store_ctx(r, "val");
 
   return ret;
@@ -1475,12 +1616,21 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
   int ret = BN_hex2bn(a, str);
 
   load_all(str, "hex");
-  symN("ztp", "ztp", NULL, TRUE);
-  symN("BN_hex2bn", "bignum", NULL, TRUE);
+
+  SymN("ztp", 1);
+  Hint("ztp");
+
+  SymN("BN_hex2bn", 1);
+  Hint("bignum");
+
   store_ctx(&dummy, "val");
 
   load_ctx(&dummy, "val", "");
-  symL("len", "len", sizeof(ret), TRUE);
+
+  SymN("len", 1);
+  Hint("len");
+  assume_len(sizeof(ret));
+
   store_buf((void *) &ret);
 
   if(a != NULL)
@@ -1511,7 +1661,10 @@ extern char *BN_bn2hex_proxy(BIGNUM const   *a )
   char * ret = BN_bn2hex(a);
 
   load_ctx(a, "val", "");
-  symN("BN_bn2hex", "hex", NULL, TRUE);
+
+  SymN("BN_bn2hex", 1);
+  Hint("hex");
+
   store_all(ret);
 
   return ret;
@@ -1545,7 +1698,10 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
   load_ctx(a2, "val", "a1");
   load_ctx(p2, "val", "p1");
   load_ctx(m, "val", "bignum");
-  symN("mod_exp2", "rr", NULL, TRUE);
+
+  SymN("mod_exp2", 5);
+  Hint("rr");
+
   store_ctx(rr, "val");
 
   return ret;
@@ -1563,7 +1719,10 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
   load_ctx(a, "val", "a");
   load_ctx(p, "val", "p");
   load_ctx(m, "val", "bignum");
-  symN("mod_exp", "rr", NULL, TRUE);
+
+  SymN("mod_exp", 3);
+  Hint("rr");
+
   store_ctx(rr, "val");
 
   return ret;
@@ -1582,15 +1741,17 @@ int DSA_generate_key_proxy(DSA *a)
   store_buf(&keylen, sizeof(keylen));
 */
 
-  newTN("DSA_keyseed", "keyseed", NULL);
+  newTL(-1, "DSA_keyseed", "keyseed");
   store_ctx(a, "keyseed");
 
   load_ctx(a, "keyseed", "keyseed");
-  symN("DSA_sk", "skey", NULL, TRUE);
+  SymN("DSA_sk", 1);
+  Hint("skey");
   store_ctx(a, "skey");
 
   load_ctx(a, "keyseed", "keyseed");
-  symN("DSA_pk", "pkey", NULL, TRUE);
+  SymN("DSA_pk", 1);
+  Hint("pkey");
   store_ctx(a, "pkey");
 
   return DSA_generate_key(a);
@@ -1627,7 +1788,11 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
 
   size_t ret = i2d_DSA_PUBKEY(a, pp);
 
-  symL("lenvar", "len", sizeof(ret), FALSE);
+  SymN("lenvar", 0);
+  Hint("len");
+  assume_len(sizeof(ret));
+  Nondet();
+
   store_buf((unsigned char  *) &ret);
 
   if(p == NULL)
@@ -1640,7 +1805,11 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
     *pp = p + ret;
 
   load_ctx(a, "pkey", "dsa_pkey");
-  symL("i2d_DSA_PUBKEY", "DER", ret, TRUE);
+
+  SymN("i2d_DSA_PUBKEY", 1);
+  Hint("DER");
+  assume_len(ret);
+
   store_buf(p);
 
   return ret;
@@ -1671,7 +1840,11 @@ DSA *d2i_DSA_PUBKEY_proxy(DSA **a , unsigned char const   **pp , long length )
   }
 
   load_buf(*pp, length, "DER");
-  symN("d2i_DSA_PUBKEY", "dsa_pkey", NULL, FALSE);
+
+  SymN("d2i_DSA_PUBKEY", 1);
+  Hint("dsa_pubkey");
+  Nondet();
+
   store_ctx(ret, "pkey");
 
   *pp = p + length;
@@ -1698,7 +1871,11 @@ unsigned long lh_strhash_proxy(char const   *c )
   unsigned long ret = lh_strhash(c);
 
   load_all(c, "str");
-  symL("lh_strhash", "strhash", sizeof(ret), TRUE);
+
+  SymN("lh_strhash", 1);
+  Hint("strhash");
+  assume_len(sizeof(ret));
+
   store_buf((void *) &ret);
 
   return ret;
@@ -1827,7 +2004,11 @@ extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa )
   {
     load_buf(m, m_length, "msg");
     load_ctx(rsa, "id", "pkey");
-    symL("RSA_verify", "sig", siglen, TRUE);
+
+    SymN("RSA_verify", 2);
+    Hint("sig");
+    assume_len(siglen);
+
     store_buf(sigbuf);
   }
 
@@ -1849,7 +2030,12 @@ extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , uns
 
   load_buf(from, flen, "plain");
   load_ctx(rsa, "id", "pkey");
-  symL("RSA_public_encrypt", "enc", ret, FALSE);
+
+  SymN("RSA_public_encrypt", 2);
+  Hint("enc");
+  assume_len(ret);
+  Nondet();
+
   store_buf(to);
 
   return ret;
@@ -1873,7 +2059,10 @@ extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , un
   int ret = RSA_private_decrypt(flen, from, to, rsa, padding);
 
   // FIXME: relying on concrete value?
-  symL("RSA_private_decrypt", "dec", ret, TRUE);
+  SymN("RSA_private_decrypt", 2);
+  Hint("dec");
+  assume_len(ret);
+
   store_buf(to);
 
   return ret;
@@ -1896,7 +2085,12 @@ extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_l
 
   load_buf(m, m_length, "msg");
   load_ctx(rsa, "id", "pkey");
-  symL("RSA_sign", "sig", *siglen, FALSE);
+
+  SymN("RSA_sign", 2);
+  Hint("sig");
+  assume_len(*siglen);
+  Nondet();
+
   store_buf(sigret);
 
   return ret;

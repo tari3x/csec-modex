@@ -27,8 +27,25 @@ let isHandled : vertex -> bool = fun v ->
   let glob = try 
     StrMap.find v !globs
     with Not_found -> fail ("isHandled, not found: " ^ v) in 
-  if glob.proxied then StrMap.mem (v ^ "_proxy") !globs else
-  glob.opaque || (isInterfaceFun v)
+    
+  (* This is to remind myself to crestify the proxies properly, which is easy to forget with my opt-in scheme *)
+  if glob.proxied then
+  begin
+    let proxy_crestified = 
+      try 
+          let proxy_glob = StrMap.find (v ^ "_proxy") !globs in
+          proxy_glob.crestified 
+      with Not_found -> false in
+    if not proxy_crestified then
+    begin
+      print_endline ("Error: function " ^ v ^ " is proxied, but the proxy function is not instrumented." 
+                      ^ " Add the proxy source file to config.");
+      exit 1;
+    end;
+  end;
+    
+  (* See comment in calltrace regarding is_proxy *)
+  glob.is_proxy || glob.opaque || (isInterfaceFun v) 
 
 let leaves : vertex -> graph -> vertex list = fun v g ->
   
@@ -54,5 +71,12 @@ let leaves : vertex -> graph -> vertex list = fun v g ->
 ;;
 begin
   readInfo "callgraph.out" "globs.out";
+  
+  if not (StrMap.mem "main" !globs) then
+  begin
+    print_endline "Error: main() is not instrumented. Please check your configuration file.";
+    exit 1;
+  end;
+    
   iter print_endline (filter isBad (leaves "main" !callgraph))
 end;

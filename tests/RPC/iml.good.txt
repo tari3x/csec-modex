@@ -1,28 +1,4 @@
 let A = 
-event client_begin(request);
-let msg1 = len(request)<8> + i20 + i8 + i1 in
-out(c, msg1);
-if i0 < (len(request)<8> + i20 + i8 + i1) then 
-let msg2 = i7|7c|52657175657374|request in
-let hash1 = HMAC(sha1, msg2, keyAB)<20> in
-let msg3 = len(request)<8>|7c|request|hash1 in
-out(c, msg3);
-let var1 = len(request)<8> + i20 + i8 + i1 in
-if !((var1 castToInt TSBase(int )) <= i0) then 
-if !(((var1 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(request)<8> + i20 + i8 + i1)) then 
-in(c, msg4<8>);
-in(c, msg5<(msg4 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
-if !(msg5{0, 8} > (msg4 - (i8 + i1))) then 
-if msg5{8, 1} = 7c then 
-if msg4 - (i8 + i1 + msg5{0, 8}) = i20 then 
-let var2 = msg5{9, msg5{0, 8}} in
-let msg6 = i8|7c|526573706f6e7365|len(request)<8>|7c|request|var2 in
-let hash2 = HMAC(sha1, msg6, keyAB)<20> in
-let var3 = msg5{i9 + msg5{0, 8}, len(msg5) - (i9 + msg5{0, 8})} in
-if var3 = hash2 then 
-event client_accept(request, var2);
-
-let B = 
 in(c, msg1<8>);
 in(c, msg2<(msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
 if !(msg2{0, 8} > (msg1 - (i8 + i1))) then 
@@ -45,4 +21,28 @@ out(c, msg6);
 let var4 = len(response)<8> + i20 + i8 + i1 in
 if !((var4 castToInt TSBase(int )) <= i0) then 
 if !(((var4 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(response)<8> + i20 + i8 + i1)) then 
+
+let B = 
+event client_begin(request);
+let msg1 = len(request)<8> + i20 + i8 + i1 in
+out(c, msg1);
+if i0 < (len(request)<8> + i20 + i8 + i1) then 
+let msg2 = i7|7c|52657175657374|request in
+let hash1 = HMAC(sha1, msg2, keyAB)<20> in
+let msg3 = len(request)<8>|7c|request|hash1 in
+out(c, msg3);
+let var1 = len(request)<8> + i20 + i8 + i1 in
+if !((var1 castToInt TSBase(int )) <= i0) then 
+if !(((var1 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(request)<8> + i20 + i8 + i1)) then 
+in(c, msg4<8>);
+in(c, msg5<(msg4 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+if !(msg5{0, 8} > (msg4 - (i8 + i1))) then 
+if msg5{8, 1} = 7c then 
+if msg4 - (i8 + i1 + msg5{0, 8}) = i20 then 
+let var2 = msg5{9, msg5{0, 8}} in
+let msg6 = i8|7c|526573706f6e7365|len(request)<8>|7c|request|var2 in
+let hash2 = HMAC(sha1, msg6, keyAB)<20> in
+let var3 = msg5{i9 + msg5{0, 8}, len(msg5) - (i9 + msg5{0, 8})} in
+if var3 = hash2 then 
+event client_accept(request, var2);
 

@@ -1,6 +1,5 @@
 
 channel c_in, c_out. 
-type mstring.
 
 param N.
 
@@ -14,27 +13,27 @@ type macinput.
 (* type macres. *)
 proba Pmac.
 
-expand UF_CMA_mac(mkeyseed, mkey, mstring, mstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+expand UF_CMA_mac(mkeyseed, mkey, bitstring, bitstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
 
-forall m: mstring, k: mkey, r: mstring;
+forall m: bitstring, k: mkey, r: bitstring;
   ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
 
 (******************** 
   <Query>
 ********************)
  
-event client_begin(mstring).
-event client_accept(mstring, mstring).
-event server_reply(mstring, mstring).
+event client_begin(bitstring).
+event client_accept(bitstring, bitstring).
+event server_reply(bitstring, bitstring).
 
-query x: mstring, y:mstring;
+query x: bitstring, y:bitstring;
   event client_accept(x, y) ==> server_reply(x, y).
 
-query x: mstring, y:mstring;
+query x: bitstring, y:bitstring;
   event server_reply(x, y) ==> client_begin(x).
 
 (*
-query x: mstring, y:mstring;
+query x: bitstring, y:bitstring;
   event client_accept(x, y).
 *)
 
@@ -50,7 +49,7 @@ let A = 0 . let B = 0 .
 
 process
 ! N (
-  in(c_in, (request: mstring, response: mstring));
+  in(c_in, (request: bitstring, response: bitstring));
   new keyseed: mkeyseed; 
   let keyAB = mkgen(keyseed) in
   out(c_out, ());

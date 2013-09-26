@@ -125,8 +125,8 @@ extern int BIO_read_proxy(BIO *b , void *data , int len ) ;
 extern int BIO_write_proxy(BIO *b , void const   *data , int len ) ;
 #pragma cilnoremove("BIO_write_proxy")
 
-// extern long BIO_ctrl_proxy(BIO *bp , int cmd , long larg , void *parg ) ;
-// #pragma cilnoremove("BIO_ctrl_proxy")
+extern long BIO_ctrl_proxy(BIO *bp , int cmd , long larg , void *parg );
+#pragma cilnoremove("BIO_ctrl_proxy")
 
 /*
  * EVP_dss() and EVP_dss1() return EVP_MD structures for
@@ -284,8 +284,8 @@ extern EVP_CIPHER const   *EVP_des_cbc_proxy(void) ;
 #pragma cilnoremove("EVP_des_cbc_proxy")
 extern EVP_CIPHER const   *EVP_des_ede3_cbc_proxy(void) ;
 #pragma cilnoremove("EVP_des_ede3_cbc_proxy")
-extern EVP_CIPHER const   *EVP_idea_cbc_proxy(void) ;
-#pragma cilnoremove("EVP_idea_cbc_proxy")
+// extern EVP_CIPHER const   *EVP_idea_cbc_proxy(void) ;
+// #pragma cilnoremove("EVP_idea_cbc_proxy")
 extern EVP_CIPHER const   *EVP_rc4_proxy(void) ;
 #pragma cilnoremove("EVP_rc4_proxy")
 extern EVP_CIPHER const   *EVP_rc2_cbc_proxy(void) ;

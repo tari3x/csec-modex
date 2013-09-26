@@ -140,6 +140,7 @@
 #define EXTERN extern
 #endif
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 typedef void (*funPtr)(void);
@@ -178,18 +179,20 @@ EXTERN void __CrestClear(__CREST_VALUE) __SKIP;
 EXTERN void __CrestInvoke(__CREST_FUN_PTR) __SKIP;
 //EXTERN void __CrestApply1(__CREST_ID, __CREST_OP, __CREST_VALUE) __SKIP;
 //EXTERN void __CrestApply2(__CREST_ID, __CREST_OP, __CREST_VALUE) __SKIP;
-EXTERN void __CrestApplyN(__CREST_OP, __CREST_VALUE) __SKIP;
+EXTERN void __CrestApply(__CREST_OP) __SKIP;
 EXTERN void __CrestSimplify(__CREST_VALUE) __SKIP;
 EXTERN void __CrestNondet() __SKIP;
 EXTERN void __CrestMute() __SKIP;
 EXTERN void __CrestUnmute() __SKIP;
 EXTERN void __CrestBranch(__CREST_BOOL) __SKIP;
-EXTERN void __CrestCall(__CREST_STR name, __CREST_FUN_PTR f) __SKIP;
+EXTERN void __CrestCall(__CREST_STR name, __CREST_FUN_PTR f, __CREST_VALUE nargs) __SKIP;
+EXTERN void __CrestCallOpaque(__CREST_STR name, __CREST_FUN_PTR f, __CREST_VALUE nargs) __SKIP;
 EXTERN void __CrestReturn(__CREST_BOOL is_void) __SKIP;
 // EXTERN void __CrestCustomReturn(__CREST_ID) __SKIP;
 EXTERN void __CrestStore() __SKIP;
 EXTERN void __CrestStoreBuf() __SKIP;
 EXTERN void __CrestLoadInt(__CREST_VALUE val) __SKIP;
+EXTERN void __CrestBS(int is_signed, int width);
 // LoadMem always reads the size of the pointer
 EXTERN void __CrestLoadMem() __SKIP;
 // Converts to hex and puts the string into heap
@@ -197,7 +200,7 @@ EXTERN void __CrestLoadCString(__CREST_STR val) __SKIP;
 EXTERN void __CrestLoadString(__CREST_STR val) __SKIP;
 EXTERN void __CrestLoadChar(__CREST_CHAR val) __SKIP;
 EXTERN void __CrestLoadTypeSize(__CREST_STR val) __SKIP;
-EXTERN void __CrestSetLen() __SKIP;
+// EXTERN void __CrestSetLen() __SKIP;
 EXTERN void __CrestSetPtrStep() __SKIP;
 EXTERN void __CrestLoadStackPtr(__CREST_STR var) __SKIP;
 EXTERN void __CrestFieldOffset(__CREST_STR field) __SKIP;
@@ -214,22 +217,37 @@ EXTERN void LoadBuf(const unsigned char * buf, size_t len);
 EXTERN void LoadAll(const unsigned char * buf);
 EXTERN void LoadAttr(const void * ctx, const char * attr);
 EXTERN void LoadInt(int n);
+EXTERN void BS(bool is_signed, int width);
+EXTERN void Val(bool is_signed, int width);
 EXTERN void LoadStr(const char * str);
-EXTERN void Sym(const char * sym);
+// EXTERN void Sym(const char * sym);
 EXTERN void SymN(const char * sym, int n);
+EXTERN void In(size_t len);
+EXTERN void New();
+EXTERN void Env(const char * name);
+EXTERN void FreshVar(const char * name_stem);
+EXTERN void Len();
+EXTERN void InType(const char * type);
 EXTERN void Dup();
+EXTERN void Clear(int n);
 EXTERN void Nondet();
 EXTERN void Done();
-EXTERN void Event();
+EXTERN void Test();
+EXTERN void Assume();
+EXTERN void Event(const char * sym, int n);
 EXTERN void Append();
 EXTERN void Hint(const char * hint);
-EXTERN void SetLen(size_t len);
+// EXTERN void SetLen(size_t len);
 EXTERN void StoreBuf(const unsigned char * buf);
 EXTERN void StoreAll(const unsigned char * buf);
 EXTERN void StoreAttr(const void * ctx, const char * attr);
+EXTERN void Out();
 EXTERN void CopyCtx(const void * to, const void * from);
 EXTERN void StoreRuntimeInt(const void * ctx, const char * attr, int n);
 EXTERN int LoadRuntimeInt(const void * ctx, const char * attr);
 EXTERN void NewHeapPtr(size_t buflen);
+EXTERN void LoadStackPtr(const char * name);
+EXTERN void SetPtrStep();
+EXTERN void TypeHint(const char * type);
 
 #endif  /* LIBCREST_CREST_H__ */

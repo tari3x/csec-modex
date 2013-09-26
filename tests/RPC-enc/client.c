@@ -11,6 +11,7 @@
 
 #ifdef CSEC_VERIFY
   #include <proxies/common.h>
+  #include <proxies/interface.h>
 #endif
 #include <string.h>
 
@@ -68,8 +69,8 @@ int send_request(RPCstate * ctx)
   fflush(stdout);
 #endif
 
-  send(&(ctx->bio), (unsigned char *) &full_len, sizeof(full_len));
-  send(&(ctx->bio), m1_e, full_len);
+  send(&(ctx->conn_fd), (unsigned char *) &full_len, sizeof(full_len));
+  send(&(ctx->conn_fd), m1_e, full_len);
 
   free(m1);
   free(m1_e);
@@ -82,15 +83,15 @@ int recv_response(RPCstate * ctx)
   unsigned char * m2_e;
   uint32_t m2_e_len;
 
-  recv(&(ctx->bio), (unsigned char*) &m2_e_len, sizeof(m2_e_len));
+  recv(&(ctx->conn_fd), (unsigned char*) &m2_e_len, sizeof(m2_e_len));
   // Check if the read length is within bounds
-  if (m2_e_len < MAX_MESSAGE_OVERHEAD || m2_e_len > MAX_PAYLOAD_LENGTH + MAX_MESSAGE_OVERHEAD)
-    return -1;
+  if (m2_e_len < MIN_MSG2_LENGTH || m2_e_len > MAX_MSG2_LENGTH)
+    fail("client: msg2 has wrong length: %d", m2_e_len);
 
   m2_e = malloc(m2_e_len);
   if (m2_e == NULL)
     return -1;
-  recv(&(ctx->bio), m2_e, m2_e_len);
+  recv(&(ctx->conn_fd), m2_e, m2_e_len);
 
 #ifdef VERBOSE
   printf("Client: Received encrypted message: ");
@@ -119,6 +120,9 @@ int recv_response(RPCstate * ctx)
     return -1;
   }
 
+  if(ctx->response_len < MIN_PAYLOAD_LENGTH || ctx->response_len > MAX_PAYLOAD_LENGTH)
+    fail("Client: response too long: %d", ctx->response_len);
+
 #ifdef VERBOSE
   printf("Client: Received and authenticated response: ");
   print_text_buffer(ctx->response,ctx->response_len);
@@ -131,12 +135,21 @@ int recv_response(RPCstate * ctx)
 
 int parseargs(int argc, char ** argv, RPCstate * ctx)
 {
-  int port_len, pwr = 1;
+  size_t port_len, pwr = 1;
 
   if (argc != 4 && argc != 5)
     return -1;
 
-  ctx->self_len = strlen(argv[1]);
+  size_t self_len = strlen(argv[1]);
+  size_t other_len = strlen(argv[2]);
+
+  // Check length before truncating to int32
+  if(self_len > MAX_PRINCIPAL_LENGTH || other_len > MAX_PRINCIPAL_LENGTH){
+    printf("Client: server of client ID too long\n");
+    exit(-1);
+  }
+
+  ctx->self_len = self_len;
   if (ctx->self_len == 0)
   {
     ctx->self_len = DEFAULTHOST_LEN;
@@ -155,7 +168,7 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
     memcpy((char*) ctx->self,argv[1],ctx->self_len);
   }
 
-  ctx->other_len = strlen(argv[2]);
+  ctx->other_len = other_len;
   if (ctx->other_len == 0)
   {
     ctx->other_len = DEFAULTHOST_LEN;
@@ -175,15 +188,15 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
   }
 
 #ifdef CSEC_VERIFY
-  // Assumption that the corresponding argv fields indeed contains the correct ids:
-  readenvE(ctx->self, &(ctx->self_len), sizeof(ctx->self_len), "clientID");
-  readenvE(ctx->other, &(ctx->other_len), sizeof(ctx->other_len), "serverID");
+  // The following chunk verifies, but adds a lot of noise from the if statements, so we replace
+  // the computed value by an environment variable "port".
+  mute();
 #endif
 
   ctx->port = 0;
   if (argc == 5)
   {
-    port_len = (int) strlen(argv[3]);
+    port_len = strlen(argv[3]);
     if (port_len > 5)
       return -1;
     for (; port_len > 0; port_len--)
@@ -199,24 +212,12 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
     ctx->port = DEFAULTPORT;
   }
 
-  // This chunk could be defined as being "get_request()"
-  ctx->request_len = strlen(argv[argc - 1]);
-  if (ctx->request_len == 0)
-    ctx->request = NULL;
-  else
-  {
-    ctx->request = malloc(ctx->request_len);
-    if (ctx->request == NULL)
-      return -1;
-
-    memcpy((char*) ctx->request,argv[argc - 1],ctx->request_len);
-  }
-
 #ifdef CSEC_VERIFY
-  // Assumption that the argv field indeed contains the request from the environment:
-  // TOOD: replace by random for the purpose of secrecy
-  readenvE(ctx->request, &(ctx->request_len), sizeof(ctx->request_len), "request");
+  unmute();
+  readenvL(&(ctx->port), sizeof(ctx->port), "port");
 #endif
+
+  ctx->request = get_request(&(ctx->request_len), argv[argc - 1]);
 
   return 0;
 }
@@ -224,6 +225,19 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
 //Begin ClientCode
 int main(int argc, char ** argv)
 {
+
+#ifdef CSEC_VERIFY
+  // Assumption that the corresponding argv fields indeed contains the correct ids:
+  readenv(argv[1], NULL, "clientID");
+  readenv(argv[2], NULL, "serverID");
+  readenv(argv[3], NULL, "port_ascii");
+
+  append_zero(argv[1]);
+  append_zero(argv[2]);
+  append_zero(argv[3]);
+#endif
+
+
   RPCstate clState;
 
   clState.end = CLIENT;
@@ -243,7 +257,7 @@ int main(int argc, char ** argv)
   fflush(stdout);
 #endif
   // Getting arguments
-  if (socket_connect(&(clState.bio),(char*) clState.other, clState.other_len, clState.port))
+  if (socket_connect(&(clState.conn_fd),(char*) clState.other, clState.other_len, clState.port))
     return -1;
   clState.k_ab = get_shared_key(clState.self, clState.self_len, clState.other, clState.other_len, &(clState.k_ab_len));
   clState.k = mk_session_key(&(clState.k_len));

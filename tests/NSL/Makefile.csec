@@ -2,28 +2,20 @@
 CSEC_ROOT = ../..
  
 include Makefile.common
- 
-#everything: orig sym
-everything: iml pv model.cv.out
 
-all: orig sym
+all: iml cv # pv
 
-SYM_PROXY_LIB += lib_proxy.o
+eclipse-all: compile
 
-PROXY_CONF_SYM = proxies.conf.out
+PROXY_LIBS = $(PROXIES)/libsystem-proxies.a $(PROXIES)/libopenssl-proxies.a $(PROXIES)/libcrestify.a
+PROXY_OBJ = lib_proxy.o
+
+BUILD_CMD = $(MAKE) -f Makefile.run compile CC="$(CC)" CFLAGS="$(CFLAGS)" LDLIBS="$(LDLIBS)"
 
 include $(CSEC_ROOT)/mk/main.mk
 
-$(PROXY_CONF_SYM): proxies.conf $(PROXIES)/openssl_proxies.sym.conf
-	cat $^ > $@
-
 test: test.c lib.c
 test: LDLIBS += $(CRYPTO_LIB) $(SYM_PROXY_LIB)
-
-lib_proxy.o: CC = $(PROXY_SYM_CILLY)
-
-# don't compile lib with CIL cause fail has varargs
-CILLY_FLAGS += --leavealone=lib
 
 clean::
 	$(RM) client server

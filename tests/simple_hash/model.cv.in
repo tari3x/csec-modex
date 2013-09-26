@@ -1,8 +1,14 @@
 
 channel c_in, c_out. 
-type mstring.
 
 param N.
+
+(******************** 
+  Types
+********************)
+
+type bounded_1000_payload [bounded].
+type fixed_20_hash [fixed].
 
 (******************** 
   MAC
@@ -14,19 +20,19 @@ type macinput.
 (* type macres. *)
 proba Pmac.
 
-expand UF_CMA_mac(mkeyseed, mkey, mstring, mstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+expand UF_CMA_mac(mkeyseed, mkey, bitstring, fixed_20_hash, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
 
-forall m: mstring, k: mkey, r: mstring;
+forall m: bitstring, k: mkey, r: fixed_20_hash;
   ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
 
 (******************** 
   <Query>
 ********************)
  
-event client_send(mstring).
-event server_recv(mstring).
+event client_send(bounded_1000_payload).
+event server_recv(bounded_1000_payload).
 
-query x: mstring, y:mstring;
+query x: bounded_1000_payload, y:bounded_1000_payload;
   event server_recv(x) ==> client_send(x).
 
 (************************
@@ -44,7 +50,7 @@ let B = 0 .
 
 process
 ! N (
-  in(c_in, (payload: mstring));
+  in(c_in, (payload: bounded_1000_payload));
 
   new keyseed: mkeyseed; 
   let key = mkgen(keyseed) in

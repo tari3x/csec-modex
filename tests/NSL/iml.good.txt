@@ -1,4 +1,43 @@
 let A = 
+if !(len(hostB)<8> > i40) then 
+if !(len(pkB)<8> > i100) then 
+if !(len(skB)<8> > i100) then 
+in(c, msg1<8>);
+in(c, msg2<(msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+let msg3 = inverse_injbot(D(msg2, skB)) in
+if !(len(msg3)<8> > decrypt_len()<8>) then 
+if !(i32 >= len(msg3)<8>) then 
+if msg3{0, 4} = 6d736731 then 
+if msg3{4, 8} = i20 then 
+if !((len(msg3)<8> - (i8 + msg3{4, 8} + i4)) > i40) then 
+if !(len(pkX)<8> > i100) then 
+let host1 = msg3{i8 + msg3{4, 8} + i4, len(msg3) - (i8 + msg3{4, 8} + i4)} in
+if check_key(host1, pkX, sigX, pkS)<1> then 
+event beginB(host1, hostB);
+let var1 = msg3{4, 8} in
+let var2 = msg3{12, msg3{4, 8}} in
+new nonce1<20>: fixed_20_nonce;
+let msg4 = 6d736732|var1|i20|var2|nonce1|hostB in
+new nonce2<lenvar(i470)>: seed_T;
+let cipher1 = E(msg4, isek(pkX), nonce2) in
+if !(len(cipher1)<8> > encrypt_len()<8>) then 
+if i0 < (len(cipher1)<8> + i8 + i4) then 
+let msg5 = 656e6372|len(cipher1)<8>|cipher1 in
+out(c, msg5);
+let var3 = len(cipher1)<8> + i8 + i4 in
+if !((var3 castToInt TSBase(int )) <= i0) then 
+if !(((var3 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(cipher1)<8> + i8 + i4)) then 
+in(c, msg6<8>);
+in(c, msg7<(msg6 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
+let msg8 = inverse_injbot(D(msg7, skB)) in
+if !(len(msg8)<8> > decrypt_len()<8>) then 
+if msg8{0, 4} = 6d736733 then 
+if len(msg8)<8> = i24 then 
+let var4 = msg8{4, len(msg8) - i4} in
+if var4 = nonce1 then 
+event endB(host1, hostB);
+
+let B = 
 if !(len(hostA)<8> > i40) then 
 if !(len(hostX)<8> > i40) then 
 if !(len(pkA)<8> > i100) then 
@@ -8,7 +47,7 @@ if check_key(hostX, pkX, sigX, pkS)<1> then
 event beginA(hostA, hostX);
 new nonce1<20>: fixed_20_nonce;
 let msg1 = 6d736731|i20|nonce1|hostA in
-new nonce2<lenvar(i394)>: seed_T;
+new nonce2<lenvar(i127)>: seed_T;
 let cipher1 = E(msg1, isek(pkX), nonce2) in
 if !(len(cipher1)<8> > encrypt_len()<8>) then 
 if i0 < (len(cipher1)<8> + i8 + i4) then 
@@ -31,7 +70,7 @@ let var3 = msg5{msg5{4, 8} + msg5{12, 8} + i16 + i4, len(msg5) - (msg5{4, 8} + m
 if var3 = hostX then 
 let var4 = msg5{msg5{4, 8} + i16 + i4, msg5{12, 8}} in
 let msg6 = 6d736733|var4 in
-new nonce3<lenvar(i524)>: seed_T;
+new nonce3<lenvar(i284)>: seed_T;
 let cipher2 = E(msg6, isek(pkX), nonce3) in
 if !(len(cipher2)<8> > encrypt_len()<8>) then 
 if i0 < (len(cipher2)<8> + i8 + i4) then 
@@ -41,43 +80,4 @@ let var5 = len(cipher2)<8> + i8 + i4 in
 if !((var5 castToInt TSBase(int )) <= i0) then 
 if !(((var5 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(cipher2)<8> + i8 + i4)) then 
 event endA(hostA, hostX);
-
-let B = 
-if !(len(hostB)<8> > i40) then 
-if !(len(pkB)<8> > i100) then 
-if !(len(skB)<8> > i100) then 
-in(c, msg1<8>);
-in(c, msg2<(msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
-let msg3 = inverse_injbot(D(msg2, skB)) in
-if !(len(msg3)<8> > decrypt_len()<8>) then 
-if !(i32 >= len(msg3)<8>) then 
-if msg3{0, 4} = 6d736731 then 
-if msg3{4, 8} = i20 then 
-if !((len(msg3)<8> - (i8 + msg3{4, 8} + i4)) > i40) then 
-if !(len(pkX)<8> > i100) then 
-let host1 = msg3{i8 + msg3{4, 8} + i4, len(msg3) - (i8 + msg3{4, 8} + i4)} in
-if check_key(host1, pkX, sigX, pkS)<1> then 
-event beginB(host1, hostB);
-let var1 = msg3{4, 8} in
-let var2 = msg3{12, msg3{4, 8}} in
-new nonce1<20>: fixed_20_nonce;
-let msg4 = 6d736732|var1|i20|var2|nonce1|hostB in
-new nonce2<lenvar(i206)>: seed_T;
-let cipher1 = E(msg4, isek(pkX), nonce2) in
-if !(len(cipher1)<8> > encrypt_len()<8>) then 
-if i0 < (len(cipher1)<8> + i8 + i4) then 
-let msg5 = 656e6372|len(cipher1)<8>|cipher1 in
-out(c, msg5);
-let var3 = len(cipher1)<8> + i8 + i4 in
-if !((var3 castToInt TSBase(int )) <= i0) then 
-if !(((var3 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (len(cipher1)<8> + i8 + i4)) then 
-in(c, msg6<8>);
-in(c, msg7<(msg6 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
-let msg8 = inverse_injbot(D(msg7, skB)) in
-if !(len(msg8)<8> > decrypt_len()<8>) then 
-if msg8{0, 4} = 6d736733 then 
-if len(msg8)<8> = i24 then 
-let var4 = msg8{4, len(msg8) - i4} in
-if var4 = nonce1 then 
-event endB(host1, hostB);
 

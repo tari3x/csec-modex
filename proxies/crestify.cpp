@@ -9,6 +9,7 @@
 #include "interface.h"
 
 #include <iostream>
+#include <fstream>
 #include <map>
 
 // for exit()
@@ -33,28 +34,52 @@ bool customReturn = false;
  */
 int lastHeapPtr = 0;
 
+int lastFreshVar = 0;
+
+/**
+ * output channel.
+ */
+ostream * out;
+
+
 ////////////////////////////////////////////////////////
 // Helpers, to be called only from uninstrumented code
 ////////////////////////////////////////////////////////
 
-void Clear(int numargs)
+void __CrestLoadHeapPtr(int id)
 {
   if(muted) return;
 
-  for(int i = 0; i < numargs; i++)
-    cout << "Clear" << endl;
+  *out << "LoadHeapPtr " << id << endl;
+  *out << "LoadInt 1" << endl;
+  *out << "SetPtrStep" << endl;
 }
 
-void LoadHeapPtr(int id)
+void __CrestLoadVarPtr(__CREST_STR varname)
 {
-  cout << "LoadHeapPtr " << id << endl;
-  cout << "LoadInt 1" << endl;
-  cout << "SetPtrStep" << endl;
+  if(muted) return;
+
+  *out << "Env " << varname << endl;
+  __CrestApply("ztp/1");
+  *out << "InType bitstring" << endl;
+  *out << "Assume " << endl;
+
+  *out << "Env " << varname << endl;
+  *out << "Dup " << endl;
+  *out << "Len " << endl;
+  __CrestLoadHeapPtr(++lastHeapPtr);
+  *out << "StoreAll" << endl;
+
+  // A cumbersome way to recreate the same pointer on stack
+  *out << "Env " << varname << endl;
+  *out << "Len " << endl;
+  __CrestLoadHeapPtr(lastHeapPtr);
 }
 
-///////////////////////////////////////////
-// CREST Functions
-///////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////
+// Instrumentation Functions, to be called only from uninstrumented code
+/////////////////////////////////////////////////////////////////////////
 
 
 /**
@@ -68,35 +93,42 @@ void LoadHeapPtr(int id)
 
 void __CrestInit()
 {
-  // load the argc, assume it is 2
-  __CrestLoadInt(2);
+  if(getenv("CVM_OUTPUT") == NULL)
+    out = &cout;
+  else
+    out = new ofstream(getenv("CVM_OUTPUT"));
+
+  // load the argc, assume it is 5
+  __CrestLoadInt(5);
+  __CrestBS(true, sizeof(5));
 
   // construct argv with two parameters
 
-  __CrestLoadCString("argv[0]_contents");
-  __CrestLoadCString("argv[1]_contents");
+  __CrestLoadVarPtr("argv0");
+  __CrestLoadVarPtr("argv1");
   Append();
-  __CrestLoadCString("argv[2]_contents");
+  __CrestLoadVarPtr("argv2");
   Append();
-  __CrestLoadCString("argv[3]_contents");
+  __CrestLoadVarPtr("argv3");
   Append();
-  __CrestLoadCString("argv[4]_contents");
+  __CrestLoadVarPtr("argv4");
   Append();
   __CrestLoadStackPtr("argv");
-  __CrestLoadInt(sizeof(char*));
+  __CrestApply("ptrLen/0");
   __CrestSetPtrStep();
   __CrestStoreBuf();
   __CrestLoadStackPtr("argv");
-  __CrestLoadInt(sizeof(char*));
+  __CrestApply("ptrLen/0");
   __CrestSetPtrStep();
-  cout << "Hint argv" << endl;
+  // *out << "Hint argv" << endl;
 }
 
 void __CrestClear(__CREST_VALUE n)
 {
   if(muted) return;
 
-  Clear(n);
+  for(int i = 0; i < n; i++)
+    *out << "Clear" << endl;
 }
 
 void __CrestInvoke(__CREST_FUN_PTR f)
@@ -110,37 +142,39 @@ void __CrestInvoke(__CREST_FUN_PTR f)
 //{
 //  if(muted) return;
 //
-//  cout << "ApplyOp " << op << " " << 1 << endl;
-//  cout << "ConcreteResult  " << val << endl;
+//  *out << "ApplyOp " << op << " " << 1 << endl;
+//  *out << "ConcreteResult  " << val << endl;
 //}
 //
 //void __CrestApply2(__CREST_OP op, __CREST_VALUE val)
 //{
 //  if(muted) return;
 //
-//  cout << "ApplyOp " << op << " " << 2 << endl;
-//  cout << "ConcreteResult  " << val << endl;
+//  *out << "ApplyOp " << op << " " << 2 << endl;
+//  *out << "ConcreteResult  " << val << endl;
 //}
 
+void __CrestApply(__CREST_OP op)
+{
+  if(muted) return;
+
+  *out << "Apply " << endl << op << endl;
+}
+
+// For internal use only
 void __CrestApplyN(__CREST_OP op, __CREST_VALUE n)
 {
   if(muted) return;
 
-  cout << "ApplyN " << op << " " << n << endl;
+  *out << "Apply " << endl << op << "/" << n << endl;
 }
 
-void __CrestSimplify(__CREST_VALUE val)
-{
-  if(muted) return;
-
-  cout << "ConcreteResult " << val << endl;
-}
 
 void __CrestNondet()
 {
   if(muted) return;
 
-  cout << "Nondet" << endl;
+  *out << "Nondet" << endl;
 }
 
 void __CrestMute()
@@ -157,14 +191,21 @@ void __CrestBranch(__CREST_BOOL cond)
 {
   if(muted) return;
 
-  cout << "Branch " << (bool) cond << endl;
+  *out << "Branch " << (bool) cond << endl;
 }
 
-void __CrestCall(__CREST_STR name, __CREST_FUN_PTR f)
+void __CrestCall(__CREST_STR name, __CREST_FUN_PTR f, __CREST_VALUE nargs)
 {
   if(muted) return;
 
-  cout << "Call " << name << endl;
+  *out << "Call " << name << " " << nargs << endl;
+}
+
+void __CrestCallOpaque(__CREST_STR name, __CREST_FUN_PTR f, __CREST_VALUE nargs)
+{
+  if(!muted) {
+    *out << "ERROR: Opaque function calls must be muted: " << name << endl;
+  }
 }
 
 void __CrestReturn(__CREST_BOOL is_void)
@@ -179,21 +220,21 @@ void __CrestReturn(__CREST_BOOL is_void)
     customReturn = false;
   }
 
-  cout << "Return" << endl;
+  *out << "Return" << endl;
 }
 
 void __CrestStore()
 {
   if(muted) return;
 
-  cout << "StoreMem " << endl;
+  *out << "StoreMem " << endl;
 }
 
 void __CrestStoreBuf()
 {
   if(muted) return;
 
-  cout << "StoreBuf " << endl;
+  *out << "StoreBuf " << endl;
 }
 
 
@@ -201,15 +242,26 @@ void __CrestLoadInt(__CREST_VALUE val)
 {
   if(muted) return;
 
-  cout << "LoadInt " << val << endl;
+  *out << "LoadInt " << val << endl;
 }
+
+void __CrestBS(int is_signed, int width)
+{
+  if(muted) return;
+
+  if(is_signed)
+    *out << "BS_signed " << width << endl;
+  else
+    *out << "BS_unsigned " << width << endl;
+}
+
 
 void __CrestLoadMem()
 {
   if(muted) return;
 
   // Always uses the size of the pointer
-  cout << "LoadMem" << endl;
+  *out << "LoadMem" << endl;
 }
 
 void __CrestLoadCString(__CREST_STR val)
@@ -220,12 +272,12 @@ void __CrestLoadCString(__CREST_STR val)
 
   // String constants are stored in the DATA memory segment, so we can just use
   // heap pointer semantics for them.
-  cout << "LoadStr " << endl << buffer2string((const unsigned char *) val, len) << "00" << endl;
-  cout << "LoadInt " << len << endl;
-  LoadHeapPtr(++lastHeapPtr);
-  cout << "StoreMem" << endl;
-  cout << "LoadInt " << len << endl;
-  LoadHeapPtr(lastHeapPtr);
+  *out << "LoadStr " << endl << buffer2string((const unsigned char *) val, len) << "00" << endl;
+  *out << "LoadInt " << len << endl;
+  __CrestLoadHeapPtr(++lastHeapPtr);
+  *out << "StoreMem" << endl;
+  *out << "LoadInt " << len << endl;
+  __CrestLoadHeapPtr(lastHeapPtr);
 }
 
 void __CrestLoadString(__CREST_STR val)
@@ -233,78 +285,80 @@ void __CrestLoadString(__CREST_STR val)
   if(muted) return;
 
   // int len = strlen(val);
-  cout << "LoadStr " << endl << val << endl;
+  *out << "LoadStr " << endl << val << endl;
 }
 
+/*
 void __CrestLoadTypeSize(__CREST_STR val)
 {
   if(muted) return;
 
-  cout << "LoadStr " << endl << val << endl;
-  cout << "ApplyN SizeOf 1" << endl;
+  *out << "LoadStr " << endl << val << endl;
+  __CrestApplyN("SizeOf", 1);
 }
+*/
 
 void __CrestLoadChar(__CREST_CHAR val)
 {
   if(muted) return;
 
-  cout << "LoadStr " << endl << buffer2string((const unsigned char *)(&val), 1) << endl;
+  *out << "LoadStr " << endl << buffer2string((const unsigned char *)(&val), 1) << endl;
 }
 
 void __CrestSetLen()
 {
   if(muted) return;
 
-  cout << "SetLen" << endl;
+  *out << "SetLen" << endl;
 }
 
 void __CrestSetPtrStep()
 {
   if(muted) return;
 
-  cout << "SetPtrStep" << endl;
+  *out << "SetPtrStep" << endl;
 }
 
 void __CrestLoadStackPtr(__CREST_STR var)
 {
   if(muted) return;
 
-  cout << "LoadStackPtr " << var << endl;
+  *out << "LoadStackPtr " << var << endl;
 }
 
 void __CrestFieldOffset(__CREST_STR field)
 {
   if(muted) return;
 
-  cout << "FieldOffset " << field << endl;
+  *out << "FieldOffset " << field << endl;
 }
 
 void __CrestIndexOffset()
 {
   if(muted) return;
 
-  cout << "IndexOffset" << endl;
+  *out << "IndexOffset" << endl;
 }
 
 void __CrestLocation(__CREST_STR loc)
 {
   if(muted) return;
 
-  cout << "// " << loc;
-  // if(muted) cout << " (muted)";
-  cout << endl;
+  *out << "// " << loc;
+  // if(muted) *out << " (muted)";
+  *out << endl;
 }
 
 void __CrestDone()
 {
   if(muted) return;
 
-  cout << "Done" << endl;
+  *out << "Done" << endl;
 }
 
-///////////////////////////////////////////////////////
-// Helpers, to be called only from instrumented code
-///////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+// Interface functions, to be called only from instrumented code
+//////////////////////////////////////////////////////////////////
 
 map<const void *, map<string, int> > int_attributes;
 
@@ -336,13 +390,13 @@ void CustomReturn()
 void LoadBuf(const unsigned char * buf, size_t len)
 {
   if(muted) return;
-  cout << "LoadBuf" << endl;
+  *out << "LoadBuf" << endl;
 }
 
 void LoadAll(const unsigned char * buf)
 {
   if(muted) return;
-  cout << "LoadAll" << endl;
+  *out << "LoadAll" << endl;
 }
 
 void LoadAttr(const void * ctx, const char * attr)
@@ -350,42 +404,116 @@ void LoadAttr(const void * ctx, const char * attr)
   if(muted) return;
 
   // remove attr from stack, it's not symbolic
-  Clear(1);
-  cout << "CtxOffset " << attr << endl;
-  cout << "LoadAll " << endl;
+  __CrestClear(1);
+  *out << "CtxOffset " << attr << endl;
+  *out << "LoadAll " << endl;
 }
 
 void LoadInt(int n)
 {
   if(muted) return;
 
-  // n is already on the stack, do nothing
+  __CrestClear(1);
+  *out << "LoadInt " << n << endl;
 }
+
+void BS(bool is_signed, int width)
+{
+  if(muted) return;
+
+  __CrestClear(2);
+  if(is_signed)
+    *out << "BS_signed " << width << endl;
+  else
+    *out << "BS_unsigned " << width << endl;
+}
+
+void Val(bool is_signed, int width)
+{
+  if(muted) return;
+
+  __CrestClear(2);
+  if(is_signed)
+    *out << "Val_signed " << width << endl;
+  else
+    *out << "Val_unsigned " << width << endl;
+}
+
 
 void LoadStr(const char * str)
 {
   if(muted) return;
 
-  Clear(1);
-  cout << "LoadStr " << endl << str << endl;
+  __CrestClear(1);
+  *out << "LoadStr " << endl << str << endl;
 }
 
+/*
 void Sym(const char * sym)
 {
   if(muted) return;
 
   // Discard the sym parameter from symbolic stack
-  Clear(1);
-  cout << "ApplyAll " << sym << endl;
+  __CrestClear(1);
+  *out << "ApplyAll " << sym << endl;
 }
+*/
 
 void SymN(const char * sym, int n)
 {
   if(muted) return;
 
   // Discard the parameters from symbolic stack
-  Clear(2);
-  cout << "ApplyN " << sym << " " << n << endl;
+  __CrestClear(2);
+  __CrestApplyN(sym, n);
+}
+
+void In(size_t len)
+{
+  if(muted) return;
+
+  *out << "In " << endl;
+}
+
+
+void New()
+{
+  if(muted) return;
+
+  *out << "New " << endl;
+}
+
+void Env(const char * name)
+{
+  if(muted) return;
+
+  // Discard the parameters from symbolic stack
+  __CrestClear(1);
+  *out << "Env " << name << endl;
+}
+
+void FreshVar(const char * name_stem)
+{
+  if(muted) return;
+
+  // Discard the parameters from symbolic stack
+  __CrestClear(1);
+  *out << "Env " << name_stem << lastFreshVar++ << endl;
+}
+
+void InType(const char * type)
+{
+  if(muted) return;
+
+  __CrestClear(1);
+  *out << "InType " << type << endl;
+}
+
+void Len()
+{
+  if(muted) return;
+
+  *out << "Len " << endl;
 }
 
 
@@ -393,49 +521,77 @@ void Dup()
 {
   if(muted) return;
 
-  cout << "Dup " << endl;
+  *out << "Dup " << endl;
+}
+
+void Clear(int n)
+{
+  if(muted) return;
+
+  __CrestClear(1);
+  for(int i = 0; i < n; i++)
+    *out << "Clear" << endl;
 }
 
 void Nondet()
 {
+  if(muted) return;
+
   __CrestNondet();
 }
 
 void Done()
 {
+  if(muted) return;
+
   __CrestDone();
 }
 
-
-void Event()
+EXTERN void Test()
 {
   if(muted) return;
 
-  cout << "Event" << endl;
+  *out << "Branch " << TRUE << endl;
+}
+
+EXTERN void Assume()
+{
+  if(muted) return;
+
+  *out << "Assume " << endl;
+}
+
+
+void Event(const char * sym, int n)
+{
+  if(muted) return;
+
+  __CrestClear(2);
+  *out << "Event " << sym << " " << n << endl;
 }
 
 void Append()
 {
   if(muted) return;
 
-  cout << "Append" << endl;
+  *out << "Append" << endl;
 }
 
 void Hint(const char * hint)
 {
   if(muted) return;
 
-  Clear(1);
+  __CrestClear(1);
 
   if(string(hint) != "")
-    cout << "Hint " << hint << endl;
+    *out << "Hint " << hint << endl;
 }
 
 void SetLen(size_t len)
 {
   if(muted) return;
 
-  cout << "SetLen" << endl;
+  *out << "SetLen" << endl;
 }
 
 void StoreBuf(const unsigned char * buf)
@@ -449,7 +605,7 @@ void StoreAll(const unsigned char * buf)
 {
   if(muted) return;
 
-  cout << "StoreAll" << endl;
+  *out << "StoreAll" << endl;
 }
 
 void StoreAttr(const void * ctx, const char * attr)
@@ -457,23 +613,31 @@ void StoreAttr(const void * ctx, const char * attr)
   if(muted) return;
 
   // remove attr from stack
-  Clear(1);
-  cout << "CtxOffset " << attr << endl;
-  cout << "StoreAll " << endl;
+  __CrestClear(1);
+  *out << "CtxOffset " << attr << endl;
+  *out << "StoreAll " << endl;
 }
+
+void Out()
+{
+  if(muted) return;
+
+  *out << "Out " << endl;
+}
+
 
 void CopyCtx(const void * to, const void * from)
 {
   if(muted) return;
 
-  cout << "CopyCtx" << endl;
+  *out << "CopyCtx" << endl;
 }
 
 void StoreRuntimeInt(const void * ctx, const char * attr, int n)
 {
   // if(muted) return; (this is runtime, so no muting)
 
-  Clear(3);
+  __CrestClear(3);
   int_attributes[ctx][string(attr)] = n;
 }
 
@@ -481,7 +645,7 @@ int LoadRuntimeInt(const void * ctx, const char * attr)
 {
   // if(muted) return; (this is runtime, so no muting)
 
-  Clear(2);
+  __CrestClear(2);
   int n = int_attributes[ctx][string(attr)];
   __CrestLoadInt(n);
   return n;
@@ -491,5 +655,30 @@ void NewHeapPtr(size_t buflen)
 {
   if(muted) return;
 
-  LoadHeapPtr(++lastHeapPtr);
+  // Keep buflen on stack
+  __CrestLoadHeapPtr(++lastHeapPtr);
+}
+
+void LoadStackPtr(const char * name)
+{
+  if(muted) return;
+
+  __CrestClear(1);
+  __CrestLoadStackPtr(name);
+}
+
+void SetPtrStep()
+{
+  if(muted) return;
+
+  __CrestSetPtrStep();
+}
+
+
+void TypeHint(const char * type)
+{
+  if(muted) return;
+
+  __CrestClear(1);
+  *out << "TypeHint " << type << endl;
 }

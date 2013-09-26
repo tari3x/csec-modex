@@ -1,6 +1,5 @@
 
 channel c_in, c_out. 
-type mstring.
 
 param N.
 
@@ -27,6 +26,11 @@ query secret nonce1.
   <Model>
 *************************)
 
+(*
+  We need to include nonce1 somewhere, because otherwise CV complains about the query.
+  In the output this process is erased and replaced by the actual extracted model, 
+  so soundness is not compromised.
+*)
 let A = 
   in(c_in, ()); 
   new nonce1: fixed_20; 

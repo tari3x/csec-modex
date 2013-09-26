@@ -1,17 +1,4 @@
 let A = 
-event client_send(payload);
-let msg1 = i9 + len(payload)<8> + i20 in
-out(c, msg1);
-if i0 < (i9 + len(payload)<8> + i20) then 
-let msg2 = len(payload)<8>|i2|payload in
-let hash1 = HMAC(sha1, msg2, key)<20> in
-let msg3 = len(payload)<8>|i1|payload|hash1 in
-out(c, msg3);
-let var1 = i9 + len(payload)<8> + i20 in
-if !((var1 castToInt TSBase(int )) <= i0) then 
-if !(((var1 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (i9 + len(payload)<8> + i20)) then 
-
-let B = 
 in(c, msg1<8>);
 in(c, msg2<(msg1 castToInt TSBase(int )) castToInt TSBase(unsigned long )>);
 if i9 + msg2{0, 8} + i20 = msg1 then 
@@ -24,4 +11,17 @@ let msg3 = var3|i2|var4 in
 let hash1 = HMAC(sha1, msg3, key)<20> in
 if hash1 = var2 then 
 event server_recv(var4);
+
+let B = 
+event client_send(payload);
+let msg1 = i9 + len(payload)<8> + i20 in
+out(c, msg1);
+if i0 < (i9 + len(payload)<8> + i20) then 
+let msg2 = len(payload)<8>|i2|payload in
+let hash1 = HMAC(sha1, msg2, key)<20> in
+let msg3 = len(payload)<8>|i1|payload|hash1 in
+out(c, msg3);
+let var1 = i9 + len(payload)<8> + i20 in
+if !((var1 castToInt TSBase(int )) <= i0) then 
+if !(((var1 castToInt TSBase(int )) castToInt TSBase(unsigned long )) < (i9 + len(payload)<8> + i20)) then 
 

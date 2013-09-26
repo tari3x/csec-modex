@@ -17,6 +17,7 @@ open List
 
 let config = ref ""
 let markingDone = ref false
+let configDone = ref false
 
 (** 
   The following lists should not be used by any instrumentation code. 
@@ -26,38 +27,43 @@ let proxyNames = ref []
 let typeNames = ref []
 let blacklist = ref []
 let boringNames = ref []
+let fileNames = ref []
 
 
 let readConfig : string -> unit = fun name ->
-  if name <> "" then
-
-  let curList : string list ref ref = ref proxyNames in
-      
-  let f = open_in name in
-
-	let chooseList : string -> unit = fun s ->
-	  curList := match s with
+  if not !configDone && name <> "" then
+  begin
+    configDone := true;
+	
+	  let curList : string list ref ref = ref proxyNames in
+	      
+	  let f = open_in name in
+	
+	  let chooseList : string -> unit = fun s ->
+	    curList := match s with
 	    | "==== Functions" -> proxyNames
 	    | "==== Types"     -> typeNames
 	    | "==== Blacklist" -> blacklist
 	    | "==== Boring"    -> boringNames
+      | "==== Files"     -> fileNames
 	    | ""               -> !curList
 	    | _ -> fail ("readConfig: unexpected section in config file :" ^ s)
-	in
-  
-	let rec read : unit -> unit = fun () ->
-    let s = trim (input_line f) in
-    if s = ""      then read () else
-    if s.[0] = '/' then read () else
-    if s.[0] = '=' then begin chooseList s; read () end 
-    else
-    begin
-      !curList := s :: !(!curList);
-      read ()
-    end
-  in
-  
-  try read () with End_of_file -> ()
+	  in
+	  
+	  let rec read : unit -> unit = fun () ->
+	    let s = trim (input_line f) in
+	    if s = ""      then read () else
+	    if s.[0] = '/' then read () else
+	    if s.[0] = '=' then begin chooseList s; read () end 
+	    else
+	    begin
+	      !curList := s :: !(!curList);
+	      read ()
+	    end
+	  in
+	  
+	  try read () with End_of_file -> ()
+  end
 
 (* take a look if the API already provides something *)
 let typeName : typ -> string = function
@@ -75,29 +81,28 @@ class markVisitorClass = object
  
   method vvrbl : varinfo -> varinfo visitAction = function 
     | v when v.vglob ->
-	    begin
-	    match v.vtype with
-	      | TFun (ret, args, _, _) ->
-		      (* print_endline ("considering function " ^ name); *)
-		
-		      let funTypes = map stripPtr (ret :: (map snd3 (argsToList args))) in
-		      let isProxy = string_match (regexp ".*_proxy$") v.vname 0 in
-		
-		      if (mem v.vname !proxyNames) ||
-		         ((exists (flip mem !typeNames) (map typeName funTypes)) && not isProxy && not (mem v.vname !blacklist)) then
-		        markNeedsProxy v;
-	          
-	      | _ -> ()
-	    end;
-	    
-		  if needsProxy v || mem v.vname !boringNames then
-		    markOpaque v;
+        begin
+        match v.vtype with
+          | TFun (ret, args, _, _) ->
+            (* print_endline ("considering function " ^ v.vname); *)
+          
+            let funTypes = map stripPtr (ret :: (map snd3 (argsToList args))) in
+          
+            if (mem v.vname !proxyNames) ||
+               ((exists (flip mem !typeNames) (map typeName funTypes)) && not (isProxy v) && not (mem v.vname !blacklist)) then
+                    markNeedsProxy v;
+              
+          | _ -> ()
+        end;
+	
+        if needsProxy v || mem v.vname !boringNames then
+          markOpaque v;
 
-      addRef v;
+        addRef v;
 
-      addChild !currentGlobal v;
+        addChild !currentGlobal v;
     	
-	    SkipChildren
+        SkipChildren
       
     | _ -> SkipChildren
 
@@ -130,12 +135,23 @@ class markVisitorClass = object
       
       if needsProxy f.svar || mem f.svar.vname !boringNames then
         markOpaque f.svar;
-      
+
+      if isProxy f.svar then markIsProxy f.svar;
+                  
       DoChildren
    
     | _ -> DoChildren
 
 end
+
+(**
+    Assumes that setSrcPath has been called. 
+*)
+let shouldSkip: file -> bool = fun f ->
+  readConfig !config;
+  print_endline !srcPath; 
+  not (List.mem !srcPath !fileNames)
+ 
 
 let markGlobals : file -> unit = fun f ->
   if not !markingDone then

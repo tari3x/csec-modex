@@ -1,8 +1,6 @@
 
 include Makefile.common
 
-CFLAGS += -DVERBOSE 
-LDLIBS += -lssl -lcrypto
 
 all: execute
 
@@ -11,9 +9,9 @@ execute: $(P1) $(P2)
 	sleep 1; ./$(P2) $(P2_CMD) & \
 	wait
 
-$(P1): $(P1_SRC)
-
-$(P2): $(P2_SRC)
+$(P1) $(P2): $(P1_SRC) $(P2_SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(P1_SRC) $(LDLIBS) -o $(P1)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(P2_SRC) $(LDLIBS) -o $(P2)
 
 compile: $(P1) $(P2)
 

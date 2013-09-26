@@ -1,4 +1,7 @@
 
+CFLAGS += -DVERBOSE 
+LDLIBS += -lssl -lcrypto
+
 P1 = server
 P2 = client
 

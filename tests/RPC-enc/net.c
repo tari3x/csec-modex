@@ -16,7 +16,7 @@ int socket_listen(int *bind_fd, int *client_fd, const unsigned char *bind_ip, ui
     return -1;
 
   memcpy(bind_ip_nt,bind_ip,bind_ip_len);
-  bind_ip_nt[bind_ip_len] = '\0';
+  bind_ip_nt[bind_ip_len] = 0;
 
   if ((ret = net_bind(bind_fd,bind_ip_nt,port)) != 0)
   {

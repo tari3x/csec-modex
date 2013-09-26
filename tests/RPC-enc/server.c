@@ -11,6 +11,7 @@
 
 #ifdef CSEC_VERIFY
   #include <proxies/common.h>
+  #include <proxies/interface.h>
 #endif
 
 #include <string.h>
@@ -20,18 +21,15 @@ int recv_request(RPCstate * ctx)
   unsigned char * m1_e, * m1, * p;
   uint32_t m1_e_len, m1_len;
 
-  recv(&(ctx->bio), (unsigned char*) &m1_e_len, sizeof(m1_e_len));
-  if (m1_e_len < MAX_MESSAGE_OVERHEAD || m1_e_len > MAX_PAYLOAD_LENGTH + MAX_MESSAGE_OVERHEAD)
-  {
-    return -1;
-  }
+  recv(&(ctx->conn_fd), (unsigned char*) &m1_e_len, sizeof(m1_e_len));
+  if (m1_e_len < MIN_MSG1_LENGTH || m1_e_len > MAX_MSG1_LENGTH)
+    fail("server: message has wrong length");
   
   p = m1_e = malloc(m1_e_len);
   if (m1_e == NULL)
-  {
-    return -1;
-  }
-  recv(&(ctx->bio), m1_e, m1_e_len);
+    fail("Allocation failure, m1_e");
+
+  recv(&(ctx->conn_fd), m1_e, m1_e_len);
 
   if (memcmp("p", p, 1))
   {
@@ -44,7 +42,8 @@ int recv_request(RPCstate * ctx)
 
   ctx->other_len = *((uint32_t *) p);
   if (ctx->other_len > MAX_PRINCIPAL_LENGTH)
-    return -1;
+    fail("ctx->other_len is too long: %d", ctx->other_len);
+
   if (m1_e_len <= 1 + sizeof(uint32_t) + ctx->other_len)
   {
 #ifndef VERIFY
@@ -56,7 +55,7 @@ int recv_request(RPCstate * ctx)
 
   ctx->other = malloc(ctx->other_len);
   if (ctx->other == NULL)
-    return -1;
+    fail("Allocation failure: ctx->other");
   memcpy(ctx->other,p,ctx->other_len);
   p += ctx->other_len;
   
@@ -82,8 +81,9 @@ int recv_request(RPCstate * ctx)
   ctx->k_ab = get_shared_key(ctx->other, ctx->other_len, ctx->self, ctx->self_len, &(ctx->k_ab_len));
 
   m1_len = decrypt_len(ctx->k_ab, ctx->k_ab_len, p, m1_e_len);
-  if (m1_len > MAX_PAYLOAD_LENGTH)
-    return -1;
+  if (m1_len > MAX_PLAINTEXT_LENGTH)
+    fail("m1_len too big");
+
   m1 = malloc(m1_len);
   if (m1 == NULL)
   {
@@ -102,7 +102,9 @@ int recv_request(RPCstate * ctx)
 
   ctx->request_len = *((uint32_t *) (m1 + 1));
 
-  if(m1_len <= 1 + sizeof(ctx->request_len) + ctx->request_len)
+  if(ctx->request_len > MAX_PAYLOAD_LENGTH ||
+     ctx->request_len < MIN_PAYLOAD_LENGTH ||
+     m1_len <= 1 + sizeof(ctx->request_len) + ctx->request_len)
   {
 #ifndef VERIFY
     fprintf(stderr, "Server: Plaintext has wrong length.\n");
@@ -166,6 +168,14 @@ int send_response(RPCstate * ctx)
 #endif
 #endif
 
+  if(ctx->k_len != 16)
+  {
+#ifndef VERIFY
+    fprintf(stderr, "Server: session key must be 16 bytes long.\n");
+#endif
+    exit(1);
+  }
+
   m2_e_len = encrypt_len(ctx->k, ctx->k_len, ctx->response, ctx->response_len);
 
   m2_e = malloc(m2_e_len);
@@ -181,14 +191,14 @@ int send_response(RPCstate * ctx)
 
 #ifdef VERBOSE
 #ifndef VERIFY
-  printf("Server: Sending encrypted message: ");
+  printf("Server: Sending encrypted message of length %d: ", m2_e_len);
   print_buffer(m2_e, m2_e_len);
   fflush(stdout);
 #endif
 #endif
 
-  send(&(ctx->bio), (unsigned char*) &m2_e_len, sizeof(m2_e_len));
-  send(&(ctx->bio), m2_e, m2_e_len);
+  send(&(ctx->conn_fd), (unsigned char*) &m2_e_len, sizeof(m2_e_len));
+  send(&(ctx->conn_fd), m2_e, m2_e_len);
 
   free(m2_e);
   return 0;
@@ -196,7 +206,7 @@ int send_response(RPCstate * ctx)
 
 int parseargs(int argc, char ** argv, RPCstate * ctx)
 {
-  uint32_t port_len, pwr = 1;
+  size_t port_len, pwr = 1;
 
   if (argc != 2 && argc != 3)
     return -1;
@@ -211,7 +221,15 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
   ctx->port = 0;
 
   // Get the principal name from the first command-line parameter
-  ctx->self_len = strlen(argv[1] );
+  size_t self_len = strlen(argv[1] );
+
+  // Check length before truncating
+  if(self_len > MAX_PRINCIPAL_LENGTH){
+    printf("Server: server ID too long\n");
+    exit(-1);
+  }
+
+  ctx->self_len = self_len;
   if (ctx->self_len >= 256)
     return -1;
   if (ctx->self_len == 0)
@@ -233,7 +251,9 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
   }
 
 #ifdef CSEC_VERIFY
-  readenvE(ctx->self, &(ctx->self_len), sizeof(ctx->self_len), "serverID");
+  // The following chunk verifies, but adds a lot of noise from the if statements, so we replace
+  // the computed value by an environment variable "port".
+  mute();
 #endif
 
   ctx->port = 0;
@@ -245,7 +265,7 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
 
     while (port_len > 0)
     {
-	  if (argv[2][port_len - 1] < '0' || argv[2][port_len - 1] > '9')
+      if (argv[2][port_len - 1] < '0' || argv[2][port_len - 1] > '9')
         return -1;
       ctx->port += (int) (((uint32_t) argv[2][port_len - 1] - 48) * pwr);
       pwr *= 10;
@@ -256,11 +276,25 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
   {
     ctx->port = DEFAULTPORT;
   }
+
+#ifdef CSEC_VERIFY
+  unmute();
+  readenvL(&(ctx->port), sizeof(ctx->port), "port");
+#endif
+
   return 0;
 }
 
 int main(int argc, char ** argv)
 {
+
+#ifdef CSEC_VERIFY
+  readenv(argv[1], NULL, "serverID");
+  readenv(argv[2], NULL, "port_ascii");
+  append_zero(argv[1]);
+  append_zero(argv[2]);
+#endif
+
   RPCstate seState;
   if (parseargs(argc,argv, &seState))
   {
@@ -278,7 +312,7 @@ int main(int argc, char ** argv)
 #endif
 #endif
 
-  if (socket_listen(&(seState.bio),&(seState.bio), seState.self, seState.self_len, seState.port,NULL))
+  if (socket_listen(&(seState.bind_fd),&(seState.conn_fd), seState.self, seState.self_len, seState.port,NULL))
     return -1;
 
 #ifdef VERBOSE
@@ -307,7 +341,7 @@ int main(int argc, char ** argv)
   }
 
   // wait for the client to close, to avoid "Address already in use" errors
-  wait_close(&(seState.bio));
+  wait_close(&(seState.conn_fd));
 
   return 0;
 }

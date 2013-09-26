@@ -1,5 +1,12 @@
+
 #include <openssl/bn.h>
 #include "needham_type.h"
+
+#ifdef CSEC_VERIFY
+  // redefine BN_num_bytes:
+  #include <proxies/openssl_proxies.h>
+#endif
+
 
 int key_gen(struct nskey_s *nskey, unsigned long pub_key);
 

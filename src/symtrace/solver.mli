@@ -5,6 +5,7 @@
 *)
 
 open Iml
+open Iml.Type.T
 open Iml.Sym.T
 open Iml.Exp.T
 
@@ -33,6 +34,14 @@ val isDefined: exp -> fact
 val trueFact : fact
 
 val inType: exp -> imltype -> fact 
+  
+module Range : sig
+  type t = IntType.t 
+  
+  val contains : t -> exp -> fact list
+  val subset : t -> t -> bool 
+end
+  
   
 (*************************************************)
 (** {1 Checking facts} *)
@@ -64,10 +73,8 @@ val implies: fact list -> fact list -> pbool
 (** {1 Evaluation} *)
 (*************************************************)
 
-(*
 (** 
   Try evaluation an integer expression.
   Will fail if a value is not unique. 
 *)
 val eval: exp -> int option
-*)

@@ -2,6 +2,7 @@
 // This file is distributed as part of csec-tools under a BSD license.
 // See LICENSE file for copyright notice.
 
+#include "rpc-enc.h"
 #include "lib.h"
 
 #include <gcm.h>
@@ -24,7 +25,7 @@ static int HSinitted = 0;
 
 extern uint32_t encrypt_len(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen)
 {
-  return 32 + inlen;
+  return ENCRYPTION_OVERHEAD + inlen;
 }
 
 extern uint32_t encrypt(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen, unsigned char * out)
@@ -47,12 +48,15 @@ extern uint32_t encrypt(unsigned char * key, uint32_t keylen, unsigned char * in
   gcm_encrypt_256b(&ctx, out + inlen + 16,16,in,inlen,NULL,0,out,out + inlen);
   gcm_destroy_256b(&ctx);
 
-  return 32 + inlen;
+  return ENCRYPTION_OVERHEAD + inlen;
 }
 
 extern uint32_t decrypt_len(unsigned char * key, uint32_t keylen, unsigned char * in, uint32_t inlen)
 {
-  return inlen - 32;
+  if(inlen < ENCRYPTION_OVERHEAD)
+    fail("decrypt_len: ciphertext too short");
+
+  return inlen - ENCRYPTION_OVERHEAD;
 }
 
 void fail(const char * fmt, ...)
@@ -73,11 +77,11 @@ extern uint32_t decrypt(unsigned char * key, uint32_t keylen, unsigned char * in
   gcm_ctx_256b ctx;
 
   gcm_init_256b(&ctx,key,keylen * 8);
-  if (gcm_decrypt_256b(&ctx,in + inlen - 16,16,in,inlen - 32,in + inlen - 32,16,NULL,0,out) == 0)
+  if (gcm_decrypt_256b(&ctx,in + inlen - 16,16,in,inlen - ENCRYPTION_OVERHEAD,in + inlen - ENCRYPTION_OVERHEAD,16,NULL,0,out) == 0)
     fail("Decryption/Authentication check failed.\n");
   gcm_destroy_256b(&ctx);
 
-  return inlen - 32;
+  return inlen - ENCRYPTION_OVERHEAD;
 }
 
 // FIXME: implement this properly
@@ -114,10 +118,44 @@ unsigned char * mk_session_key(uint32_t * len)
   return key;
 }
 
+
+unsigned char * get_request(uint32_t * len, const char * request)
+{
+  size_t rlen = strlen(request);
+
+  // important to check here before truncating to uint32_t
+  if(rlen > MAX_PAYLOAD_LENGTH)
+    fail("request too long");
+
+  if(rlen >= MIN_PAYLOAD_LENGTH)
+  {
+    *len = rlen;
+    return request;
+  }
+
+  unsigned char * buf = malloc(MIN_PAYLOAD_LENGTH);
+  if(buf == NULL)
+    fail("Allocation failure");
+
+  memset(buf, ' ', MIN_PAYLOAD_LENGTH);
+  memcpy(buf, request, rlen);
+
+  *len = MIN_PAYLOAD_LENGTH;
+  return buf;
+}
+
 unsigned char * get_response(uint32_t * len)
 {
-  *len = 20;
-  return (unsigned char*) "Look out the window.";
+  *len = MIN_PAYLOAD_LENGTH;
+
+  unsigned char * buf = malloc(MIN_PAYLOAD_LENGTH);
+  if(buf == NULL)
+    fail("Allocation failure");
+
+  memset(buf, ' ', MIN_PAYLOAD_LENGTH);
+  strcpy(buf, "Look out the window.");
+
+  return buf;
 }
 
 void print_buffer(const unsigned char * buf, int len)

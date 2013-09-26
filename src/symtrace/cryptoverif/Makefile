@@ -17,7 +17,7 @@ CV_OBJ = parsing_helper.cmx parser.cmx \
            types.cmx binderset.cmx settings.cmx terms.cmx \
            lexer.cmx oparser.cmx olexer.cmx stringmap.cmx \
            syntax.cmx
-           
+
 CV_LIB = cryptoverif.cmx
 
 # CV_OBJ = $(subst .ml,.cmo,$(subst .mli,.cmi,$(CV_SRC)))
