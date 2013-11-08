@@ -8,7 +8,7 @@ default_target: all
 #=============================================================================
 # Special targets provided by cmake.
 
-# Disable implicit rules so canoncical targets will work.
+# Disable implicit rules so canonical targets will work.
 .SUFFIXES:
 
 # Remove some rules from gmake that .SUFFIXES does not remove.
@@ -35,14 +35,17 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
+# Escaping for special characters.
+EQUALS = =
+
 # The program to use to edit the cache.
 CMAKE_EDIT_COMMAND = /usr/bin/ccmake
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/avatar/docs/verification/svn/csec-modex/proxies
+CMAKE_SOURCE_DIR = /home/avatar/docs/verification/svn/csec-modex
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/avatar/docs/verification/svn/csec-modex/proxies
+CMAKE_BINARY_DIR = /home/avatar/docs/verification/svn/csec-modex
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -69,14 +72,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/avatar/docs/verification/svn/csec-modex/proxies/CMakeFiles /home/avatar/docs/verification/svn/csec-modex/proxies/CMakeFiles/progress.marks
-	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/avatar/docs/verification/svn/csec-modex/proxies/CMakeFiles 0
+	cd /home/avatar/docs/verification/svn/csec-modex && $(CMAKE_COMMAND) -E cmake_progress_start /home/avatar/docs/verification/svn/csec-modex/CMakeFiles /home/avatar/docs/verification/svn/csec-modex/proxies/CMakeFiles/progress.marks
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/avatar/docs/verification/svn/csec-modex/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	$(MAKE) -f CMakeFiles/Makefile2 clean
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/clean
 .PHONY : clean
 
 # The main clean target
@@ -85,69 +88,73 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	$(MAKE) -f CMakeFiles/Makefile2 preinstall
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	$(MAKE) -f CMakeFiles/Makefile2 preinstall
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/avatar/docs/verification/svn/csec-modex && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-#=============================================================================
-# Target rules for targets named crestify
+# Convenience name for target.
+proxies/CMakeFiles/crestify.dir/rule:
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/CMakeFiles/crestify.dir/rule
+.PHONY : proxies/CMakeFiles/crestify.dir/rule
 
-# Build rule for target.
-crestify: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 crestify
+# Convenience name for target.
+crestify: proxies/CMakeFiles/crestify.dir/rule
 .PHONY : crestify
 
 # fast build rule for target.
 crestify/fast:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/build
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/build
 .PHONY : crestify/fast
 
-#=============================================================================
-# Target rules for targets named csec-info
+# Convenience name for target.
+proxies/CMakeFiles/csec-info.dir/rule:
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/CMakeFiles/csec-info.dir/rule
+.PHONY : proxies/CMakeFiles/csec-info.dir/rule
 
-# Build rule for target.
-csec-info: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 csec-info
+# Convenience name for target.
+csec-info: proxies/CMakeFiles/csec-info.dir/rule
 .PHONY : csec-info
 
 # fast build rule for target.
 csec-info/fast:
-	$(MAKE) -f CMakeFiles/csec-info.dir/build.make CMakeFiles/csec-info.dir/build
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/csec-info.dir/build.make proxies/CMakeFiles/csec-info.dir/build
 .PHONY : csec-info/fast
 
-#=============================================================================
-# Target rules for targets named openssl-proxies
+# Convenience name for target.
+proxies/CMakeFiles/openssl-proxies.dir/rule:
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/CMakeFiles/openssl-proxies.dir/rule
+.PHONY : proxies/CMakeFiles/openssl-proxies.dir/rule
 
-# Build rule for target.
-openssl-proxies: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 openssl-proxies
+# Convenience name for target.
+openssl-proxies: proxies/CMakeFiles/openssl-proxies.dir/rule
 .PHONY : openssl-proxies
 
 # fast build rule for target.
 openssl-proxies/fast:
-	$(MAKE) -f CMakeFiles/openssl-proxies.dir/build.make CMakeFiles/openssl-proxies.dir/build
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/openssl-proxies.dir/build.make proxies/CMakeFiles/openssl-proxies.dir/build
 .PHONY : openssl-proxies/fast
 
-#=============================================================================
-# Target rules for targets named system-proxies
+# Convenience name for target.
+proxies/CMakeFiles/system-proxies.dir/rule:
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f CMakeFiles/Makefile2 proxies/CMakeFiles/system-proxies.dir/rule
+.PHONY : proxies/CMakeFiles/system-proxies.dir/rule
 
-# Build rule for target.
-system-proxies: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 system-proxies
+# Convenience name for target.
+system-proxies: proxies/CMakeFiles/system-proxies.dir/rule
 .PHONY : system-proxies
 
 # fast build rule for target.
 system-proxies/fast:
-	$(MAKE) -f CMakeFiles/system-proxies.dir/build.make CMakeFiles/system-proxies.dir/build
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/system-proxies.dir/build.make proxies/CMakeFiles/system-proxies.dir/build
 .PHONY : system-proxies/fast
 
 common.o: common.c.o
@@ -155,7 +162,7 @@ common.o: common.c.o
 
 # target to build an object file
 common.c.o:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/common.c.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/common.c.o
 .PHONY : common.c.o
 
 common.i: common.c.i
@@ -163,7 +170,7 @@ common.i: common.c.i
 
 # target to preprocess a source file
 common.c.i:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/common.c.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/common.c.i
 .PHONY : common.c.i
 
 common.s: common.c.s
@@ -171,7 +178,7 @@ common.s: common.c.s
 
 # target to generate assembly for a file
 common.c.s:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/common.c.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/common.c.s
 .PHONY : common.c.s
 
 common_cpp.o: common_cpp.cpp.o
@@ -179,7 +186,7 @@ common_cpp.o: common_cpp.cpp.o
 
 # target to build an object file
 common_cpp.cpp.o:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/common_cpp.cpp.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/common_cpp.cpp.o
 .PHONY : common_cpp.cpp.o
 
 common_cpp.i: common_cpp.cpp.i
@@ -187,7 +194,7 @@ common_cpp.i: common_cpp.cpp.i
 
 # target to preprocess a source file
 common_cpp.cpp.i:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/common_cpp.cpp.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/common_cpp.cpp.i
 .PHONY : common_cpp.cpp.i
 
 common_cpp.s: common_cpp.cpp.s
@@ -195,7 +202,7 @@ common_cpp.s: common_cpp.cpp.s
 
 # target to generate assembly for a file
 common_cpp.cpp.s:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/common_cpp.cpp.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/common_cpp.cpp.s
 .PHONY : common_cpp.cpp.s
 
 crestify.o: crestify.cpp.o
@@ -203,7 +210,7 @@ crestify.o: crestify.cpp.o
 
 # target to build an object file
 crestify.cpp.o:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/crestify.cpp.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/crestify.cpp.o
 .PHONY : crestify.cpp.o
 
 crestify.i: crestify.cpp.i
@@ -211,7 +218,7 @@ crestify.i: crestify.cpp.i
 
 # target to preprocess a source file
 crestify.cpp.i:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/crestify.cpp.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/crestify.cpp.i
 .PHONY : crestify.cpp.i
 
 crestify.s: crestify.cpp.s
@@ -219,7 +226,7 @@ crestify.s: crestify.cpp.s
 
 # target to generate assembly for a file
 crestify.cpp.s:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/crestify.cpp.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/crestify.cpp.s
 .PHONY : crestify.cpp.s
 
 openssl_proxies.o: openssl_proxies.c.o
@@ -227,7 +234,7 @@ openssl_proxies.o: openssl_proxies.c.o
 
 # target to build an object file
 openssl_proxies.c.o:
-	$(MAKE) -f CMakeFiles/openssl-proxies.dir/build.make CMakeFiles/openssl-proxies.dir/openssl_proxies.c.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/openssl-proxies.dir/build.make proxies/CMakeFiles/openssl-proxies.dir/openssl_proxies.c.o
 .PHONY : openssl_proxies.c.o
 
 openssl_proxies.i: openssl_proxies.c.i
@@ -235,7 +242,7 @@ openssl_proxies.i: openssl_proxies.c.i
 
 # target to preprocess a source file
 openssl_proxies.c.i:
-	$(MAKE) -f CMakeFiles/openssl-proxies.dir/build.make CMakeFiles/openssl-proxies.dir/openssl_proxies.c.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/openssl-proxies.dir/build.make proxies/CMakeFiles/openssl-proxies.dir/openssl_proxies.c.i
 .PHONY : openssl_proxies.c.i
 
 openssl_proxies.s: openssl_proxies.c.s
@@ -243,7 +250,7 @@ openssl_proxies.s: openssl_proxies.c.s
 
 # target to generate assembly for a file
 openssl_proxies.c.s:
-	$(MAKE) -f CMakeFiles/openssl-proxies.dir/build.make CMakeFiles/openssl-proxies.dir/openssl_proxies.c.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/openssl-proxies.dir/build.make proxies/CMakeFiles/openssl-proxies.dir/openssl_proxies.c.s
 .PHONY : openssl_proxies.c.s
 
 openssl_proxies_internal.o: openssl_proxies_internal.c.o
@@ -251,7 +258,7 @@ openssl_proxies_internal.o: openssl_proxies_internal.c.o
 
 # target to build an object file
 openssl_proxies_internal.c.o:
-	$(MAKE) -f CMakeFiles/openssl-proxies.dir/build.make CMakeFiles/openssl-proxies.dir/openssl_proxies_internal.c.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/openssl-proxies.dir/build.make proxies/CMakeFiles/openssl-proxies.dir/openssl_proxies_internal.c.o
 .PHONY : openssl_proxies_internal.c.o
 
 openssl_proxies_internal.i: openssl_proxies_internal.c.i
@@ -259,7 +266,7 @@ openssl_proxies_internal.i: openssl_proxies_internal.c.i
 
 # target to preprocess a source file
 openssl_proxies_internal.c.i:
-	$(MAKE) -f CMakeFiles/openssl-proxies.dir/build.make CMakeFiles/openssl-proxies.dir/openssl_proxies_internal.c.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/openssl-proxies.dir/build.make proxies/CMakeFiles/openssl-proxies.dir/openssl_proxies_internal.c.i
 .PHONY : openssl_proxies_internal.c.i
 
 openssl_proxies_internal.s: openssl_proxies_internal.c.s
@@ -267,7 +274,7 @@ openssl_proxies_internal.s: openssl_proxies_internal.c.s
 
 # target to generate assembly for a file
 openssl_proxies_internal.c.s:
-	$(MAKE) -f CMakeFiles/openssl-proxies.dir/build.make CMakeFiles/openssl-proxies.dir/openssl_proxies_internal.c.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/openssl-proxies.dir/build.make proxies/CMakeFiles/openssl-proxies.dir/openssl_proxies_internal.c.s
 .PHONY : openssl_proxies_internal.c.s
 
 symbolic_interface.o: symbolic_interface.c.o
@@ -275,7 +282,7 @@ symbolic_interface.o: symbolic_interface.c.o
 
 # target to build an object file
 symbolic_interface.c.o:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/symbolic_interface.c.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/symbolic_interface.c.o
 .PHONY : symbolic_interface.c.o
 
 symbolic_interface.i: symbolic_interface.c.i
@@ -283,7 +290,7 @@ symbolic_interface.i: symbolic_interface.c.i
 
 # target to preprocess a source file
 symbolic_interface.c.i:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/symbolic_interface.c.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/symbolic_interface.c.i
 .PHONY : symbolic_interface.c.i
 
 symbolic_interface.s: symbolic_interface.c.s
@@ -291,7 +298,7 @@ symbolic_interface.s: symbolic_interface.c.s
 
 # target to generate assembly for a file
 symbolic_interface.c.s:
-	$(MAKE) -f CMakeFiles/crestify.dir/build.make CMakeFiles/crestify.dir/symbolic_interface.c.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/crestify.dir/build.make proxies/CMakeFiles/crestify.dir/symbolic_interface.c.s
 .PHONY : symbolic_interface.c.s
 
 system_proxies.o: system_proxies.c.o
@@ -299,7 +306,7 @@ system_proxies.o: system_proxies.c.o
 
 # target to build an object file
 system_proxies.c.o:
-	$(MAKE) -f CMakeFiles/system-proxies.dir/build.make CMakeFiles/system-proxies.dir/system_proxies.c.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/system-proxies.dir/build.make proxies/CMakeFiles/system-proxies.dir/system_proxies.c.o
 .PHONY : system_proxies.c.o
 
 system_proxies.i: system_proxies.c.i
@@ -307,7 +314,7 @@ system_proxies.i: system_proxies.c.i
 
 # target to preprocess a source file
 system_proxies.c.i:
-	$(MAKE) -f CMakeFiles/system-proxies.dir/build.make CMakeFiles/system-proxies.dir/system_proxies.c.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/system-proxies.dir/build.make proxies/CMakeFiles/system-proxies.dir/system_proxies.c.i
 .PHONY : system_proxies.c.i
 
 system_proxies.s: system_proxies.c.s
@@ -315,7 +322,7 @@ system_proxies.s: system_proxies.c.s
 
 # target to generate assembly for a file
 system_proxies.c.s:
-	$(MAKE) -f CMakeFiles/system-proxies.dir/build.make CMakeFiles/system-proxies.dir/system_proxies.c.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/system-proxies.dir/build.make proxies/CMakeFiles/system-proxies.dir/system_proxies.c.s
 .PHONY : system_proxies.c.s
 
 system_proxies_boring.o: system_proxies_boring.c.o
@@ -323,7 +330,7 @@ system_proxies_boring.o: system_proxies_boring.c.o
 
 # target to build an object file
 system_proxies_boring.c.o:
-	$(MAKE) -f CMakeFiles/system-proxies.dir/build.make CMakeFiles/system-proxies.dir/system_proxies_boring.c.o
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/system-proxies.dir/build.make proxies/CMakeFiles/system-proxies.dir/system_proxies_boring.c.o
 .PHONY : system_proxies_boring.c.o
 
 system_proxies_boring.i: system_proxies_boring.c.i
@@ -331,7 +338,7 @@ system_proxies_boring.i: system_proxies_boring.c.i
 
 # target to preprocess a source file
 system_proxies_boring.c.i:
-	$(MAKE) -f CMakeFiles/system-proxies.dir/build.make CMakeFiles/system-proxies.dir/system_proxies_boring.c.i
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/system-proxies.dir/build.make proxies/CMakeFiles/system-proxies.dir/system_proxies_boring.c.i
 .PHONY : system_proxies_boring.c.i
 
 system_proxies_boring.s: system_proxies_boring.c.s
@@ -339,7 +346,7 @@ system_proxies_boring.s: system_proxies_boring.c.s
 
 # target to generate assembly for a file
 system_proxies_boring.c.s:
-	$(MAKE) -f CMakeFiles/system-proxies.dir/build.make CMakeFiles/system-proxies.dir/system_proxies_boring.c.s
+	cd /home/avatar/docs/verification/svn/csec-modex && $(MAKE) -f proxies/CMakeFiles/system-proxies.dir/build.make proxies/CMakeFiles/system-proxies.dir/system_proxies_boring.c.s
 .PHONY : system_proxies_boring.c.s
 
 # Help Target
@@ -389,6 +396,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/avatar/docs/verification/svn/csec-modex && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

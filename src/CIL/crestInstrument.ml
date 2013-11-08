@@ -144,31 +144,32 @@ let needsOpaqueWrapper : varinfo -> bool = fun v ->
 (** {1 Ops} *)
 (*************************************************)
 
-module Sym = struct
-  module Type = struct
-    type t = { 
-      argument_types: typ list;
-      result_type: typ }
-      
-    let showSigned = function
-      | false -> "u"
-      | true -> "s"
+module Type = struct
+  type t = { 
+    argument_types: typ list;
+    result_type: typ }
+    
+  let showSigned = function
+    | false -> "u"
+    | true -> "s"
   
-    let showIntType = function
-      | TInt (ikind, _) -> 
-        sprintf "[%s,%d]" (showSigned (isSigned ikind)) (bytesSizeOfInt ikind) 
-      | TPtr _ -> "ptr"
-        (* FIXME: the name will be parsed incorrectly if it contains underscores. *)
-      | t -> 
-        Pretty.sprint 500 (d_typsig () (typeSig t))
-        (* E.s (error "unexpected type of operator argument or result: %a\n" d_type t) *)
+  let showIntType = function
+    | TInt (ikind, _) -> 
+      sprintf "[%s,%d]" (showSigned (isSigned ikind)) (bytesSizeOfInt ikind) 
+    | TPtr _ -> "ptr"
+      (* FIXME: the name will be parsed incorrectly if it contains underscores. *)
+    | t -> 
+      Pretty.sprint 500 (d_typsig () (typeSig t))
+      (* E.s (error "unexpected type of operator argument or result: %a\n" d_type t) *)
 
-    let toString {argument_types; result_type } = 
-      let ts = List.map showIntType argument_types in
-      let t = showIntType result_type in
-      sprintf "%s -> %s" (String.concat " * " ts) t
-  end
+  let toString {argument_types; result_type } = 
+    let ts = List.map showIntType argument_types in
+    let t = showIntType result_type in
+    sprintf "%s -> %s" (String.concat " * " ts) t
+end
 
+
+module Sym = struct
   type arity = int
 
   type t = 
@@ -277,7 +278,7 @@ class crestInstrumentVisitor f =
   let setPtrStepFunc   = mkInstFunc "SetPtrStep" [] in
   let loadStackPtrFunc = mkInstFunc "LoadStackPtr" [nameArg] in
   let fieldOffsetFunc  = mkInstFunc "FieldOffset" [strArg] in
-  let indexOffsetFunc  = mkInstFunc "IndexOffset" [] in
+  let indexOffsetFunc  = mkInstFunc "IndexOffset" [strArg] in
   let locationFunc     = mkInstFunc "Location" [strArg] in
   let doneFunc         = mkInstFunc "Done" [] in
 
@@ -356,7 +357,7 @@ class crestInstrumentVisitor f =
   let mkSetPtrStep ()          = mkInstCall setPtrStepFunc [] in
   let mkLoadStackPtr name      = mkInstCall loadStackPtrFunc [mkString name] in
   let mkFieldOffset f          = mkInstCall fieldOffsetFunc [mkString (f.fname)] in
-  let mkIndexOffset ()         = mkInstCall indexOffsetFunc [] in 
+  let mkIndexOffset t          = mkInstCall indexOffsetFunc [mkString (Type.showIntType t)] in 
   let mkLocation l             = mkInstCall locationFunc [mkString (Pretty.sprint 100 (d_loc () l))] in   
   let mkInit v                 = mkInstCall invokeFunc [mkFunAddr (initFunc v)] in
   let mkDone ()                = mkInstCall doneFunc [] in
@@ -411,7 +412,7 @@ class crestInstrumentVisitor f =
 	    match o with
 	        | NoOffset      -> []
 	        | Field (f, o') -> [mkFieldOffset f] @ (instrumentOffset t' o')
-	        | Index (e, o') -> (instrumentExpr e) @ [mkIndexOffset ()] @ (instrumentOffset t' o')
+	        | Index (e, o') -> (instrumentExpr e) @ [mkIndexOffset (typeOf e)] @ (instrumentOffset t' o')
 
     in
     (instrumentHost host) @ (instrumentOffset (typeOfLval (host, NoOffset)) offset)
@@ -433,7 +434,7 @@ class crestInstrumentVisitor f =
   and instrumentCast : typ -> typ -> instr list = fun t_from t_to ->
     let t_from = unrollType t_from in
     let t_to = unrollType t_to in
-    let t = { Sym.Type.argument_types = [t_from]; result_type = t_to } in 
+    let t = { Type.argument_types = [t_from]; result_type = t_to } in 
     match t_from, t_to with
         (* Pointers are cast to ints for comparisons:
            if ((unsigned long )hint != (unsigned long )((void * )0))  *)
@@ -474,7 +475,7 @@ class crestInstrumentVisitor f =
       | UnOp (op, e, t) ->
         let argument_types = [unrollType (typeOf e)] in
         let result_type = unrollType t in
-        let sym = Sym.UnOp (op, {Sym.Type. argument_types; result_type}) in
+        let sym = Sym.UnOp (op, {Type. argument_types; result_type}) in
         (instrumentExpr e) @ [mkApply sym; mkDone ()]
   
       | BinOp (op, e1, e2, t) ->
@@ -487,7 +488,7 @@ class crestInstrumentVisitor f =
         in
         let argument_types = [unrollType (typeOf e1); unrollType (typeOf e2)] in
         let result_type = unrollType t in
-        let sym = Sym.BinOp (op, {Sym.Type. argument_types; result_type}) in
+        let sym = Sym.BinOp (op, {Type. argument_types; result_type}) in
         (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply sym; mkDone ()]
   
       | CastE (t, e) ->

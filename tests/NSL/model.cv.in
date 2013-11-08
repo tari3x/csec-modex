@@ -1,38 +1,4 @@
 
-(*
-conc1(bitstring, fixed_20_nonce, bounded_40_host): bounded_200_cleartext
-conc2(bitstring): bitstring
-conc3(fixed_20_nonce, bounded_40_host): bounded_200_cleartext
-conc4(bitstring): bitstring
-conc5(bitstring): bounded_200_cleartext
-conc6(bitstring): bitstring
-
-Should be:
-conc1(fixed_20_nonce, fixed_20_nonce, bounded_40_host): bounded_200_cleartext !!!
-conc2(bitstring): bitstring
-conc3(fixed_20_nonce, bounded_40_host): bounded_200_cleartext
-conc4(bitstring): bitstring
-conc5(fixed_20_nonce): bounded_200_cleartext  !!! 
-conc6(bitstring): bitstring
-*)
-
-(*
-conc1/3 := "msg2"|len(arg0)|len(arg1)|arg0|arg1|arg2
-conc2/1 := "encr"|len(arg0)|arg0
-conc3/2 := "msg1"|len(arg0)|arg0|arg1
-conc4/1 := "encr"|len(arg0)|arg0
-conc5/1 := "msg3"|arg0
-conc6/1 := "encr"|len(arg0)|arg0
-
-parse1/1 := arg0{i8 +_N arg0{4, 8} +_N i4, len(arg0) -_N (i8 +_N arg0{4, 8} +_N i4)}
-parse2/1 := arg0{12, arg0{4, 8}}
-parse3/1 := arg0{4, len(arg0) -_N i4}
-parse4/1 := arg0{20, arg0{4, 8}}
-parse5/1 := arg0{arg0{4, 8} +_N arg0{12, 8} +_N i16 +_N i4, len(arg0) -_N (arg0{4, 8} +_N arg0{12, 8} +_N i16 +_N i4)}
-parse6/1 := arg0{arg0{4, 8} +_N i16 +_N i4, arg0{12, 8}}
-
-*)
-
 channel c_in, c_out. 
 
 param N.
@@ -70,13 +36,14 @@ const hostB: bounded_40_host.
 
 type keyseed_T [fixed, large].
 type key_T [bounded].
+type bounded_1000_ciphertext [bounded].
 type bounded_200_cleartext [bounded].
 type fixed_256_seed_T [fixed].
 
 proba Penc.
 proba Penccoll.
 
-expand IND_CCA2_public_key_enc(keyseed_T, key_T, key_T, bounded_200_cleartext, bitstring, fixed_256_seed_T, dk, ek, E, D, injbot, Z, Penc, Penccoll).
+expand IND_CCA2_public_key_enc(keyseed_T, key_T, key_T, bounded_200_cleartext, bounded_1000_ciphertext, fixed_256_seed_T, dk, ek, E, D, injbot, Z, Penc, Penccoll).
 
 fun inverse_injbot(bitstringbot): bounded_200_cleartext.
 

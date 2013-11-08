@@ -188,7 +188,7 @@ GOOD_OUTPUTS = $(OUTPUTS:.out=.good.txt)
 check: $(GOOD_OUTPUTS)
 
 %.good.txt: %.out
-	@if diff $@ $<; then\
+	@if patdiff $@ $<; then\
 		echo "$<: Test OK.";\
 	else\
 		echo "$<: Test not OK.";\

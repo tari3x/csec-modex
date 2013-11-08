@@ -17,9 +17,9 @@
 
 int main(int argc, char ** argv)
 {
-  // our identity and the identity of the other partner
-  unsigned char * host, * xhost;
-  size_t host_len, xhost_len;
+  // our identity, the identity of the intended partner, and the identity received from partner
+  unsigned char * client_name, * server_name, * x_server_name;
+  size_t client_name_len, server_name_len;
 
   unsigned char * pkey, * skey, * xkey;
   size_t pkey_len, skey_len, xkey_len;
@@ -29,7 +29,7 @@ int main(int argc, char ** argv)
   size_t m1_len, m1_e_len, m1_all_len;
 
   unsigned char * m2, * m2_e;
-  unsigned char * xNb;
+  unsigned char * xNb, * xNa;
   size_t m2_len, m2_e_len;
   size_t m2_l1, m2_l2;
 
@@ -43,8 +43,8 @@ int main(int argc, char ** argv)
 
   BIO * bio = socket_connect();
 
-  host = get_host(&host_len, 'A');
-  xhost = get_xhost(&xhost_len, 'A');
+  client_name = get_host(&client_name_len, 'A');
+  server_name = get_xhost(&server_name_len, 'A');
 
   pkey = get_pkey(&pkey_len, 'A');
   skey = get_skey(&skey_len, 'A');
@@ -58,12 +58,12 @@ int main(int argc, char ** argv)
   print_buffer(skey, skey_len);
   printf("\n");
 
-  printf("A xhost = ");
-  print_buffer(xhost, xhost_len);
+  printf("A server_name = ");
+  print_buffer(server_name, server_name_len);
   printf("\n");
 #endif
 
-  xkey = lookup_xkey(&xkey_len, xhost, xhost_len, 'A');
+  xkey = lookup_xkey(&xkey_len, server_name, server_name_len, 'A');
 
 #ifdef VERBOSE
   printf("A xkey = ");
@@ -73,7 +73,7 @@ int main(int argc, char ** argv)
 
 #ifdef CSEC_VERIFY
 #ifdef USE_EVENT_PARAMS
-  event2("beginA", host, host_len, xhost, xhost_len);
+  event2("beginA", client_name, client_name_len, server_name, server_name_len);
 #else
   event0("beginA");
 #endif
@@ -81,7 +81,7 @@ int main(int argc, char ** argv)
 
   /* Send message 1 */
 
-  m1_len = SIZE_NONCE + 4 + host_len
+  m1_len = SIZE_NONCE + 4 + client_name_len
       + sizeof(size_t);
   p = m1 = malloc(m1_len);
 
@@ -92,7 +92,7 @@ int main(int argc, char ** argv)
   Na = p;
   nonce(Na);
   p += SIZE_NONCE;
-  memcpy(p, host, host_len);
+  memcpy(p, client_name, client_name_len);
 
   m1_e_len = encrypt_len(xkey, xkey_len,
                          m1, m1_len);
@@ -138,7 +138,7 @@ int main(int argc, char ** argv)
       decrypt(skey, skey_len,
               m2_e, m2_e_len, m2);
 
-  if(xhost_len + 2 * SIZE_NONCE
+  if(server_name_len + 2 * SIZE_NONCE
       + 2 * sizeof(size_t) + 4 != m2_len)
   {
     printf("A: m2 has wrong length\n");
@@ -166,16 +166,22 @@ int main(int argc, char ** argv)
     exit(1);
   }
 
-  if(memcmp(m2 + 4 + 2 * sizeof(size_t), Na, m2_l1))
+  xNa = m2 + 4 + 2 * sizeof(size_t);
+  typehint(xNa, SIZE_NONCE, "fixed_20_nonce");
+
+  if(memcmp(xNa, Na, m2_l1))
   {
     printf("A: xNa in m2 doesn't match Na\n");
     exit(1);
   }
 
+  x_server_name =
+    m2 + m2_l1 + m2_l2
+    + 2 * sizeof(size_t) + 4;
+  typehint(x_server_name, server_name_len, "bounded_40_host");
+
 #ifndef LOWE_ATTACK
-  if(memcmp(m2 + m2_l1 + m2_l2
-            + 2 * sizeof(size_t) + 4,
-            xhost,  xhost_len))
+  if(memcmp(x_server_name, server_name,  server_name_len))
   {
     printf("A: x_xkey in m2 doesn't match xkey\n");
     exit(1);
@@ -234,7 +240,7 @@ int main(int argc, char ** argv)
 
 #ifdef CSEC_VERIFY
 #ifdef USE_EVENT_PARAMS
-  event2("endA", host, host_len, xhost, xhost_len);
+  event2("endA", client_name, client_name_len, server_name, server_name_len);
 #else
   event0("endA");
 #endif

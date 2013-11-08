@@ -185,7 +185,7 @@ let isInterfaceFun : string -> bool = fun s ->
          "store_buf"; "store_all"; "store_ctx"; "event"; 
          "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int"; 
          "get_attr_int"; "copy_ctx"; "copy_attr_ex"; "copy_attr";
-         "clear_attr"; "concrete_val"; "fresh_ptr"; "append_zero"]
+         "clear_attr"; "concrete_val"; "fresh_ptr"; "append_zero"; "typehint"]
 
 
 (*************************************************)

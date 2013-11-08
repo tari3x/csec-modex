@@ -78,9 +78,39 @@ int EVP_Cipher_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned cha
   return ret;
 }
 
+extern BIO *BIO_pop_proxy(BIO *a )
+{
+  mute();
+  BIO * ret = BIO_pop(a);
+  unmute();
+
+  // Let the attacker decide what this function returns.
+  fresh_ptr(sizeof(*ret));
+  store_buf(&ret);
+  input("BIO_pop_result", sizeof(*ret));
+  store_buf(ret);
+
+  return ret;
+}
+
+extern int BIO_free_proxy(BIO *a )
+{
+  mute();
+  int ret = BIO_free(a);
+  unmute();
+
+  // Let the attacker decide decide the result
+  input("BIO_free_result", sizeof(ret));
+  store_buf(&ret);
+
+  return ret;
+}
+
 int BIO_write_proxy(BIO *b, const void *in, int inl)
 {
+  mute();
   int ret = BIO_write(b, in, inl);
+  unmute();
 
   int cond = 0;
 
@@ -111,7 +141,9 @@ int BIO_write_proxy(BIO *b, const void *in, int inl)
 
 int BIO_read_proxy(BIO *b, void *out, int outl)
 {
+  mute();
   int ret = BIO_read(b, out, outl);
+  unmute();
 
   // FIXME: should check: are we reading from memory?
 
@@ -133,9 +165,41 @@ int BIO_read_proxy(BIO *b, void *out, int outl)
   return ret;
 }
 
+extern BIO *BIO_new_connect_proxy(char *host_port )
+{
+  mute();
+  BIO * ret = BIO_new_connect(host_port);
+  unmute();
+
+  // Let the attacker decide what this function returns.
+  fresh_ptr(sizeof(*ret));
+  store_buf(&ret);
+  input("BIO_new_connect_result", sizeof(*ret));
+  store_buf(ret);
+
+  return ret;
+}
+
+extern BIO *BIO_new_accept_proxy(char *host_port )
+{
+  mute();
+  BIO * ret = BIO_new_accept(host_port);
+  unmute();
+
+  // Let the attacker decide what this function returns.
+  fresh_ptr(sizeof(*ret));
+  store_buf(&ret);
+  input("BIO_new_accept_result", sizeof(*ret));
+  store_buf(ret);
+
+  return ret;
+}
+
 extern long BIO_ctrl_proxy(BIO *bp , int cmd , long larg , void *parg )
 {
+  mute();
   long ret = BIO_ctrl(bp, cmd, larg, parg);
+  unmute();
 
   // Let the attacker decide decide the result
   input("BIO_ctrl_result", sizeof(ret));

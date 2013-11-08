@@ -288,7 +288,6 @@ void __CrestLoadString(__CREST_STR val)
   *out << "LoadStr " << endl << val << endl;
 }
 
-/*
 void __CrestLoadTypeSize(__CREST_STR val)
 {
   if(muted) return;
@@ -296,13 +295,12 @@ void __CrestLoadTypeSize(__CREST_STR val)
   *out << "LoadStr " << endl << val << endl;
   __CrestApplyN("SizeOf", 1);
 }
-*/
 
-void __CrestLoadChar(__CREST_CHAR val)
+void __CrestLoadChar(__CREST_CHAR c)
 {
   if(muted) return;
 
-  *out << "LoadStr " << endl << buffer2string((const unsigned char *)(&val), 1) << endl;
+  *out << "LoadChar " << c << endl;
 }
 
 void __CrestSetLen()
@@ -333,11 +331,11 @@ void __CrestFieldOffset(__CREST_STR field)
   *out << "FieldOffset " << field << endl;
 }
 
-void __CrestIndexOffset()
+void __CrestIndexOffset(__CREST_STR type)
 {
   if(muted) return;
 
-  *out << "IndexOffset" << endl;
+  *out << "IndexOffset" << endl << type << endl;
 }
 
 void __CrestLocation(__CREST_STR loc)

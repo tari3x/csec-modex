@@ -10,9 +10,9 @@ include $(CSEC_ROOT)/mk/common.mk
 
 OCAMLC = ocamlc
 OCAMLOPT = ocamlopt
-OCAML_INC = -I $(OCAMLYICES_ROOT) -I /usr/local/lib -I cryptoverif
+OCAML_INC = -I $(OCAMLYICES_ROOT) -I /usr/local/lib -I cryptoverif -I $(CIL_OBJDIR)
 OCAML_FLAGS = -g $(OCAML_INC) 
-OCAML_LIBS = nums.cma ocamlyices.cma str.cma unix.cma
+OCAML_LIBS = nums.cma ocamlyices.cma str.cma unix.cma cil.cma
 OCAMLOPT_LIBS = $(OCAML_LIBS:.cma=.cmxa)
 ## OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -package num ocamlyices.cmxa -package str -linkpkg 
 

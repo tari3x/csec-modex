@@ -102,14 +102,14 @@ query hClient: bounded_1024_id, resp: fixed_1024_payload;
   <Model> 
 ***************************)
 
-let A = 0 . 
-let B = 0 .
+let client = 0 . 
+let server = 0 .
 
 (********************************
   <Environment>
 *********************************)
 
-let client =
+let client' =
   in(c_in, xClient: bounded_1024_id);
   
   (*
@@ -119,7 +119,7 @@ let client =
   new request: fixed_1024_payload;
   
   out(c_out, ());
-  B .
+  client .
 
 (* The sentinel used in formulating weak secrecy of the response *)
 let sentinel =
@@ -128,20 +128,19 @@ let sentinel =
   event leaked(xClient, response);
   yield .
 
-let server = 
+let server' = 
   in(c_in, xClient: bounded_1024_id);
 
   new response: fixed_1024_payload;
 
   if xClient = clientID then
     out(c_out, ());  
-    ( A | sentinel )
+    ( server | sentinel )
   else
     let badHost(xClient') = xClient in
     event bad(xClient);
     out(c_out, ());
-    ( A | sentinel ) .
-
+    ( server | sentinel ) .
 
 process 
 ! N(
@@ -154,5 +153,5 @@ process
   let db = add_honest(kAB, adb) in
 
   out(c_out, ());
-  ((! N client) | (! N server))
+  ((! N client') | (! N server'))
 )

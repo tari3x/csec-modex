@@ -204,7 +204,7 @@ EXTERN void __CrestLoadTypeSize(__CREST_STR val) __SKIP;
 EXTERN void __CrestSetPtrStep() __SKIP;
 EXTERN void __CrestLoadStackPtr(__CREST_STR var) __SKIP;
 EXTERN void __CrestFieldOffset(__CREST_STR field) __SKIP;
-EXTERN void __CrestIndexOffset() __SKIP;
+EXTERN void __CrestIndexOffset(__CREST_STR type) __SKIP;
 EXTERN void __CrestLocation(__CREST_STR) __SKIP;
 EXTERN void __CrestDone() __SKIP;
 

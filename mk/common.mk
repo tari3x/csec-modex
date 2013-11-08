@@ -27,7 +27,7 @@ CILLY = /home/avatar/docs/verification/svn/csec-modex/deps/cil-1.3.7-svn/bin/cil
 
 PROXY_SYM_CILLY = $(CILLY) --doCrestInstrument --csec-config=$(PROXY_CONF_SYM) --save-temps --commPrintLn
 
-OCAML_LIB = /usr/lib64/ocaml
+OCAML_LIB = /home/avatar/.opam/4.00.1/lib/ocaml
 
 # some system dependency, I guess autoconf would be real nice here
 # ifdef WINDIR
