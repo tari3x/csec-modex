@@ -22,21 +22,20 @@ type fact = exp
 (** {1 Building facts} *)
 (*************************************************)
 
-val eqBitstring: exp list -> fact
-val eqInt: exp list -> fact
+val eq_bitstring: exp list -> fact
+val eq_int: exp list -> fact
 val not : fact -> fact
 val gt : exp -> exp -> fact 
 val ge : exp -> exp -> fact
 
+val is_defined: exp -> fact
 
-val isDefined: exp -> fact
+val true_fact : fact
 
-val trueFact : fact
-
-val inType: exp -> imltype -> fact 
+val in_type: exp -> imltype -> fact 
   
 module Range : sig
-  type t = IntType.t 
+  type t = Int_type.t 
   
   val contains : t -> exp -> fact list
   val subset : t -> t -> bool 
@@ -47,34 +46,50 @@ end
 (** {1 Checking facts} *)
 (*************************************************)
 
+val add_fact : fact -> unit 
 
-val addFact : fact -> unit 
+val reset_facts : unit -> unit
 
-val resetFacts : unit -> unit
+val is_true: fact -> pbool
 
-val isTrue: fact -> pbool
+val equal_bitstring : exp -> exp -> pbool
 
-val equalBitstring : exp -> exp -> pbool
-
-val notEqualBitstring : exp -> exp -> pbool
+val not_equal_bitstring : exp -> exp -> pbool
 
 (** Comparison is done on numeric values. *)
-val equalInt : ?facts:fact list -> len -> len -> pbool
+val equal_int : ?facts:fact list -> len -> len -> pbool
 
-val greaterEqual : exp -> exp -> pbool
+val greater_equal : exp -> exp -> pbool
 
-val greaterEqualLen : len -> len -> pbool
+val greater_equal_len : len -> len -> pbool
 
-val greaterEqualLenAnswer : len -> len -> answer
+val greater_equal_len_answer : len -> len -> answer
 
 val implies: fact list -> fact list -> pbool
-  
+
 (*************************************************)
 (** {1 Evaluation} *)
 (*************************************************)
 
 (** 
-  Try evaluation an integer expression.
+  Evaluation of an integer expression.
   Will fail if a value is not unique. 
 *)
 val eval: exp -> int option
+
+(*************************************************)
+(** {1 Simplification} *)
+(*************************************************)
+
+(** Only simplifies the topmost constructor. *)
+val simplify : exp -> exp
+
+(** If an expression is opaque, then the simplifier does not understand its structure.
+    In particular, the solver cannot tell that simplifications inside the expression preserve equality. *)
+val is_opaque : exp -> bool
+
+(*************************************************)
+(** {1 Warnings} *)
+(*************************************************)
+
+val warn_on_failed_conditions : bool -> unit

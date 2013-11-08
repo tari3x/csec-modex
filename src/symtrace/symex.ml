@@ -24,13 +24,13 @@ module Stmt = struct
   include Iml.Stmt.T
   include Iml.Stmt
 end
-module BaseMap = E.BaseMap
+module Base_map = E.Base_map
 
 module L = struct
-  let getLen e = E.Len e
+  let get_len e = Simplify.simplify (E.Len e)
 end  
 
-type mem = exp BaseMap.t 
+type mem = exp Base_map.t 
 
 
 type sym = string
@@ -38,14 +38,15 @@ type nargs = int
 
 type cvm = 
     (* loading *)
-  | LoadInt of intval
-  | LoadStr of string (** assumed to be in hex already *)
-  | LoadStackPtr of string (** name of variable; step init to 0 (invalid value) *)
-  | LoadHeapPtr of int (** stack: buffer length; step init to 0 *)
-  | LoadBuf (** stack: ptr, len *)
-  | LoadMem (** stack: ptr; use ptr step as len. *)
-  | LoadAll (** stack: ptr; load the whole buffer *)
-    (* LoadAttr attr // stack: ptr; consumed *)
+  | Load_int of intval
+  | Load_str of string (** assumed to be in hex already *)
+  | Load_char of char
+  | Load_stack_ptr of string (** name of variable; step init to 0 (invalid value) *)
+  | Load_heap_ptr of int (** stack: buffer length; step init to 0 *)
+  | Load_buf (** stack: ptr, len *)
+  | Load_mem (** stack: ptr; use ptr step as len. *)
+  | Load_all (** stack: ptr; load the whole buffer *)
+    (* Load_attr attr // stack: ptr; consumed *)
   | In  (** stack: len *)
   | New (** 
             stack: constant int length N, type alias T. Creates value of type Fixed (N, T).
@@ -54,45 +55,45 @@ type cvm =
   | Env of string
     
     (* offsetts *)
-  | FieldOffset of string (** stack: ptr; step init to 0 *)
-  | CtxOffset of string (** pointer step set to 0, 
-                            a context pointer should never be used with LoadMem (implement a check in update) *)
-  | IndexOffset (** stack: ptr, offset; step init to 0 *)
+  | Field_offset of string (** stack: ptr; step init to 0 *)
+  | Ctx_offset of string (** pointer step set to 0, 
+                            a context pointer should never be used with Load_mem (implement a check in update) *)
+  | Index_offset of Int_type.t (** stack: ptr, offset; step init to 0 *)
     
     (* operations *)
   | Apply of sym
   | Dup
   | Len
-  | BS of IntType.t
-  | Val of IntType.t
-  | InType of string 
+  | BS of Int_type.t
+  | Val of Int_type.t
+  | In_type of string 
     
-  | ApplyNondet (** For a symbol application on top of stack indicate that the application is not deterministic.
+  | Apply_nondet (** For a symbol application on top of stack indicate that the application is not deterministic.
                     For a stack pointer assigns it a fresh id. *)
 
-  (* | ConcreteResult of intval *)
+  (* | Concrete_result of intval *)
   | Append (** stack: first, second; second consumed *)
   | Event of sym * nargs
   | Branch of intval
   | Assume
   | Hint of string 
-  | TypeHint of string
-  | SetPtrStep (** The size of the underlying type, 
+  | Type_hint of string
+  | Set_ptr_step (** The size of the underlying type, 
                    stack: ptr, step; step consumed
                    Overwrites existing pointer step.
                    Is necessary as a separate thing because of casts and the trick with flat char arrays. *)
   | Done (** signals that we are done creating and customising a new value *)
     
     (* storing *)
-  | StoreBuf (** stack: exp, ptr; both consumed; use exp len *)
-  | StoreMem (** stack: exp, ptr; both consumed; use pointer step *)
-  | StoreAll (** stack: exp, ptr; both consumed; replace whatever the pointer points to, don't look at exp len
+  | Store_buf (** stack: exp, ptr; both consumed; use exp len *)
+  | Store_mem (** stack: exp, ptr; both consumed; use pointer step *)
+  | Store_all (** stack: exp, ptr; both consumed; replace whatever the pointer points to, don't look at exp len
                  Currently used in two cases:
                  - To replace contents of E.zero-terminated expressions
                  - To store cryptographic attributes *)
-    (* StoreAttr attr // stack: exp, ptr; both consumed *)
+    (* Store_attr attr // stack: exp, ptr; both consumed *)
   | Clear (** No warnings *)
-  | CopyCtx (** stack: to, from; both consumed *)
+  | Copy_ctx (** stack: to, from; both consumed *)
   | Out
     
     (* misc *)
@@ -106,7 +107,7 @@ type cvm =
 (*************************************************)
 
 (** The symbolic memory *)
-let mem : mem ref = ref BaseMap.empty
+let mem : mem ref = ref Base_map.empty
 
 (** Symbolic execution stack *)
 let stack: exp Stack.t = Stack.create () 
@@ -115,62 +116,62 @@ let stack: exp Stack.t = Stack.create ()
 let iml: iml ref = ref []
 
 (** All the functions called so far, for debug purposes only *)
-let calledFunctions: string list ref = ref []
+let called_functions: string list ref = ref []
 
 (** Current call stack, used for debug purposes only *)
-let callStack: string Stack.t = Stack.create ()
+let call_stack: string Stack.t = Stack.create ()
 
 (** The ids for the calls on the call stack *)
-let callId : int ref = ref 0
+let call_id : int ref = ref 0
 
 (** The ids used for stack pointers. *)
-let curPtrId : int ref = ref 0
+let cur_ptr_id : int ref = ref 0
 
 (** The number of instructions executed so far *)
-let doneInstr : int ref = ref 0
+let done_instr : int ref = ref 0
 
 
-let lastComment = ref ""
+let last_comment = ref ""
 
-let resetState : unit -> unit = fun () ->
+let reset_state : unit -> unit = fun () ->
   (* don't reset the Exp state *)
-  mem := BaseMap.empty;
+  mem := Base_map.empty;
   Stack.clear stack;
   iml := [];
-  Stack.clear callStack;
-  callId := 0
+  Stack.clear call_stack;
+  call_id := 0
 
-let lens : exp IntMap.t ref = ref IntMap.empty
+let lens : exp Int_map.t ref = ref Int_map.empty
 
 (*************************************************)
 (** {1 Helpers} *)
 (*************************************************)
 
-let ptrLen = Sym (PtrLen, [])
+let ptr_len = Sym (Ptr_len, [])
 
-let makeAssumptions : unit -> unit = fun () ->
+let make_assumptions : unit -> unit = fun () ->
   (* FIXME: remove this later when all symbolic sizes are being used properly *)
-  S.addFact (S.ge (E.int 8) ptrLen);
-  S.addFact (S.gt ptrLen E.zero) 
+  S.add_fact (S.ge (E.int 8) ptr_len);
+  S.add_fact (S.gt ptr_len E.zero) 
   
-let checkWellFormed : exp -> unit = fun e ->
+let check_well_formed : exp -> unit = fun e ->
   
-  let rec checkDecreasing : pos -> unit = function
+  let rec check_decreasing : pos -> unit = function
     | [_; (Attr _, _)] -> ()
     | (_, step1) :: ((_, step2) as os2) :: pos' ->
-      if not (S.greaterEqualLen step1 step2) then
-        fail "checkWellFormed: offset step sequence not monotonous: %s" (E.dump e);
-      checkDecreasing (os2 :: pos')
+      if not (S.greater_equal_len step1 step2) then
+        fail "check_well_formed: offset step sequence not monotonous: %s" (E.dump e);
+      check_decreasing (os2 :: pos')
 
     | _ -> ()
   in
     
   (* 
   (* check that all flat offsets have step 1 *)
-  let rec checkFlatOffset: offset -> unit = function
+  let rec check_flat_offset: offset -> unit = function
     | (Flat _, step) -> 
-      if not (S.equalLen step one) then
-        fail ("checkWellFormed: a flat offset with step greater 1: " ^ E.dump e)
+      if not (S.equal_len step one) then
+        fail ("check_well_formed: a flat offset with step greater 1: " ^ E.dump e)
    | _ -> ()
   in
   *)
@@ -180,49 +181,49 @@ let checkWellFormed : exp -> unit = fun e ->
     One thing that prevents this from being enforced is that a step of an attribute offset
     isn't known, so an attribute offset doesn't bubble up past the trailing flat or index offset.
     
-    I think this can be fixed by updating bubbleUp so that attributes always bubble up past
+    I think this can be fixed by updating bubble_up so that attributes always bubble up past
     flat offsets.
   *)   
-  let rec checkOrder : bool -> bool -> pos -> unit = fun seenIndex prevFlat -> function
+  let rec check_order : bool -> bool -> pos -> unit = fun seen_index prev_flat -> function
     | ((Field _ | Attr _), _) :: pos' -> 
-      if not seenIndex then
-        fail "checkPos: first field or attribute not preceded by index: %s" (E.dump e);
-      if prevFlat then 
-        fail "checkPos: field or attribute preceded by flat: %s" (E.dump e);
-      checkOrder seenIndex false pos'
+      if not seen_index then
+        fail "check_pos: first field or attribute not preceded by index: %s" (E.dump e);
+      if prev_flat then 
+        fail "check_pos: field or attribute preceded by flat: %s" (E.dump e);
+      check_order seen_index false pos'
 
     | (Index _, _) :: pos' ->
-      if prevFlat then
-        fail "checkPos: index preceded by flat: %s" (E.dump e);
-      checkOrder true false pos';
+      if prev_flat then
+        fail "check_pos: index preceded by flat: %s" (E.dump e);
+      check_order true false pos';
         
-     | (Flat _, _) :: pos' -> checkOrder seenIndex true pos';
+     | (Flat _, _) :: pos' -> check_order seen_index true pos';
 
      | [] -> ()
   in               
   *)
 
-  E.typecheck (E.typeOf e) e;
+  E.typecheck (E.type_of e) e;
   
   match e with
 	  | Ptr (b, pos) -> 
-    	(* checkOrder false false pos; *) 
-	    checkDecreasing pos;
+    	(* check_order false false pos; *) 
+	    check_decreasing pos;
       (* See notes about flat offset steps *)
-      (* iter checkFlatOffset pos *)
-	  | e -> () (* L.getLen e <> Unknown *) (* see notes *)
+      (* iter check_flat_offset pos *)
+	  | e -> () (* L.get_len e <> Unknown *) (* see notes *)
 
 (*
   FIXME: merge when merging with CIL.
 *)
-let isInterfaceFun : string -> bool = fun s -> 
+let is_interface_fun : string -> bool = fun s -> 
   List.mem s 
         ["event0"; "event1"; "event2"; "event3"; "event4"; "readenv"; "readenvE"; "readenvL";  
          "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail";
          (* Internal interface functions: *)
          "load_buf"; "load_all"; "load_ctx"; "load_int"; "load_str"; 
          "symL"; "symN"; "symNE"; "input"; "newTN"; "newTL"; "newL";
-         "varsym"; "var"; "varWithBUfInit"; "varL"; "output";  
+         "varsym"; "var"; "varWithBufInit"; "varL"; "output";  
          "store_buf"; "store_all"; "store_ctx"; "event"; 
          "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int"; 
          "get_attr_int"; "copy_ctx"; "copy_attr_ex"; "copy_attr";
@@ -250,83 +251,83 @@ let output a =
     if !fail_mode then
       fail_buf := !fail_buf ^ ("\n  " ^ s)
     else 
-      if debugEnabled () then prerr_endline (decorateDebug s)
+      if debug_enabled () then prerr_endline (decorate_debug s)
   in
   Printf.ksprintf output a
     
 
 (** Non-destructive. *)
-let dumpStack : unit -> unit = fun () -> Stack.iter (fun e -> output "# %s" (E.dump e)) stack
+let dump_stack : unit -> unit = fun () -> Stack.iter (fun e -> output "# %s" (E.dump e)) stack
 
-let dumpCallStack : unit -> unit = fun () -> Stack.iter (fun fname -> output "#  %s" fname) callStack
+let dump_call_stack : unit -> unit = fun () -> Stack.iter (fun fname -> output "#  %s" fname) call_stack
 
-let dumpMemory: unit -> unit = fun () ->
+let dump_memory: unit -> unit = fun () ->
     
-    let dumpCell: base -> exp -> unit = fun b e ->
-        output "%s => %s"(E.baseToString b) (E.dump e)
+    let dump_cell: base -> exp -> unit = fun b e ->
+        output "%s => %s"(E.base_to_string b) (E.dump e)
     in
     
-    BaseMap.iter dumpCell !mem  
+    Base_map.iter dump_cell !mem  
 
-let dumpCalledFuns: unit -> unit = fun () ->
+let dump_called_funs: unit -> unit = fun () ->
   (* output called functions *)
   let f = open_out_bin "called.out" in
-  List.iter (fun s -> output_string f (s ^ "\n")) !calledFunctions
+  List.iter (fun s -> output_string f (s ^ "\n")) !called_functions
 
 let failfun () =
   fail_mode := true;
-  output "Instructions Executed: %d" !doneInstr; 
-  output "Last comment: %s" !lastComment;
+  output "Instructions Executed: %d" !done_instr; 
+  output "Last comment: %s" !last_comment;
   output ("Call stack:");
-  dumpCallStack ();
-  (* E.clipEnabled := false; *)
+  dump_call_stack ();
+  (* E.clip_enabled := false; *)
   output ("Execution stack:");
-  dumpStack ();
+  dump_stack ();
   (*     
   debug ("symbolic memory:");
-  dumpMemory ();
+  dump_memory ();
   debug ("generated iml:");  
-  iter prerr_endline (map E.dump (filter interestingEvent !iml));
+  iter prerr_endline (map E.dump (filter interesting_event !iml));
   *)
   (*
   (* FIXME: this should be done only once, given that we use catch now. *)
-  dumpCalledFuns ();
+  dump_called_funs ();
   *)
   
   output "process = ";
-  output "%s" (Iml.toString (procAndFilter !iml));
+  output "%s" (Iml.to_string (proc_and_filter !iml));
   fail_mode := false;
   let result = !fail_buf in
   fail_buf := "";
   result
   
 
-let _ = failFuns := !failFuns @ [failfun]
+let _ = fail_funs := !fail_funs @ [failfun]
 
 (*************************************************)
 (** {1 Symbolic Buffer Manipulation} *)
 (*************************************************)
 
-let flattenArray : exp IntMap.t -> exp = fun cells ->
+let flatten_array : exp Int_map.t -> exp = fun cells ->
   let rec check = fun len -> function
     | [] -> ()
     | [j, _] -> if j = len - 1 then () else fail "flatten: sparse arrays not supported yet"
     | _ :: xs -> check len xs
   in
-  let clist = fold2list IntMap.fold (fun i e -> (i, e)) cells in
+  let clist = fold2list Int_map.fold (fun i e -> (i, e)) cells in
   check (length clist) clist;
   Simplify.simplify (Concat (List.map snd clist))
 
-let flattenIndex : pos -> pos = function
+let flatten_index : pos -> pos = function
   | (Index i, step) :: pos -> (Flat (Simplify.prod [step; (E.int i)]), step) :: pos
-  | _ -> fail "flattenIndex"
+  | _ -> fail "flatten_index"
 
 (**
     Flatten until the next field or attribute offset.
 *)
-let rec flattenIndexDeep : pos -> pos = function
-  | (Index i, step) :: pos -> (Flat (Simplify.prod [step; (E.int i)]), step) :: flattenIndexDeep pos
-  | (Flat e, step) :: pos -> (Flat e, step) :: flattenIndexDeep pos
+let rec flatten_index_deep : pos -> pos = function
+  | (Index i, step) :: pos -> (Flat (Simplify.prod [step; (E.int i)]), step) :: flatten_index_deep pos
+  | (Flat e, step) :: pos -> (Flat e, step) :: flatten_index_deep pos
   | pos -> pos
 
 
@@ -340,7 +341,7 @@ let rec flattenIndexDeep : pos -> pos = function
 *)
 let rec extract : pos -> len option -> exp -> exp = fun pos l e ->
   debug "extract, e_host: %s" (E.dump e);
-  debug "extract, pos: %s" (String.concat ", " (List.map E.offsetToString pos));
+  debug "extract, pos: %s" (String.concat ", " (List.map E.offset_to_string pos));
   debug "extract, len: %s" (option_to_string E.dump l);
   begin match l with 
     | None -> ()
@@ -349,52 +350,52 @@ let rec extract : pos -> len option -> exp -> exp = fun pos l e ->
   match (pos, l, e) with
     | ((Field s, _) :: os', _, Struct (fields, _, _, e_old)) -> 
       begin
-	      try let e' = StrMap.find s fields in extract os' l e'
+	      try let e' = Str_map.find s fields in extract os' l e'
 	      with Not_found -> extract pos l e_old
       end
       
     | ((Attr s, _) :: os', _, Struct (_, attrs, _, _)) -> 
-      let e' = try StrMap.find s attrs 
+      let e' = try Str_map.find s attrs 
                with Not_found -> fail "extract: attribute not initialised: %s" s in
       extract os' l e'
 
-    | ((Index i, step) :: pos', l, Array (cells, len, eltSize)) ->
+    | ((Index i, step) :: pos', l, Array (cells, len, elt_size)) ->
       (* trying to catch a situation where pointer to the start of array is used to extract a big piece of array *)
       (* TODO: simplify the control here *)
       let inside_cell = match l with
-        | Some l -> S.greaterEqualLenAnswer eltSize l = S.Yes
+        | Some l -> S.greater_equal_len_answer elt_size l = S.Yes
         | None -> false
       in
       if not inside_cell then 
-        extract pos l (flattenArray cells)
+        extract pos l (flatten_array cells)
       else
       begin 
-		      if S.equalInt step eltSize then
-		        let e' = try IntMap.find i cells
+		      if S.equal_int step elt_size then
+		        let e' = try Int_map.find i cells
 		                 with Not_found -> fail "extract: array index not initialised: %s" (string_of_int i) in
 		        extract pos' l e'
-		      else if i = 0 && S.equalInt step len then
+		      else if i = 0 && S.equal_int step len then
 		        extract pos' l e
-		      else if S.greaterEqualLen eltSize step then
-		        let e' = try IntMap.find 0 cells
+		      else if S.greater_equal_len elt_size step then
+		        let e' = try Int_map.find 0 cells
 		                 with Not_found -> fail "extract: cannot descend into first cell" in
 		        extract pos l e'
 		      else 
-            extract pos l (flattenArray cells)
+            extract pos l (flatten_array cells)
       end
 
     | ((Index i, step) :: pos', l, e) -> 
-      extract (flattenIndex pos) l e
+      extract (flatten_index pos) l e
 
     | (pos, Some l, Array (cells, _, l')) ->
-        if pos = [] && S.equalInt l l' then e else 
-        extract pos (Some l) (flattenArray cells)
+        if pos = [] && S.equal_int l l' then e else 
+        extract pos (Some l) (flatten_array cells)
 
     | (pos, None, Array (cells, _, l')) ->
-        extract pos None (flattenArray cells)
+        extract pos None (flatten_array cells)
 
     | ((Flat oe, _) :: os', l, e) -> 
-      let e' = Simplify.simplify (Range (e, oe, Simplify.minus (L.getLen e) oe)) in
+      let e' = Simplify.simplify (Range (e, oe, Simplify.minus (L.get_len e) oe)) in
       extract os' l e'
 
     | ([], None, e) -> e
@@ -405,15 +406,15 @@ let rec extract : pos -> len option -> exp -> exp = fun pos l e ->
 
     | ((Field s, _) :: os', Some l, e) -> 
       (* We already pre-trim to length l, otherwise the length of the result is harder to compute. *)
-      let e' = Simplify.simplify (Range (e, Sym (Sym.T.FieldOffset, [String s]), l)) in
+      let e' = Simplify.simplify (Range (e, Sym (Sym.T.Field_offset, [String s]), l)) in
       extract os' (Some l) e'
 
     | _ -> fail "extract: cannot read through pointer"
       
 let extract pos l e =
-  increase_debug_depth ();
+  push_debug "extract_pos";
   let result = extract pos l e in
-  decrease_debug_depth ();
+  pop_debug "extract_pos";
   result
 
 (**
@@ -432,7 +433,7 @@ let extract pos l e =
 let rec update : pos -> len -> len option -> exp -> exp -> exp = fun pos step l_val e_host e_val ->
   debug "update, e_host: %s" (E.dump e_host);
   debug "update, e_val: %s"  (E.dump e_val);
-  debug "update, pos: %s" (String.concat ", " (List.map E.offsetToString pos));
+  debug "update, pos: %s" (String.concat ", " (List.map E.offset_to_string pos));
   debug "update, step: %s" (E.dump step);
   debug "update, l_val: %s" (option_to_string E.dump l_val);
   begin match l_val with 
@@ -440,66 +441,66 @@ let rec update : pos -> len -> len option -> exp -> exp -> exp = fun pos step l_
     | Some l -> E.typecheck (Type.Int) l
   end;
   match (pos, l_val, e_host) with
-    | ((Index i, step') :: pos', None, Array (cells, len, eltSize)) ->
-      update pos step None (flattenArray cells) e_val
+    | ((Index i, step') :: pos', None, Array (cells, len, elt_size)) ->
+      update pos step None (flatten_array cells) e_val
   
-    | ((Index i, step') :: pos', Some l_val, Array (cells, len, eltSize)) ->
+    | ((Index i, step') :: pos', Some l_val, Array (cells, len, elt_size)) ->
       begin
-      match S.greaterEqualLenAnswer eltSize l_val with
-        | (S.No | S.Maybe) -> update pos step (Some l_val) (flattenArray cells) e_val
+      match S.greater_equal_len_answer elt_size l_val with
+        | (S.No | S.Maybe) -> update pos step (Some l_val) (flatten_array cells) e_val
         | _ ->
-		      if S.equalInt step' eltSize then
-	          let e_elem = try IntMap.find i cells 
+		      if S.equal_int step' elt_size then
+	          let e_elem = try Int_map.find i cells 
 	                       with Not_found -> Concat [] in
 	          let e' = update pos' step' (Some l_val) e_elem e_val in
-	          Array (IntMap.add i e' cells, len, eltSize)
+	          Array (Int_map.add i e' cells, len, elt_size)
 	          
-		      else if i = 0 && S.equalInt step' len then
+		      else if i = 0 && S.equal_int step' len then
 		        update pos' step' (Some l_val) e_host e_val
 	          
-		      (* else if S.greaterEqualLen eltSize step then
-	          let e_elem = try IntMap.find 0 cells 
+		      (* else if S.greater_equal_len elt_size step then
+	          let e_elem = try Int_map.find 0 cells 
 	                       with Not_found -> Concat [] in
-	          let e' = update pos eltSize l_val e_elem e_val in
-	          Array (IntMap.add 0 e' cells, len, eltSize) *)
+	          let e' = update pos elt_size l_val e_elem e_val in
+	          Array (Int_map.add 0 e' cells, len, elt_size) *)
 
-          else update pos step (Some l_val) (flattenArray cells) e_val
+          else update pos step (Some l_val) (flatten_array cells) e_val
 
 		      (* else fail "update: index step incompatible with array element size" *)
       end
 
     | ((Index i, step') :: pos', None, Concat []) -> 
-        update (flattenIndex pos) step None e_host e_val
+        update (flatten_index pos) step None e_host e_val
 
     | ((Index i, step') :: pos', Some l_val, Concat []) -> 
-      if S.greaterEqualLen step' l_val then
-	      let e_new = Array (IntMap.empty, step, step') in
+      if S.greater_equal_len step' l_val then
+	      let e_new = Array (Int_map.empty, step, step') in
 	      update pos step (Some l_val) e_new e_val
       else
-        update (flattenIndex pos) step (Some l_val) e_host e_val
+        update (flatten_index pos) step (Some l_val) e_host e_val
 
       (* TODO: give it one more chance in case Concat [Array _]? *)
     | ((Index i, step') :: pos', l_val, e_host) -> 
       (* deep flattening here is slightly cosmetical - otherwise you get stuff like [payload_len|<{0 -> <{0 -> 7c}>}>] *)
-      (* let e_new = update (flattenIndexDeep pos') step' l_val (Concat []) e_val in
-      update (flattenIndex [Index i, step']) step (L.getLen e_new) e_host e_new *)
-      update (flattenIndexDeep pos) step l_val e_host e_val
+      (* let e_new = update (flatten_index_deep pos') step' l_val (Concat []) e_val in
+      update (flatten_index [Index i, step']) step (L.get_len e_new) e_host e_new *)
+      update (flatten_index_deep pos) step l_val e_host e_val
 
     | ((Field s, step') :: pos', l_val, Struct (fields, attrs, len, e_old)) -> 
-      let e_field = try StrMap.find s fields 
+      let e_field = try Str_map.find s fields 
                     with Not_found -> Concat [] in
       let e' = update pos' step' l_val e_field e_val in
-      Struct (StrMap.add s e' fields, attrs, len, e_old)
+      Struct (Str_map.add s e' fields, attrs, len, e_old)
 
     | ((Attr s, step') :: pos', l_val, Struct (fields, attrs, len, e_old)) -> 
-      let e_attr = try StrMap.find s attrs 
+      let e_attr = try Str_map.find s attrs 
                    with Not_found -> Concat [] in
       let e' = update pos' step' l_val e_attr e_val in
-      Struct (fields, StrMap.add s e' attrs, len, e_old)
+      Struct (fields, Str_map.add s e' attrs, len, e_old)
 
       (* FIXME: we might need to descend if position is E.zero *)
     | ((Flat oe, _) :: _, l_val, Array (cells, _, _)) -> 
-      update pos step l_val (flattenArray cells) e_val
+      update pos step l_val (flatten_array cells) e_val
 
       (* 
         We follow the assumption that a flat offset has step 1.
@@ -507,25 +508,26 @@ let rec update : pos -> len -> len option -> exp -> exp -> exp = fun pos step l_
         structure size (pointer step) from above. 
       *)
     | ((Flat oe, _) :: pos', l_val, e) -> 
-      (* FIXME: you might want to flattenIndexDeep pos' in case oe > 0 *)
+      (* FIXME: you might want to flatten_index_deep pos' in case oe > 0 *)
       let e1 = Simplify.simplify (Range (e, E.zero, oe)) in
-      let e2 = Simplify.simplify (Range (e, oe, Simplify.minus (L.getLen e) oe)) in
+      let e2 = Simplify.simplify (Range (e, oe, Simplify.minus (L.get_len e) oe)) in
       Simplify.simplify (Concat [e1; update pos' step l_val e2 e_val])
 
     | ([], None, e) -> e_val 
 
     | ([], Some l_val, e) -> 
-      begin match S.greaterEqualLenAnswer (L.getLen e) l_val with
+      let e_len = Simplify.simplify (L.get_len e) in
+      begin match S.greater_equal_len_answer e_len l_val with
         | S.Yes -> 
-  	      let e' = Simplify.simplify (Range (e, l_val, Simplify.minus (L.getLen e) l_val)) in
+  	      let e' = Simplify.simplify (Range (e, l_val, Simplify.minus e_len l_val)) in
   	      Simplify.simplify (Concat ([e_val; e']))
           (* here we essentially replace e by undef which is sound *)
         | S.No -> e_val
         | S.Maybe -> 
-          fail "update: cannot decide which is greater: %s or %s" (E.toString (L.getLen e)) (E.toString l_val)
+          fail "update: cannot decide which is greater: %s or %s" (E.to_string e_len) (E.to_string l_val)
       end 
 
-    | (pos, l_val, Concat (e :: es)) when S.greaterEqualLen (L.getLen e) step -> 
+    | (pos, l_val, Concat (e :: es)) when S.greater_equal_len (L.get_len e) step -> 
       (* 
         At this point [pos] starts with something that definitely goes into a deeper segment.
         Thus it is safe to pass only the first element down - the right thing happens even if
@@ -536,7 +538,7 @@ let rec update : pos -> len -> len option -> exp -> exp -> exp = fun pos step l_
     
     | (((Field _ | Attr _), step') :: _, l_val, e) -> 
       let e_old = Simplify.simplify (Range (e, E.zero, step)) in
-      let e_new = Struct (StrMap.empty, StrMap.empty, step, e_old) in
+      let e_new = Struct (Str_map.empty, Str_map.empty, step, e_old) in
       update pos step' l_val e_new e_val
     
     (* Last resort: try to overwrite the value completely *)
@@ -545,9 +547,9 @@ let rec update : pos -> len -> len option -> exp -> exp -> exp = fun pos step l_
     (* | _ -> fail "update: cannot write through pointer" *)
 
 let update pos step l_val e_host e_val =
-  increase_debug_depth ();
+  push_debug "update";
   let result = update pos step l_val e_host e_val in
-  decrease_debug_depth ();
+  pop_debug "update";
   result
 
 
@@ -557,95 +559,94 @@ let update pos step l_val e_host e_val =
 
 (**
   Simplifications are done on a case-by-case basis. It is important not to do them too early, in order
-  to let things like Hint and SetLen be applied to whatever they are meant for.
+  to let things like Hint and Set_len be applied to whatever they are meant for.
 *)
 
-let takeStack : unit -> exp = fun () ->
+let take_stack : unit -> exp = fun () ->
   try
     let e = (Stack.pop stack) in
     debug "taking %s" (E.dump e);
     e
   with 
-    | Stack.Empty -> fail "takeStack: not enough elements on stack"
+    | Stack.Empty -> fail "take_stack: not enough elements on stack"
 
-let takeAllStack : unit -> exp list = fun () ->
+let take_all_stack : unit -> exp list = fun () ->
   try
-    let es = (popAll stack) in
+    let es = (pop_all stack) in
     List.iter (fun e -> debug "taking %s" (E.dump e)) es;
     es
   with 
-    | Stack.Empty -> fail "takeAllStack: not enough elements on stack"
+    | Stack.Empty -> fail "take_all_stack: not enough elements on stack"
     
 
-let takeNStack : int -> exp list = fun n ->
+let take_nStack : int -> exp list = fun n ->
   try
-    let es = (popN stack n) in
+    let es = (pop_n stack n) in
     List.iter (fun e -> debug "taking %s" (E.dump e)) es;
     es
   with 
-    | Stack.Empty -> fail "takeNStack: not enough elements on stack"
+    | Stack.Empty -> fail "take_nStack: not enough elements on stack"
 
-let toStack : exp -> unit = fun e -> 
+let to_stack : exp -> unit = fun e -> 
   let e' = e in
   debug "pushing %s" (E.dump e');
   Stack.push e' stack
 
-let toMem : base -> exp-> unit = fun b e -> 
-  if debugEnabled () then checkWellFormed e;
+let to_mem : base -> exp-> unit = fun b e -> 
+  check_well_formed e;
   debug "storing %s" (E.dump e);
-  mem := BaseMap.add b e !mem
+  mem := Base_map.add b e !mem
 
-let addStmt s = 
-  iml := !iml @ [Stmt.Comment !lastComment; s]
+let add_stmt s = 
+  iml := !iml @ [Stmt.Comment !last_comment; s]
 
 (*
   None means take all that's in the buffer.
 *)
 let load : len option -> exp -> unit = fun l p ->
-  if interesting p then markEnabled := true;
+  if interesting p then mark_enabled := true;
   debug "load, p: %s" (E.dump p);
   match p with
     | Ptr (b, pos) ->
-      let e = BaseMap.find b !mem in
+      let e = Base_map.find b !mem in
       (* extract already does the simplification *)
       let e'= extract pos l e in
-      toStack e';
-      markEnabled := false
+      to_stack e';
+      mark_enabled := false
     
     | _ -> fail "load: ptr expected"
 
-let getStep : offset list -> exp = comp snd last
+let get_step : offset list -> exp = comp snd List.last
 
-let loadP : bool -> unit = fun useStep ->
-
+let load_p : bool -> unit = fun use_step ->
   try
-    match takeStack () with
-      | Ptr (b, pos) as p -> load (if useStep then Some (getStep pos) else None) p
-      | _ -> fail "loadMem: ptr expected"
+    match take_stack () with
+      | Ptr (b, pos) as p -> load (if use_step then Some (get_step pos) else None) p
+      | _ -> fail "load_mem: ptr expected"
   with
-    | Not_found   -> fail "loadMem: reading uninitialised memory" 
-    | Stack.Empty -> fail "loadMem: not enough elements on stack"
+    | Not_found   -> fail "load_mem: reading uninitialised memory" 
+    | Stack.Empty -> fail "load_mem: not enough elements on stack"
 
 let store : cvm -> unit = fun flag ->
-  let getLength e =
-    let l = L.getLen e in
+  let get_length e =
+    let l = L.get_len e in
     if l = Unknown then fail "store: cannot determine expression length"
     else l 
   in
-  let p = takeStack () in
-  let e = takeStack () in
+  let p = take_stack () in
+  let e = take_stack () in
 
-  if interesting p then markEnabled := true; 
+  if interesting p then mark_enabled := true; 
 
   debug "store, p: %s" (E.dump p);
   debug "store, e: %s" (E.dump e);
   match p with 
     | Ptr (b, pos) ->
-      let e_host = try BaseMap.find b !mem with Not_found -> Concat [] in
+      let e_host = try Base_map.find b !mem with Not_found -> Concat [] in
       let l_val = match flag with
-        | StoreBuf -> Some (getLength e)
-        | StoreMem -> Some (getStep pos)
-        | StoreAll -> None
+        | Store_buf -> Some (get_length e)
+        | Store_mem -> Some (get_step pos)
+        | Store_all -> None
         | _ -> fail "store: impossible"
       in
       let step = match b with
@@ -653,237 +654,254 @@ let store : cvm -> unit = fun flag ->
         | _ -> snd (List.hd pos)
       in
       (* update performs simplification already *)
-      toMem b ( (* silent *) (update pos step l_val e_host) e);
-      markEnabled := false
+      to_mem b ( (* silent *) (update pos step l_val e_host) e);
+      mark_enabled := false
 
     | _ -> fail "store: pointer expected"
 
-let valueUnsigned e = 
-  match S.eval (E.Len e) with
-  | None   -> fail "cannot determine width of %s" (E.toString e)
-  | Some w -> E.Val (e, (IntType.Unsigned, w)) |> Simplify.simplify
+let value ~expected_type e = 
+  match E.type_of e with
+  | Type.Bs_int itype as t ->
+    (* begin match expected_sign with *)
+    if itype <> expected_type
+    then fail "Expected type %s in expression %s, got %s" (Int_type.to_string expected_type) (E.to_string e) (Type.to_string t)
+    else E.Val (e, itype) |> Simplify.simplify
+  | _ -> 
+    E.Val (e, expected_type)
 
 let rec execute = function
 
-  | LoadBuf ->
+  | Load_buf ->
     begin try
-      let l = takeStack () in
-      let p = takeStack () in
-      load (Some (valueUnsigned l)) p
+      let l = take_stack () in
+      let p = take_stack () in
+      (* The expected type is the type of the argument of Load_buf in C. *)
+      load (Some (value ~expected_type:Int_type.size_t l)) p
     with
-      | Not_found   -> fail "loadBuf: reading uninitialised memory"
-      | Stack.Empty -> fail "loadBuf: not enough elements on stack"
+      | Not_found   -> fail "load_buf: reading uninitialised memory"
+      | Stack.Empty -> fail "load_buf: not enough elements on stack"
     end
 
-  | LoadMem -> loadP true
-  | LoadAll -> loadP false
+  | Load_mem -> load_p true
+  | Load_all -> load_p false
 
-  | LoadInt ival ->
-    toStack (Int ival)
+  | Load_int ival ->
+    to_stack (Int ival)
 
-  | LoadStr s ->
-    toStack (String s)
+  | Load_str s ->
+    to_stack (String s)
 
-  | LoadStackPtr name ->
-    toStack (Ptr (Stack name, [Index 0, Unknown]))
+  | Load_char c ->
+    (* Character literals in C have type int *)
+    to_stack (E.BS (Char c, Int_type.int))
 
-  | LoadHeapPtr id ->
-    let l = takeStack () in
-    toStack (Ptr (Heap (id, l), [Flat E.zero, Unknown]))
+  | Load_stack_ptr name ->
+    to_stack (Ptr (Stack name, [Index 0, Unknown]))
+
+  | Load_heap_ptr id ->
+    let l = take_stack () in
+    to_stack (Ptr (Heap (id, l), [Flat E.zero, Unknown]))
 
   | In ->
-    let l = takeStack () in
+    let l = take_stack () in
     let vname = Var.fresh "" in
     let v = Var vname in
-    let fact = S.eqInt [E.Len v; valueUnsigned l] in
+    (* The expected type is the type of the argument of In in C *)
+    let fact = S.eq_int [E.Len v; value ~expected_type:Int_type.size_t l] in
     (* Inputs are defined in IML. *)
-    S.addFact (S.isDefined v);
-    S.addFact fact;
+    S.add_fact (S.is_defined v);
+    S.add_fact fact;
     iml := !iml @ [Stmt.In [vname]; Test fact];
-    toStack v
+    to_stack v
 
   | New ->
     let vname = Var.fresh "" in
     let v = Var vname in
-    let t = match takeNStack 2 with
-      | [Int i; String s] when i = -1L -> Named (s, None)
-      | [Int i; String ""]             -> Fixed (Int64.to_int i)
-      | [Int i; String s]              -> Named (s, Some (Fixed (Int64.to_int i)))
-      | es -> fail "New: length followed by typename expected on stack, instead found %s" (E.dumpList es)
+    let l, t = match take_nStack 2 with
+      | [Int i; String s] when i = -1L -> Var (Var.fresh "unknown"), Named (s, None)
+      | [Int i; String ""]             -> Int i, Fixed (Int64.to_int i)
+      | [Int i; String s]              -> Int i, Named (s, Some (Fixed (Int64.to_int i)))
+      | es -> fail "New: length followed by typename expected on stack, instead found %s" (E.dump_list es)
     in
     iml := !iml @ [Stmt.New (vname, t)];
-    toStack v
+    S.add_fact (S.is_defined v);
+    S.add_fact (S.eq_int [E.len v; l]);
+    to_stack v
     
   | Env v ->
-    toStack (Var v)
+    to_stack (Var v)
 
-  | FieldOffset s ->
-    begin match takeStack () with
-      | Ptr (b, pos) -> toStack (Ptr (b, pos @ [(Field s, Unknown)]))
-      | _ ->  fail "fieldOffset: pointer expected"
+  | Field_offset s ->
+    begin match take_stack () with
+      | Ptr (b, pos) -> to_stack (Ptr (b, pos @ [(Field s, Unknown)]))
+      | _ ->  fail "field_offset: pointer expected"
     end 
 
-  | CtxOffset s ->
-    begin match takeStack () with
-        | Ptr (b, pos) -> toStack (Ptr (b, pos @ [(Attr s, Unknown)]))
-        | _ ->  fail "ctxOffset: pointer expected"
+  | Ctx_offset s ->
+    begin match take_stack () with
+        | Ptr (b, pos) -> to_stack (Ptr (b, pos @ [(Attr s, Unknown)]))
+        | _ ->  fail "ctx_offset: pointer expected"
     end 
 
-  | IndexOffset ->
+  | Index_offset itype ->
     begin 
-      let e = takeStack () in
+      let e = take_stack () in
       (* FIXME: loss of precision because of Int64 conversion *)
-      match takeStack (), Simplify.arithFold e with
-        | (Ptr (b, pos), Int i)  -> toStack (Ptr (b, pos @ [(Index (Int64.to_int i), Unknown)]))
-        | (Ptr _, _)             -> fail "indexOffset: only concrete indices supported for now"
-        | _ ->  fail "indexOffset: pointer expected"
+      (* This seems to be what 6.5.6 of the standard implies. *)
+      match take_stack (), S.eval (value ~expected_type:itype e) with
+        | (Ptr (b, pos), Some i) -> to_stack (Ptr (b, pos @ [(Index i, Unknown)]))
+        | (Ptr _, _)             -> fail "index_offset: only concrete indices supported for now"
+        | _ ->  fail "index_offset: pointer expected"
      end 
 
   (* 
-  | ApplyAll s ->
-    let args = takeAllStack () in
-    toStack (Sym (Sym.ofString s, args))
+  | Apply_all s ->
+    let args = take_all_stack () in
+    to_stack (Sym (Sym.of_string s, args))
   *)
 
   | Apply s ->
-    let sym = Sym.ofString s in
-    let args = takeNStack (Sym.arity sym) in 
+    let sym = Sym.of_string s in
+    let args = take_nStack (Sym.arity sym) in 
     let e' = Sym (sym, args) in
-    toStack e'
+    to_stack e'
 
   | Dup ->
-    let e = takeStack () in
-    toStack e; toStack e
+    let e = take_stack () in
+    to_stack e; to_stack e
 
   | Len ->
-    let e = takeStack() in
-    toStack (E.Len e)
+    let e = take_stack() in
+    to_stack (E.Len e)
     
   | BS itype ->
-    let e = takeStack() in
-    toStack (E.BS (e, itype))
+    let e = take_stack() in
+    to_stack (E.BS (e, itype))
 
-  | Val (s, w) ->
-    let e = takeStack() in
-    toStack (Simplify.simplify (E.Val (e, (s, w))))
+  | Val itype ->
+    let e = take_stack () in
+    to_stack (Simplify.simplify (E.Val (e, itype)))
             
-  | InType tname ->
-    let t = Type.ofString tname in
-    let e = takeStack() in
-    toStack (S.inType e t)
+  | In_type tname ->
+    let t = Type.of_string tname in
+    let e = take_stack() in
+    to_stack (S.in_type e t)
 
 
-  | ApplyNondet ->
-    begin match takeStack () with
-      | Sym (Fun (s, n), args) -> toStack (Sym (NondetFun (s, Var.freshId "nondet", n), args))
-      | Ptr (Stack name, pos)  -> toStack (Ptr (Stack (name ^ "[" ^ (string_of_int (increment curPtrId)) ^ "]"), pos)) 
-      | e -> fail "Nondet: unexpected value on stack: %s" (E.toString e) 
+  | Apply_nondet ->
+    begin match take_stack () with
+      | Sym (Fun (s, n), args) -> to_stack (Sym (Nondet_fun (s, Var.fresh_id "nondet", n), args))
+      | Ptr (Stack name, pos)  -> to_stack (Ptr (Stack (name ^ "[" ^ (string_of_int (increment cur_ptr_id)) ^ "]"), pos)) 
+      | e -> fail "Nondet: unexpected value on stack: %s" (E.to_string e) 
     end
 
   (* 
-  | ConcreteResult ival ->
-    begin match takeStack () with
+  | Concrete_result ival ->
+    begin match take_stack () with
           (* 
             Replace concrete expressions by their values.
             
             FIXME: should anything be concretised at all? Time to move away from it.
           *)
         | Sym (_, args) as e ->
-          if E.isConcrete e 
-          then toStack (Int ival) bla bla what about length here?
-          else toStack e
+          if E.is_concrete e 
+          then to_stack (Int ival) bla bla what about length here?
+          else to_stack e
   
-        | e -> fail "concreteResult: Sym expected"
+        | e -> fail "concrete_result: Sym expected"
     end
   *)
 
   | Append ->
-    let args = takeNStack 2 in
-    toStack (Simplify.simplify (Concat args))
+    let args = take_nStack 2 in
+    to_stack (Simplify.simplify (Concat args))
 
   | Event (name, nargs) ->
-    let args = takeNStack nargs in
+    let args = take_nStack nargs in
     iml := !iml @ [Stmt.Event (name, args)] (* [Sym (("event", Prefix), [e], Unknown, Det)] *)
 
   | Out ->
-    let e = takeStack() in
+    let e = take_stack() in
     iml := !iml @ [Stmt.Out [e]]
     
   | Branch bdir ->
-    let e = takeStack () in
+    let e = take_stack () in
     debug "branch: %s" (E.dump e);
-    if not (E.isConcrete e) then
+    if not (E.is_concrete e) then
     begin
       debug "branch is not concrete";
       let e = E.truth e in
       let e = if bdir = 1L then e else S.not e in
-      if not (S.isTrue e) then
+      if not (S.is_true e) then
       begin
         debug "branch has non-constant condition, adding test statement"; 
-        addStmt (Test e);
-        S.addFact e
+        add_stmt (Test e);
+        S.add_fact e
       end
     end
 
   | Assume ->
-    let e = takeStack () in
+    let e = take_stack () in
+    (* This is a bit stupid: we often cannot simplify an expression before assuming it,
+       because parts of it may be undefined. *)
+    S.add_fact e;
+    let e = Simplify.full_simplify e in
     debug "assume: %s" (E.dump e);
-    addStmt (Stmt.Assume e);
-    S.addFact e
+    add_stmt (Stmt.Assume e)
 
   | Hint h ->
-    let e = takeStack () in
+    let e = take_stack () in
     let vname = Var.fresh h in
     let v = Var vname in
-    S.addFact (S.eqBitstring [v; e]);
+    S.add_fact (S.eq_bitstring [v; e]);
     iml := !iml @ [Let (Pat.T.VPat vname, Annotation(Name vname, e))];
-    toStack v;
+    to_stack v;
     debug "attaching hint %s to %s" h (E.dump e)
     
-  | TypeHint t ->
-    let e = takeStack () in
+  | Type_hint t ->
+    let e = take_stack () in
     debug "attaching type hint %s to %s" t (E.dump e);
-    toStack (Annotation (E.TypeHint (Type.ofString t), e))
+    to_stack (Annotation (E.Type_hint (Type.of_string t), e))
     
-  | SetPtrStep ->
+  | Set_ptr_step ->
     
-    let flatten : offset -> offsetVal = function
+    let flatten : offset -> offset_val = function
       | (Flat e,  step) -> Flat e
       | (Index i, step) -> Flat (Simplify.prod [step; (E.int i)])
         (* The logic here is that Field is already flat in the sense that the offset value is independet of step *)
       | (Field f, step) -> Field f 
-        (* fail "setPtrStep: trying to flatten a field offset" *)
-      | (Attr _, _) -> fail "setPtrStep: trying to flatten an attribute"
+        (* fail "set_ptr_step: trying to flatten a field offset" *)
+      | (Attr _, _) -> fail "set_ptr_step: trying to flatten an attribute"
     in
     
-    let rec bubbleUp : offset -> pos -> pos = fun (ov, l) -> function
+    let rec bubble_up : offset -> pos -> pos = fun (ov, l) -> function
       | (ov', l') :: pos' as pos -> 
-        if S.greaterEqualLen l l' then
+        if S.greater_equal_len l l' then
           
-          if Simplify.isZeroOffsetVal ov' then 
-            bubbleUp (ov, l) pos'
+          if Simplify.is_zero_offset_val ov' then 
+            bubble_up (ov, l) pos'
             
-          else if Simplify.isZeroOffsetVal ov then
-            if S.equalInt l l' then
+          else if Simplify.is_zero_offset_val ov then
+            if S.equal_int l l' then
               pos
             else
-              bubbleUp (flatten (ov', l'), l) pos'
+              bubble_up (flatten (ov', l'), l) pos'
   
           else 
-            if S.equalInt l l' && (Simplify.isFieldOffsetVal ov) && (Simplify.isFieldOffsetVal ov') then
+            if S.equal_int l l' && (Simplify.is_field_offset_val ov) && (Simplify.is_field_offset_val ov') then
               (ov, l) :: pos
-            else fail "setPtrStep: trying to merge two nonzero offsets"
+            else fail "set_ptr_step: trying to merge two nonzero offsets"
             
           (*
-          else if S.equalLen l l' then
-            if isZeroOffsetVal ov then
+          else if S.equal_len l l' then
+            if is_zero_offset_val ov then
               pos
-            else if isFieldOffsetVal ov then
+            else if is_field_offset_val ov then
               (ov, l) :: pos
             else
-              fail "setPtrStep: trying to delete a non-E.zero offset (1)"
+              fail "set_ptr_step: trying to delete a non-E.zero offset (1)"
           else
-            fail "setPtrStep: trying to delete a non-E.zero offset"
+            fail "set_ptr_step: trying to delete a non-E.zero offset"
           *)
             
         else
@@ -892,76 +910,76 @@ let rec execute = function
       | [] -> [(ov, l)]
     in
     
-    let setStep : len -> pos -> pos = fun l -> function 
-      | (ov, _) :: pos' -> bubbleUp (ov, l) pos'
-      | [] -> fail "setPtrStep: empty offset list" 
+    let set_step : len -> pos -> pos = fun l -> function 
+      | (ov, _) :: pos' -> bubble_up (ov, l) pos'
+      | [] -> fail "set_ptr_step: empty offset list" 
         (* This unfortunately does not work, because of pointer-to-pointer casts *)
-        (* | _ ->  fail "setPtrStep: step already present" *)
+        (* | _ ->  fail "set_ptr_step: step already present" *)
     in
     
-    let l = takeStack () in
+    let l = take_stack () in
     (* 
         Simplification needed because we want to remove casts from pointers.
     *)
-    let e = match Simplify.simplify (takeStack ()) with
-      | Ptr (b, pos) -> Ptr (b, rev (setStep l (rev pos)))
-      | _ -> fail "setPtrStep: pointer expected"
+    let e = match Simplify.simplify (take_stack ()) with
+      | Ptr (b, pos) -> Ptr (b, rev (set_step l (rev pos)))
+      | _ -> fail "set_ptr_step: pointer expected"
     in
-    toStack e 
+    to_stack e 
 
   | Done ->
-    let e = takeStack () in
+    let e = take_stack () in
     (*
-    let l = freshLen e in
-    S.addFact (S.ge l E.zero);
-    let e = L.setLen e l in
+    let l = fresh_len e in
+    S.add_fact (S.ge l E.zero);
+    let e = L.set_len e l in
     *)
     let e = Simplify.simplify e in
     debug "Done, simplified: %s" (E.dump e); 
-    (* debug ("doDone, with new len: " ^ E.dump e); *)
-    if debugEnabled () then checkWellFormed e;
-    toStack e;
-    if E.isLength e then S.addFact (S.ge e E.zero)
+    (* debug ("do_done, with new len: " ^ E.dump e); *)
+    check_well_formed e;
+    to_stack e;
+    if E.is_length e then S.add_fact (S.ge e E.zero)
 
-  | StoreBuf -> store StoreBuf
-  | StoreMem -> store StoreMem
-  | StoreAll -> store StoreAll
+  | Store_buf -> store Store_buf
+  | Store_mem -> store Store_mem
+  | Store_all -> store Store_all
 
   | Clear ->
-    ignore (takeStack ())
+    ignore (take_stack ())
 
-  | CopyCtx ->
-      execute LoadMem;
-      let eFrom = takeStack () in
-      let pTo   = takeStack () in
-      execute LoadMem;
-      let eTo   = takeStack () in
-      begin match (eFrom, eTo) with
+  | Copy_ctx ->
+      execute Load_mem;
+      let e_from = take_stack () in
+      let p_to   = take_stack () in
+      execute Load_mem;
+      let e_to   = take_stack () in
+      begin match (e_from, e_to) with
         | (Struct (_, attrs, _, _), Struct (fields, _, len, e_old)) ->
           (* FIXME: no need for simplification *)
-          toStack (Struct (fields, attrs, len, e_old));
-          toStack pTo;
-          execute StoreMem;
+          to_stack (Struct (fields, attrs, len, e_old));
+          to_stack p_to;
+          execute Store_mem;
   
-        | _ -> fail "copyCtx: two structure pointers expected"
+        | _ -> fail "copy_ctx: two structure pointers expected"
       end
   
   | Call (fname, nargs) ->
-    calledFunctions := !calledFunctions @ [fname];
+    called_functions := !called_functions @ [fname];
   
     increase_indent ();
   
-    Stack.push (Printf.sprintf "%s[%d, %s]" fname !callId !lastComment) callStack;
-    callId := !callId + 1;
+    Stack.push (Printf.sprintf "%s[%d, %s]" fname !call_id !last_comment) call_stack;
+    call_id := !call_id + 1;
     debug "# Entering %s, new call stack:" fname;
-    dumpCallStack ();
+    dump_call_stack ();
     debug ("# execution stack:");  
-    dumpStack ();
-    if not (isInterfaceFun fname) && Stack.length stack != nargs then
+    dump_stack ();
+    if not (is_interface_fun fname) && Stack.length stack != nargs then
       warn "Wrong number of elements on stack when entering %s" fname
   
   | Return ->
-    let fname = Stack.pop callStack in 
+    let fname = Stack.pop call_stack in 
     debug "returning from %s" fname;
     decrease_indent ()
     
@@ -972,7 +990,7 @@ let rec execute = function
 (** {1 Execution Loop} *)
 (*************************************************)
 
-let executeFile : in_channel -> iml = fun file ->
+let execute_file : in_channel -> iml = fun file ->
 
   let rec execute' = fun () ->
     let line = input_line file in
@@ -980,45 +998,47 @@ let executeFile : in_channel -> iml = fun file ->
     if length toks = 0 then fail "empty instruction: %s" line;
     let cmd = 
       try match List.hd toks with
-          | "//"             -> lastComment := line; warning_location := line; Comment
-          | "LoadBuf"        -> LoadBuf
-          | "LoadMem"        -> LoadMem
-          | "LoadAll"        -> LoadAll
-          | "LoadInt"        -> LoadInt (Int64.of_string (nth toks 1))
-          | "BS_signed"      -> BS (IntType.Signed, int_of_string (nth toks 1))
-          | "BS_unsigned"    -> BS (IntType.Unsigned, int_of_string (nth toks 1))
-          | "Val_signed"     -> Val (IntType.Signed, int_of_string (nth toks 1))
-          | "Val_unsigned"   -> Val (IntType.Unsigned, int_of_string (nth toks 1))
-          | "LoadStr"        -> LoadStr (input_line file)
-          | "LoadStackPtr"   -> LoadStackPtr (nth toks 1) (* (int_of_string (nth toks 2)) *)
-          | "LoadHeapPtr"    -> LoadHeapPtr (int_of_string (nth toks 1))
+          | "//"             -> last_comment := line; warning_location := line; Comment
+          | "LoadBuf"        -> Load_buf
+          | "LoadMem"        -> Load_mem
+          | "LoadAll"        -> Load_all
+          | "LoadInt"        -> Load_int (Int64.of_string (nth toks 1))
+            (* TODO: write full int types in crestify? *)
+          | "BS_signed"      -> BS (Int_type.create `Signed (int_of_string (nth toks 1)))
+          | "BS_unsigned"    -> BS (Int_type.create `Unsigned (int_of_string (nth toks 1)))
+          | "Val_signed"     -> Val (Int_type.create `Signed (int_of_string (nth toks 1)))
+          | "Val_unsigned"   -> Val (Int_type.create `Unsigned  (int_of_string (nth toks 1)))
+          | "LoadStr"        -> Load_str (input_line file)
+          | "LoadChar"       -> Load_char (nth toks 1).[0]
+          | "LoadStackPtr"   -> Load_stack_ptr (nth toks 1) (* (int_of_string (nth toks 2)) *)
+          | "LoadHeapPtr"    -> Load_heap_ptr (int_of_string (nth toks 1))
           | "In"             -> In
           | "New"            -> New
           | "Env"            -> Env (nth toks 1)
-          | "FieldOffset"    -> FieldOffset (nth toks 1)
-          | "CtxOffset"      -> CtxOffset (nth toks 1)
-          | "IndexOffset"    -> IndexOffset 
-          (* | "ApplyAll"       -> ApplyAll (nth toks 1) *)
+          | "FieldOffset"    -> Field_offset (nth toks 1)
+          | "CtxOffset"      -> Ctx_offset (nth toks 1)
+          | "IndexOffset"    -> Index_offset (Int_type.of_string (input_line file))
+          (* | "Apply_all"       -> Apply_all (nth toks 1) *)
           | "Apply"          -> Apply (input_line file)
           | "Dup"            -> Dup 
           | "Len"            -> Len
-          | "InType"         -> InType (nth toks 1)
-          | "Nondet"         -> ApplyNondet 
-          (* | "ConcreteResult" -> ConcreteResult (Int64.of_string (nth toks 1)) *)
+          | "InType"         -> In_type (nth toks 1)
+          | "Nondet"         -> Apply_nondet 
+          (* | "Concrete_result" -> Concrete_result (Int64.of_string (nth toks 1)) *)
           | "Append"         -> Append 
           | "Event"          -> Event (nth toks 1, int_of_string (nth toks 2))
           | "Branch"         -> Branch (Int64.of_string (nth toks 1))
           | "Assume"         -> Assume
           | "Hint"           -> Hint (nth toks 1)
-          | "TypeHint"       -> TypeHint (nth toks 1)
-          | "SetPtrStep"     -> SetPtrStep
+          | "TypeHint"       -> Type_hint (nth toks 1)
+          | "SetPtrStep"     -> Set_ptr_step
           | "Done"           -> Done
-          | "StoreBuf"       -> StoreBuf
-          | "StoreMem"       -> StoreMem
-          | "StoreAll"       -> StoreAll
+          | "StoreBuf"       -> Store_buf
+          | "StoreMem"       -> Store_mem
+          | "StoreAll"       -> Store_all
           | "Out"            -> Out
           | "Clear"          -> Clear
-          | "CopyCtx"        -> CopyCtx
+          | "CopyCtx"        -> Copy_ctx
           | "Call"           -> Call (nth toks 1, int_of_string (nth toks 2))
           | "Return"         -> Return
                                 (* Using failwith as this will be caught outside and fail invoked then *)
@@ -1029,43 +1049,43 @@ let executeFile : in_channel -> iml = fun file ->
     begin match cmd with 
       | Call _ | Return -> ()
       | Apply s -> debug "Apply %s" s
-      | LoadStr s -> debug "LoadStr %s" s
+      | Load_str s -> debug "Load_str %s" s
       | _ -> debug "%s" line
     end;
     debug "stack depth = %s" (string_of_int (Stack.length stack));
-    debug "instruction %d" !doneInstr;
+    debug "instruction %d" !done_instr;
     execute cmd;
     (* if (line <> "Indent") && (line <> "Dedent") then *)
-    doneInstr := !doneInstr + 1;
+    done_instr := !done_instr + 1;
     execute' ()
   in
   
-  makeAssumptions ();
-  try with_debug ~depth:3 execute' () with End_of_file -> ();
+  make_assumptions ();
+  try with_debug "execute" execute' () with End_of_file -> ();
   
   if Stack.length stack <> 1 then
     fail "Expecting a single element on stack (return of main)";
     
   (* return (); *)
-  let iml = !iml in (* List.map deepSimplify  *)
-  resetState ();
+  let iml = !iml in (* List.map deep_simplify  *)
+  reset_state ();
   iml
   
 (*************************************************)
 (** {1 Marshalling} *)
 (*************************************************)
 
-let rawOut: out_channel -> iml -> iml -> unit = fun c client server ->
+let raw_out: out_channel -> iml -> iml -> unit = fun c client server ->
   output_value c client;
   output_value c server;
   E.serialize_state c;
-  output_value c !curPtrId
+  output_value c !cur_ptr_id
   
-let rawIn: in_channel -> iml * iml = fun c ->
+let raw_in: in_channel -> iml * iml = fun c ->
   let client = input_value c in
   let server = input_value c in
   E.deserialize_state c;
-  curPtrId := input_value c;
+  cur_ptr_id := input_value c;
   Var.unfresh (vars client);
   Var.unfresh (vars server);
   (client, server)

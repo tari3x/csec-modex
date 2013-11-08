@@ -14,41 +14,57 @@ open Scanf
 (*************************************************)
 
 module Ptr = Int64
-module PtrMap = CustomMap (struct include Ptr let toString = to_string end)
-module IntMap = CustomMap (struct type t = int let compare = Pervasives.compare let toString = string_of_int end) 
-module StrMap = CustomMap (struct include String let toString s = s end)
+module Ptr_map = Custom_map (struct include Ptr let to_string = to_string end)
+module Int_map = Custom_map (struct type t = int let compare = Pervasives.compare let to_string = string_of_int end) 
+module Str_map = Custom_map (struct include String let to_string s = s end)
 
 module Type = struct
 
   module T = struct
   
-    module IntType = struct
+    module Int_type = struct
       module Signedness = struct
-        type t = Signed | Unsigned
+        type t = [ `Signed | `Unsigned ]
         
-        let toString = function
-          | Signed -> "s"
-          | Unsigned -> "u"
+        let to_string = function
+          | `Signed -> "s"
+          | `Unsigned -> "u"
       end
-      type signedness = Signedness.t = Signed | Unsigned 
-      type width = int
+      type signedness = Signedness.t  
     
-      type t = signedness * width
+      type t = signedness * int
 
-      let toString (sd, w) = 
+      let to_string (sd, w) = 
         match sd with 
-        | Signed -> sprintf "[s,%d]" w
-        | Unsigned -> sprintf "[u,%d]" w
+        | `Signed -> sprintf "[s,%d]" w
+        | `Unsigned -> sprintf "[u,%d]" w
 
-      let ofString s = 
+      let of_string s = 
         let s = trim s in
         let toks = Str.split (Str.regexp "[][,]") s in
         match toks with
-        | ["u"; w] ->  (Unsigned, int_of_string w)
-        | ["s"; w] ->  (Signed,   int_of_string w)
-        | _ -> fail "IntType.ofString: %s" s
+        | ["u"; w] ->  (`Unsigned, int_of_string w)
+        | ["s"; w] ->  (`Signed,   int_of_string w)
+        | _ -> fail "Int_type.of_string: %s" s
           
-      let isValid (_, w) = w <> 0
+      let is_valid (_, w) = w <> 0
+
+      let () = Cil.initCIL ()
+                  
+      let int =
+        match Cil.intType with  
+        | Cil.TInt (ikind, _) -> (`Signed, Cil.bytesSizeOfInt ikind)
+        | _ -> assert false
+
+      let size_t =
+        (* TODO: check that this is the right type *)
+        match !Cil.typeOfSizeOf with
+        | Cil.TInt (ikind, _) -> (`Unsigned, Cil.bytesSizeOfInt ikind)
+        | _ -> assert false
+                              
+      let signedness (s, w) = s
+      let width (s, w) = w
+      let create s w = (s, w)
     end
          
     (*
@@ -63,15 +79,15 @@ module Type = struct
       | Bool
       | Int
       | Ptr
-      | BsInt of IntType.t
+      | Bs_int of Int_type.t
       | Named of string * t option (** A named type with an optional type definition.
                                        Named (_, None) may not contain bottom. *)
   end
   
   include T
         
-  let ofString s =
-    try BsInt (IntType.ofString s) with
+  let of_string s =
+    try Bs_int (Int_type.of_string s) with
     _ ->
     match List.map String.trim (Str.bounded_split (Str.regexp "_") s 3) with
       | ["bitstringbot"]     -> Bitstringbot
@@ -86,7 +102,7 @@ module Type = struct
       | ["ptr"]              -> Ptr
       | _                    -> Named (s, None)
   
-  let rec toString = function
+  let rec to_string = function
     | Bitstringbot         -> "bitstringbot"
     | Bitstring            -> "bitstring"
     | Fixed n              -> "fixed_" ^ string_of_int n 
@@ -94,16 +110,16 @@ module Type = struct
     | Bool                 -> "bool"
     | Int                  -> "int"
     | Ptr                  -> "ptr"
-    | BsInt itype          -> IntType.toString itype 
-    | Named (name, Some t) -> toString t ^ "_" ^ name
+    | Bs_int itype          -> Int_type.to_string itype 
+    | Named (name, Some t) -> to_string t ^ "_" ^ name
     | Named (name, None)   -> name
 
-  let rec stripName = function
-    | Named (_, Some t) -> stripName t
+  let rec strip_name = function
+    | Named (_, Some t) -> strip_name t
     | t -> t
       
   let subtype t t' =
-    match stripName t, stripName t' with
+    match strip_name t, strip_name t' with
       | Bool, _ | _, Bool 
       | Int, _ | _, Int -> t = t'
       | _, Bitstringbot -> true
@@ -115,38 +131,43 @@ module Type = struct
       | Fixed i, Fixed i'     -> i = i'
       | t, t' -> t = t'
   
-  let meet t t' =
+  let intersection t t' =
     if subtype t t' then t
     else if subtype t' t then t'
-    else failwith (Printf.sprintf "cannot compute intersection of types " ^ toString t ^ " and " ^ toString t')
+    else fail "cannot compute intersection of types %s and %s" (to_string t) (to_string t')
+
+  let union t t' =
+    if subtype t t' then t'
+    else if subtype t' t then t
+    else fail "cannot compute union of types %s and %s" (to_string t) (to_string t')
 
   (* Could return true for more types, but this is enough for now. *)
-  let hasFixedLength t =
-    match stripName t with
+  let has_fixed_length t =
+    match strip_name t with
     | Fixed _ -> true
     | _ -> false
 end
 
 type imltype = Type.t
 
-module FunType = struct
+module Fun_type = struct
   type t = Type.t list * Type.t
 
-  let toString (ts, t) = 
-    let ts = List.map Type.toString ts in
-    let t = Type.toString t in
+  let to_string (ts, t) = 
+    let ts = List.map Type.to_string ts in
+    let t = Type.to_string t in
     sprintf "%s -> %s" (String.concat " * " ts) t
   
-  let ofString s = 
+  let of_string s = 
     if not (Str.string_match (Str.regexp "\\(.*\\) -> \\(.*\\)") s 0) 
-    then fail "OpType.ofString: %s" s
+    then fail "Op_type.of_string: %s" s
     else try
       (* Call matched_group before calling split. *) 
       let result_type = Str.matched_group 2 s in
       let arg_types = Str.matched_group 1 s |> Str.split (Str.regexp "\\*") in
-      (List.map Type.ofString arg_types, Type.ofString result_type)
+      (List.map Type.of_string arg_types, Type.of_string result_type)
     with 
-      e -> fail "OpType.ofString: %s: %s" s (Printexc.to_string e)
+      e -> fail "Op_type.of_string: %s: %s" s (Printexc.to_string e)
 
 end
 
@@ -162,12 +183,12 @@ module Sym = struct
         | BNot                                (** Bitwise complement (~) *)
         | LNot                                (** Logical Not (!) *)
       
-        | PlusA                               (** arithmetic + *)
-        | PlusPI                              (** pointer + integer *)
+        | Plus_a                               (** arithmetic + *)
+        | Plus_pI                              (** pointer + integer *)
           
-        | MinusA                              (** arithmetic - *)
-        | MinusPI                             (** pointer - integer *)
-        | MinusPP                             (** pointer - pointer *)
+        | Minus_a                              (** arithmetic - *)
+        | Minus_pI                             (** pointer - integer *)
+        | Minus_pP                             (** pointer - pointer *)
         | Mult                                (** * *)
         | Div                                 (** / *)
         | Mod                                 (** % *)
@@ -188,25 +209,25 @@ module Sym = struct
                                                * expressions this one does not 
                                                * always evaluate both operands. If 
                                                * you want to use these, you must 
-                                               * set {!Cil.useLogicalOperators}. *)
+                                               * set {!Cil.use_logical_operators}. *)
         | LOr                                 (** logical or. Unlike other 
                                                * expressions this one does not 
                                                * always evaluate both operands.  If 
                                                * you want to use these, you must 
-                                               * set {!Cil.useLogicalOperators}. *)
+                                               * set {!Cil.use_logical_operators}. *)
                                               
-        | CastToInt
-        | CastToPtr
-        | CastToOther
+        | Cast_to_int
+        | Cast_to_ptr
+        | Cast_to_other
     end
 
     open T
     type t = T.op
     
-    let toString = function
+    let to_string = function
       | Neg -> "neg"  | BNot -> "~"  |  LNot -> "!"
   
-      | PlusA   -> "+"   | MinusA  ->  "-"   | Mult  -> "*"    | Div   -> "/"
+      | Plus_a   -> "+"   | Minus_a  ->  "-"   | Mult  -> "*"    | Div   -> "/"
       | Mod     -> "%"   | BAnd    ->  "&"   | BOr   -> "BOR"  | BXor  -> "XOR"
       | Shiftlt -> "<<"  | Shiftrt ->  ">>"  | LAnd  -> "&&"   | LOr   -> "LOR"
     
@@ -217,17 +238,17 @@ module Sym = struct
       | Lt -> "<"   
       | Ge ->  ">="
         
-      | PlusPI  -> "PlusPI"
-      | MinusPI -> "MinusPI"
-      | MinusPP -> "MinusPP"
+      | Plus_pI  -> "PlusPI"
+      | Minus_pI -> "MinusPI"
+      | Minus_pP -> "MinusPP"
         
-      | CastToInt -> "CastToInt"
-      | CastToPtr -> "CastToPtr"
-      | CastToOther -> "CastToOther"
+      | Cast_to_int -> "CastToInt"
+      | Cast_to_ptr -> "CastToPtr"
+      | Cast_to_other -> "CastToOther"
         
-    let ofString = function
-      | "+" -> PlusA
-      | "-" -> MinusA
+    let of_string = function
+      | "+" -> Plus_a
+      | "-" -> Minus_a
       | "*" -> Mult
       | "/" -> Div
       | "%" -> Mod
@@ -241,15 +262,15 @@ module Sym = struct
       | "<" -> Lt 
       | ">=" -> Ge
         
-      | "PlusPI" -> PlusPI 
-      | "MinusPP" -> MinusPP
-      | "CastToInt" -> CastToInt
-      | "CastToPtr" -> CastToPtr
-      | "CastToOther" -> CastToOther
+      | "PlusPI" -> Plus_pI 
+      | "MinusPP" -> Minus_pP
+      | "CastToInt" -> Cast_to_int
+      | "CastToPtr" -> Cast_to_ptr
+      | "CastToOther" -> Cast_to_other
   
-      | s -> fail "Op.toString: %s" s
+      | s -> fail "Op.to_string: %s" s
         
-     let isBinaryComparison = function
+     let is_binary_comparison = function
       | Eq | Ne | Ge | Gt | Le | Lt -> true
       | _ -> false
   end
@@ -264,25 +285,25 @@ module Sym = struct
     type invocation_id = int
   
     type sym =
-      | Op of op * FunType.t
+      | Op of op * Fun_type.t
             
-      | BsEq                               (** Bitstring comparison *)
+      | Bs_eq                               (** Bitstring comparison *)
       | Cmp                                (** Bitstring comparison returning bitstring result.
-                                               BsEq(x, y) = Truth(Cmp(x, y)) *)
+                                               Bs_eq(x, y) = Truth(Cmp(x, y)) *)
         
         
-      | MinusInt                           (** Operators without overflow. Think of them as widening their result
+      | Minus_int                           (** Operators without overflow. Think of them as widening their result
                                                if necessary *)
-      | PlusInt of arity
-      | MultInt of arity
-      | NegInt
+      | Plus_int of arity
+      | Mult_int of arity
+      | Neg_int
 
-      | LtInt                               (** <  (arithmetic comparison) *)
-      | GtInt                               (** >  (arithmetic comparison) *)  
-      | LeInt                               (** <= (arithmetic comparison) *)
-      | GeInt                               (** >  (arithmetic comparison) *)
-      | EqInt                               (** == (arithmetic comparison) *)
-      | NeInt                               (** != (arithmetic comparison) *)            
+      | Lt_int                               (** <  (arithmetic comparison) *)
+      | Gt_int                               (** >  (arithmetic comparison) *)  
+      | Le_int                               (** <= (arithmetic comparison) *)
+      | Ge_int                               (** >  (arithmetic comparison) *)
+      | Eq_int                               (** == (arithmetic comparison) *)
+      | Ne_int                               (** != (arithmetic comparison) *)            
 
       | Implies
       | And of arity
@@ -290,7 +311,7 @@ module Sym = struct
       | Not
       | True
         
-      | PtrLen
+      | Ptr_len
 
       | Cast of Type.t * Type.t
         
@@ -302,19 +323,19 @@ module Sym = struct
         (**
           Same as Ztp, but returns the argument unchanged instead of bottom.
         *)
-      | ZtpSafe
+      | Ztp_safe
         
       | Replicate
-      | FieldOffset
+      | Field_offset
       | Opaque                             (** Used only in Solver *)
       | Defined
-      | InType of Type.t                   (** Defined is the same as (InType Bitstring) *)
+      | In_type of Type.t                   (** Defined is the same as (In_type Bitstring) *)
         
       | Truth
         
         (* The yices versions of len and val, see thesis. *)        
-      | LenY
-      | ValY of IntType.t
+      | Len_y
+      | Val_y of Int_type.t
         
       | Const of name
         
@@ -324,80 +345,83 @@ module Sym = struct
         
       | Fun of name * arity
         (* FIXME: make non-determinism explicit by random sampling, or check that there are no such funs in final output *)
-      | NondetFun of name * invocation_id * arity
+      | Nondet_fun of name * invocation_id * arity
   end
   
   open T
   type t = T.sym
 
-  let isArithmetic = function
-    | Op (PlusA, _) | Op (MinusA, _) | Op (Mult, _) | Op (Div, _) | PlusInt _ | MinusInt | MultInt _ -> true
+  let is_arithmetic = function
+    | Op (Plus_a, _) | Op (Minus_a, _) | Op (Mult, _) | Op (Div, _) | Plus_int _ | Minus_int | Mult_int _ -> true
     | _ -> false
       
-  let isBinaryArithmetic = function 
-    | Op (PlusA, _) | Op (MinusA, _) | Op (Mult, _) | Op (Div, _) -> true
+  let is_binary_arithmetic = function 
+    | Op (Plus_a, _) | Op (Minus_a, _) | Op (Mult, _) | Op (Div, _) -> true
     | _ -> false
 
-  let isBinaryComparison = function
-    | Op (op, _) -> Op.isBinaryComparison op
+  let is_binary_comparison = function
+    | Op (op, _) -> Op.is_binary_comparison op
     | _    -> false 
 
-  let isIntegerComparison = function
-    | LtInt                               
-    | GtInt                                 
-    | LeInt                               
-    | GeInt                               
-    | EqInt                               
-    | NeInt -> true
+  let is_integer_comparison = function
+    | Lt_int                               
+    | Gt_int                                 
+    | Le_int                               
+    | Ge_int                               
+    | Eq_int                               
+    | Ne_int -> true
     | _ -> false            
 
-  let isLogical = function
+  let is_logical = function
     | Not | And _ | Or _ | Implies -> true
     | _ -> false 
   
-  let isUnaryOp = function
+  let is_unary_op = function
       | Neg
       | BNot
       | LNot -> true
       | _ -> false 
       
-  let isInfix = function
-      | Op (op, _) -> not (isUnaryOp op)
+  let is_infix = function
+      | Op (op, _) -> not (is_unary_op op)
     
-      | PlusInt _
-      | MinusInt 
-      | MultInt _
+      | Plus_int _
+      | Minus_int 
+      | Mult_int _
 
-      | LtInt                               
-      | GtInt                                
-      | LeInt                              
-      | GeInt                              
-      | EqInt                              
-      | NeInt                                            
+      | Lt_int                               
+      | Gt_int                                
+      | Le_int                              
+      | Ge_int                              
+      | Eq_int                              
+      | Ne_int                                            
                         
       | Implies
       | And _ 
       | Or _
             
-      | BsEq -> true
+      | Bs_eq -> true
         
       | _ -> false
 
 
-  let toString = function
-    | Op (op, t) -> sprintf "(%s : %s)" (Op.toString op) (FunType.toString t)
+  let to_string_hum ?(show_types = true) = function
+    | Op (op, t) ->
+      if show_types 
+      then sprintf "(%s : %s)" (Op.to_string op) (Fun_type.to_string t)
+      else sprintf "%s" (Op.to_string op)
       
-    | EqInt -> "="
-    | NeInt -> "<>"
-    | GeInt -> ">="
-    | GtInt -> ">"
-    | LeInt -> "<="
-    | LtInt -> "<"
+    | Eq_int -> "="
+    | Ne_int -> "<>"
+    | Ge_int -> ">="
+    | Gt_int -> ">"
+    | Le_int -> "<="
+    | Lt_int -> "<"
 
-    | PlusInt _ -> "+"
-    | MinusInt -> "-"
-    | MultInt _ -> "*"
-    | NegInt -> "-"
+    | Plus_int _ -> "+"
+    | Minus_int -> "-"
+    | Mult_int _ -> "*"
+    | Neg_int -> "-"
       
     | Implies -> "=>"
     | And _ -> "/\\"
@@ -405,87 +429,87 @@ module Sym = struct
     | Not -> "¬"
     | True -> "True"
 
-    | BsEq -> "="
-    | PtrLen -> "ptrLen"
+    | Bs_eq -> "="
+    | Ptr_len -> "ptrLen"
       
-    | Cast (t, t') -> "cast_" ^ Type.toString t ^ "_" ^ Type.toString t'
+    | Cast (t, t') -> "cast_" ^ Type.to_string t ^ "_" ^ Type.to_string t'
       
     | Ztp -> "ztp"
-    | ZtpSafe -> "ztpSafe"
+    | Ztp_safe -> "ztpSafe"
 
     | Truth -> "truth"
       
-    | LenY -> "lenY"
-    | ValY t -> sprintf "valY%s" (IntType.toString t)
+    | Len_y -> "len_y"
+    | Val_y t -> sprintf "val_y%s" (Int_type.to_string t)
       
     | Cmp -> "cmp"
                   
     | Replicate -> "replicate"
-    | FieldOffset -> "field_offset"
+    | Field_offset -> "field_offset"
     | Opaque -> "opaque"
     | Defined -> "defined"
-    | InType t -> sprintf "InType[%s]" (Type.toString t)
+    | In_type t -> sprintf "InType[%s]" (Type.to_string t)
     | Undef i -> Printf.sprintf "undef[%d]" i
     | Const s -> s
     | Fun (s, _) -> sprintf "%s" s
-    | NondetFun (s, id, _) -> Printf.sprintf "%s[%d]" s id
+    | Nondet_fun (s, id, _) -> Printf.sprintf "%s[%d]" s id
 
+  let to_string t = to_string_hum t
 
-  let cvDeclaration f (ts, t) = 
-    toString f ^ "(" ^ String.concat ", " (List.map Type.toString ts) ^ "): " ^ Type.toString t
+  let cv_declaration f (ts, t) = 
+    to_string f ^ "(" ^ String.concat ", " (List.map Type.to_string ts) ^ "): " ^ Type.to_string t
 
-
-  let ofString s =
+  let of_string s =
     if Str.string_match (Str.regexp "(\\(.+\\) *: \\(.+\\))") s 0 
     then try 
       let op = Str.matched_group 1 s in
       let t = Str.matched_group 2 s in
-      Op (Op.ofString op, FunType.ofString t)
-      with e -> fail "Sym.ofString: failed op: %s: %s" s (Printexc.to_string e)
+      Op (Op.of_string op, Fun_type.of_string t)
+      with e -> fail "Sym.of_string: failed op: %s: %s" s (Printexc.to_string e)
     else if not (Str.string_match (Str.regexp "\\(.+\\)/\\([0-9]+\\)") s 0)
-    then fail "Sym.ofString: %s" s
+    then fail "Sym.of_string: %s" s
     else try
       let sym = Str.matched_group 1 s in
       let nargs = int_of_string (Str.matched_group 2 s) in
       match sym with
-        | "=" -> BsEq
-        | "EqInt" -> EqInt
+        | "=" -> Bs_eq
+        | "EqInt" -> Eq_int
 
-        | "ptrLen" -> PtrLen
+        | "ptrLen" -> Ptr_len
           
         | "ztp" -> Ztp
-        | "ztpSafe" -> ZtpSafe
+        | "ztpSafe" -> Ztp_safe
           
         | "cmp" -> Cmp
   
         | s -> Fun (sym, nargs)
-    with e -> fail "Sym.ofString: failed fun: %s: %s" s (Printexc.to_string e)
+    with e -> fail "Sym.of_string: failed fun: %s: %s" s (Printexc.to_string e)
    
   let itype_exn = function
     | Op (_, (_, itype)) -> itype
-    | sym -> fail "itype of symbol not defined: %s" (toString sym)
+    | sym -> fail "itype of symbol not defined: %s" (to_string sym)
 
-  let mayFail sym = 
+  let may_fail sym = 
     match sym with
     | Op _
     | Ztp
     | Fun _ 
-    | ValY _
-    | NondetFun _ -> true
+    | Val_y _
+    | Nondet_fun _ -> true
       
-    | FieldOffset -> fail "Sym.mayFail: not so sure about %s" (toString sym)
+    | Field_offset -> fail "Sym.may_fail: not so sure about %s" (to_string sym)
 
-    | EqInt
-    | NeInt
-    | GeInt
-    | GtInt   
-    | LeInt
-    | LtInt  
+    | Eq_int
+    | Ne_int
+    | Ge_int
+    | Gt_int   
+    | Le_int
+    | Lt_int  
                   
-    | PlusInt _
-    | MinusInt
-    | MultInt _
-    | NegInt
+    | Plus_int _
+    | Minus_int
+    | Mult_int _
+    | Neg_int
       
     | Implies 
     | And _
@@ -493,29 +517,29 @@ module Sym = struct
     | Not
     | True
 
-    | BsEq
-    | PtrLen
+    | Bs_eq
+    | Ptr_len
             
     | Cast _
       
-    | ZtpSafe 
+    | Ztp_safe 
       
     | Truth
     | Cmp
 
-    | LenY
+    | Len_y
                   
     | Replicate 
     | Defined
-    | InType _
+    | In_type _
     | Undef _
     | Opaque
     | Const _ -> false      
 
-  let neverFails sym = 
+  let never_fails sym = 
     match sym with
-    | BsEq
-    | InType _
+    | Bs_eq
+    | In_type _
     | True
     | Implies 
     | And _
@@ -526,33 +550,33 @@ module Sym = struct
     | Op _
     | Ztp
     | Fun _ 
-    | NondetFun _ 
+    | Nondet_fun _ 
       
-    | FieldOffset 
+    | Field_offset 
 
-    | EqInt
-    | NeInt
-    | GeInt
-    | GtInt   
-    | LeInt
-    | LtInt  
+    | Eq_int
+    | Ne_int
+    | Ge_int
+    | Gt_int   
+    | Le_int
+    | Lt_int  
                   
-    | PlusInt _
-    | MinusInt
-    | MultInt _
-    | NegInt
+    | Plus_int _
+    | Minus_int
+    | Mult_int _
+    | Neg_int
       
-    | PtrLen
+    | Ptr_len
             
     | Cast _
       
-    | ZtpSafe 
+    | Ztp_safe 
 
     | Truth
     | Cmp
 
-    | LenY
-    | ValY _
+    | Len_y
+    | Val_y _
                                                       
     | Replicate 
     | Undef _
@@ -561,39 +585,39 @@ module Sym = struct
 
 
   (** The return type ignoring bottoms *)
-  let resultType = function
-    | PlusInt _
-    | MinusInt
-    | MultInt _
-    | NegInt
-    | LenY
-    | ValY _
-    | PtrLen -> Int
+  let result_type = function
+    | Plus_int _
+    | Minus_int
+    | Mult_int _
+    | Neg_int
+    | Len_y
+    | Val_y _
+    | Ptr_len -> Int
 
     | Truth
     | Not 
     | And _
     | Or _
     | True
-    | EqInt
-    | NeInt
-    | GeInt
-    | GtInt   
-    | LeInt
-    | LtInt  
+    | Eq_int
+    | Ne_int
+    | Ge_int
+    | Gt_int   
+    | Le_int
+    | Lt_int  
     | Implies   
-    | BsEq 
-    | InType _
+    | Bs_eq 
+    | In_type _
     | Defined -> Bool
 
     | Ztp
     | Opaque 
     | Fun _ 
-    | NondetFun _ 
+    | Nondet_fun _ 
       
-    | FieldOffset 
+    | Field_offset 
 
-    | ZtpSafe 
+    | Ztp_safe 
       
     | Cmp
       
@@ -606,23 +630,23 @@ module Sym = struct
     | Op (_, (_, t)) -> t
 
   (** The expected argument type ignoring bottoms *)
-  let argumentTypes = function
-    | EqInt
-    | NeInt
-    | GeInt
-    | GtInt   
-    | LeInt
-    | LtInt  
+  let argument_types = function
+    | Eq_int
+    | Ne_int
+    | Ge_int
+    | Gt_int   
+    | Le_int
+    | Lt_int  
     
-    | MinusInt -> [Int; Int]
+    | Minus_int -> [Int; Int]
       
-    | PlusInt n
-    | MultInt n -> List2.replicate n Int
+    | Plus_int n
+    | Mult_int n -> List.replicate n Int
       
-    | NegInt -> [Int]
+    | Neg_int -> [Int]
 
     | And n 
-    | Or n -> List2.replicate n Bool
+    | Or n -> List.replicate n Bool
 
     | Not -> [Bool] 
     | Implies -> [Bool; Bool]
@@ -630,39 +654,39 @@ module Sym = struct
     | True
     | Const _ 
     | Undef _ 
-    | PtrLen -> []
+    | Ptr_len -> []
 
     | Truth
     | Ztp
-    | ZtpSafe 
-    | FieldOffset 
+    | Ztp_safe 
+    | Field_offset 
     | Opaque
-    | InType _
-    | LenY 
+    | In_type _
+    | Len_y 
     | Defined -> [Bitstring] 
 
     | Cmp
-    | BsEq -> [Bitstring; Bitstring]
+    | Bs_eq -> [Bitstring; Bitstring]
 
     | Replicate -> [Bitstring; Int] 
 
     | Cast (t, _) -> [t]
     
-    | ValY t -> [BsInt t]
+    | Val_y t -> [Bs_int t]
 
-    | Fun (_, n) | NondetFun (_, _, n) -> List2.replicate n Bitstring
+    | Fun (_, n) | Nondet_fun (_, _, n) -> List.replicate n Bitstring
                   
     | Op (_, (ts, _)) -> ts
 
-  let arity t = List.length (argumentTypes t)
+  let arity t = List.length (argument_types t)
 
   module Key = struct
     type t = sym
     let compare = Pervasives.compare
-    let toString = toString
+    let to_string = to_string
   end
   
-  module Map = CustomMap(Key)
+  module Map = Custom_map(Key)
 end
 
 type intval = int64
@@ -682,18 +706,18 @@ module Var = struct
   
   let id = ref 0
 
-  let usedNames = ref []
+  let used_names = ref []
 
   let unfresh names = 
-    usedNames := !usedNames @ names
+    used_names := !used_names @ names
 
   let rec unused stem i = 
     let name = stem ^ (string_of_int i) in
-    if List.mem name !usedNames then
+    if List.mem name !used_names then
       unused stem (i + 1)
     else 
     begin
-      usedNames := name :: !usedNames; 
+      used_names := name :: !used_names; 
       i, name
     end
 
@@ -701,17 +725,17 @@ module Var = struct
     let name = if name = "" then "var" else name in
     unused name 1 |> snd
     
-  let freshId name = 
+  let fresh_id name = 
     let name = if name = "" then "var" else name in
     unused name 1 |> fst
     
   module Key = struct
     type t = var
     let compare = Pervasives.compare   
-    let toString t = t
+    let to_string t = t
   end
   
-  module Map = CustomMap(Key)
+  module Map = Custom_map(Key)
 end
 
 
@@ -744,7 +768,7 @@ module Exp = struct
          *)    
     
     
-    and offsetVal = 
+    and offset_val = 
       | Field of string
       | Attr of string
       | Index of int (* Not intval, cause ocaml is really clumsy with that - you can't even subtract it easily *)
@@ -752,13 +776,13 @@ module Exp = struct
         (** Flat offsets always measured in bytes *)
     
     (** Offset value together with offset step *)
-    and offset = offsetVal * len
+    and offset = offset_val * len
     
     and pos = offset list
     
     (* FIXME: replace information lens with width option. Possibly use named width or some other
        mechanism to make sure that output is the same on all architectures. The best thing
-       is to implement getLenValue by evaluating the length expression in the yices model (with cache).
+       is to implement get_len_value by evaluating the length expression in the yices model (with cache).
        But this does rely a bit too much on global state - think again!
       
        Lens and Ints should have a width field, Vars and Syms should be covered by a width
@@ -778,10 +802,14 @@ module Exp = struct
     *) 
     and exp = 
       | Int of intval 
-    
+
+      | Char of char
+        (** An integer with given ascii value. *)
+        
         (* FIXME: have a separate case for literal strings *)
       | String of bitstring
         (** A concrete bitstring in hex representation: each byte corresponds to two characters. *)
+    
     
       | Var of var
     
@@ -799,16 +827,16 @@ module Exp = struct
         
       | Len of exp
         
-      | BS of exp * IntType.t
+      | BS of exp * Int_type.t
         
-      | Val of exp * IntType.t
+      | Val of exp * Int_type.t
     
-      | Struct of (exp StrMap.t) * (exp StrMap.t) * len * exp
+      | Struct of (exp Str_map.t) * (exp Str_map.t) * len * exp
         (** The first component are the real fields, the second are the crypto attributes.
             The last component is the value of underlying memory at the time the struct has been created.
             This will get removed as soon as I transition to static implementation. *)
     
-      | Array of (exp IntMap.t) * len * len
+      | Array of (exp Int_map.t) * len * len
         (** Contains total length and element length.
         
             A good alternative is to use native array, but it only makes sense if I know the number of elements in advance.
@@ -835,7 +863,7 @@ module Exp = struct
       | Annotation of annotation * exp
         
     and annotation = 
-      | TypeHint of imltype
+      | Type_hint of imltype
       | Name of string 
   end
 
@@ -847,27 +875,31 @@ module Exp = struct
   (*************************************************)
   (** {1 Show} *)
   (*************************************************)
-  
+
+  let show_types = ref false
+      
   (**
     Does an expression need a bracket in context?
     
     In expressions "|" binds less tightly than any infix operator.
   *)
-  let needsBracket : exp -> bool = function
+  let needs_bracket : exp -> bool = function
     | Concat _ -> true
-    | Sym (s, _) when Sym.isInfix s -> true
+    | Sym (s, _) when Sym.is_infix s -> true
     | _ -> false
   
-  let isFreeLen : len -> bool = function
+  let is_free_len : len -> bool = function
     | Unknown -> true
     | _ -> false
   
-  let baseToString : base -> string = function
+  let base_to_string : base -> string = function
     | Stack name    -> "stack " ^ name (* ^ "[" ^ string_of_int id ^ "]" *)
     | Heap (id, _)  -> "heap " ^ string_of_int id
     | Abs i         -> "abs " ^ Int64.to_string i
   
-  let rec showIExpBody : exp -> string = function 
+  let rec show_iExp_body t = 
+    let show_types = !show_types in
+    match t with 
     | Int ival -> Int64.to_string ival 
     | String s -> 
       begin try
@@ -878,95 +910,107 @@ module Exp = struct
           "\"" ^ String.concat "" rep ^ "\""
       with Scanf.Scan_failure _ -> "\"" ^ s ^ "\""
       end
+      
+    | Char c -> sprintf "'%s'" (Char.escaped c)
     
     | Sym (Const s, []) -> s
-    | Sym (s, es) when Sym.isInfix s && List.length es > 1 -> 
-        let bodies = List.map (showIExp ~bracket: true) es in
-        if bodies = [] then Sym.toString s ^ "()" 
-                       else String.concat (" " ^ Sym.toString s ^ " ") bodies
+    | Sym (s, es) when Sym.is_infix s && List.length es > 1 -> 
+        let bodies = List.map (show_iExp ~bracket:true) es in
+        if bodies = [] then Sym.to_string_hum ~show_types s ^ "()" 
+                       else String.concat (" " ^ Sym.to_string_hum ~show_types s ^ " ") bodies
     | Sym (s, es) -> 
-        let bodies = List.map (showIExp) es in
-        Sym.toString s ^ "(" ^ String.concat ", " bodies ^ ")"
+        let bodies = List.map show_iExp es in
+        Sym.to_string_hum ~show_types s ^ "(" ^ String.concat ", " bodies ^ ")"
         
     | Range (e, f, l) ->
-        let body = showIExp ~bracket: true e in
-        let f_body = showLen f in
-        let l_body = showLen l in
+        let body = show_iExp ~bracket:true e in
+        let f_body = show_len f in
+        let l_body = show_len l in
         body ^ "{" ^ f_body ^ ", " ^ l_body ^ "}"
     | Concat [] -> "<empty concat>"
     | Concat es -> 
-        let bodies = List.map showIExp es in
+        let bodies = List.map show_iExp es in
         let body = String.concat "|" bodies
         in body
     | Ptr (b, pos) -> 
-        let pos_bodies = List.map (offsetToString) pos in
-        (* let (step_defs, step_body) = showLen step in *)
-        let body = "<<" ^ baseToString b ^ "; " ^ String.concat ", " pos_bodies ^ ">>"
+        let pos_bodies = List.map (offset_to_string) pos in
+        (* let (step_defs, step_body) = show_len step in *)
+        let body = "<<" ^ base_to_string b ^ "; " ^ String.concat ", " pos_bodies ^ ">>"
         in body
     | Struct (fields, _, _, _) ->
-        let showField name e = 
-          let field_body = showIExp e in
+        let show_field name e = 
+          let field_body = show_iExp e in
           name ^ ": " ^ field_body
         in
-        let field_bodies = fold2list StrMap.fold showField fields in
+        let field_bodies = fold2list Str_map.fold show_field fields in
         "<{" ^ String.concat "; " field_bodies ^ "}>"
     | Array (cells, len, _) -> 
-        let showCell (i, e) = 
-          let cell_body = showIExp e in
+        let show_cell (i, e) = 
+          let cell_body = show_iExp e in
           string_of_int i ^ " ~> " ^ cell_body
         in
         begin
-        match fold2list IntMap.fold (fun i e -> (i, e)) cells with
-          | [0, e] -> showIExp e
+        match fold2list Int_map.fold (fun i e -> (i, e)) cells with
+          | [0, e] -> show_iExp e
           | cells -> 
-            let cell_bodies = List.map showCell cells in
+            let cell_bodies = List.map show_cell cells in
             "[|" ^ String.concat "; " cell_bodies ^ "|]"
              (* ^ "<" ^ E.dump len ^ ">" *)
         end
             
     | Var v -> v
       
-    | Len e -> "len(" ^ showIExpBody e ^ ")"
+    | Len e -> "len(" ^ show_iExp_body e ^ ")"
   
-    | BS (e, itype) -> sprintf "(%s)^%s" (showIExp e) (IntType.toString itype)
+    | BS (e, itype) -> sprintf "(%s)^%s" (show_iExp e) (Int_type.to_string itype)
       
-    | Val (e, t) -> sprintf "(%s)_%s" (showIExp e) (IntType.toString t)
+    | Val (e, t) -> sprintf "(%s)_%s" (show_iExp e) (Int_type.to_string t)
   
-    | Annotation (TypeHint t, e) -> showIExpBody e  ^ ":" ^ Type.toString t 
-    (* | Annotation (Width w, e) -> sprintf "%s<%d>" (showIExpBody e) w *)  
-    | Annotation (Name name, e) -> sprintf "%s (* named %s *)" (showIExpBody e) name
+    | Annotation (Type_hint t, e) -> show_iExp_body  e  ^ ":" ^ Type.to_string t 
+    (* | Annotation (Width w, e) -> sprintf "%s<%d>" (show_iExp_body e) w *)  
+    | Annotation (Name name, e) -> sprintf "%s (* named %s *)" (show_iExp_body e) name
             
     | Unknown -> "?"
   
-  and showLen : len -> string = function
+  and show_len = function
     | Unknown -> "?"
     | Int (ival) -> Int64.to_string ival
-    | e -> showIExp e
+    | e -> show_iExp e
   
-  and offsetToString : offset -> string = function (os, step) -> 
-    let os_body = showOffsetVal os in
-    let step_body = showIExp step in
+  and offset_to_string : offset -> string = function (os, step) -> 
+    let os_body = show_offset_val os in
+    let step_body = show_iExp step in
     os_body ^ "(" ^ step_body ^ ")"
   
-  and showOffsetVal : offsetVal -> string = function
+  and show_offset_val : offset_val -> string = function
     | Field s -> "field " ^ s
     | Attr s -> "attr " ^ s
     | Index i -> "index " ^ (string_of_int i)
-    | Flat e -> showIExp e
+    | Flat e -> show_iExp e
   
-  and showIExp : ?bracket: bool -> exp -> string = fun ?(bracket = false) e ->
+  and show_iExp ?(bracket = false) e =
     match e with
       | Var s -> s
       | e ->
-            if bracket && (needsBracket e) then "(" ^ showIExpBody e ^ ")"
-            else showIExpBody e
+        if bracket && (needs_bracket e) then "(" ^ show_iExp_body e ^ ")"
+        else show_iExp_body e
   
-  let listToString es = "[" ^ String.concat "; " (List.map (showIExp ~bracket:false) es) ^ "]"
-  let dumpList es = listToString es
+  let list_to_string es =
+    show_types := false; 
+    "[" ^ String.concat "; " (List.map (show_iExp ~bracket:false) es) ^ "]"
     
-  let toString e = showIExp ~bracket:false e  
-  let dump e = toString e
-  
+  let to_string e = 
+    show_types := false;
+    show_iExp ~bracket:false e
+
+  let dump_list es =
+    show_types := true; 
+    "[" ^ String.concat "; " (List.map (show_iExp ~bracket:false) es) ^ "]"
+    
+  let dump e = 
+    show_types := true;
+    show_iExp ~bracket:false e
+      
   (*************************************************)
   (** {1 Traversal} *)
   (*************************************************)
@@ -982,7 +1026,7 @@ module Exp = struct
     | Len e -> [e]
     | BS (e, _) -> [e]
     | Val (e, _) -> [e]
-    | Var _ | Int _ | String _ | Struct _ | Array _ | Ptr _ | Unknown -> []
+    | Var _ | Int _ | String _ | Char _ | Struct _ | Array _ | Ptr _ | Unknown -> []
 
   
   (**
@@ -990,7 +1034,7 @@ module Exp = struct
   *)
   let descend: (t -> t) -> t -> t = fun f e ->
     match e with
-      | Var _ | String _ | Int _ | Unknown -> e
+      | Var _ | String _ | Char _ | Int _ | Unknown -> e
       | Ptr _ -> e
       | Len e -> Len (f e)
       | Val (e, itype) -> Val (f e, itype)
@@ -998,8 +1042,8 @@ module Exp = struct
       | Sym (sym, es) -> Sym (sym, List.map f es) 
       | Range (e, pos, len) -> Range  (f e, f pos, f len)
       | Concat es -> Concat (List.map f es)
-      | Struct (fields, attrs, len, e_old) -> Struct (StrMap.map f fields, StrMap.map f attrs, f len, e_old)
-      | Array (cells, len, step) -> Array (IntMap.map f cells, len, step)
+      | Struct (fields, attrs, len, e_old) -> Struct (Str_map.map f fields, Str_map.map f attrs, f len, e_old)
+      | Array (cells, len, step) -> Array (Int_map.map f cells, len, step)
       | Annotation(a, e) -> Annotation(a, f e)
   
   (*
@@ -1011,11 +1055,11 @@ module Exp = struct
   let rec vars e = 
     match e with
       | Var v -> [v]
-      | e -> concat_map vars (children e) |> nub
+      | e -> List.concat_map ~f:vars (children e) |> List.nub
 
   let rec refcount v = function
     | Var v' when v = v' -> 1
-    | e -> sum_with (refcount v) (children e)       
+    | e -> List.sum_with (refcount v) (children e)       
 
 
   (*************************************************)
@@ -1025,7 +1069,7 @@ module Exp = struct
   module Key = struct
     type t = exp
     let compare = Pervasives.compare
-    let toString = toString
+    let to_string = to_string
   end
 
   module Base =
@@ -1034,8 +1078,8 @@ module Exp = struct
     let compare = Pervasives.compare
   end
 
-  module BaseMap = Map.Make (Base)
-  module Map = CustomMap(Key)
+  module Base_map = Map.Make (Base)
+  module Map = Custom_map(Key)
   module Set = Set.Make (Key)
 
   (*************************************************)
@@ -1043,41 +1087,44 @@ module Exp = struct
   (*************************************************)
 
   let ids = ref Map.empty
-  let lastId = ref 0
+  let last_id = ref 0
 
   let id e =
     match Map.maybe_find e !ids with
       | Some id -> id
       | None -> 
-        let id = increment lastId in
+        let id = increment last_id in
         ids := Map.add e id !ids;
         id
   
   let serialize_state c =
     output_value c !ids;
-    output_value c !lastId
+    output_value c !last_id
     
   let deserialize_state c =
     ids := input_value c;
-    lastId := input_value c 
+    last_id := input_value c 
 
   (*************************************************)
   (** {1 Well-formedness} *)
   (*************************************************)
 
-  let typecheck t eTop =
+  let typecheck t e_top =
     let module T = Type.T in
     let rec typecheck t e =
-      debug "typechecking %s: %s" (toString e) (Type.toString t);
+      debug "typechecking %s: %s" (to_string e) (Type.to_string t);
       match e, t with 
         | Len e, T.Int -> typecheck T.Bitstring e
         | Val (e, _), T.Int -> typecheck T.Bitstring e
-        | BS (e, t), t' when Type.subtype (T.BsInt t) t' && IntType.isValid t -> 
+        | BS (e, t), t' when Type.subtype (T.Bs_int t) t' && Int_type.is_valid t -> 
           typecheck T.Int e
         | Sym (Opaque, [e]), t when Type.subtype t T.Bitstringbot ->
           typecheck t e
-        | Sym (sym, es), t when Type.subtype (Sym.resultType sym) t -> 
-          List.iter2 typecheck (Sym.argumentTypes sym) es
+          (* An escape hatch for functions which actually return Bs_int types. *)
+        | Sym (((Fun _ | Nondet_fun _ ) as sym), es), t when Type.subtype t T.Bitstringbot ->
+          List.iter2 typecheck (Sym.argument_types sym) es
+        | Sym (sym, es), t when Type.subtype (Sym.result_type sym) t -> 
+          List.iter2 typecheck (Sym.argument_types sym) es
           (* Not too strict here, because some ranges are interpreted as bitstring integers. *) 
         | Range (e, pos, len), t when Type.subtype t T.Bitstring -> 
           typecheck T.Bitstring e;
@@ -1086,10 +1133,10 @@ module Exp = struct
         | Concat es, T.Bitstring -> 
           List.iter (typecheck T.Bitstring) es 
         | Struct (fields, attrs, len, e_old), T.Bitstring -> 
-          StrMap.iter (fun _ e -> typecheck T.Bitstring e) fields;
-          StrMap.iter (fun _ e -> typecheck T.Bitstring e) attrs 
+          Str_map.iter (fun _ e -> typecheck T.Bitstring e) fields;
+          Str_map.iter (fun _ e -> typecheck T.Bitstring e) attrs 
         | Array (cells, len, step), T.Bitstring ->
-          IntMap.iter (fun _ e -> typecheck T.Bitstring e) cells
+          Int_map.iter (fun _ e -> typecheck T.Bitstring e) cells
         | Annotation(_, e), t  -> typecheck t e
         | Ptr _, t when Type.subtype T.Ptr t  -> ()
           (* This is very lax because we can't tell the width of the variable here,
@@ -1097,14 +1144,16 @@ module Exp = struct
         | Var _, t when Type.subtype t T.Bitstring -> ()  
         | String _, T.Bitstring 
         | Int _, T.Int
+        | Char _, T.Int
         | Unknown, T.Bitstring -> ()
-        | e, _ -> fail "typecheck: wrong type %s of expression %s in %s" (Type.toString t) (toString e) (toString eTop)
+        | e, _ -> fail "typecheck: wrong type %s of expression %s in %s" (Type.to_string t) (to_string e) (to_string e_top)
     in
-    increase_debug_depth ();
-    typecheck t eTop;
-    decrease_debug_depth ()
+    push_debug "E.typecheck";
+    typecheck t e_top;
+    pop_debug "E.typecheck"
     
-  let rec typeOf = function
+  let rec type_of = function
+    | Char _
     | Int _ 
     | Len _ 
     | Val _ -> Type.Int
@@ -1119,23 +1168,23 @@ module Exp = struct
       
     | Ptr _ -> Type.Ptr
       
-    | BS (_, itype) -> BsInt itype
+    | BS (_, itype) -> Bs_int itype
       
-    | Sym (Opaque, [e]) -> typeOf e 
+    | Sym (Opaque, [e]) -> type_of e 
       
-    | Sym (sym, _) -> Sym.resultType sym
+    | Sym (sym, _) -> Sym.result_type sym
 
-    | Annotation (_, e) -> typeOf e
+    | Annotation (_, e) -> type_of e
 
   let itype_exn = function
     | Sym (sym, _) as e -> 
-      begin match Sym.resultType sym with
-        | BsInt itype -> itype
-        | t -> fail "sym result type not BsInt: (%s : %s)" (toString e) (Type.toString t)
+      begin match Sym.result_type sym with
+        | Bs_int itype -> itype
+        | t -> fail "sym result type not Bs_int: (%s : %s)" (to_string e) (Type.to_string t)
       end
-    | String s -> (IntType.Unsigned, String.length s / 2)
+    | String s -> (`Unsigned, String.length s / 2)
     | BS (_, itype) (* | Val (_, itype) *) -> itype
-    | e -> fail "expression itype undefined: %s" (toString e)
+    | e -> fail "expression itype undefined: %s" (to_string e)
 
   (*************************************************)
   (** {1 Misc} *)
@@ -1149,64 +1198,60 @@ module Exp = struct
   let var v = Var v
   
   let int i = Int (Int64.of_int i)
-      
-  let intVal: exp -> int = function
-    | Int i -> Int64.to_int i
-    | e -> fail "not an int: %s" (toString e)
-    
+  
   let zero : exp = Int 0L
   let one  : exp = Int 1L
-  let zeroByte signedness = BS (Int 0L, (signedness, 1))
+  let zero_byte signedness = BS (Int 0L, (signedness, 1))
   
   let sum = function
     | [] -> zero
     | [e] -> e
-    | es -> Sym (PlusInt (List.length es), es)
+    | es -> Sym (Plus_int (List.length es), es)
 
   let prod = function
     | [] -> one
     | [e] -> e
-    | es -> Sym (MultInt (List.length es), es)
+    | es -> Sym (Mult_int (List.length es), es)
 
   let conj es = Sym (And (List.length es), es)
   let disj es = Sym (Or  (List.length es), es)
                         
-  let rec isConcrete : exp -> bool = function
+  let rec is_concrete : exp -> bool = function
     | Var _ -> false
-    | e -> List.for_all isConcrete (children e)
+    | e -> List.for_all is_concrete (children e)
   
-  let isLength : exp -> bool = fun e ->
+  let is_length : exp -> bool = fun e ->
     match e with
     | Len _ -> true
     | _ -> false
 
-  let isInteger : exp -> bool = function
+  let is_integer : exp -> bool = function
     | Int _ -> true
     | _     -> false
 
-  let isString : exp -> bool = function
+  let is_string : exp -> bool = function
     | String _ -> true
     | _     -> false
       
 
-  let rec containsSym s = function
+  let rec contains_sym s = function
     | Sym (s', _) when s' = s -> true
-    | e -> List.exists (containsSym s) (children e)
+    | e -> List.exists (contains_sym s) (children e)
     
 
   let rec replace es es' e =
-    match find_index ((=) e) es with
+    match List.find_index ((=) e) es with
       | Some i -> List.nth es' i
       | None -> descend (replace es es') e
         
   let subst vs es e =
     replace (List.map (fun v -> Var v) vs) es e
     
-  let substV vs vs' e = subst vs (List.map var vs') e
+  let subst_v vs vs' e = subst vs (List.map var vs') e
   
-  let rec removeAnnotations = function
-    | Annotation(_, e) -> removeAnnotations e
-    | e -> descend removeAnnotations e
+  let rec remove_annotations = function
+    | Annotation(_, e) -> remove_annotations e
+    | e -> descend remove_annotations e
 
   (* TODO: Consider making this part of Solver.rewrite *)
   let rec truth = function
@@ -1216,12 +1261,15 @@ module Exp = struct
       (* This is because we send defined(e) through branch as well.
          A proper solution would either use two different test 
          commands or apply truth explicityl to C if conditions. *)
-    | e when typeOf e = Bool -> e
-    | Sym (Op (op, (ts, t)), es) when Sym.Op.isBinaryComparison op ->
+    | e when type_of e = Bool -> e
+    | Sym (Op (op, (ts, t)), es) when Sym.Op.is_binary_comparison op ->
       Sym (Op (op, (ts, Bool)), es)
-    | Sym (Cmp, [e1; e2]) -> Sym (Not, [Sym (BsEq, [e1; e2])])
+    | Sym (Cmp, [e1; e2]) -> Sym (Not, [Sym (Bs_eq, [e1; e2])])
     | Var v as e -> Sym (Truth, [e]) 
-    | e -> fail "Exp.truth: unexpected: %s" (toString e) 
+      (* check_key(host1, key1, sig1, sigkey1) 
+         Same comment as above applies. *)
+    | Sym (Fun _, _) as e -> Sym (Truth, [e])
+    | e -> fail "Exp.truth: unexpected: %s" (to_string e) 
       
   let len e = Len e
 end
@@ -1241,13 +1289,13 @@ module Pat = struct
   type t = T.pat
 
   let rec vars = function
-    | FPat (_, pats) -> List2.concat_map vars pats
+    | FPat (_, pats) -> List.concat_map vars pats
     | VPat v -> [v]
     | Underscore -> []
                                                       
   let rec dump = function
     | VPat v -> v
-    | FPat (f, ps) -> Sym.toString f ^ "(" ^ String.concat ", " (List.map dump ps) ^ ")"
+    | FPat (f, ps) -> Sym.to_string f ^ "(" ^ String.concat ", " (List.map dump ps) ^ ")"
     | Underscore -> "_"
 end
 
@@ -1261,9 +1309,9 @@ module Stmt = struct
     type stmt =
       | Let of pat * exp
         (** [Test e; P = if e then P else 0] *)
-      | AuxTest of exp
+      | Aux_test of exp
       | Test of exp
-      | TestEq of exp * exp
+      | Test_eq of exp * exp
       | Assume of exp
       | In of var list
       | Out of exp list
@@ -1276,7 +1324,7 @@ module Stmt = struct
   type t = T.stmt
   open T
   
-  let toString t =
+  let to_string t =
     match t with
       | In [v] -> 
         "in(c, " ^ v ^ ");";
@@ -1285,31 +1333,31 @@ module Stmt = struct
         "in(c, (" ^ String.concat ", " vs ^ "));";
   
       | New (v, t) -> 
-        "new " ^ v ^ ": " ^ Type.toString t ^ ";"
+        "new " ^ v ^ ": " ^ Type.to_string t ^ ";"
   
       | Out [e] -> 
-        "out(c, " ^ Exp.showIExp e ^ ");";
+        "out(c, " ^ Exp.show_iExp e ^ ");";
   
       | Out es -> 
-        "out(c, (" ^ String.concat ", " (List.map Exp.showIExp es) ^ "));";
+        "out(c, (" ^ String.concat ", " (List.map Exp.show_iExp es) ^ "));";
   
-      | TestEq (e1, e2) ->
-        "ifeq " ^ Exp.showIExp e1 ^ " = " ^ Exp.showIExp e2 ^ " then "
+      | Test_eq (e1, e2) ->
+        "ifeq " ^ Exp.show_iExp e1 ^ " = " ^ Exp.show_iExp e2 ^ " then "
   
       | Test e ->
-        "if " ^ Exp.showIExp e ^ " then "
+        "if " ^ Exp.show_iExp e ^ " then "
 
-      | AuxTest e ->
-        "ifaux " ^ Exp.showIExp e ^ " then "
+      | Aux_test e ->
+        "ifaux " ^ Exp.show_iExp e ^ " then "
                                              
       | Assume e ->
-        Printf.sprintf "assume %s in" (Exp.showIExp e)
+        Printf.sprintf "assume %s in" (Exp.show_iExp e)
                                                                        
       | Event (name, es) -> 
-        "event " ^ name ^ "(" ^ String.concat ", " (List.map Exp.showIExp es) ^ ");"
+        "event " ^ name ^ "(" ^ String.concat ", " (List.map Exp.show_iExp es) ^ ");"
       
       | Let (pat, e) ->
-        "let " ^ Pat.dump pat ^ " = " ^ Exp.showIExp e ^ " in"
+        "let " ^ Pat.dump pat ^ " = " ^ Exp.show_iExp e ^ " in"
         
       | Yield -> "yield ."
         
@@ -1318,9 +1366,9 @@ module Stmt = struct
   
   let children: t -> exp list = function
     | Let (_, e) -> [e]
-    | AuxTest e -> [e]
+    | Aux_test e -> [e]
     | Test e -> [e]
-    | TestEq (e1, e2) -> [e1; e2]
+    | Test_eq (e1, e2) -> [e1; e2]
     | Assume e -> [e]
     | In vs -> []
     | Out es -> es
@@ -1332,9 +1380,9 @@ module Stmt = struct
       
   let descend: (exp -> exp) -> t -> t = fun f -> function
     | Let (pat, e) -> Let(pat, f e) 
-    | AuxTest e -> AuxTest (f e)
+    | Aux_test e -> Aux_test (f e)
     | Test e -> Test (f e)      
-    | TestEq (e1, e2) -> TestEq (f e1, f e2)
+    | Test_eq (e1, e2) -> Test_eq (f e1, f e2)
     | Assume e -> Assume (f e)
     | In vs -> In vs
     | Out es -> Out (List.map f es)
@@ -1345,9 +1393,9 @@ module Stmt = struct
       
   let subst vs es t = descend (Exp.subst vs es) t
   
-  let vars s = concat_map Exp.vars (children s)
+  let vars s = List.concat_map ~f:Exp.vars (children s)
 
-  let removeAnnotations t = descend (Exp.removeAnnotations) t
+  let remove_annotations t = descend (Exp.remove_annotations) t
 end
 
 open Pat.T
@@ -1360,30 +1408,30 @@ type t = iml
 let map f p = List.map (Stmt.descend f) p
 let iter f p = List.iter (fun s -> List.iter f (Stmt.children s)) p
   
-let refcount v p = sum_with (fun s -> sum_with (Exp.refcount v) (Stmt.children s)) p
+let refcount v p = List.sum_with (fun s -> List.sum_with (Exp.refcount v) (Stmt.children s)) p
       
-let vars p = concat_map Stmt.vars p
+let vars p = List.concat_map ~f:Stmt.vars p
 
-let rec freeVars = function
+let rec free_vars = function
   | Let (VPat v, e) :: p ->
-    remove v (Exp.vars e @ freeVars p)
+    List.remove v (Exp.vars e @ free_vars p)
   | New (v, t) :: p ->
-    remove v (freeVars p)
+    List.remove v (free_vars p)
   | In vs :: p ->
-    diff (freeVars p) vs
+    List.diff (free_vars p) vs
   | s :: p ->
-    Stmt.vars s @ freeVars p
+    Stmt.vars s @ free_vars p
   | [] -> [] 
 
 let rec subst vs es = 
 
-  let substUnderBinding p v =
+  let subst_under_binding p v =
     let vs, es = 
          List.combine vs es
-      |> List.filter (fun (v', e) -> 
+      |> List.filter ~f:(fun (v', e) -> 
           if v' = v then false
           else if List.mem v (Exp.vars e) && refcount v' p > 0 then
-            fail "subst: variable %s captures a variable in substitution %s ~> %s" v v' (Exp.toString e)
+            fail "subst: variable %s captures a variable in substitution %s ~> %s" v v' (Exp.to_string e)
           else true)
       |> List.split
     in
@@ -1396,18 +1444,18 @@ let rec subst vs es =
     let s = Stmt.subst vs es s in
     match s with
       | New (v, _) ->
-        s :: substUnderBinding p v
+        s :: subst_under_binding p v
       | Let (pat, _) ->
         let vs' = Pat.vars pat in
-        s :: List.fold_left substUnderBinding p vs'
+        s :: List.fold_left subst_under_binding p vs'
       | In vs' ->
-        s :: List.fold_left substUnderBinding p vs'
+        s :: List.fold_left subst_under_binding p vs'
       | s -> s :: subst vs es p
 
-let substV vs vs' e =  subst vs (List.map Exp.var vs') e
+let subst_v vs vs' e =  subst vs (List.map Exp.var vs') e
 
-let toString p =
-  String.concat "\n" (List.map Stmt.toString p) ^ "\n" 
+let to_string p =
+  String.concat "\n" (List.map Stmt.to_string p) ^ "\n" 
 
 
 (* 1180 lines *)

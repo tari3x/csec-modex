@@ -11,18 +11,18 @@ val prod: exp list -> exp
 (**
     Does not do constant folding - this way we might see more about the history of the expression. 
 *)
-val arithSimplify : exp -> exp
+val arith_simplify : exp -> exp
   
 (**
     This is supposed to additionally perform constant folding.
 *)
-val arithFold : exp -> exp
+val arith_fold : exp -> exp
 
 (*---------------------------
   To be removed
 -----------------------------*)
 
-val isZeroOffsetVal : offsetVal -> bool
-val isFieldOffsetVal : offsetVal -> bool
+val is_zero_offset_val : offset_val -> bool
+val is_field_offset_val : offset_val -> bool
 
-val deepSimplify: exp -> exp
+val full_simplify: exp -> exp

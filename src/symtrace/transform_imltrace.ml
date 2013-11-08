@@ -21,7 +21,7 @@ module S = Solver
 (** {1 Comments} *)
 (*************************************************)
 
-let filterWithComments f p =
+let filter_with_comments f p =
   let rec filter = function
     | Comment c :: s :: p when not (f s) -> filter p
     | s :: p when not (f s) -> filter p
@@ -30,62 +30,61 @@ let filterWithComments f p =
   in
   filter p
   
-let rec removeComments = function
-  | Comment _ :: p -> removeComments p
-  | s :: p -> s :: removeComments p
+let rec remove_comments = function
+  | Comment _ :: p -> remove_comments p
+  | s :: p -> s :: remove_comments p
   | [] -> []
-  
-  
   
 (*************************************************)
 (** {1 Auxiliary Statements} *)
 (*************************************************)
 
-let isCryptographic = function
+let rec is_cryptographic = function
   | Var _ | Range _ | Concat _ | Sym (Fun _, _) -> true
+  | Annotation (_, e) -> is_cryptographic e
   | _ -> false
 
-let isAuxiliaryTest e =
+let is_auxiliary_test e =
   match e with
-  | Sym (BsEq, [e1; e2]) when isCryptographic e1 && isCryptographic e2 -> false 
+  | Sym (Bs_eq, [e1; e2]) when is_cryptographic e1 && is_cryptographic e2 -> false 
   | _ -> true
 
-let mkCmp e1 e2 =
-  let e = (Sym (BsEq, [e1; e2])) in
-  if isAuxiliaryTest e 
-  then AuxTest e
-  else TestEq (e1, e2)
+let mk_cmp e1 e2 =
+  let e = (Sym (Bs_eq, [e1; e2])) in
+  if is_auxiliary_test e 
+  then Aux_test e
+  else Test_eq (e1, e2)
 
 
-let makeAuxiliary : stmt -> stmt = function
-  | Test (Sym ((Not, [Sym (Op (Ne, itype), [e1; e2])]))) -> AuxTest (Sym (Op (Eq, itype), [e1; e2]))
+let make_auxiliary : stmt -> stmt = function
+  | Test (Sym ((Not, [Sym (Op (Ne, itype), [e1; e2])]))) -> Aux_test (Sym (Op (Eq, itype), [e1; e2]))
 
-  | Test (Sym (Op (Eq, _), [Sym (Fun ("cmp", _), [e1; e2]); z])) when S.equalInt z E.zero -> mkCmp e1 e2
+  | Test (Sym (Op (Eq, _), [Sym (Fun ("cmp", _), [e1; e2]); z])) when S.equal_int z E.zero -> mk_cmp e1 e2
 
-  | Test (Sym ((Not, [Sym (Fun ("cmp", _), [e1; e2])]))) -> mkCmp e1 e2
+  | Test (Sym ((Not, [Sym (Fun ("cmp", _), [e1; e2])]))) -> mk_cmp e1 e2
     
-  | Test (Sym (BsEq, [e1; e2])) -> mkCmp e1 e2
+  | Test (Sym (Bs_eq, [e1; e2])) -> mk_cmp e1 e2
     
-  | Test e when isAuxiliaryTest e -> AuxTest e
+  | Test e when is_auxiliary_test e -> Aux_test e
 
   | s -> s
 
                   
-let rec mapWithoutAuxiliary f = function
-  | (AuxTest _ | Assume _) as s :: p -> s :: mapWithoutAuxiliary f p
+let rec map_without_auxiliary f = function
+  | (Aux_test _ | Assume _) as s :: p -> s :: map_without_auxiliary f p
   | s :: p ->
     (* enforce evaluation order *)
     let s' = Stmt.descend f s in   
-    s' :: mapWithoutAuxiliary f p
+    s' :: map_without_auxiliary f p
   | [] -> []
   
-let rec removeAuxiliary = function
-  | (AuxTest _ | Assume _) :: p -> removeAuxiliary p
-  | s :: p -> s :: removeAuxiliary p
+let rec remove_auxiliary = function
+  | (Aux_test _ | Assume _) :: p -> remove_auxiliary p
+  | s :: p -> s :: remove_auxiliary p
   | [] -> []
 
   
-let procAndFilter es = (* filterWithComments interestingStmt *) (List.map makeAuxiliary es)
+let proc_and_filter es = (* filter_with_comments interesting_stmt *) (List.map make_auxiliary es)
 
   
 (* 90 lines *)

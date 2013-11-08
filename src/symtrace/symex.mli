@@ -6,16 +6,16 @@
 
 open Iml
 
-val executeFile : in_channel -> iml
+val execute_file : in_channel -> iml
 
  
 (*************************************************)
 (** {1 Marshalling} *)
 (*************************************************)
 
-val rawOut: out_channel -> iml -> iml -> unit 
+val raw_out: out_channel -> iml -> iml -> unit 
 
-val rawIn: in_channel -> iml * iml 
+val raw_in: in_channel -> iml * iml 
 
 (*************************************************)
 (** {1 Misc} *)
@@ -24,5 +24,5 @@ val rawIn: in_channel -> iml * iml
 (**
   Dump the names of C functions called during symex into "called.out".
 *)
-val dumpCalledFuns: unit -> unit 
+val dump_called_funs: unit -> unit 
  

@@ -10,24 +10,36 @@ open Common
 (** {1 Types} *)
 (*************************************************)
 
-module PtrMap: CustomMap with type key = int64
-module IntMap: CustomMap with type key = int
-module StrMap: CustomMap with type key = string
+module Ptr_map: Custom_map with type key = int64
+module Int_map: Custom_map with type key = int
+module Str_map: Custom_map with type key = string
 
 module Type: sig
   module T: sig
   
-    module IntType: sig
-      type signedness = Signed | Unsigned
-      type width = int
-      type t = signedness * width
+    module Int_type: sig
+      module Signedness : sig
+        type t = [ `Signed | `Unsigned ]
+        val to_string : t -> string
+      end
+      type t
+      
+      val signedness : t -> Signedness.t
+      val width : t -> int
+      val create : Signedness.t -> int -> t
+      
+      val to_string : t -> string
+      val of_string : string -> t
+      
+      val int : t
+      val size_t : t
     end
   
     (*
       Not using CV typet, because it contains options that we don't care about,
       and so is not equatable. 
     *)
-    (* TODO: use polymorphic variants to prove to the compiler that CastToInt may only contain BsInt *)
+    (* TODO: use polymorphic variants to prove to the compiler that Cast_to_int may only contain Bs_int *)
     type t = 
       | Bitstringbot               (** All strings and bottom. *)
       | Bitstring                  (** All machine-representable strings *)
@@ -36,7 +48,7 @@ module Type: sig
       | Bool
       | Int
       | Ptr
-      | BsInt of IntType.t
+      | Bs_int of Int_type.t
       | Named of string * t option (** A named type with an optional type definition.
                                        Named (_, None) may not contain bottom. *)
   end
@@ -49,29 +61,29 @@ module Type: sig
       | Bool
       | Int
       | Ptr
-      | BsInt of T.IntType.t
+      | Bs_int of T.Int_type.t
       | Named of string * t option (** A named type with an optional type definition.
                                        Named (_, None) may not contain bottom. *)
     
-  val ofString: string -> t
+  val of_string: string -> t
   
-  val toString: t -> string
+  val to_string: t -> string
   
   val subtype: t -> t -> bool
+  val intersection : t -> t -> t
+  val union : t -> t -> t
   
-  val meet : t -> t -> t
-  
-  val stripName: t -> t
+  val strip_name: t -> t
 
-  val hasFixedLength: t -> bool
+  val has_fixed_length: t -> bool
 end
 
 type imltype = Type.t
 
-module FunType: sig
+module Fun_type: sig
   type t = imltype list * imltype
 
-  val toString: t -> string
+  val to_string: t -> string
 end
 
 
@@ -86,13 +98,13 @@ module Sym: sig
         | BNot                                (** Bitwise complement (~) *)
         | LNot                                (** Logical Not (!) *)
       
-        | PlusA                               (** arithmetic + *)
-          (* We don't use IndexPI *)
-        | PlusPI                              (** pointer + integer *)
+        | Plus_a                               (** arithmetic + *)
+          (* We don't use Index_pI *)
+        | Plus_pI                              (** pointer + integer *)
           
-        | MinusA                              (** arithmetic - *)
-        | MinusPI                             (** pointer - integer *)
-        | MinusPP                             (** pointer - pointer *)
+        | Minus_a                              (** arithmetic - *)
+        | Minus_pI                             (** pointer - integer *)
+        | Minus_pP                             (** pointer - pointer *)
         | Mult                                (** * *)
         | Div                                 (** / *)
         | Mod                                 (** % *)
@@ -113,17 +125,17 @@ module Sym: sig
                                                * expressions this one does not 
                                                * always evaluate both operands. If 
                                                * you want to use these, you must 
-                                               * set {!Cil.useLogicalOperators}. *)
+                                               * set {!Cil.use_logical_operators}. *)
         | LOr                                 (** logical or. Unlike other 
                                                * expressions this one does not 
                                                * always evaluate both operands.  If 
                                                * you want to use these, you must 
-                                               * set {!Cil.useLogicalOperators}. *)
+                                               * set {!Cil.use_logical_operators}. *)
 
           (* These are added by us, they are not defined as ops in CIL *)
-        | CastToInt
-        | CastToPtr
-        | CastToOther 
+        | Cast_to_int
+        | Cast_to_ptr
+        | Cast_to_other 
     end
     
     type t = T.op
@@ -140,24 +152,25 @@ module Sym: sig
       TODO: use polymorphic variants and move solver-specific stuff into solver.
     *)
     type sym =
-      | Op of op * FunType.t
+      (* TODO: should take Int_type.t *)
+      | Op of op * Fun_type.t
             
-      | BsEq                               (** Bitstring comparison, works on bottoms too. *)
+      | Bs_eq                               (** Bitstring comparison, works on bottoms too. *)
       | Cmp                                (** Bitstring comparison returning bitstring result.
-                                               BsEq(x, y) = Truth(Cmp(x, y)) *)
+                                               Bs_eq(x, y) = Truth(Cmp(x, y)) *)
         
-      | MinusInt                           (** Operators without overflow. Think of them as widening their result
+      | Minus_int                           (** Operators without overflow. Think of them as widening their result
                                                if necessary *)
-      | PlusInt of arity
-      | MultInt of arity
-      | NegInt
+      | Plus_int of arity
+      | Mult_int of arity
+      | Neg_int
 
-      | LtInt                               (** <  (arithmetic comparison) *)
-      | GtInt                               (** >  (arithmetic comparison) *)  
-      | LeInt                               (** <= (arithmetic comparison) *)
-      | GeInt                               (** >  (arithmetic comparison) *)
-      | EqInt                               (** == (arithmetic comparison) *)
-      | NeInt                               (** != (arithmetic comparison) *)            
+      | Lt_int                               (** <  (arithmetic comparison) *)
+      | Gt_int                               (** >  (arithmetic comparison) *)  
+      | Le_int                               (** <= (arithmetic comparison) *)
+      | Ge_int                               (** >  (arithmetic comparison) *)
+      | Eq_int                               (** == (arithmetic comparison) *)
+      | Ne_int                               (** != (arithmetic comparison) *)            
 
       | Implies
       | And of arity
@@ -165,7 +178,7 @@ module Sym: sig
       | Not
       | True
         
-      | PtrLen
+      | Ptr_len
 
       | Cast of Type.t * Type.t
         
@@ -177,19 +190,19 @@ module Sym: sig
         (**
           Same as Ztp, but returns the argument unchanged instead of bottom.
         *)
-      | ZtpSafe
+      | Ztp_safe
         
       | Replicate
-      | FieldOffset
+      | Field_offset
       | Opaque                             (** Used only in Solver *)
       | Defined
-      | InType of Type.t                   (** Defined is the same as (InType Bitstring) *)
+      | In_type of Type.t                   (** Defined is the same as (In_type Bitstring) *)
         
       | Truth
 
         (* The yices versions of len and val, see thesis. *)        
-      | LenY
-      | ValY of IntType.t
+      | Len_y
+      | Val_y of Int_type.t
         
         (* TODO: kill const, now that Funs carry explicit arities *)
       | Const of name
@@ -200,7 +213,7 @@ module Sym: sig
         
       | Fun of name * arity
         (* FIXME: make non-determinism explicit by random sampling, or check that there are no such funs in final output *)
-      | NondetFun of name * invocation_id * arity
+      | Nondet_fun of name * invocation_id * arity
   end
 
   type t = T.sym
@@ -208,31 +221,31 @@ module Sym: sig
   (**
     Binary or integer arithmetic opeator. Cast not included.
   *)
-  val isArithmetic: t -> bool
-  val isBinaryArithmetic: t -> bool
-  val isBinaryComparison: t -> bool
-  val isIntegerComparison: t -> bool
+  val is_arithmetic: t -> bool
+  val is_binary_arithmetic: t -> bool
+  val is_binary_comparison: t -> bool
+  val is_integer_comparison: t -> bool
   (** A symbol that takes boolean arguments and returns a boolean result. *)
-  val isLogical: t -> bool
+  val is_logical: t -> bool
 
   (**
     May return bottom even if all arguments are not bottom.
   *)
-  val mayFail: t -> bool
-  val neverFails: t -> bool
+  val may_fail: t -> bool
+  val never_fails: t -> bool
   
-  val resultType: t -> Type.t
-  val argumentTypes: t -> Type.t list
+  val result_type: t -> Type.t
+  val argument_types: t -> Type.t list
   val arity: t -> int
   
-  val isInfix: t -> bool
+  val is_infix: t -> bool
   
-  val toString: t -> string
-  val ofString: string -> t
+  val to_string: t -> string
+  val of_string: string -> t
   
-  val cvDeclaration: t -> FunType.t -> string
+  val cv_declaration: t -> Fun_type.t -> string
   
-  module Map: CustomMap with type key = t
+  module Map: Custom_map with type key = t
 end
 
 
@@ -254,9 +267,9 @@ module Var: sig
   val unfresh: string list -> unit
   
   val fresh: string -> t
-  val freshId: string -> int
+  val fresh_id: string -> int
   
-  module Map: CustomMap with type key = var
+  module Map: Custom_map with type key = var
 end 
 
 module Exp: sig
@@ -287,7 +300,7 @@ module Exp: sig
          *)    
     
     
-    and offsetVal = 
+    and offset_val = 
       | Field of string
       | Attr of string
       | Index of int (* Not intval, cause ocaml is really clumsy with that - you can't even subtract it easily *)
@@ -296,13 +309,13 @@ module Exp: sig
         (** Flat offsets always measured in bytes *)
     
     (** Offset value together with offset step *)
-    and offset = offsetVal * len
+    and offset = offset_val * len
     
     and pos = offset list
 
     (* FIXME: replace information lens with width option. Possibly use named width or some other
        mechanism to make sure that output is the same on all architectures. The best thing
-       is to implement getLenValue by evaluating the length expression in the yices model (with cache).
+       is to implement get_len_value by evaluating the length expression in the yices model (with cache).
        But this does rely a bit too much on global state - think again!
       
        Lens and Ints should have a width field, Vars and Syms should be covered by a width
@@ -326,6 +339,9 @@ module Exp: sig
       | Int of intval
         (** A concrete integer of given width. *) 
     
+      | Char of char
+        (** An integer with given ascii value. *)
+    
         (* FIXME: have a separate case for literal strings *)
       | String of bitstring
         (** A concrete bitstring in hex representation: each byte corresponds to two characters. *)
@@ -346,16 +362,16 @@ module Exp: sig
         
       | Len of exp 
     
-      | BS of exp * IntType.t
+      | BS of exp * Int_type.t
         
-      | Val of exp * IntType.t
+      | Val of exp * Int_type.t
     
-      | Struct of (exp StrMap.t) * (exp StrMap.t) * len * exp
+      | Struct of (exp Str_map.t) * (exp Str_map.t) * len * exp
         (** The first component are the real fields, the second are the crypto attributes.
             The last component is the value of underlying memory at the time the struct has been created.
             This will get removed as soon as I transition to static implementation. *)
     
-      | Array of (exp IntMap.t) * len * len
+      | Array of (exp Int_map.t) * len * len
         (** Contains total length and element length.
         
             A good alternative is to use native array, but it only makes sense if I know the number of elements in advance.
@@ -382,7 +398,7 @@ module Exp: sig
       | Annotation of annotation * exp
         
     and annotation = 
-      | TypeHint of imltype
+      | Type_hint of imltype
       | Name of string 
       (* | Width of width *)
   end
@@ -390,8 +406,8 @@ module Exp: sig
   open T
   type t = exp
 
-  module BaseMap: Map.S with type key = base
-  module Map: CustomMap with type key = exp
+  module Base_map: Map.S with type key = base
+  module Map: Custom_map with type key = exp
   module Set: Set.S     with type elt = exp
 
 
@@ -418,8 +434,8 @@ module Exp: sig
     bottom then [e] is of type [t].
   *)
   val typecheck: Type.t -> exp -> unit
-  val itype_exn: exp -> IntType.t
-  val typeOf: exp -> Type.t
+  val itype_exn: exp -> Int_type.t
+  val type_of: exp -> Type.t
 
   (*************************************************)
   (** {1 IDs} *)
@@ -438,11 +454,10 @@ module Exp: sig
   val concat : exp list -> exp
   val range : exp -> len -> len -> exp
   val int : int -> exp
-  val intVal: exp -> int
   
   val zero : exp
   val one  : exp
-  val zeroByte: IntType.signedness -> exp
+  val zero_byte: Int_type.Signedness.t -> exp
   
   val sum: exp list -> exp
   val prod: exp list -> exp 
@@ -454,13 +469,13 @@ module Exp: sig
   val max_len : exp
   *)
   
-  val isConcrete : exp -> bool
-  val isLength : exp -> bool
-  (* val isComparison: exp -> bool *)
-  (* val isLogical: exp -> bool *)
-  val isInteger : exp -> bool
-  val isString: exp -> bool
-  val containsSym: sym -> exp -> bool
+  val is_concrete : exp -> bool
+  val is_length : exp -> bool
+  (* val is_comparison: exp -> bool *)
+  (* val is_logical: exp -> bool *)
+  val is_integer : exp -> bool
+  val is_string: exp -> bool
+  val contains_sym: sym -> exp -> bool
   
   val vars: t -> var list 
 
@@ -470,12 +485,12 @@ module Exp: sig
     The first list must contain [Var] expressions only.
   *)
   val subst: var list -> exp list -> exp -> exp
-  val substV: var list -> var list -> exp -> exp
+  val subst_v: var list -> var list -> exp -> exp
   (* 
   val replace: exp list -> exp list -> exp -> exp
   *)
   
-  val removeAnnotations: t -> t
+  val remove_annotations: t -> t
   
   (**
     The truth function from the thesis that takes C boolean
@@ -492,15 +507,15 @@ module Exp: sig
   (*************************************************)
 
   (* 
-  val clipEnabled: bool ref
+  val clip_enabled: bool ref
   *)
 
-  val toString: t -> string
+  val to_string: t -> string
   val dump: t -> string
-  val dumpList: t list -> string
-  val listToString: t list -> string
-  val baseToString: base -> string
-  val offsetToString: offset -> string
+  val dump_list: t list -> string
+  val list_to_string: t list -> string
+  val base_to_string: base -> string
+  val offset_to_string: offset -> string
 end 
 
 
@@ -527,7 +542,7 @@ module Stmt: sig
   module T: sig
     type stmt =
       | Let of pat * exp
-      | AuxTest of exp
+      | Aux_test of exp
         (** 
           [Test e; P = if e then P else 0]
           
@@ -535,9 +550,9 @@ module Stmt: sig
         *)
       | Test of exp
         (**
-          [TestEq] is never auxiliary after symex postprocessing.
+          [Test_eq] is never auxiliary after symex postprocessing.
         *)
-      | TestEq of exp * exp
+      | Test_eq of exp * exp
       | Assume of exp
       | In of var list
       | Out of exp list
@@ -549,7 +564,7 @@ module Stmt: sig
   
   type t = T.stmt
   
-  val toString: t -> string
+  val to_string: t -> string
   
   val children: t -> exp list
       
@@ -559,7 +574,7 @@ module Stmt: sig
   
   val vars: t -> var list
   
-  val removeAnnotations: t -> t
+  val remove_annotations: t -> t
 end
 
 open Exp.T
@@ -575,14 +590,14 @@ val refcount: var -> t -> int
       
 val vars: t -> var list
 
-val freeVars: t -> var list
+val free_vars: t -> var list
 
-val toString: t -> string
+val to_string: t -> string
 
 (**
   Fails on capture.
 *)
 val subst: var list -> exp list -> t -> t
-val substV: var list -> var list -> t -> t
+val subst_v: var list -> var list -> t -> t
 
 (* 490 lines *)
