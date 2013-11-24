@@ -19,24 +19,28 @@ let setup_debug () =
       | None -> false
       | Some i -> i <= n
     in
-    at_most_n_under 0 "execute"
-  || at_most_n_under 0 "deep_simplify"
-  || false) 
-    
+    let under l =  List.mem l labels in
+    under "dummy"
+    || at_most_n_under 0 "execute"
+    (* || at_most_n_under 0 "deep_simplify" *)
+    (* || at_most_n_under 0 "rewrite" *)
+    (* || under "rewrite" *)
+    || false)
+
 let main () =
   setup_debug ();
-  
+
   let client = execute_file (open_in Sys.argv.(1)) in
   let server = execute_file (open_in Sys.argv.(2)) in
 
   (*
-  Iml.Exp.clip_enabled := false;
+    Iml.Exp.clip_enabled := false;
   *)
 
   (*
-  if debug_enabled () then prerr_endline "";
-  if debug_enabled () then List.iter (fun s -> prerr_endline (Stmt.dump s)) client;
-  if debug_enabled () then List.iter (fun s -> prerr_endline (Stmt.dump s)) server;
+    if debug_enabled () then prerr_endline "";
+    if debug_enabled () then List.iter (fun s -> prerr_endline (Stmt.dump s)) client;
+    if debug_enabled () then List.iter (fun s -> prerr_endline (Stmt.dump s)) server;
   *)
   if debug_enabled () then prerr_endline "";
   if debug_enabled () then prerr_endline (Iml.to_string client);
@@ -50,17 +54,17 @@ let main () =
   print_endline (Iml.to_string client);
   print_endline "let B = ";
   print_endline (Iml.to_string server);
-    
+
   raw_out (open_out_bin Sys.argv.(3)) client server;
-  
+
   dump_called_funs ();
 
 ;;
 begin
-  try main () with 
-    Failure s -> begin 
+  try main () with
+    Failure s -> begin
       print_endline s;
       exit 1;
-    end 
+    end
 end
-  
+

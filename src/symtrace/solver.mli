@@ -25,28 +25,28 @@ type fact = exp
 val eq_bitstring: exp list -> fact
 val eq_int: exp list -> fact
 val not : fact -> fact
-val gt : exp -> exp -> fact 
+val gt : exp -> exp -> fact
 val ge : exp -> exp -> fact
 
 val is_defined: exp -> fact
 
 val true_fact : fact
 
-val in_type: exp -> imltype -> fact 
-  
+val in_type: exp -> imltype -> fact
+
 module Range : sig
-  type t = Int_type.t 
-  
+  type t = Int_type.t
+
   val contains : t -> exp -> fact list
-  val subset : t -> t -> bool 
+  val subset : t -> t -> bool
 end
-  
-  
+
+
 (*************************************************)
 (** {1 Checking facts} *)
 (*************************************************)
 
-val add_fact : fact -> unit 
+val add_fact : fact -> unit
 
 val reset_facts : unit -> unit
 
@@ -71,11 +71,11 @@ val implies: fact list -> fact list -> pbool
 (** {1 Evaluation} *)
 (*************************************************)
 
-(** 
+(**
   Evaluation of an integer expression.
-  Will fail if a value is not unique. 
+  Will fail if a value is not unique or if we cannot prove that it is defined.
 *)
-val eval: exp -> int option
+val eval : exp -> int option
 
 (*************************************************)
 (** {1 Simplification} *)
@@ -93,3 +93,10 @@ val is_opaque : exp -> bool
 (*************************************************)
 
 val warn_on_failed_conditions : bool -> unit
+
+(*************************************************)
+(** {1 Warnings} *)
+(*************************************************)
+
+val test : unit -> unit
+

@@ -21,7 +21,6 @@ void assume_intype(const char * type)
 {
   Dup();
   InType(type);
-  Done();
   Assume();
 }
 

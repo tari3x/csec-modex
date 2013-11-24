@@ -29,12 +29,12 @@ let filter_with_comments f p =
     | [] -> []
   in
   filter p
-  
+
 let rec remove_comments = function
   | Comment _ :: p -> remove_comments p
   | s :: p -> s :: remove_comments p
   | [] -> []
-  
+
 (*************************************************)
 (** {1 Auxiliary Statements} *)
 (*************************************************)
@@ -46,12 +46,13 @@ let rec is_cryptographic = function
 
 let is_auxiliary_test e =
   match e with
-  | Sym (Bs_eq, [e1; e2]) when is_cryptographic e1 && is_cryptographic e2 -> false 
+  | Sym (Bs_eq, [e1; e2]) when is_cryptographic e1 && is_cryptographic e2 -> false
+  | Sym (Fun _, _) -> false
   | _ -> true
 
 let mk_cmp e1 e2 =
   let e = (Sym (Bs_eq, [e1; e2])) in
-  if is_auxiliary_test e 
+  if is_auxiliary_test e
   then Aux_test e
   else Test_eq (e1, e2)
 
@@ -62,29 +63,29 @@ let make_auxiliary : stmt -> stmt = function
   | Test (Sym (Op (Eq, _), [Sym (Fun ("cmp", _), [e1; e2]); z])) when S.equal_int z E.zero -> mk_cmp e1 e2
 
   | Test (Sym ((Not, [Sym (Fun ("cmp", _), [e1; e2])]))) -> mk_cmp e1 e2
-    
+
   | Test (Sym (Bs_eq, [e1; e2])) -> mk_cmp e1 e2
-    
+
   | Test e when is_auxiliary_test e -> Aux_test e
 
   | s -> s
 
-                  
+
 let rec map_without_auxiliary f = function
   | (Aux_test _ | Assume _) as s :: p -> s :: map_without_auxiliary f p
   | s :: p ->
     (* enforce evaluation order *)
-    let s' = Stmt.descend f s in   
+    let s' = Stmt.descend f s in
     s' :: map_without_auxiliary f p
   | [] -> []
-  
+
 let rec remove_auxiliary = function
   | (Aux_test _ | Assume _) :: p -> remove_auxiliary p
   | s :: p -> s :: remove_auxiliary p
   | [] -> []
 
-  
-let proc_and_filter es = (* filter_with_comments interesting_stmt *) (List.map make_auxiliary es)
+let proc_and_filter es =
+  (* filter_with_comments interesting_stmt *)
+  List.map make_auxiliary es
 
-  
 (* 90 lines *)

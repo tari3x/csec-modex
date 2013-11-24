@@ -207,6 +207,7 @@ EXTERN void __CrestFieldOffset(__CREST_STR field) __SKIP;
 EXTERN void __CrestIndexOffset(__CREST_STR type) __SKIP;
 EXTERN void __CrestLocation(__CREST_STR) __SKIP;
 EXTERN void __CrestDone() __SKIP;
+EXTERN void __CrestTruth() __SKIP;
 
 ///////////////////////////////////////////////////////
 // Helpers, to be called only from instrumented code

@@ -11,16 +11,16 @@
 
 (*
   Changes by Misha (OUTDATED):
-  
+
     - Store and Load now also supply the sizeof() the stored/loaded variable
-    
+
     - HandleReturn and ClearFrame (renamed from ClearStack) now get the number
       of function parameters, so that calling a function works even when the stack is not empty.
-      
+
     - Return now gets a bool indicating whether the returned value is symbolic (false if void).
-    
+
     - Call now also supplies the name and the address of the function.
-      
+
     - A new function Invoke() is inserted right before a call and given the called function address.
 *)
 
@@ -59,7 +59,7 @@ let concatMap f ls =
       | (x::xs) -> doIt (List.rev_append (f x) res) xs
   in
     doIt [] ls
-  
+
 
 (*************************************************)
 (** {1 Helpers} *)
@@ -89,7 +89,7 @@ let strType  = charConstPtrType
 let funPtrType = cType "void (*)()" []
 
 
-let checkHasAddress (_, off) = 
+let checkHasAddress (_, off) =
   let rec containsBitField off =
     match off with
       | NoOffset         -> false
@@ -97,7 +97,7 @@ let checkHasAddress (_, off) =
       | Index (_, off)  -> containsBitField off
   in
     if not (containsBitField off) then ()
-    else 
+    else
       E.error "bitfields not supported"
 
 let funReturnType : typ -> typ = function
@@ -110,18 +110,18 @@ let isVoidFunType : typ -> bool = function
 
 let isVarargFunType : typ -> bool = function
 	| TFun (_, _, true, _) -> true
-	| _ -> false  
+	| _ -> false
 
 let opaque : varinfo -> varinfo = fun v ->
   if isVarargFunType v.vtype then v else
-  (* 
+  (*
     The reason to make it static is that we insert a definition when encountering a declaration,
     because some definitions might not actually be crestified.
-    
+
     This can lead to a warning that the opaque wrapper is unused (which is only given for static functions),
     so I turn it off at compilation. Maybe try asking CIL to remove unused definitions.
   *)
-  { v with vname = "__crest_" ^ v.vname ^ "_opaque"; vstorage = Static } 
+  { v with vname = "__crest_" ^ v.vname ^ "_opaque"; vstorage = Static }
 
 let needsOpaqueWrapper : varinfo -> bool = fun v ->
   (*
@@ -133,8 +133,8 @@ let needsOpaqueWrapper : varinfo -> bool = fun v ->
   (*
     The only time we expect to see a naked proxied function is inside the proxy itself,
     in which case it is correct to provide an opaque wrapper for it.
-    
-    The only problem is that this way we provide unused wrappers in all the other files.  
+
+    The only problem is that this way we provide unused wrappers in all the other files.
   *)
   isOpaque v && isFunctionType v.vtype (* && not (isProxied v) *)
   (* the opaque wrapper now reacts specially to these: *)
@@ -145,24 +145,24 @@ let needsOpaqueWrapper : varinfo -> bool = fun v ->
 (*************************************************)
 
 module Type = struct
-  type t = { 
+  type t = {
     argument_types: typ list;
     result_type: typ }
-    
+
   let showSigned = function
     | false -> "u"
     | true -> "s"
-  
+
   let showIntType = function
-    | TInt (ikind, _) -> 
-      sprintf "[%s,%d]" (showSigned (isSigned ikind)) (bytesSizeOfInt ikind) 
+    | TInt (ikind, _) ->
+      sprintf "[%s,%d]" (showSigned (isSigned ikind)) (bytesSizeOfInt ikind)
     | TPtr _ -> "ptr"
       (* FIXME: the name will be parsed incorrectly if it contains underscores. *)
-    | t -> 
+    | t ->
       Pretty.sprint 500 (d_typsig () (typeSig t))
       (* E.s (error "unexpected type of operator argument or result: %a\n" d_type t) *)
 
-  let toString {argument_types; result_type } = 
+  let toString {argument_types; result_type } =
     let ts = List.map showIntType argument_types in
     let t = showIntType result_type in
     sprintf "%s -> %s" (String.concat " * " ts) t
@@ -172,35 +172,35 @@ end
 module Sym = struct
   type arity = int
 
-  type t = 
+  type t =
     | UnOp of unop * Type.t
     | BinOp of binop * Type.t
-    | Fun of string * arity 
+    | Fun of string * arity
     | CastToInt of Type.t
-    | CastToPtr of Type.t 
+    | CastToPtr of Type.t
     | CastToOther of Type.t
 
   let unaryOpCode = function
     | Neg -> "neg"  | BNot -> "~"  |  LNot -> "!"
 
-  let binaryOpCode = function 
+  let binaryOpCode = function
       | PlusA   -> "+"   | MinusA  ->  "-"   | Mult  -> "*"    | Div   -> "/"
       | Mod     -> "%"   | BAnd    ->  "&"   | BOr   -> "BOR"  | BXor  -> "XOR"
       | Shiftlt -> "<<"  | Shiftrt ->  ">>"  | LAnd  -> "&&"   | LOr   -> "LOR"
-  
-      | Eq -> "=="  
-      | Ne ->  "!="  
-      | Gt -> ">"    
+
+      | Eq -> "=="
+      | Ne ->  "!="
+      | Gt -> ">"
       | Le -> "<="
-      | Lt -> "<"   
+      | Lt -> "<"
       | Ge ->  ">="
-      
+
       | PlusPI  -> "PlusPI"
       | IndexPI -> "PlusPI" (* sic *)
       | MinusPI -> "MinusPI"
       | MinusPP -> "MinusPP"
 
-                                                
+
   let toString = function
     | UnOp (op, t) -> sprintf "(%s: %s)" (unaryOpCode op) (Type.toString t)
     | BinOp (op, t) -> sprintf "(%s: %s)" (binaryOpCode op) (Type.toString t)
@@ -225,7 +225,7 @@ class crestInstrumentVisitor f =
    *)
   (* let bidArg  = ("bid",  bidType,  []) in *)
   (* let fidArg  = ("fid",  fidType,  []) in *)
-  (* let idArg  = ("id",  idType,  []) in *)  
+  (* let idArg  = ("id",  idType,  []) in *)
   let valArg  = ("val",  valType,  []) in
   (* let numArg  = ("num",  valType,  []) in *)
   (* let addrArg = ("addr", addrType, []) in *)
@@ -244,7 +244,7 @@ class crestInstrumentVisitor f =
       func.vattr <- [Attr ("crest_skip", [])] ;
       func
   in
-  
+
   let initFunc : varinfo -> varinfo = fun v ->
     let f = makeGlobalVar ("__crest_" ^ v.vname ^ "_init") (cType "void ()()" []) in
     {f with vstorage = v.vstorage}
@@ -268,7 +268,7 @@ class crestInstrumentVisitor f =
   (* let handleReturnFunc = mkInstFunc "HandleReturn" [valArg; numArg] in *)
   let storeFunc        = mkInstFunc "Store" [] in
   let loadIntFunc      = mkInstFunc "LoadInt" [valArg] in
-  let bsFunc           = mkInstFunc "BS" [boolArg; valArg] in  
+  let bsFunc           = mkInstFunc "BS" [boolArg; valArg] in
   let loadMemFunc      = mkInstFunc "LoadMem" [] in
   let loadCStringFunc  = mkInstFunc "LoadCString" [strArg] in
   (* let loadStringFunc   = mkInstFunc "LoadString" [strArg] in *)
@@ -281,6 +281,7 @@ class crestInstrumentVisitor f =
   let indexOffsetFunc  = mkInstFunc "IndexOffset" [strArg] in
   let locationFunc     = mkInstFunc "Location" [strArg] in
   let doneFunc         = mkInstFunc "Done" [] in
+  let truthFunc        = mkInstFunc "Truth" [] in
 
   (*
    * Functions to create calls to the above instrumentation functions.
@@ -307,7 +308,7 @@ class crestInstrumentVisitor f =
       | Some 0L -> integer 0
       | _       -> failwith "sizeOf: unexpected argument"
   in *)
-  
+
   let mkFunAddr : varinfo -> exp = fun f ->
     mkCast (mkAddrOf (Var f, NoOffset)) funPtrType
   in
@@ -316,7 +317,7 @@ class crestInstrumentVisitor f =
   let mkBool b =
     if b then integer 1 else integer 0
   in
-  
+
   let isSignedConst = function
     | Const (CInt64 (_, kind, _)) when isSigned kind -> true
     | _ -> false
@@ -335,16 +336,16 @@ class crestInstrumentVisitor f =
   let mkUnmute ()              = mkInstCall unmuteFunc [] in
   let mkNondet ()              = mkInstCall nondetFunc [] in
   let mkBranch b               = mkInstCall branchFunc [integer b] in
-  let mkCall f nargs           = mkInstCall callFunc 
+  let mkCall f nargs           = mkInstCall callFunc
                                  [mkString f.vname; mkFunAddr f; integer nargs] in
-  let mkCallOpaque f nargs     = mkInstCall callOpaqueFunc 
+  let mkCallOpaque f nargs     = mkInstCall callOpaqueFunc
                                  [mkString f.vname; mkFunAddr f; integer nargs] in
   (* FIXME: isSym is obsolete where everything is symbolic - but still need a void indication? *)
   let mkReturn isVoid          = mkInstCall returnFunc [integer isVoid] in
   (* let mkHandleReturn value num = mkInstCall handleReturnFunc [toValue value; integer num] in *)
   let mkStore ()               = mkInstCall storeFunc [] in
   let mkLoadInt value          = mkInstCall loadIntFunc [toValue value] in
-  let mkBS is_signed width     = if is_signed 
+  let mkBS is_signed width     = if is_signed
                                  then mkInstCall bsFunc [integer 1; integer width]
                                  else mkInstCall bsFunc [integer 0; integer width]
                                  in
@@ -357,10 +358,11 @@ class crestInstrumentVisitor f =
   let mkSetPtrStep ()          = mkInstCall setPtrStepFunc [] in
   let mkLoadStackPtr name      = mkInstCall loadStackPtrFunc [mkString name] in
   let mkFieldOffset f          = mkInstCall fieldOffsetFunc [mkString (f.fname)] in
-  let mkIndexOffset t          = mkInstCall indexOffsetFunc [mkString (Type.showIntType t)] in 
-  let mkLocation l             = mkInstCall locationFunc [mkString (Pretty.sprint 100 (d_loc () l))] in   
+  let mkIndexOffset t          = mkInstCall indexOffsetFunc [mkString (Type.showIntType t)] in
+  let mkLocation l             = mkInstCall locationFunc [mkString (Pretty.sprint 100 (d_loc () l))] in
   let mkInit v                 = mkInstCall invokeFunc [mkFunAddr (initFunc v)] in
   let mkDone ()                = mkInstCall doneFunc [] in
+  let mkTruth ()               = mkInstCall truthFunc [] in
 
   let mkRef v = mkLoadStackPtr (mkUniqueName v) in
 
@@ -369,15 +371,15 @@ class crestInstrumentVisitor f =
   let rec instrumentSizeOf : typ -> instr list = function
     | TPtr _ -> [mkApply (Sym.Fun ("ptrLen", 0))]
     | t -> match sizeOf t with
-	      | Const (CInt64 _) as c -> [mkLoadInt c] 
+	      | Const (CInt64 _) as c -> [mkLoadInt c]
 	      | SizeOf t'             -> [mkLoadTypeSize (Pretty.sprint 100 (d_typsig () (typeSig t)))]
 	      | _                     -> E.s (error "instrumentSizeOf: unexpected sizeOf result")
-  
+
   (** FIXME: not sound, switch to the symbolic version. *)
   (* let rec instrumentSizeOf : typ -> instr list = function t -> [mkLoadInt (SizeOf t)] *)
-  
- 
-  (** 
+
+
+  (**
 	  Takes the pointer type, not the base type.
 	  Silently does nothing if not a pointer.
    *)
@@ -394,25 +396,25 @@ class crestInstrumentVisitor f =
 
   and instrumentLval' (host, offset) =
 
-	  let instrumentHost : lhost -> instr list = function 
- 		    | Var v -> [mkRef v]
-		    | Mem e -> instrumentExpr e 
-	  in
-    
-	  let rec instrumentOffset : typ -> offset -> instr list = fun t o ->
-       
-	    let extendType : typ -> offset -> typ = fun t -> function
-	      | NoOffset -> t
-	      | Field (f, _) -> typeOffset t (Field (f, NoOffset))
-	      | Index (e, _) -> typeOffset t (Index (e, NoOffset))
-	    in
-	    
-	    let t' = extendType t o in
+    let instrumentHost : lhost -> instr list = function
+      | Var v -> [mkRef v]
+      | Mem e -> instrumentExpr e
+    in
+
+    let rec instrumentOffset : typ -> offset -> instr list = fun t o ->
+
+      let extendType : typ -> offset -> typ = fun t -> function
+	| NoOffset -> t
+	| Field (f, _) -> typeOffset t (Field (f, NoOffset))
+	| Index (e, _) -> typeOffset t (Index (e, NoOffset))
+      in
+
+      let t' = extendType t o in
       setPtrStep t @
-	    match o with
-	        | NoOffset      -> []
-	        | Field (f, o') -> [mkFieldOffset f] @ (instrumentOffset t' o')
-	        | Index (e, o') -> (instrumentExpr e) @ [mkIndexOffset (typeOf e)] @ (instrumentOffset t' o')
+	match o with
+	| NoOffset      -> []
+	| Field (f, o') -> [mkFieldOffset f] @ (instrumentOffset t' o')
+	| Index (e, o') -> (instrumentExpr e) @ [mkIndexOffset (typeOf e)] @ (instrumentOffset t' o')
 
     in
     (instrumentHost host) @ (instrumentOffset (typeOfLval (host, NoOffset)) offset)
@@ -425,7 +427,7 @@ class crestInstrumentVisitor f =
 	       [mkLoadStackPtr v.vname] @ setPtrStep v.vtype @ (instrumentLval' host) @ [mkStore ()]
 	      else
 	        [mkApply (Sym.Fun (v.vname, 0))] @ (instrumentLval' host) @ [mkStore ()]
-      else 
+      else
         [mkInit v]
     | _ -> []
 
@@ -434,7 +436,7 @@ class crestInstrumentVisitor f =
   and instrumentCast : typ -> typ -> instr list = fun t_from t_to ->
     let t_from = unrollType t_from in
     let t_to = unrollType t_to in
-    let t = { Type.argument_types = [t_from]; result_type = t_to } in 
+    let t = { Type.argument_types = [t_from]; result_type = t_to } in
     match t_from, t_to with
         (* Pointers are cast to ints for comparisons:
            if ((unsigned long )hint != (unsigned long )((void * )0))  *)
@@ -443,7 +445,7 @@ class crestInstrumentVisitor f =
       | _, TPtr _ -> [mkApply (Sym.CastToPtr t)]
         (*
           clState.end = CLIENT;
-            translates to 
+            translates to
           clState.end = (enum protEnd )0;
         *)
       | _, t_to   -> [mkApply (Sym.CastToOther t)]
@@ -454,130 +456,130 @@ class crestInstrumentVisitor f =
   (*
    * Instrument an expression.
    *)
-  and instrumentExpr e = 
+  and instrumentExpr e =
     match e with
-      | Const c -> 
+      | Const c ->
           instrumentConst c
-  
+
       | Lval lv ->
           checkHasAddress lv;
           (instrumentLval lv) @ [mkLoadMem ()]
-  
+
       | SizeOf t ->
           instrumentSizeOf t @ [mkBS (isSigned !kindOfSizeOf) (bytesSizeOfInt !kindOfSizeOf)]
-          
+
       | SizeOfE e ->
           instrumentSizeOf (typeOf e) @ [mkBS (isSigned !kindOfSizeOf) (bytesSizeOfInt !kindOfSizeOf)]
-  
+
       | SizeOfStr s ->
           [mkLoadInt (integer (String.length s))] @ [mkBS (isSigned !kindOfSizeOf) (bytesSizeOfInt !kindOfSizeOf)]
-  
+
       | UnOp (op, e, t) ->
         let argument_types = [unrollType (typeOf e)] in
         let result_type = unrollType t in
         let sym = Sym.UnOp (op, {Type. argument_types; result_type}) in
         (instrumentExpr e) @ [mkApply sym; mkDone ()]
-  
+
       | BinOp (op, e1, e2, t) ->
         (* CIL doesn't do this cast for us.
            For now we assume that IULong is the right type. *)
-        let e2 = 
+        let e2 =
           match op with
           | IndexPI | PlusPI -> mkCast ~e:e2 ~newt:(TInt (IULong, []))
-          | _ -> e2  
+          | _ -> e2
         in
         let argument_types = [unrollType (typeOf e1); unrollType (typeOf e2)] in
         let result_type = unrollType t in
         let sym = Sym.BinOp (op, {Type. argument_types; result_type}) in
         (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply sym; mkDone ()]
-  
+
       | CastE (t, e) ->
         (* Unroll to see through typedefs *)
         begin match unrollType t with
           | TPtr (t', _) when isZero e -> [mkLoadStackPtr "nullPtr"] @ (setPtrStep t')
           | TPtr (t', _) -> instrumentExpr e @ instrumentCast (typeOf e) t @ (setPtrStep t') @ [mkDone ()]
           | _ ->            instrumentExpr e @ instrumentCast (typeOf e) t @ [mkDone ()]
-            
+
           (* else if isPointerType t && not (isPointerType (typeOf e)) then
             E.s (error "instrumentExpr: cast to pointer of non-zero expression") *)
         end
- 
+
       | AddrOf lv ->
           (instrumentLval lv)
-          
+
       | StartOf lv ->
           (instrumentLval (addOffsetLval (Index (zero, NoOffset)) lv))
-  
+
       | (AlignOf _ | AlignOfE _) -> E.s (error "instrumentExpr: __alignof_ not supported")
 
   and instrumentAssignment : lval -> exp -> instr list = fun lv e ->
     (instrumentExpr e) @ (instrumentLval lv) @ [mkStore ()]
 
-  and instrumentInit : varinfo -> init -> instr list = fun v init -> 
+  and instrumentInit : varinfo -> init -> instr list = fun v init ->
     let rec instr : lval -> init -> instr list = fun lv -> function
       | SingleInit e -> instrumentAssignment lv e
       | CompoundInit (_, inits) -> concat (map (function (o, i) -> instr (addOffsetLval o lv) i) inits)
     in
-    instr (Var v, NoOffset) init 
+    instr (Var v, NoOffset) init
 
   and instrumentResult : typ -> string -> exp list -> instr list = fun t fname args ->
 	  match t with
     | TVoid _ -> [mkClear (length args)]
 	  | TPtr (t, _) -> [mkClear (length args); mkLoadStackPtr (fname ^ "()"); mkNondet ()] @ (setPtrStep t)
-	  | _ -> [mkApply (Sym.Fun (fname ^ "()", length args)); mkNondet ()] 
-  in 
+	  | _ -> [mkApply (Sym.Fun (fname ^ "()", length args)); mkNondet ()]
+  in
 
-  (* 
+  (*
     A function wrapper.
-    
+
     The reason we can't just intercept at the call site is that this could be called through
     a pointer.
   *)
   let opaqueWrapper : varinfo -> global list = fun v ->
-    
+
     (* in calls to vararg funs we don't put parameters on stack *)
     if isVarargFunType v.vtype then []
 	  else if StrSet.mem v.vname !opaqueWrappers then []
-	  else 
+	  else
 	  begin
 	    opaqueWrappers := StrSet.add v.vname !opaqueWrappers;
-    
+
 	    let nameFormal : varinfo -> varinfo = fun v ->
 	      if v.vname = "" then v.vname <- "__crest_tmp" ^ (string_of_int (getNewId ()));
 	      v
 	    in
-	
+
 	    let v' = opaque v in
 		  let f = emptyFunction "" in
 	    f.svar <- v';
 	    setFunctionTypeMakeFormals f (typeOfLval (Var v', NoOffset));
 	    setFormals f (map nameFormal f.sformals);
-	
+
 	    let returnType = funReturnType v'.vtype in
 	    let args = map (fun v -> Lval (Var v, NoOffset)) f.sformals in
-	     
-	    let (call, returnInstrumentation, returnInstruction) = 
-	      if isVoidType returnType then 
+
+	    let (call, returnInstrumentation, returnInstruction) =
+	      if isVoidType returnType then
 	        (Call (None, Lval (Var v, NoOffset), args, locUnknown),
            [mkReturn 1],
            [])
 	      else
 	        let ret = makeLocalVar f "__crest_ret" returnType in
 	        (Call (Some (Var ret, NoOffset), Lval (Var v, NoOffset), args, locUnknown),
-           [mkReturn 1], 
+           [mkReturn 1],
 	         [Return (Some (Lval (Var ret, NoOffset)), locUnknown)])
 	    in
-	
+
 	    let opaqueResult = instrumentResult returnType v.vname args in
-	    let body = [Instr ([mkCallOpaque v (List.length f.sformals)] 
-                  @ opaqueResult @ [mkMute (); call; mkUnmute ()] @ returnInstrumentation)] 
+	    let body = [Instr ([mkCallOpaque v (List.length f.sformals)]
+                  @ opaqueResult @ [mkMute (); call; mkUnmute ()] @ returnInstrumentation)]
                  @ returnInstruction in
-	    
+
 		  f.sbody.bstmts <- map mkStmt body;
 		  [GFun (f, locUnknown)]
     end
   in
-  
+
 object (self)
   inherit nopCilVisitor
 
@@ -589,19 +591,20 @@ object (self)
       | If (e, b1, b2, l) ->
         self#queueInstr [mkLocation l];
         self#queueInstr (instrumentExpr e) ;
+        self#queueInstr [mkTruth ()] ;
         prependToBlock [mkBranch 1] b1 ;
         prependToBlock [mkBranch 0] b2 ;
-        DoChildren 
+        DoChildren
 
       | Return (Some e, l) ->
           self#queueInstr [mkLocation l];
           self#queueInstr (instrumentExpr e) ;
           self#queueInstr [mkReturn 0];
           (*
-            (* 
+            (*
               OLD: This is for the case we are doing custom return - some overhead, but can be simplified in the static tool
-              NEW: The code for the custom return should deal with setting the length. This will eliminate calling SetLen on 
-                a value twice.   
+              NEW: The code for the custom return should deal with setting the length. This will eliminate calling SetLen on
+                a value twice.
             *)
           self#queueInstr (setLen (typeOf e));
           *)
@@ -626,24 +629,24 @@ object (self)
           SkipChildren
 
       (* Don't instrument calls to instrumentation functions themselves. *)
-      | Call (_, Lval (Var f, NoOffset), _, _) when shouldSkipFunction f -> 
+      | Call (_, Lval (Var f, NoOffset), _, _) when shouldSkipFunction f ->
         SkipChildren
 
       | Call (ret, Lval f, args, l) ->
 
         let t = typeOfLval f in
-        let call = 
+        let call =
           if isVarargFunType t then
-            [mkMute(); i; mkUnmute ()] @ instrumentResult (funReturnType t) "vararg_result" args 
-          else 
+            [mkMute(); i; mkUnmute ()] @ instrumentResult (funReturnType t) "vararg_result" args
+          else
             [i]
         in
-        
+
 	      let assignRet = match ret with
 	       | Some lv ->
 	         checkHasAddress lv;
 	         (instrumentLval lv) @ [mkStore ()]
-	       | _ -> 
+	       | _ ->
 	         if isVoidFunType t then [] else [mkClear 1]
         in
         ChangeTo ([mkLocation l] @ (concatMap instrumentExpr args) @ call @ assignRet)
@@ -663,8 +666,8 @@ object (self)
       let instParam v = (instrumentLval (Var v, NoOffset)) @ [mkStore ()] in
       let (_, _, isVarArgs, _) = splitFunctionType f.svar.vtype in
         if (not isVarArgs) then
-          iter (flip prependToBlock f.sbody) (List.map instParam f.sformals) 
-        else 
+          iter (flip prependToBlock f.sbody) (List.map instParam f.sformals)
+        else
           E.s (error "varargs not supported, each vararg function must be declared opaque, f: %s\n" f.svar.vname);
         prependToBlock [mkCall f.svar (List.length f.sformals)] f.sbody;
         DoChildren
@@ -672,11 +675,11 @@ object (self)
 
   method vglob = function
     | GVar (v, {init = i}, loc) as g when not (isOpaque v) && not (v.vstorage = Extern) ->
-      
+
       (*
-      ignore (Pretty.printf "crestifying global %a\n" (printGlobal plainCilPrinter) g);  
+      ignore (Pretty.printf "crestifying global %a\n" (printGlobal plainCilPrinter) g);
       *)
-      
+
       markCrestified v;
       let f = emptyFunction ("__crest_" ^ v.vname ^ "_init") in
       let initialised = makeGlobalVar ("__crest_" ^ v.vname ^ "_initialised") boolType in
@@ -685,38 +688,38 @@ object (self)
         | None        -> FI []
       in
       let body =
-        [mkStmtOneInstr (mkCall f.svar (List.length f.sformals))] 
+        [mkStmtOneInstr (mkCall f.svar (List.length f.sformals))]
         @
-        cStmts 
-            "if(!initialised) {initialised = 1; {%I:doInit}}" 
+        cStmts
+            "if(!initialised) {initialised = 1; {%I:doInit}}"
             (fun n t -> makeTempVar f ~name:n t)
             loc
-            [ ("initialised", Fv initialised); ("doInit", doInit) ] 
+            [ ("initialised", Fv initialised); ("doInit", doInit) ]
         @
         [mkStmtOneInstr (mkReturn 1)]
       in
       f.sbody.bstmts <- body;
-      
+
        (* Sometimes a global is defined in a header without extern, like in rergress.h in cryptokix.
-          I don't really know how that is valid C. 
+          I don't really know how that is valid C.
           This usually correlated with giving the global no declaration and no initialisation, so
           we choose to make the function static to prevent multiple definition errors.
        *)
       if i = None then
-      begin 
-        (* 
+      begin
+        (*
 	      f.svar.vstorage <- Static;
 	      initialised.vstorage <- Static;
         *)
         E.s (error "globals without initialisers must be declared opaque: %a\n" d_global g);
       end;
-        
+
       ChangeTo [g; GVar (initialised, {init = Some (SingleInit (integer 0))}, loc); GFun (f, loc)]
 
     | GFun (f, loc) as g ->
       (* ignore (Pretty.printf "visiting function definition %a\n" (printGlobal defaultCilPrinter) g); *)
       (* FIXME: why are functions for which we introduce an opaque wrapper considered crestified? *)
-      (* FIXME: looks like the svar here is never static? *) 
+      (* FIXME: looks like the svar here is never static? *)
       markCrestified f.svar;
       if needsOpaqueWrapper f.svar then
       begin
@@ -738,8 +741,8 @@ object (self)
     | GVarDecl (v, loc) as g when not (isOpaque v) && not (isFunctionType v.vtype) ->
       let f = initFunc v in
       ChangeTo [g; GVarDecl (f, loc)]
-                  
-    | _ -> DoChildren 
+
+    | _ -> DoChildren
 
 end
 
@@ -747,8 +750,8 @@ class opaqueReplaceVisitorClass = object
   inherit nopCilVisitor
 
   method vvrbl : varinfo -> varinfo visitAction = function
-      (* 
-        This replaces calls to all opaque f() by calls to __crest_f_opaque(), 
+      (*
+        This replaces calls to all opaque f() by calls to __crest_f_opaque(),
         the definition of which is created by opaqueWrapper.
       *)
     | v when needsOpaqueWrapper v -> ChangeTo (opaque v)
@@ -777,11 +780,11 @@ let feature : featureDescr =
     fd_enabled = ref false;
     fd_description = "instrument a program for symbolic execution";
     fd_extraopt = [
-      ("--root", 
-          Arg.String setRootPath, 
+      ("--root",
+          Arg.String setRootPath,
         " The root folder of the compilation.");
       ("--csec-config", Arg.String (fun s -> Mark.config := s),
-        " The csec instrumentation configuration file.");        
+        " The csec instrumentation configuration file.");
     ];
     fd_post_check = true;
     fd_doit =
@@ -800,7 +803,7 @@ let feature : featureDescr =
 	        (* Finally instrument the program. *)
 	        visitCilFile (new opaqueReplaceVisitorClass) f;
 	        let instVisitor = new crestInstrumentVisitor f in
-	           visitCilFile (instVisitor :> cilVisitor) f; 
+	           visitCilFile (instVisitor :> cilVisitor) f;
 	        (* Add a function to initialize the instrumentation library. *)
 	        addCrestInitializer f ;
 	        writeInfo f

@@ -26,11 +26,15 @@ extern size_t encrypt_len_proxy(unsigned char * key, size_t keylen, unsigned cha
   size_t ret = encrypt_len(key, keylen, in, inlen);
   unmute();
 
-  // No hint, to avoid term duplication.
+  // No hint here because encrypt_len will be opaque for the solver,
+  // so we should keep its contents in.
   load_buf(in, inlen, "");
   SymN("encrypt_len", 1);
   assume_intype("bitstring");
   assume_len(sizeof(ret));
+  // Give a hint to make sure the function application is exposed to CV,
+  // so that we can communicate length-regularity properties.
+  Hint("len");
 
   store_buf(&ret);
 
@@ -242,9 +246,9 @@ unsigned char * get_xhost_proxy(size_t * len, char side)
 }
 
 bool check_key_proxy(const unsigned char * host, size_t host_len,
-               const unsigned char * key, size_t key_len,
-               const unsigned char * sig, size_t sig_len,
-               const unsigned char * sigkey, size_t sigkey_len)
+                     const unsigned char * key, size_t key_len,
+                     const unsigned char * sig, size_t sig_len,
+                     const unsigned char * sigkey, size_t sigkey_len)
 {
   mute();
   bool ret = check_key(host, host_len, key, key_len, sig, sig_len, sigkey, sigkey_len);
@@ -256,6 +260,7 @@ bool check_key_proxy(const unsigned char * host, size_t host_len,
   load_buf(sigkey, sigkey_len, "sigkey");
 
   SymN("check_key", 4);
+  SymN("bs_of_truth[1]", 1);
   assume_len(sizeof(ret));
 
   store_buf(&ret);

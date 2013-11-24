@@ -104,9 +104,9 @@ int main(int argc, char ** argv)
   m1_all = malloc(m1_all_len);
   memcpy(m1_all, "encr", 4);
   m1_e_len =
-      encrypt(xkey, xkey_len, m1,
-              m1_len,
-              m1_all + sizeof(m1_e_len) + 4);
+    encrypt(xkey, xkey_len, m1,
+            m1_len,
+            m1_all + sizeof(m1_e_len) + 4);
   m1_all_len = m1_e_len + sizeof(size_t) + 4;
   * (size_t *) (m1_all + 4) = m1_e_len;
 

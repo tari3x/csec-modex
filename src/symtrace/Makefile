@@ -27,7 +27,7 @@ COMMON_CMX = $(COMMON_CMO:.cmo=.cmx)
 #$(addprefix -I $(CIL_ROOT), /src /src/frontc $(CIL_OBJDIR))
 
 # pitrace cvtrace
-all: imltrace cvtrace
+all: imltrace cvtrace run_tests
 htdoc: doc
 
 imltrace: $(COMMON_CMX) imltrace.cmx
@@ -37,6 +37,9 @@ pitrace: $(COMMON_CMX) transform.cmx pitrace.cmx
 	$(OCAMLOPT) $(OCAML_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
 cvtrace: $(CV_LIB) $(COMMON_CMX) transform.cmx cvtrace.cmx
+	$(OCAMLOPT) $(OCAML_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
+
+run_tests: $(CV_LIB) $(COMMON_CMX) transform.cmx run_tests.cmx
 	$(OCAMLOPT) $(OCAML_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
 top: $(COMMON_CMO)
@@ -70,4 +73,3 @@ clean:
 	ocamldep $(OCAML_INC) *.mli *.ml > .depend
 
 include .depend
-	

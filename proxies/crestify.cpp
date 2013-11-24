@@ -354,6 +354,14 @@ void __CrestDone()
   *out << "Done" << endl;
 }
 
+void __CrestTruth()
+{
+  if(muted) return;
+
+  *out << "Truth" << endl;
+}
+
+
 //////////////////////////////////////////////////////////////////
 // Interface functions, to be called only from instrumented code
 //////////////////////////////////////////////////////////////////

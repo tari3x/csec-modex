@@ -23,7 +23,7 @@ int main(int argc, char ** argv)
   size_t pkey_len, skey_len, xkey_len;
 
   unsigned char * m1, * m1_e;
-  unsigned char * xNa;
+  unsigned char * xNa, * xNb;
   size_t m1_len, m1_e_len;
   size_t m1_l;
 
@@ -92,8 +92,6 @@ int main(int argc, char ** argv)
     exit(1);
   }
 
-  // using SIZE_NONCE instead of m1_l here doesn't work because our heuristic
-  // would then classify the fact as boring
   xhost_len = m1_len - (sizeof(size_t) + m1_l + 4);
   xhost = m1 + sizeof(size_t) + m1_l + 4;
 
@@ -203,7 +201,10 @@ int main(int argc, char ** argv)
     exit(1);
   }
 
-  if(memcmp(m3 + 4, Nb, SIZE_NONCE))
+  xNb = m3 + 4;
+  typehint(xNb, SIZE_NONCE, "fixed_20_nonce");
+
+  if(memcmp(xNb, Nb, SIZE_NONCE))
   {
     fprintf(stderr, "xNb in m3 doesn't match Nb\n");
     exit(1);
@@ -232,4 +233,4 @@ int main(int argc, char ** argv)
 
   return 0;
 }
- 
+

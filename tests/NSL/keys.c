@@ -18,7 +18,7 @@ unsigned char * lookup_xkey(size_t * key_len, const unsigned char * xhost, size_
 
   // check that sig binds host to key
   if(!check_key(xhost, xhost_len, key, *key_len, sig, sig_len, sigkey, sigkey_len))
-      fail("could not check that key belongs to host");
+    fail("could not check that key belongs to host");
 
   return key;
 }
