@@ -211,7 +211,11 @@ let warn_on_failed_conditions b =
 
 let debug_expr ?(raise_by = 0) s e =
   if debug_enabled () then begin
-    prerr_string (decorate_debug s); flush stderr; Yices.pp_expr e; prerr_endline ""; flush stderr;
+    prerr_string (decorate_debug s);
+    flush stderr;
+    Yices.pp_expr e;
+    prerr_endline "";
+    flush stderr;
   end;
 
 (*************************************************)
@@ -369,6 +373,9 @@ let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
           | Ptr _ as e ->
             [is_defined e], Sym (Ptr_len, [])
 
+          | Struct (_, _, l, _) as e ->
+            [is_defined e], collect l
+
           | Annotation (a, e) ->
             [], collect_even_if_simplifying (Len e)
 
@@ -381,7 +388,7 @@ let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
             fail "Unexpected len argument: %s" (E.to_string e_top)
 
           | Sym ((Replicate | Cmp | Ztp | Ztp_safe | Undef _ | Fun _ | Nondet_fun _ | Cast _), _)
-          | Int _ | Var _ | Unknown | Struct _ | Array _ as e ->
+          | Int _ | Var _ | Unknown | Array _ as e ->
             match mode with
             | `Simplify ->
               [], e_top

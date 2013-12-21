@@ -1,7 +1,7 @@
 (*
-    Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
-    This file is distributed as part of csec-tools under a BSD license.
-    See LICENSE file for copyright notice.
+  Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
+  This file is distributed as part of csec-tools under a BSD license.
+  See LICENSE file for copyright notice.
 *)
 
 open Common
@@ -42,29 +42,29 @@ module Type: sig
     *)
     (* TODO: use polymorphic variants to prove to the compiler that Cast_to_int may only contain Bs_int *)
     type t =
-      | Bitstringbot               (** All strings and bottom. *)
-      | Bitstring                  (** All machine-representable strings *)
-      | Fixed of int               (** All strings of a given length *)
-      | Bounded of int             (** All strings up to a given length *)
-      | Bool
-      | Int
-      | Ptr
-      | Bs_int of Int_type.t
-      | Named of string * t option (** A named type with an optional type definition.
-                                       Named (_, None) may not contain bottom. *)
+    | Bitstringbot               (** All strings and bottom. *)
+    | Bitstring                  (** All machine-representable strings *)
+    | Fixed of int               (** All strings of a given length *)
+    | Bounded of int             (** All strings up to a given length *)
+    | Bool
+    | Int
+    | Ptr
+    | Bs_int of Int_type.t
+    | Named of string * t option (** A named type with an optional type definition.
+                                     Named (_, None) may not contain bottom. *)
   end
 
   type t = T.t =
-      | Bitstringbot               (** All strings and bottom. *)
-      | Bitstring                  (** All machine-representable strings *)
-      | Fixed of int               (** All strings of a given length *)
-      | Bounded of int             (** All strings up to a given length *)
-      | Bool
-      | Int
-      | Ptr
-      | Bs_int of T.Int_type.t
-      | Named of string * t option (** A named type with an optional type definition.
-                                       Named (_, None) may not contain bottom. *)
+           | Bitstringbot               (** All strings and bottom. *)
+           | Bitstring                  (** All machine-representable strings *)
+           | Fixed of int               (** All strings of a given length *)
+           | Bounded of int             (** All strings up to a given length *)
+           | Bool
+           | Int
+           | Ptr
+           | Bs_int of T.Int_type.t
+           | Named of string * t option (** A named type with an optional type definition.
+                                            Named (_, None) may not contain bottom. *)
 
   val of_string: string -> t
 
@@ -95,48 +95,48 @@ module Sym: sig
     module T: sig
       (* TODO: import these directly from CIL *)
       type op =
-          Neg                                 (** Unary minus *)
-        | BNot                                (** Bitwise complement (~) *)
-        | LNot                                (** Logical Not (!) *)
+        Neg                                 (** Unary minus *)
+      | BNot                                (** Bitwise complement (~) *)
+      | LNot                                (** Logical Not (!) *)
 
-        | Plus_a                               (** arithmetic + *)
-          (* We don't use Index_pI *)
-        | Plus_pI                              (** pointer + integer *)
+      | Plus_a                               (** arithmetic + *)
+        (* We don't use Index_pI *)
+      | Plus_PI                              (** pointer + integer *)
 
-        | Minus_a                              (** arithmetic - *)
-        | Minus_pI                             (** pointer - integer *)
-        | Minus_pP                             (** pointer - pointer *)
-        | Mult                                (** * *)
-        | Div                                 (** / *)
-        | Mod                                 (** % *)
-        | Shiftlt                             (** shift left *)
-        | Shiftrt                             (** shift right *)
+      | Minus_a                              (** arithmetic - *)
+      | Minus_PI                             (** pointer - integer *)
+      | Minus_PP                             (** pointer - pointer *)
+      | Mult                                (** * *)
+      | Div                                 (** / *)
+      | Mod                                 (** % *)
+      | Shiftlt                             (** shift left *)
+      | Shiftrt                             (** shift right *)
 
-        | Lt                                  (** <  (arithmetic comparison) *)
-        | Gt                                  (** >  (arithmetic comparison) *)
-        | Le                                  (** <= (arithmetic comparison) *)
-        | Ge                                  (** >  (arithmetic comparison) *)
-        | Eq                                  (** == (arithmetic comparison) *)
-        | Ne                                  (** != (arithmetic comparison) *)
-        | BAnd                                (** bitwise and *)
-        | BXor                                (** exclusive-or *)
-        | BOr                                 (** inclusive-or *)
+      | Lt                                  (** <  (arithmetic comparison) *)
+      | Gt                                  (** >  (arithmetic comparison) *)
+      | Le                                  (** <= (arithmetic comparison) *)
+      | Ge                                  (** >  (arithmetic comparison) *)
+      | Eq                                  (** == (arithmetic comparison) *)
+      | Ne                                  (** != (arithmetic comparison) *)
+      | BAnd                                (** bitwise and *)
+      | BXor                                (** exclusive-or *)
+      | BOr                                 (** inclusive-or *)
 
-        | LAnd                                (** logical and. Unlike other
-                                               * expressions this one does not
-                                               * always evaluate both operands. If
-                                               * you want to use these, you must
-                                               * set {!Cil.use_logical_operators}. *)
-        | LOr                                 (** logical or. Unlike other
-                                               * expressions this one does not
-                                               * always evaluate both operands.  If
-                                               * you want to use these, you must
-                                               * set {!Cil.use_logical_operators}. *)
+      | LAnd                                (** logical and. Unlike other
+                                             * expressions this one does not
+                                             * always evaluate both operands. If
+                                             * you want to use these, you must
+                                             * set {!Cil.use_logical_operators}. *)
+      | LOr                                 (** logical or. Unlike other
+                                             * expressions this one does not
+                                             * always evaluate both operands.  If
+                                             * you want to use these, you must
+                                             * set {!Cil.use_logical_operators}. *)
 
-          (* These are added by us, they are not defined as ops in CIL *)
-        | Cast_to_int
-        | Cast_to_ptr
-        | Cast_to_other
+        (* These are added by us, they are not defined as ops in CIL *)
+      | Cast_to_int
+      | Cast_to_ptr
+      | Cast_to_other
     end
 
     type t = T.op
@@ -222,7 +222,7 @@ module Sym: sig
   type t = T.sym
 
   (**
-    Binary or integer arithmetic opeator. Cast not included.
+     Binary or integer arithmetic opeator. Cast not included.
   *)
   val is_arithmetic: t -> bool
   val is_binary_arithmetic: t -> bool
@@ -232,7 +232,7 @@ module Sym: sig
   val is_logical: t -> bool
 
   (**
-    May return bottom even if all arguments are not bottom.
+     May return bottom even if all arguments are not bottom.
   *)
   val may_fail: t -> bool
   val never_fails: t -> bool
@@ -286,31 +286,32 @@ module Exp: sig
 
     (** Not the same as lhost in CIL *)
     and base =
-      | Stack of string
-        (** (Old) Name and unique id of variable. Note that this way variables from different calls of the same function will be mapped
-            to the same base, but not variables from different functions. *)
-      | Heap of id * len
-      | Abs of intval
-         (** An absolute pointer value to deal with cases like:
-            {[
-            // signal.h:
-            typedef void ( *__sighandler_t) (int);
-            // signum.h:
-            /* Fake signal functions.  */
-            #define SIG_ERR ((__sighandler_t) -1)       /* Error return.  */
-            #define SIG_DFL ((__sighandler_t) 0)        /* Default action.  */
-            #define SIG_IGN ((__sighandler_t) 1)        /* Ignore signal.  */
-            ]}
-         *)
+    | Stack of string
+      (** (Old) Name and unique id of variable. Note that this way variables from
+          different calls of the same function will be mapped to the same base, but not
+          variables from different functions. *)
+    | Heap of id * len
+    | Abs of intval
+    (** An absolute pointer value to deal with cases like:
+        {[
+          // signal.h:
+          typedef void ( *__sighandler_t) (int);
+          // signum.h:
+           /* Fake signal functions.  */
+           #define SIG_ERR ((__sighandler_t) -1)       /* Error return.  */
+           #define SIG_DFL ((__sighandler_t) 0)        /* Default action.  */
+           #define SIG_IGN ((__sighandler_t) 1)        /* Ignore signal.  */
+        ]}
+    *)
 
 
     and offset_val =
-      | Field of string
-      | Attr of string
-      | Index of int (* Not intval, cause ocaml is really clumsy with that - you can't even subtract it easily *)
-        (* For now flat offsets are true integers, unlike in the thesis *)
-      | Flat of len
-        (** Flat offsets always measured in bytes *)
+    | Field of string
+    | Attr of string
+    | Index of int (* Not intval, cause ocaml is really clumsy with that - you can't even subtract it easily *)
+      (* For now flat offsets are true integers, unlike in the thesis *)
+    | Flat of len
+    (** Flat offsets always measured in bytes *)
 
     (** Offset value together with offset step *)
     and offset = offset_val * len
@@ -327,84 +328,93 @@ module Exp: sig
        Int and Len and is necessary to reconstruct the bitstring that they represent,
        but not so for Vars and Syms.
 
-      Do we actually need any width information on vars and syms? It is only used for treating arithmetic expressions
-      in the solver, but then you should just add width information to the arithmetic symbols.
+       Do we actually need any width information on vars and syms? It is only used for treating arithmetic expressions
+       in the solver, but then you should just add width information to the arithmetic symbols.
     *)
 
     (* TODO: use GADTs to enforce well-formedness.
        You would then need to use two different syms, a binary and an integer
-     *)
+    *)
 
     (**
-      The type of symbolic expressions.
-      b exp are expressions that evaluate to bitstrings, i exp evaluate to (mathematical) integers.
+       The type of symbolic expressions.
+       b exp are expressions that evaluate to bitstrings, i exp evaluate to (mathematical) integers.
     *)
     and exp =
-      | Int of intval
-        (** A concrete integer of given width. *)
+    | Int of intval
+      (** A concrete integer of given width. *)
 
-      | Char of char
-        (** An integer with given ascii value. *)
+    | Char of char
+      (** An integer with given ascii value. *)
 
-        (* FIXME: have a separate case for literal strings *)
-      | String of bitstring
-        (** A concrete bitstring in hex representation: each byte corresponds to two characters. *)
+      (* FIXME: have a separate case for literal strings *)
+    | String of bitstring
+      (** A concrete bitstring in hex representation: each byte corresponds to two characters. *)
 
-      | Var of var
+    | Var of var
 
-      | Sym of sym * exp list
-        (** [Sym s es] is an application of a symbolic function [s(e1, e2, ...)].
-          *)
+    | Sym of sym * exp list
+      (** [Sym s es] is an application of a symbolic function [s(e1, e2, ...)].
+      *)
 
-      | Range of exp * len * len
-        (** A substring of a given expression with given start position and length.
-            A position is a point between two characters or at the beginning or end of the string.
-            Given a string of length [l], the first position is [0], the last is [l].
-         *)
+    | Range of exp * len * len
+      (** A substring of a given expression with given start position and length.
+          A position is a point between two characters or at the beginning or end of the string.
+          Given a string of length [l], the first position is [0], the last is [l].
+      *)
 
-      | Concat of exp list
+    | Concat of exp list
 
-      | Len of exp
+    | Len of exp
 
-      | BS of exp * Int_type.t
+    | BS of exp * Int_type.t
 
-      | Val of exp * Int_type.t
+    | Val of exp * Int_type.t
 
-      | Struct of (exp Str_map.t) * (exp Str_map.t) * len * exp
-        (** The first component are the real fields, the second are the crypto attributes.
-            The last component is the value of underlying memory at the time the struct has been created.
-            This will get removed as soon as I transition to static implementation. *)
+    | Struct of (exp Str_map.t) * (exp Str_map.t) * len * exp
+      (** The first component are the real fields, the second are the crypto attributes.
+          The last component is the value of underlying memory at the time the struct
+          has been created.  This will get removed as soon as I transition to static
+          implementation. *)
 
-      | Array of (exp Int_map.t) * len * len
-        (** Contains total length and element length.
+    | Array of (exp Int_map.t) * len * len
+      (** Contains total length and element length.
 
-            A good alternative is to use native array, but it only makes sense if I know the number of elements in advance.
-            This can be done, but I don't see overwhelming advantages and I'm too lazy to change right now,
-            thus sticking to a sparse representation.
+          A good alternative is to use native array, but it only makes sense if I know
+          the number of elements in advance.  This can be done, but I don't see
+          overwhelming advantages and I'm too lazy to change right now, thus sticking to
+          a sparse representation.
 
-            At some point might have to use [Map] here, if there is need to generalise indices to arbitrary expressions.
-         *)
-        (* FIXME: find out how to use Map here *)
+          At some point might have to use [Map] here, if there is need to generalize
+          indices to arbitrary expressions.  *)
+      (* FIXME: find out how to use Map here *)
 
-      | Ptr of base * pos
-        (** Invariants (being reviewed):
-            - The offset list is never empty.
-            - The sequence of offset steps is decreasing, except that step may be [Unknown] for attribute offsets.
-            - An attribute offset always comes last.
-            - The first field or context offset is preceded by an index offset.
-            - A field, context, or index offset is never preceded by a flat offset.
-        *)
+    | Ptr of base * pos
+      (** Invariants (being reviewed):
 
-      | Unknown
-        (** Used in length context only, where the value is not known or is not relevant. *)
-        (* FIXME: shouldn't unknown be given an index to prevent it being equal to other unknowns? *)
+          - The offset list is never empty.
 
-      | Annotation of annotation * exp
+          - The sequence of offset steps is decreasing, except that step may be
+          [Unknown] for attribute offsets.
+
+          - An attribute offset always comes last.
+
+          - The first field or context offset is preceded by an index offset.
+
+          - A field, context, or index offset is never preceded by a flat offset.
+      *)
+
+    | Unknown
+      (** Used in length context only, where the value is not known or is not
+          relevant. *)
+      (* FIXME: shouldn't unknown be given an index to prevent it being equal to other
+         unknowns? *)
+    | Annotation of annotation * exp
 
     and annotation =
-      | Type_hint of imltype
-      | Name of string
-      (* | Width of width *)
+    | Type_hint of imltype
+    | Name of string
+  (* | Width of width *)
   end
 
   open T
@@ -420,12 +430,12 @@ module Exp: sig
   (*************************************************)
 
   (**
-      Does not include lengths for non-range expressions.
+     Does not include lengths for non-range expressions.
   *)
   val children: t -> t list
 
   (**
-      Not going into lengths for non-range expressions.
+     Not going into lengths for non-range expressions.
   *)
   val descend: (t -> t) -> t -> t
 
@@ -434,8 +444,8 @@ module Exp: sig
   (*************************************************)
 
   (**
-    If [typecheck t e] is true and [e] does not evaluate to
-    bottom then [e] is of type [t].
+     If [typecheck t e] is true and [e] does not evaluate to
+     bottom then [e] is of type [t].
   *)
   val typecheck: Type.t -> exp -> unit
   val itype_exn: exp -> Int_type.t
@@ -470,7 +480,7 @@ module Exp: sig
 
   (*
   (** Arbitrary for now *)
-  val max_len : exp
+    val max_len : exp
   *)
 
   val is_concrete : exp -> bool
@@ -486,21 +496,21 @@ module Exp: sig
   val refcount: var -> t -> int
 
   (**
-    The first list must contain [Var] expressions only.
+     The first list must contain [Var] expressions only.
   *)
   val subst: var list -> exp list -> exp -> exp
   val subst_v: var list -> var list -> exp -> exp
   (*
-  val replace: exp list -> exp list -> exp -> exp
+    val replace: exp list -> exp list -> exp -> exp
   *)
 
   val remove_annotations: t -> t
 
   (**
-    The truth function from the thesis that takes C boolean
-    expressions and converts them to expressions of type Bool.
-    In particular, all boolean C operators (LNot, LAnd, ...) are
-    replaced by "proper" boolean operators (Not, And, ...).
+     The truth function from the thesis that takes C boolean
+     expressions and converts them to expressions of type Bool.
+     In particular, all boolean C operators (LNot, LAnd, ...) are
+     replaced by "proper" boolean operators (Not, And, ...).
   *)
   val truth: t -> t
 
@@ -511,7 +521,7 @@ module Exp: sig
   (*************************************************)
 
   (*
-  val clip_enabled: bool ref
+    val clip_enabled: bool ref
   *)
 
   val to_string: t -> string
@@ -528,9 +538,9 @@ module Pat: sig
 
   module T: sig
     type pat =
-      | VPat of var
-      | FPat of sym * pat list
-      | Underscore
+    | VPat of var
+    | FPat of sym * pat list
+    | Underscore
   end
 
   type t = T.pat
@@ -545,25 +555,25 @@ module Stmt: sig
 
   module T: sig
     type stmt =
-      | Let of pat * exp
-      | Aux_test of exp
-        (**
-          [Test e; P = if e then P else 0]
+    | Let of pat * exp
+    | Aux_test of exp
+      (**
+         [Test e; P = if e then P else 0]
 
-          [Test] is never auxiliary after symex postprocessing.
-        *)
-      | Test of exp
-        (**
-          [Test_eq] is never auxiliary after symex postprocessing.
-        *)
-      | Test_eq of exp * exp
-      | Assume of exp
-      | In of var list
-      | Out of exp list
-      | New of var * imltype
-      | Event of string * exp list
-      | Yield
-      | Comment of string
+         [Test] is never auxiliary after symex postprocessing.
+      *)
+    | Test of exp
+      (**
+         [Test_eq] is never auxiliary after symex postprocessing.
+      *)
+    | Test_eq of exp * exp
+    | Assume of exp
+    | In of var list
+    | Out of exp list
+    | New of var * imltype
+    | Event of string * exp list
+    | Yield
+    | Comment of string
   end
 
   type t = T.stmt
@@ -599,7 +609,7 @@ val free_vars: t -> var list
 val to_string: t -> string
 
 (**
-  Fails on capture.
+   Fails on capture.
 *)
 val subst: var list -> exp list -> t -> t
 val subst_v: var list -> var list -> t -> t

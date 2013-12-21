@@ -253,11 +253,11 @@ funlist: funlist_compile funlist_run
 # Make sure to call leaves first, as it gives better diagnostics.
 funlist_compile: callgraph.out globs.out
 	@echo "==== Reachable functions not proxied, opaque or crestified:"
-	@$(CSEC_ROOT)/src/CIL/leaves
+	@$(CSEC_ROOT)/src/CIL/leaves.exe
 	@echo "==== Bad pairs:"
-	@$(CSEC_ROOT)/src/CIL/badpairs
+	@$(CSEC_ROOT)/src/CIL/badpairs.exe
 	@echo "==== Unreachable boring functions:"
-	@$(CSEC_ROOT)/src/CIL/unreachable $(CSEC_CONF)
+	@$(CSEC_ROOT)/src/CIL/unreachable.exe $(CSEC_CONF)
 	@#echo "==== Instrumented boring functions:"
 	@#comm -12 boring.out crestified.out
 	@#echo "==== Unreachable boring functions:"

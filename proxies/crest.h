@@ -213,7 +213,6 @@ EXTERN void __CrestTruth() __SKIP;
 // Helpers, to be called only from instrumented code
 ///////////////////////////////////////////////////////
 
-EXTERN void CustomReturn();
 EXTERN void LoadBuf(const unsigned char * buf, size_t len);
 EXTERN void LoadAll(const unsigned char * buf);
 EXTERN void LoadAttr(const void * ctx, const char * attr);

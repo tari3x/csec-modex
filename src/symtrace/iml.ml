@@ -182,11 +182,11 @@ module Sym = struct
         | LNot                                (** Logical Not (!) *)
 
         | Plus_a                               (** arithmetic + *)
-        | Plus_pI                              (** pointer + integer *)
+        | Plus_PI                              (** pointer + integer *)
 
         | Minus_a                              (** arithmetic - *)
-        | Minus_pI                             (** pointer - integer *)
-        | Minus_pP                             (** pointer - pointer *)
+        | Minus_PI                             (** pointer - integer *)
+        | Minus_PP                             (** pointer - pointer *)
         | Mult                                (** * *)
         | Div                                 (** / *)
         | Mod                                 (** % *)
@@ -236,9 +236,9 @@ module Sym = struct
       | Lt -> "<"
       | Ge ->  ">="
 
-      | Plus_pI  -> "PlusPI"
-      | Minus_pI -> "MinusPI"
-      | Minus_pP -> "MinusPP"
+      | Plus_PI  -> "PlusPI"
+      | Minus_PI -> "MinusPI"
+      | Minus_PP -> "MinusPP"
 
       | Cast_to_int -> "CastToInt"
       | Cast_to_ptr -> "CastToPtr"
@@ -260,8 +260,8 @@ module Sym = struct
       | "<" -> Lt
       | ">=" -> Ge
 
-      | "PlusPI" -> Plus_pI
-      | "MinusPP" -> Minus_pP
+      | "PlusPI" -> Plus_PI
+      | "MinusPP" -> Minus_PP
       | "CastToInt" -> Cast_to_int
       | "CastToPtr" -> Cast_to_ptr
       | "CastToOther" -> Cast_to_other
@@ -767,6 +767,7 @@ module Exp = struct
   module T = struct
     type len = exp
 
+    (* TODO: use [Abs 0] for NULL pointers. *)
     (** Not the same as lhost in CIL *)
     and base =
       | Stack of string
@@ -1259,7 +1260,6 @@ module Exp = struct
     | Sym (s', _) when s' = s -> true
     | e -> List.exists (contains_sym s) (children e)
 
-
   let rec replace es es' e =
     match List.find_index ((=) e) es with
       | Some i -> List.nth es' i
@@ -1279,6 +1279,7 @@ module Exp = struct
     | Sym (BS_of_truth _, [e]) -> e
     | BS (Int i, _) ->
       if i = 0L then Sym (Not, [Sym (True, [])]) else Sym (True, [])
+    | Ptr _ as p -> Sym (Truth_of_bs, [p])
     | Sym (Op (LAnd, _), es) -> conj (List.map truth es)
     | Sym (Op (LOr, _), es) -> disj (List.map truth es)
     | Sym (Op (LNot, _), [e]) -> Sym (Not, [truth e])

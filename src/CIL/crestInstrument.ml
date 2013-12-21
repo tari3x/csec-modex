@@ -394,7 +394,7 @@ class crestInstrumentVisitor f =
     | CReal  _      -> E.s (error "instrumentConst: reals not supported")
     | CEnum  _      -> E.s (error "instrumentConst: enums temporarily not supported")
 
-  and instrumentLval' (host, offset) =
+  and instrumentLvalNoInit (host, offset) =
 
     let instrumentHost : lhost -> instr list = function
       | Var v -> [mkRef v]
@@ -422,16 +422,20 @@ class crestInstrumentVisitor f =
   and initHost : lhost -> instr list = function
     | Var v when v.vglob && not (isFunctionType v.vtype) ->
       if isOpaque v then
-	      let host = (Var v, NoOffset) in
-	      if isPointerType v.vtype then
-	       [mkLoadStackPtr v.vname] @ setPtrStep v.vtype @ (instrumentLval' host) @ [mkStore ()]
-	      else
-	        [mkApply (Sym.Fun (v.vname, 0))] @ (instrumentLval' host) @ [mkStore ()]
+	let host = (Var v, NoOffset) in
+	if isPointerType v.vtype then
+	  [mkLoadStackPtr v.vname]
+          @ setPtrStep v.vtype
+          @ (instrumentLvalNoInit host)
+          @ [mkStore ()]
+	else
+	  [mkApply (Sym.Fun (v.vname, 0))] @ (instrumentLvalNoInit host) @ [mkStore ()]
       else
         [mkInit v]
     | _ -> []
 
-  and instrumentLval (host, offset) = (initHost host) @ instrumentLval' (host, offset)
+  and instrumentLvalWithInit (host, offset) =
+    initHost host @ instrumentLvalNoInit (host, offset)
 
   and instrumentCast : typ -> typ -> instr list = fun t_from t_to ->
     let t_from = unrollType t_from in
@@ -463,7 +467,7 @@ class crestInstrumentVisitor f =
 
       | Lval lv ->
           checkHasAddress lv;
-          (instrumentLval lv) @ [mkLoadMem ()]
+          (instrumentLvalWithInit lv) @ [mkLoadMem ()]
 
       | SizeOf t ->
           instrumentSizeOf t @ [mkBS (isSigned !kindOfSizeOf) (bytesSizeOfInt !kindOfSizeOf)]
@@ -505,20 +509,28 @@ class crestInstrumentVisitor f =
         end
 
       | AddrOf lv ->
-          (instrumentLval lv)
+          (instrumentLvalWithInit lv)
 
       | StartOf lv ->
-          (instrumentLval (addOffsetLval (Index (zero, NoOffset)) lv))
+          (instrumentLvalWithInit (addOffsetLval (Index (zero, NoOffset)) lv))
 
-      | (AlignOf _ | AlignOfE _) -> E.s (error "instrumentExpr: __alignof_ not supported")
+      | AlignOf _
+      | AlignOfE _
+      | Question _
+      | AddrOfLabel _ ->
+        E.s (error "unsupported expression: %a" d_exp e)
 
-  and instrumentAssignment : lval -> exp -> instr list = fun lv e ->
-    (instrumentExpr e) @ (instrumentLval lv) @ [mkStore ()]
+  and instrumentAssignment ?(do_init = true) lv e =
+    (instrumentExpr e)
+    @ (if do_init then instrumentLvalWithInit lv else instrumentLvalNoInit lv)
+    @ [mkStore ()]
 
   and instrumentInit : varinfo -> init -> instr list = fun v init ->
     let rec instr : lval -> init -> instr list = fun lv -> function
-      | SingleInit e -> instrumentAssignment lv e
-      | CompoundInit (_, inits) -> concat (map (function (o, i) -> instr (addOffsetLval o lv) i) inits)
+      | SingleInit e ->
+        instrumentAssignment ~do_init:false lv e
+      | CompoundInit (_, inits) ->
+        concat (map (function (o, i) -> instr (addOffsetLval o lv) i) inits)
     in
     instr (Var v, NoOffset) init
 
@@ -622,37 +634,37 @@ object (self)
    *)
   method vinst(i) =
     match i with
-      | Set (lv, e, l) ->
-          self#queueInstr [mkLocation l];
-          checkHasAddress lv;
-          self#queueInstr (instrumentAssignment lv e);
-          SkipChildren
+    | Set (lv, e, l) ->
+      self#queueInstr [mkLocation l];
+      checkHasAddress lv;
+      self#queueInstr (instrumentAssignment lv e);
+      SkipChildren
 
       (* Don't instrument calls to instrumentation functions themselves. *)
-      | Call (_, Lval (Var f, NoOffset), _, _) when shouldSkipFunction f ->
-        SkipChildren
+    | Call (_, Lval (Var f, NoOffset), _, _) when shouldSkipFunction f ->
+      SkipChildren
 
-      | Call (ret, Lval f, args, l) ->
+    | Call (ret, Lval f, args, l) ->
 
-        let t = typeOfLval f in
-        let call =
-          if isVarargFunType t then
-            [mkMute(); i; mkUnmute ()] @ instrumentResult (funReturnType t) "vararg_result" args
-          else
-            [i]
-        in
+      let t = typeOfLval f in
+      let call =
+        if isVarargFunType t then
+          [mkMute(); i; mkUnmute ()] @ instrumentResult (funReturnType t) "vararg_result" args
+        else
+          [i]
+      in
 
-	      let assignRet = match ret with
-	       | Some lv ->
-	         checkHasAddress lv;
-	         (instrumentLval lv) @ [mkStore ()]
-	       | _ ->
-	         if isVoidFunType t then [] else [mkClear 1]
-        in
-        ChangeTo ([mkLocation l] @ (concatMap instrumentExpr args) @ call @ assignRet)
+      let assignRet = match ret with
+	| Some lv ->
+	  checkHasAddress lv;
+	  (instrumentLvalWithInit lv) @ [mkStore ()]
+	| _ ->
+	  if isVoidFunType t then [] else [mkClear 1]
+      in
+      ChangeTo ([mkLocation l] @ (concatMap instrumentExpr args) @ call @ assignRet)
 
       (* FIXME: for functions called through pointers make sure they are not symbolic *)
-      | _ -> DoChildren
+    | _ -> DoChildren
 
 
   (*
@@ -663,7 +675,7 @@ object (self)
     if shouldSkipFunction f.svar then
       SkipChildren
     else
-      let instParam v = (instrumentLval (Var v, NoOffset)) @ [mkStore ()] in
+      let instParam v = (instrumentLvalWithInit (Var v, NoOffset)) @ [mkStore ()] in
       let (_, _, isVarArgs, _) = splitFunctionType f.svar.vtype in
         if (not isVarArgs) then
           iter (flip prependToBlock f.sbody) (List.map instParam f.sformals)
@@ -691,20 +703,19 @@ object (self)
         [mkStmtOneInstr (mkCall f.svar (List.length f.sformals))]
         @
         cStmts
-            "if(!initialised) {initialised = 1; {%I:doInit}}"
-            (fun n t -> makeTempVar f ~name:n t)
-            loc
-            [ ("initialised", Fv initialised); ("doInit", doInit) ]
+          "if(!initialised) {initialised = 1; {%I:doInit}}"
+          (fun n t -> makeTempVar f ~name:n t)
+          loc
+          [ ("initialised", Fv initialised); ("doInit", doInit) ]
         @
-        [mkStmtOneInstr (mkReturn 1)]
+          [mkStmtOneInstr (mkReturn 1)]
       in
       f.sbody.bstmts <- body;
 
-       (* Sometimes a global is defined in a header without extern, like in rergress.h in cryptokix.
-          I don't really know how that is valid C.
-          This usually correlated with giving the global no declaration and no initialisation, so
-          we choose to make the function static to prevent multiple definition errors.
-       *)
+      (* Sometimes a global is defined in a header without extern, like in rergress.h in
+         cryptokix.  I don't really know how that is valid C.  This usually correlated
+         with giving the global no declaration and no initialisation, so we choose to
+         make the function static to prevent multiple definition errors.  *)
       if i = None then
       begin
         (*
@@ -714,7 +725,9 @@ object (self)
         E.s (error "globals without initialisers must be declared opaque: %a\n" d_global g);
       end;
 
-      ChangeTo [g; GVar (initialised, {init = Some (SingleInit (integer 0))}, loc); GFun (f, loc)]
+      ChangeTo [g;
+                GVar (initialised, {init = Some (SingleInit (integer 0))}, loc);
+                GFun (f, loc)]
 
     | GFun (f, loc) as g ->
       (* ignore (Pretty.printf "visiting function definition %a\n" (printGlobal defaultCilPrinter) g); *)

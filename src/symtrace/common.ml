@@ -472,5 +472,3 @@ module Custom_map (M: Custom_key): (Custom_map with type key = M.t) = struct
     let (_, values) = List.split (bindings m) in
     values
 end
-
-

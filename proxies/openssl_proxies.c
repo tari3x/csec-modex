@@ -765,21 +765,46 @@ extern unsigned char *HMAC_proxy(EVP_MD const   *evp_md , void const   *key ,
 
 int SHA256_Init_proxy(SHA256_CTX *c)
 {
+  mute();
+  int ret = SHA256_Init(c);
+  unmute();
+
+  SymN("SHA256_Init", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
+
   clear_attr(c, "msg");
 
-  return SHA256_Init(c);
+  return ret;
 }
 
 int SHA256_Update_proxy(SHA256_CTX *c, const void *data, size_t len)
 {
+  mute();
+  int ret = SHA256_Update(c, data, len);
+  unmute();
+
+  SymN("SHA256_Update", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
+
   add_to_attr(c, "msg", data, len);
 
-  return SHA256_Update(c, data, len);
+  return ret;
 }
 
 int SHA256_Final_proxy(unsigned char *md, SHA256_CTX *c)
 {
+  mute();
   int ret = SHA256_Final(md, c);
+  unmute();
+
+  SymN("SHA256_Final", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
 
   load_ctx(c, "msg", "msg");
 
@@ -1573,20 +1598,258 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
 
 #endif
 
+void BN_free_proxy(BIGNUM *a )
+{
+  mute();
+  BN_free(a);
+  unmute();
+}
+
+BIGNUM *BN_new_proxy(void)
+{
+  mute();
+  BIGNUM * ret = BN_new();
+  unmute();
+
+  fresh_ptr(sizeof(ret));
+  store_buf((unsigned char *) &ret);
+
+  return ret;
+}
+
+void BN_init_proxy(BIGNUM * a)
+{
+  mute();
+  BN_init(a);
+  unmute();
+}
+
+int BN_rand_range_proxy(BIGNUM *rnd , BIGNUM const   *range )
+{
+  mute();
+  int ret = BN_rand_range(rnd, range);
+  unmute();
+
+  SymN("BN_rand_range_result", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
+
+  load_ctx(range, "val", "range");
+  SymN("BN_rand_range", 1);
+  Nondet();
+  store_ctx(rnd, "val");
+
+  return ret;
+}
+
+/* No documentation but seems to do with multithreading. */
+BN_MONT_CTX *BN_MONT_CTX_set_locked_proxy(BN_MONT_CTX **pmont ,
+                                          int lock ,
+                                          BIGNUM const   *mod ,
+                                          BN_CTX *ctx )
+{
+  mute();
+  BN_MONT_CTX * ret = BN_MONT_CTX_set_locked(pmont, lock, mod, ctx);
+  unmute();
+
+  fresh_ptr(sizeof(ret));
+  store_buf((unsigned char *) &ret);
+
+  return ret;
+}
+
+
+BIGNUM *BN_copy_proxy(BIGNUM *a , BIGNUM const   *b )
+{
+  mute();
+  BIGNUM * ret = BN_copy(a, b);
+  unmute();
+
+  ret = a;
+
+  load_ctx(a, "val", "bignum");
+  store_ctx(b, "val");
+
+  return ret;
+}
+
+/*
+  BN_add() adds a and b and places the result in r (r=a+b). r may be
+  the same BIGNUM as a or b.
+ */
+int BN_add_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *b )
+{
+  mute();
+  int ret = BN_add(r, a, b);
+  unmute();
+
+  SymN("BN_add_result", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
+
+  load_ctx(a, "val", "a");
+  load_ctx(b, "val", "b");
+  SymN("BN_add", 2);
+  store_ctx(r, "val");
+
+  return ret;
+}
+
+/*
+  BN_div() divides a by d and places the result in dv and the
+  remainder in rem (dv=a/d, rem=a%d). Either of dv and rem may be
+  NULL, in which case the respective value is not returned. The result
+  is rounded towards zero; thus if a is negative, the remainder will
+  be zero or negative. For division by powers of 2, use BN_rshift.
+ */
+int BN_div_proxy(BIGNUM *dv , BIGNUM *rem , BIGNUM const   *m ,
+                 BIGNUM const   *d , BN_CTX *ctx )
+{
+  mute();
+  int ret = BN_div(dv, rem, m, d, ctx);
+  unmute();
+
+  SymN("BN_div_result", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
+
+  if(dv != NULL){
+    load_ctx(m, "val", "m");
+    load_ctx(d, "val", "d");
+    SymN("BN_div", 2);
+    store_ctx(dv, "val");
+  }
+
+  if(rem != NULL){
+    load_ctx(m, "val", "m");
+    load_ctx(d, "val", "d");
+    SymN("BN_rem", 2);
+    store_ctx(rem, "val");
+  }
+
+  return ret;
+}
+
+BIGNUM *BN_mod_inverse_proxy(BIGNUM *ret , BIGNUM const   *a ,
+                             BIGNUM const   *n , BN_CTX *ctx )
+{
+  mute();
+  ret = BN_mod_inverse(ret, a, n, ctx);
+  unmute();
+
+  load_ctx(a, "val", "a");
+  load_ctx(n, "val", "n");
+  SymN("BN_mod_inverse", 2);
+  store_ctx(ret, "val");
+
+  return ret;
+}
+
+void BN_clear_free_proxy(BIGNUM *a )
+{
+  mute();
+  BN_clear_free(a);
+  unmute();
+}
+
+void BN_MONT_CTX_free_proxy(BN_MONT_CTX *mont )
+{
+  mute();
+  BN_MONT_CTX_free(mont);
+  unmute();
+}
+
+void ERR_put_error_proxy(int lib , int func , int reason ,
+                         char const   *file , int line )
+{
+  mute();
+  ERR_put_error(lib, func, reason, file, line);
+  unmute();
+}
+
+
+BN_CTX *BN_CTX_new_proxy(void)
+{
+  mute();
+  BN_CTX * ret = BN_CTX_new();
+  unmute();
+
+  fresh_ptr(sizeof(ret));
+  store_buf((unsigned char *) &ret);
+
+  return ret;
+}
+
+void BN_CTX_free_proxy(BN_CTX *c )
+{
+  mute();
+  BN_CTX_free(c);
+  unmute();
+}
+
+void BN_CTX_start_proxy(BN_CTX *ctx )
+{
+  mute();
+  BN_CTX_start(ctx);
+  unmute();
+}
+
+BIGNUM *BN_CTX_get_proxy(BN_CTX *ctx )
+{
+  mute();
+  BIGNUM * ret = BN_CTX_get(ctx);
+  unmute();
+
+  fresh_ptr(sizeof(ret));
+  store_buf((unsigned char *) &ret);
+
+  return ret;
+}
+
+void BN_CTX_end_proxy(BN_CTX *ctx )
+{
+  mute();
+  BN_CTX_end(ctx);
+  unmute();
+}
+
+int BN_num_bits_proxy(BIGNUM const   *a )
+{
+  mute();
+  int ret = BN_num_bits(a);
+  unmute();
+
+  load_ctx(a, "val", "bignum");
+
+  SymN("BN_num_bits", 1);
+  assume_len(sizeof(ret));
+  Hint("len");
+
+  store_buf((void*) &ret);
+
+  return ret;
+}
 
 /*
   BN_num_bytes() returns the size of a BIGNUM in bytes.
 
-  BN_num_bits_word() returns the number of significant bits in a word. If we take 0x00000432 as an example,
-  it returns 11, not 16, not 32. Basically, except for a zero, it returns floor(log2(w))+1.
+  BN_num_bits_word() returns the number of significant bits in a
+  word. If we take 0x00000432 as an example, it returns 11, not 16,
+  not 32. Basically, except for a zero, it returns floor(log2(w))+1.
 
-  BN_num_bits() returns the number of significant bits in a BIGNUM, following the same principle as BN_num_bits_word().
+  BN_num_bits() returns the number of significant bits in a BIGNUM,
+  following the same principle as BN_num_bits_word().
 
   BN_num_bytes() is a macro.
  */
 int BN_num_bytes_proxy(const BIGNUM *a)
 {
+  mute();
   int ret = (BN_num_bits(a)+7)/8;
+  unmute();
 
   load_ctx(a, "val", "bignum");
 
@@ -1601,16 +1864,23 @@ int BN_num_bytes_proxy(const BIGNUM *a)
 
 
 /*
- * BN_bin2bn() converts the positive integer in big-endian form of length len at s into a BIGNUM  and places it in ret.
- * If ret is NULL, a new BIGNUM is created.
+ * BN_bin2bn() converts the positive integer in big-endian form of
+ * length len at s into a BIGNUM and places it in ret.  If ret is
+ * NULL, a new BIGNUM is created.
  *
  * BN_bin2bn() returns the BIGNUM, NULL on error.
  */
 extern BIGNUM *BN_bin2bn_proxy(unsigned char const *s , int len , BIGNUM *ret )
 {
+  mute();
   BIGNUM * ret2 = BN_bin2bn(s, len, ret);
+  unmute();
+
+  fresh_ptr(sizeof(*ret2));
+  store_buf(&ret);
 
   BIGNUM * result;
+  // FIXME: nontrivial branching
   if(ret == NULL) result = ret2; else result = ret;
 
   load_buf(s, len, "val");
@@ -1627,7 +1897,9 @@ extern BIGNUM *BN_bin2bn_proxy(unsigned char const *s , int len , BIGNUM *ret )
  */
 extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
 {
+  mute();
   size_t ret = BN_bn2bin(a, to);
+  unmute();
 
   load_ctx(a, "val", "val");
 
@@ -1714,9 +1986,10 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
 }
 
 /*
- * BN_bn2hex() and BN_bn2dec() return printable strings containing the hexadecimal and decimal encoding of a respectively.
- * For negative numbers, the string is prefaced with a leading '-'.
- * The string must be freed later using OPENSSL_free().
+ * BN_bn2hex() and BN_bn2dec() return printable strings containing the
+ * hexadecimal and decimal encoding of a respectively.  For negative
+ * numbers, the string is prefaced with a leading '-'.  The string
+ * must be freed later using OPENSSL_free().
  *
  * BN_bn2hex() and BN_bn2dec() return a null-terminated string, or NULL on error.
  */
@@ -1735,11 +2008,19 @@ extern char *BN_bn2hex_proxy(BIGNUM const   *a )
 }
 
 /*
- * BN_zero(), BN_one() and BN_set_word() return 1 on success, 0 otherwise. BN_value_one() returns the constant.
+ * BN_zero(), BN_one() and BN_set_word() return 1 on success, 0
+ * otherwise. BN_value_one() returns the constant.
  */
 int BN_set_word_proxy(BIGNUM *a, unsigned long w)
 {
+  mute();
   int ret = BN_set_word(a, w);
+  unmute();
+
+  SymN("BN_set_word_result", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
 
   load_buf((unsigned char *)&w, sizeof(w), "wordval");
   store_ctx(a, "val");
@@ -1751,11 +2032,18 @@ int BN_set_word_proxy(BIGNUM *a, unsigned long w)
  * rr = a1^p1 * a2*p2 mod m
  */
 int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
-                                  BIGNUM const   *p1 , BIGNUM const   *a2 ,
-                                  BIGNUM const   *p2 , BIGNUM const   *m ,
-                                  BN_CTX *ctx , BN_MONT_CTX *in_mont )
+                           BIGNUM const   *p1 , BIGNUM const   *a2 ,
+                           BIGNUM const   *p2 , BIGNUM const   *m ,
+                           BN_CTX *ctx , BN_MONT_CTX *in_mont )
 {
+  mute();
   int ret = BN_mod_exp2_mont(rr, a1, p1, a2, p2, m, ctx, in_mont);
+  unmute();
+
+  SymN("BN_mod_exp2_mont_result", 0);
+  Nondet();
+  assume_len(sizeof(ret));
+  store_buf(&ret);
 
   load_ctx(a1, "val", "a1");
   load_ctx(p1, "val", "p1");
@@ -1775,8 +2063,8 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
  * See BN_mod_exp_proxy.
  */
 int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
-                                 BIGNUM const   *p , BIGNUM const   *m ,
-                                 BN_CTX *ctx , BN_MONT_CTX *in_mont )
+                          BIGNUM const   *p , BIGNUM const   *m ,
+                          BN_CTX *ctx , BN_MONT_CTX *in_mont )
 {
   int ret = BN_mod_exp_mont(rr, a, p, m, ctx, in_mont);
 
@@ -1790,6 +2078,33 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
   store_ctx(rr, "val");
 
   return ret;
+}
+
+void DSA_free_proxy(DSA *r )
+{
+  mute();
+  DSA_free(r);
+  unmute();
+}
+
+
+DSA_SIG *DSA_SIG_new_proxy(void)
+{
+  mute();
+  DSA_SIG * ret = DSA_SIG_new();
+  unmute();
+
+  fresh_ptr(sizeof(ret));
+  store_buf((unsigned char *) &ret);
+
+  return ret;
+}
+
+void DSA_SIG_free_proxy(DSA_SIG *a )
+{
+  mute();
+  DSA_SIG_free(a);
+  unmute();
 }
 
 /*
@@ -1821,14 +2136,30 @@ int DSA_generate_key_proxy(DSA *a)
   return DSA_generate_key(a);
 }
 
+DSA *DSA_new_proxy(void)
+{
+  mute();
+  DSA * ret = DSA_new();
+  unmute();
+
+  fresh_ptr(sizeof(ret));
+  store_buf((unsigned char *) &ret);
+
+  return ret;
+}
+
+
 /*
- * DSA_new_method() allocates and initializes a DSA structure so that engine will be used for the DSA operations.
- * If engine is NULL, the default engine for DSA operations is used, and if no default ENGINE is set,
- * the DSA_METHOD controlled by DSA_set_default_method() is used.
+ * DSA_new_method() allocates and initializes a DSA structure so that
+ * engine will be used for the DSA operations. If engine is NULL, the
+ * default engine for DSA operations is used, and if no default ENGINE
+ * is set, the DSA_METHOD controlled by DSA_set_default_method() is
+ * used.
  */
 DSA *DSA_new_method_proxy(ENGINE *engine)
 {
-  // show symex the very first execution of DSA_get_default_method that initialises the method structure
+  // show symex the very first execution of DSA_get_default_method
+  // that initialises the method structure
   DSA_get_default_method();
 
   DSA * ret = DSA_new_method(engine);
@@ -1837,20 +2168,25 @@ DSA *DSA_new_method_proxy(ENGINE *engine)
 
 
 /**
- * d2i_DSA_PUBKEY() and i2d_DSA_PUBKEY() decode and encode an DSA public key using a SubjectPublicKeyInfo
- * (certificate public key) structure.
+ * d2i_DSA_PUBKEY() and i2d_DSA_PUBKEY() decode and encode an DSA
+ * public key using a SubjectPublicKeyInfo (certificate public key)
+ * structure.
  *
  * Behaves as follows, with out = pp:
  *
  * i2d_X509() encodes the structure pointed to by x into DER format.
- * If out is not NULL is writes the DER encoded data to the buffer at *out, and increments it to point after the data just written.
- * If the return value is negative an error occurred, otherwise it returns the length of the encoded data.
+ * If out is not NULL is writes the DER encoded data to the buffer at
+ * *out, and increments it to point after the data just written.  If
+ * the return value is negative an error occurred, otherwise it
+ * returns the length of the encoded data.
  */
 int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
 {
   unsigned char *p = *pp;
 
+  mute();
   size_t ret = i2d_DSA_PUBKEY(a, pp);
+  unmute();
 
   SymN("lenvar", 0);
   Hint("len");
@@ -2164,4 +2500,18 @@ extern void RSA_blinding_off_proxy(RSA *rsa )
 {
   // FIXME: fill in
   RSA_blinding_off(rsa);
+}
+
+void ERR_load_crypto_strings_proxy(void)
+{
+  mute();
+  ERR_load_crypto_strings();
+  unmute();
+}
+
+void ERR_print_errors_fp_proxy(FILE *fp )
+{
+  mute();
+  ERR_print_errors_fp(fp);
+  unmute();
 }

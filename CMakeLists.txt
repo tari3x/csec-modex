@@ -5,7 +5,12 @@ set(CSEC_ROOT ${CMAKE_BINARY_DIR} CACHE PATH "The root folder of the compilation
 
 ######## deps/CIL and src/CIL  ##############################
 
-set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.3.7-svn)
+# To upgrade to new CIL:
+# - link all your sources under CIL/src directory
+# - add all your modules to src/cil.mllib
+# /configure EXTRAFEATURES="fundefs funreplace crestInstrument"
+
+set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.7.3)
 
 # find ARCHOS as configured by CIL
 if(NOT EXISTS ${CIL_ROOT}/config.mk)
@@ -21,7 +26,7 @@ execute_process(COMMAND sed -n "s/.*ARCHOS=\\(.*\\)/\\1/p" ${CIL_ROOT}/config.mk
 #                 OUTPUT_VARIABLE ARCHOS 
 #                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-set(CIL_OBJDIR ${CIL_ROOT}/obj/${ARCHOS} CACHE PATH "CIL object folder")
+set(CIL_OBJDIR ${CIL_ROOT}/_build/src/ CACHE PATH "CIL object folder")
 set(CIL_LIB ${CIL_OBJDIR}/cil.a CACHE FILEPATH "Location of the CIL library")
 set(CILLY ${CIL_ROOT}/bin/cilly CACHE FILEPATH "Location of the CIL front-end")
 
@@ -87,35 +92,35 @@ add_custom_command(OUTPUT ${OCAMLYICES}
 
 ######## deps/openssl ###########################
 
-set(OPENSSL ${CSEC_ROOT}/deps/openssl-1.0.0d)
-
-add_custom_command(OUTPUT ${OPENSSL}/Makefile
-                    COMMAND ./Configure ${OPENSSL_CONFIG}
-                    WORKING_DIRECTORY ${OPENSSL}
-                    VERBATIM)
-
-add_custom_command(OUTPUT ${OPENSSL}/libcrypto.a ${OPENSSL}/libssl.a 
-                    COMMAND make clean
-                    COMMAND make 
-                    DEPENDS ${OPENSSL}/Makefile
-                    WORKING_DIRECTORY ${OPENSSL}
-                    VERBATIM)
+# set(OPENSSL ${CSEC_ROOT}/deps/openssl-1.0.0d)
+# 
+# add_custom_command(OUTPUT ${OPENSSL}/Makefile
+#                     COMMAND ./Configure ${OPENSSL_CONFIG}
+#                     WORKING_DIRECTORY ${OPENSSL}
+#                     VERBATIM)
+# 
+# add_custom_command(OUTPUT ${OPENSSL}/libcrypto.a ${OPENSSL}/libssl.a 
+#                     COMMAND make clean
+#                     COMMAND make 
+#                     DEPENDS ${OPENSSL}/Makefile
+#                     WORKING_DIRECTORY ${OPENSSL}
+#                     VERBATIM)
 
 ######## deps/openssl-crestified ###########################
 
-set(OPENSSL_CRESTIFIED ${CSEC_ROOT}/deps/openssl-1.0.0d-crestified)
-
-add_custom_command(OUTPUT ${OPENSSL_CRESTIFIED}/Makefile
-                    COMMAND ./Configure ${OPENSSL_CONFIG}
-                    WORKING_DIRECTORY ${OPENSSL_CRESTIFIED}
-                    VERBATIM)
-
-add_custom_command(OUTPUT ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTIFIED}/libssl_sym.a 
-                    COMMAND make clean
-                    COMMAND make -f ${CSEC_ROOT}/mk/openssl.mk sym
-                    DEPENDS ${OPENSSL_CRESTIFIED}/Makefile
-                    WORKING_DIRECTORY ${OPENSSL_CRESTIFIED}
-                    VERBATIM)
+set(OPENSSL_CRESTIFIED ${CSEC_ROOT}/tests/openssl-1.0.0d)
+# 
+# add_custom_command(OUTPUT ${OPENSSL_CRESTIFIED}/Makefile
+#                     COMMAND ./Configure ${OPENSSL_CONFIG}
+#                     WORKING_DIRECTORY ${OPENSSL_CRESTIFIED}
+#                     VERBATIM)
+# 
+# add_custom_command(OUTPUT ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTIFIED}/libssl_sym.a 
+#                     COMMAND make clean
+#                     COMMAND make -f ${CSEC_ROOT}/mk/openssl.mk sym
+#                     DEPENDS ${OPENSSL_CRESTIFIED}/Makefile
+#                     WORKING_DIRECTORY ${OPENSSL_CRESTIFIED}
+#                     VERBATIM)
 
 ######## deps/cryptoverif ###########################
 

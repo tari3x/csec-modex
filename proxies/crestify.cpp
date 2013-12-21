@@ -25,11 +25,6 @@
 int muted = 0;
 
 /**
- * Set by CustomReturn()
- */
-bool customReturn = false;
-
-/**
  * The last heap ptr id used by memory allocation functions.
  */
 int lastHeapPtr = 0;
@@ -212,14 +207,6 @@ void __CrestReturn(__CREST_BOOL is_void)
 {
   if(muted) return;
 
-  // if CustomReturn() has been called already, remove the automatically
-  // generated value from the stack to let the custom value be returned
-  if(customReturn)
-  {
-    if(!is_void) __CrestClear(1);
-    customReturn = false;
-  }
-
   *out << "Return" << endl;
 }
 
@@ -385,13 +372,6 @@ void unmute()
   if(muted) muted--;
 }
 
-
-void CustomReturn()
-{
-  if(muted) return;
-
-  customReturn = true;
-}
 
 void LoadBuf(const unsigned char * buf, size_t len)
 {

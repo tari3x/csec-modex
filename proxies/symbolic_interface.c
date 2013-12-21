@@ -280,8 +280,8 @@ void set_attr_int(const void * ctx, const char * attr, int n)
 int get_attr_int(const void * ctx, const char * attr)
 {
   LoadAttr(ctx, attr);
-  CustomReturn();
-  return LoadRuntimeInt(ctx, attr);
+  int ret = LoadRuntimeInt(ctx, attr);
+  return ret;
 }
 
 void clear_attr(const void * ctx, const char * attr)
@@ -307,10 +307,11 @@ void copy_attr(const void * to, const void * from, const char * attr)
 
 long int concrete_val(long int n)
 {
+  long int ret = n;
   __CrestLoadInt(n);
-  BS(TRUE, sizeof(n));
-  CustomReturn();
-  return n;
+  BS(TRUE, sizeof(ret));
+  store_buf(&ret);
+  return ret;
 }
 
 //void * fresh_ptr(void * p, int size)
@@ -332,8 +333,3 @@ void stack_ptr(const char * name)
   SetPtrStep();
 }
 
-
-void sym_return()
-{
-  CustomReturn();
-}

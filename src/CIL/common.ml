@@ -4,7 +4,6 @@
     See LICENSE file for copyright notice.
 *)
 
-
 open Str
 open Filename
 open List
@@ -25,19 +24,19 @@ type edge = vertex * vertex
 type graph = edge list
 
 (**
-  Information that I collect about globals. Another options is to keep it in [varinfo] instead, but 
+  Information that I collect about globals. Another options is to keep it in [varinfo] instead, but
   that is more cumbersome to parse: you need to additionally provide headers for all types, so it
   could become a mess.
-  
+
   Another problem is that [varinfo] only holds the location of the declaration, whereas I am more interested
   in the definition instead.
 *)
-type glob = 
+type glob =
 {
   mutable name: string;
-  mutable opaque: bool; 
-  (** 
-    Functions for which neither the return value nor the side effects are relevant, 
+  mutable opaque: bool;
+  (**
+    Functions for which neither the return value nor the side effects are relevant,
     or globals, for which the value is not relevant and fields of which are not accessed by instrumented code.
 
     A function is marked as opaque if it is explicitly listed in the boring section in config file
@@ -50,7 +49,7 @@ type glob =
   mutable crestified: bool;
   mutable is_fun: bool;
   mutable locdef: string option;
-  mutable stor: storage; 
+  mutable stor: storage;
 }
 
 (* What you gonna do about full source file paths? Answer: give config a full root path *)
@@ -62,16 +61,16 @@ type glob =
 module StrSet = Set.Make (String)
 module StrMap = Map.Make (String)
 
-(** 
+(**
     The root folder of the compilation.
     Ends with a trailing directory separator.
 *)
 let compilationRoot = ref ""
-(* 
+(*
 (** The source file name *)
-let srcName = ref "" 
+let srcName = ref ""
 *)
-(** 
+(**
   The path of the current source file relative to [compilationRoot], including the file name itself.
   We use the name of the .c file even when we are called with .i file as argument.
 *)
@@ -83,7 +82,7 @@ let crestifiedNames : string list ref = ref []
 *)
 
 (** Names of opaque functions for which we actually encountered a definition *)
-(* let opaqueDefNames : string list ref = ref []  
+(* let opaqueDefNames : string list ref = ref []
 *)
 
 (*
@@ -111,7 +110,7 @@ let callgraph : graph ref = ref []
 (*************************************************)
 
 let trim : string -> string = function s ->
-  replace_first (regexp "^[ \t\n]+") "" (replace_first (regexp "[ \t\n]+$") "" s)      
+  replace_first (regexp "^[ \t\n]+") "" (replace_first (regexp "[ \t\n]+$") "" s)
 
 let snd3 (_, a, _) = a
 
@@ -127,17 +126,17 @@ let fail : string -> 'a = fun s -> failwith s
 let some: 'a option -> 'a = function
   | Some a -> a
   | None   -> failwith "some called with None"
-    
+
 let readFile : string -> string list = fun name ->
   let f = open_in name in
 
   let rec read : unit -> string list = fun () ->
     (* Stay tail-recursive, make sure not to create nested exception handlers at runtime. *)
-    match 
-      try Some (trim (input_line f)) 
+    match
+      try Some (trim (input_line f))
       with End_of_file -> None with
     | Some s -> s :: read ()
-    | None   -> [] 
+    | None   -> []
   in
   read()
 
@@ -158,7 +157,7 @@ let rec diff : 'a list -> 'a list -> 'a list = fun xs -> function
 
 let intersect: 'a list -> 'a list -> 'a list = fun xs ys -> filter (fun y -> mem y xs) ys
 
-let nub: 'a list -> 'a list = fun l -> 
+let nub: 'a list -> 'a list = fun l ->
   let rec nub' = fun ls ->
     function
       | (x::xs) when mem x ls -> nub' ls xs
@@ -175,15 +174,15 @@ let nub: 'a list -> 'a list = fun l ->
 (*
   FIXME: Have a __proxy__ attribute on interface functions.
 *)
-let isInterfaceFun : string -> bool = fun s -> 
-  mem s ["event0"; "event1"; "event2"; "event3"; "event4"; "readenv"; "readenvE"; "readenvL";  
+let isInterfaceFun : string -> bool = fun s ->
+  mem s ["event0"; "event1"; "event2"; "event3"; "event4"; "readenv"; "readenvE"; "readenvL";
          "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail";
          (* Internal interface functions: *)
          "load_buf"; "load_alll"; "load_ctx"; "load_int"; "load_str";
          "symL"; "symN"; "symNE"; "input"; "newTN"; "newTL"; "newL";
-         "varsym"; "var"; "varWithBUfInit"; "varL"; "output";  
-         "store_buf"; "store_all"; "store_ctx"; "event"; 
-         "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int"; 
+         "varsym"; "var"; "varWithBUfInit"; "varL"; "output";
+         "store_buf"; "store_all"; "store_ctx"; "event";
+         "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int";
          "get_attr_int"; "copy_ctx"; "copy_attr_ex"; "copy_attr";
          "clear_attr"; "concrete_val"; "fresh_ptr"; "append_zero"; "typehint"]
 
@@ -193,22 +192,22 @@ let isInterfaceFun : string -> bool = fun s ->
 (*************************************************)
 
 let setRootPath: string -> unit = fun path ->
-  if Filename.check_suffix "/" path then 
-    compilationRoot := path 
-  else  
-    compilationRoot := path ^ "/" 
-     
+  if Filename.check_suffix "/" path then
+    compilationRoot := path
+  else
+    compilationRoot := path ^ "/"
+
 
 let setSrcPath : file -> unit = fun f ->
   if !compilationRoot = "" then
     fail "setSrcPath: compilation root not set";
-    
-  let cName = try chop_extension f.fileName ^ ".c" 
+
+  let cName = try chop_extension f.fileName ^ ".c"
               with Invalid_argument _ -> failwith "setSrcPath: source name without extension" in
 
   (* there should be a library function to compute canonical file names *)
   let cName = global_replace (regexp "^\\./") "" cName in
-  
+
   let fullPath =
     if Filename.is_relative cName then
       Filename.concat (getcwd ()) cName
@@ -223,32 +222,32 @@ let setSrcPath : file -> unit = fun f ->
 (* TODO: think of eventually making some of these functions exclusive to marking code *)
 
 (**
-  Generates a descriptive global (across the whole compilation) unique identifier for a variable. 
+  Generates a descriptive global (across the whole compilation) unique identifier for a variable.
   One identifer corresponds to one physical variable in the linked executable.
 
   We use a single global name for static functions. This makes it easier to designate them
   in configuration files. At the same time this makes it problematic to have two static functions of the same
-  name in different files.   
-  
+  name in different files.
+
   This is addressed in {!readGlobs} by checking that no two globs have same names but different locdefs.
 *)
-(*   
+(*
   This is also called from crestInstrument to give names to stack locations.
 *)
 let mkUniqueName : varinfo -> string = fun v ->
-  if not v.vglob (* || v.vstorage = Static *) then 
+  if not v.vglob (* || v.vstorage = Static *) then
     !srcPath ^ ":" ^ v.vname ^ "[" ^ string_of_int v.vid ^ "]"
   else
-    v.vname 
+    v.vname
 
 let addGlob : varinfo -> glob = fun v ->
-  if not v.vglob then 
+  if not v.vglob then
     fail "addGlob: trying to add a local variable";
   let key = mkUniqueName v in
   try StrMap.find key !globs
-  with Not_found -> 
+  with Not_found ->
     (* print_endline ("addGlob: adding " ^ key); *)
-    let g = { 
+    let g = {
         name = v.vname;
         opaque = false;
         needs_proxy = false;
@@ -267,12 +266,12 @@ let addChild : global -> varinfo -> unit = fun parentG child ->
   let parent = match parentG with
     | GFun (f, _)    -> f.svar
     | GVar (v, _, _) -> v
-    | _ -> 
+    | _ ->
       E.error "%t: %s, %a" d_thisloc "function variable reference in unexpected global" d_global !currentGlobal;
       fail "addChild"
   in
   callgraph := (mkUniqueName parent, mkUniqueName child) :: !callgraph
-  
+
 let markNeedsProxy : varinfo -> unit = fun v ->
   let g = addGlob v in
   g.needs_proxy <- true
@@ -284,7 +283,7 @@ let markIsProxy : varinfo -> unit = fun v ->
 let markProxied : varinfo -> unit = fun v ->
   let g = addGlob v in
   g.proxied <- true
-  
+
 let markOpaque : varinfo -> unit = fun v ->
   let g = addGlob v in
   g.opaque <- true
@@ -292,7 +291,7 @@ let markOpaque : varinfo -> unit = fun v ->
 let markCrestified : varinfo -> unit = fun v ->
   let g = addGlob v in
   g.crestified <- true
-      
+
 let addRef : varinfo -> unit = fun v -> ignore (addGlob v)
 
 let addDef : varinfo -> location -> unit = fun v _ ->
@@ -309,29 +308,29 @@ let addDef : varinfo -> location -> unit = fun v _ ->
 *)
 let getGlob : varinfo -> glob = fun v -> StrMap.find (mkUniqueName v) !globs
 
-(* 
+(*
 let globKeyByName : string -> string = fun name ->
-  fst (StrMap.choose (StrMap.filter (fun _ g -> g.name = name) !globs)) 
+  fst (StrMap.choose (StrMap.filter (fun _ g -> g.name = name) !globs))
 *)
 
-let isOpaque : varinfo -> bool = fun v -> 
+let isOpaque : varinfo -> bool = fun v ->
   try let g = getGlob v in
       g.opaque
   with Not_found -> false
-  
-let needsProxy : varinfo -> bool = fun v -> 
+
+let needsProxy : varinfo -> bool = fun v ->
   try let g = getGlob v in
       g.needs_proxy
   with Not_found -> false
 
-let isProxied : varinfo -> bool = fun v -> 
+let isProxied : varinfo -> bool = fun v ->
   try let g = getGlob v in
       g.proxied
   with Not_found -> false
 
 (*
-let isProxy : varinfo -> bool = fun v -> 
-  let result = 
+let isProxy : varinfo -> bool = fun v ->
+  let result =
   try let g = getGlob v in
       g.is_proxy
   with Not_found -> false in
@@ -349,7 +348,7 @@ let isProxy: varinfo -> bool = function v ->
 (** {1 Information Input and Output} *)
 (*************************************************)
 
-let writeGraph : graph -> string -> unit = fun g outname -> 
+let writeGraph : graph -> string -> unit = fun g outname ->
   let c = open_out outname in
   iter (fun (parent, child) -> output_string c (parent ^ " " ^ child ^ "\n")) g;
   close_out c
@@ -357,7 +356,7 @@ let writeGraph : graph -> string -> unit = fun g outname ->
 let writeGlob : out_channel -> string -> glob -> unit = fun c key g ->
 
   let writePair : string -> string -> unit = fun a b -> output_string c (a ^ " ~ " ^ b ^ "\n") in
-  
+
   writePair key "name";
   output_string c (g.name ^ "\n");
 
@@ -367,16 +366,16 @@ let writeGlob : out_channel -> string -> glob -> unit = fun c key g ->
   if g.is_proxy then writePair key "is_proxy";
   if g.crestified then writePair key "crestified";
   if g.is_fun then writePair key "is_fun";
-  
+
   begin
   match g.locdef with
     | Some s ->
       writePair key "locdef";
       output_string c (s ^ "\n")
-      
+
     | _ -> ()
   end;
-  
+
   match g.stor with
     | NoStorage -> writePair key "NoStorage"
     | Static -> writePair key "Static"
@@ -384,12 +383,12 @@ let writeGlob : out_channel -> string -> glob -> unit = fun c key g ->
     | Extern -> writePair key "Extern"
 
 
-let writeGlobs : glob StrMap.t -> string -> unit = fun globs outname -> 
+let writeGlobs : glob StrMap.t -> string -> unit = fun globs outname ->
   let c = open_out outname in
   StrMap.iter (writeGlob c) globs;
   close_out c
 
-let writeInfo : file -> unit = fun f ->  
+let writeInfo : file -> unit = fun f ->
   (* output the call relation *)
   writeGraph !callgraph (f.fileName ^ ".callgraph.out");
   (* output the defined and referenced globals list *)
@@ -409,15 +408,15 @@ let rec readGraph : in_channel -> graph = fun file ->
   with
     End_of_file -> []
 
-            
+
 let readGlobs : in_channel -> glob StrMap.t = fun file ->
 
   let globs : glob StrMap.t ref = ref (StrMap.empty) in
 
   let globByKey : string -> glob = fun key ->
-    try StrMap.find key !globs 
-    with Not_found ->  
-    let g = { 
+    try StrMap.find key !globs
+    with Not_found ->
+    let g = {
         name = "";
         opaque = false;
         needs_proxy = false;
@@ -434,10 +433,10 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
   in
 
   let rec readField : unit -> unit = fun () ->
-    
+
     let line = nextNonemptyLine file in
     let toks = words line in
-    let (key, field) = 
+    let (key, field) =
       if nth toks 1 = "~" then (nth toks 0, nth toks 2)
         else fail (Printf.sprintf "readGlobField: unexpected format %s" line) in
     let g = globByKey key in
@@ -450,12 +449,12 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
       | "proxied" -> g.proxied <- true
       | "crestified" -> g.crestified <- true
       | "is_fun" -> g.is_fun <- true
-      | "locdef" -> 
-        let locdef = input_line file in 
+      | "locdef" ->
+        let locdef = input_line file in
         if g.locdef = None then
           g.locdef <- Some locdef
         else if (g.locdef <> Some locdef) && (g.stor = Static) then
-          fail ("readGlobs: two different source files define two static functions of the same name, this is unsupported: " 
+          fail ("readGlobs: two different source files define two static functions of the same name, this is unsupported: "
                  ^ key ^ ", " ^ locdef ^ ", " ^ some g.locdef)
       | "NoStorage" -> g.stor <- NoStorage
       | "Static" -> g.stor <- Static
@@ -463,13 +462,13 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
       | "Extern" -> g.stor <- Extern
       | _ -> fail "readGlobField: unrecognized field"
     end;
-      
+
   readField ()
   in
 
   begin try readField (); with End_of_file -> () end;
   !globs
-    
-let readInfo : string -> string -> unit = fun graphname globname ->  
+
+let readInfo : string -> string -> unit = fun graphname globname ->
   callgraph := readGraph (open_in graphname);
   globs := readGlobs (open_in globname)

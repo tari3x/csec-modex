@@ -46,5 +46,3 @@ let feature : featureDescr =
     fd_doit = fundefs;
     fd_post_check = true
   }
-
- 

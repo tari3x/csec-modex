@@ -1,4 +1,4 @@
- 
+
 #include "openssl_proxies.h"
 
 #include "common.h"
@@ -10,7 +10,9 @@
  */
 DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
 {
+  mute();
   DSA_SIG * ret = dsa_do_sign(dgst, dlen, dsa);
+  unmute();
 
 //  symL("dsa_sign_new_bn");
 //  store_buf((unsigned char *) &(ret->r), sizeof(ret->r), "r");
@@ -46,7 +48,9 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
 int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *sig ,
                                DSA *dsa )
 {
+  mute();
   int ret = dsa_do_verify(dgst, dgst_len, sig, dsa);
+  unmute();
 
   // FIXME: only do it if no sig is present already
   load_ctx(sig->r, "val", "dsa_sig_r");

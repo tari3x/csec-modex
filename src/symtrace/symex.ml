@@ -131,7 +131,6 @@ let cur_ptr_id : int ref = ref 0
 (** The number of instructions executed so far *)
 let done_instr : int ref = ref 0
 
-
 let last_comment = ref ""
 
 let reset_state : unit -> unit = fun () ->
@@ -418,134 +417,134 @@ let extract pos l e =
   pop_debug "extract_pos";
   result
 
-(**
-    Creates structures and members along the way if they don't exist.
+(** Creates structures and members along the way if they don't exist.
 
     [l_val] is the length of the part of [e_host] that needs to be replaced with [e_val].
-    In case [l_val = None] the effect is to replace all data from [pos] until the end of the
-    segment that [pos] points to.
+    In case [l_val = None] the effect is to replace all data from [pos] until the end of
+    the segment that [pos] points to.
 
     [step] gives the length for newly created structures and arrays.
 
     [e_host] is the rest of the current segment. This is important if [l_val = Infty].
 
-    It is however not a requirement and sometimes the call can return expressions of other lengths.
+    It is however not a requirement and sometimes the call can return expressions of other
+    lengths.
 *)
-let rec update : pos -> len -> len option -> exp -> exp -> exp = fun pos step l_val e_host e_val ->
+let rec update (pos : pos) (step : len) (l_val : len option) (e_host : exp) (e_val : exp) =
   debug "update, e_host: %s" (E.dump e_host);
   debug "update, e_val: %s"  (E.dump e_val);
   debug "update, pos: %s" (String.concat ", " (List.map E.offset_to_string pos));
   debug "update, step: %s" (E.dump step);
   debug "update, l_val: %s" (option_to_string E.dump l_val);
+  E.typecheck Type.Int step;
   begin match l_val with
-    | None -> ()
-    | Some l -> E.typecheck (Type.Int) l
+  | None -> ()
+  | Some l -> E.typecheck Type.Int l
   end;
   match (pos, l_val, e_host) with
-    | ((Index i, step') :: pos', None, Array (cells, len, elt_size)) ->
-      update pos step None (flatten_array cells) e_val
+  | ((Index i, step') :: pos', None, Array (cells, len, elt_size)) ->
+    update pos step None (flatten_array cells) e_val
 
-    | ((Index i, step') :: pos', Some l_val, Array (cells, len, elt_size)) ->
-      begin
+  | ((Index i, step') :: pos', Some l_val, Array (cells, len, elt_size)) ->
+    begin
       match S.greater_equal_len_answer elt_size l_val with
-        | (S.No | S.Maybe) -> update pos step (Some l_val) (flatten_array cells) e_val
-        | _ ->
-		      if S.equal_int step' elt_size then
-	          let e_elem = try Int_map.find i cells
-	                       with Not_found -> Concat [] in
-	          let e' = update pos' step' (Some l_val) e_elem e_val in
-	          Array (Int_map.add i e' cells, len, elt_size)
+      | (S.No | S.Maybe) -> update pos step (Some l_val) (flatten_array cells) e_val
+      | _ ->
+	if S.equal_int step' elt_size then
+	  let e_elem = try Int_map.find i cells
+	    with Not_found -> Concat [] in
+	  let e' = update pos' step' (Some l_val) e_elem e_val in
+	  Array (Int_map.add i e' cells, len, elt_size)
 
-		      else if i = 0 && S.equal_int step' len then
-		        update pos' step' (Some l_val) e_host e_val
+	else if i = 0 && S.equal_int step' len then
+	  update pos' step' (Some l_val) e_host e_val
 
-		      (* else if S.greater_equal_len elt_size step then
-	          let e_elem = try Int_map.find 0 cells
-	                       with Not_found -> Concat [] in
-	          let e' = update pos elt_size l_val e_elem e_val in
-	          Array (Int_map.add 0 e' cells, len, elt_size) *)
+	(* else if S.greater_equal_len elt_size step then
+	   let e_elem = try Int_map.find 0 cells
+	   with Not_found -> Concat [] in
+	   let e' = update pos elt_size l_val e_elem e_val in
+	   Array (Int_map.add 0 e' cells, len, elt_size) *)
 
-          else update pos step (Some l_val) (flatten_array cells) e_val
+        else update pos step (Some l_val) (flatten_array cells) e_val
 
-		      (* else fail "update: index step incompatible with array element size" *)
-      end
+    (* else fail "update: index step incompatible with array element size" *)
+    end
 
-    | ((Index i, step') :: pos', None, Concat []) ->
-        update (flatten_index pos) step None e_host e_val
+  | ((Index i, step') :: pos', None, Concat []) ->
+    update (flatten_index pos) step None e_host e_val
 
-    | ((Index i, step') :: pos', Some l_val, Concat []) ->
-      if S.greater_equal_len step' l_val then
-	      let e_new = Array (Int_map.empty, step, step') in
-	      update pos step (Some l_val) e_new e_val
-      else
-        update (flatten_index pos) step (Some l_val) e_host e_val
+  | ((Index i, step') :: pos', Some l_val, Concat []) ->
+    if S.greater_equal_len step' l_val then
+      let e_new = Array (Int_map.empty, step, step') in
+      update pos step (Some l_val) e_new e_val
+    else
+      update (flatten_index pos) step (Some l_val) e_host e_val
 
-      (* TODO: give it one more chance in case Concat [Array _]? *)
-    | ((Index i, step') :: pos', l_val, e_host) ->
-      (* deep flattening here is slightly cosmetical - otherwise you get stuff like [payload_len|<{0 -> <{0 -> 7c}>}>] *)
-      (* let e_new = update (flatten_index_deep pos') step' l_val (Concat []) e_val in
-      update (flatten_index [Index i, step']) step (L.get_len e_new) e_host e_new *)
-      update (flatten_index_deep pos) step l_val e_host e_val
+  (* TODO: give it one more chance in case Concat [Array _]? *)
+  | ((Index i, step') :: pos', l_val, e_host) ->
+    (* deep flattening here is slightly cosmetical - otherwise you get stuff like
+       [payload_len|<{0 -> <{0 -> 7c}>}>] *)
+    (* let e_new = update (flatten_index_deep pos') step' l_val (Concat []) e_val in
+       update (flatten_index [Index i, step']) step (L.get_len e_new) e_host e_new *)
+    update (flatten_index_deep pos) step l_val e_host e_val
 
-    | ((Field s, step') :: pos', l_val, Struct (fields, attrs, len, e_old)) ->
-      let e_field = try Str_map.find s fields
-                    with Not_found -> Concat [] in
-      let e' = update pos' step' l_val e_field e_val in
-      Struct (Str_map.add s e' fields, attrs, len, e_old)
+  | ((Field s, step') :: pos', l_val, Struct (fields, attrs, len, e_old)) ->
+    let e_field =
+      try Str_map.find s fields
+      with Not_found -> Concat []
+    in
+    let e' = update pos' step' l_val e_field e_val in
+    Struct (Str_map.add s e' fields, attrs, len, e_old)
 
-    | ((Attr s, step') :: pos', l_val, Struct (fields, attrs, len, e_old)) ->
-      let e_attr = try Str_map.find s attrs
-                   with Not_found -> Concat [] in
-      let e' = update pos' step' l_val e_attr e_val in
-      Struct (fields, Str_map.add s e' attrs, len, e_old)
+  | ((Attr s, step') :: pos', l_val, Struct (fields, attrs, len, e_old)) ->
+    let e_attr = try Str_map.find s attrs
+      with Not_found -> Concat [] in
+    let e' = update pos' step' l_val e_attr e_val in
+    Struct (fields, Str_map.add s e' attrs, len, e_old)
 
-      (* FIXME: we might need to descend if position is E.zero *)
-    | ((Flat oe, _) :: _, l_val, Array (cells, _, _)) ->
-      update pos step l_val (flatten_array cells) e_val
+  (* FIXME: we might need to descend if position is E.zero *)
+  | ((Flat oe, _) :: _, l_val, Array (cells, _, _)) ->
+    update pos step l_val (flatten_array cells) e_val
 
-      (*
-        We follow the assumption that a flat offset has step 1.
-        If we want to create a structure below this offset, we better inherit the
-        structure size (pointer step) from above.
-      *)
-    | ((Flat oe, _) :: pos', l_val, e) ->
-      (* FIXME: you might want to flatten_index_deep pos' in case oe > 0 *)
-      let e1 = Simplify.simplify (Range (e, E.zero, oe)) in
-      let e2 = Simplify.simplify (Range (e, oe, Simplify.minus (L.get_len e) oe)) in
-      Simplify.simplify (Concat [e1; update pos' step l_val e2 e_val])
+  (* We follow the assumption that a flat offset has step 1.  If we want to create a
+     structure below this offset, we better inherit the structure size (pointer step) from
+     above.  *)
+  | ((Flat oe, _) :: pos', l_val, e) ->
+    (* FIXME: you might want to flatten_index_deep pos' in case oe > 0 *)
+    let e1 = Simplify.simplify (Range (e, E.zero, oe)) in
+    let e2 = Simplify.simplify (Range (e, oe, Simplify.minus (L.get_len e) oe)) in
+    Simplify.simplify (Concat [e1; update pos' step l_val e2 e_val])
 
-    | ([], None, e) -> e_val
+  | ([], None, e) -> e_val
 
-    | ([], Some l_val, e) ->
-      let e_len = Simplify.simplify (L.get_len e) in
-      begin match S.greater_equal_len_answer e_len l_val with
-        | S.Yes ->
-  	      let e' = Simplify.simplify (Range (e, l_val, Simplify.minus e_len l_val)) in
-  	      Simplify.simplify (Concat ([e_val; e']))
-          (* here we essentially replace e by undef which is sound *)
-        | S.No -> e_val
-        | S.Maybe ->
-          fail "update: cannot decide which is greater: %s or %s" (E.to_string e_len) (E.to_string l_val)
-      end
+  | ([], Some l_val, e) ->
+    let e_len = Simplify.simplify (L.get_len e) in
+    begin match S.greater_equal_len_answer e_len l_val with
+    | S.Yes ->
+      let e' = Simplify.simplify (Range (e, l_val, Simplify.minus e_len l_val)) in
+      Simplify.simplify (Concat ([e_val; e']))
+    (* here we essentially replace e by undef which is sound *)
+    | S.No -> e_val
+    | S.Maybe ->
+      fail "update: cannot decide which is greater: %s or %s" (E.to_string e_len) (E.to_string l_val)
+    end
 
-    | (pos, l_val, Concat (e :: es)) when S.greater_equal_len (L.get_len e) step ->
-      (*
-        At this point [pos] starts with something that definitely goes into a deeper segment.
-        Thus it is safe to pass only the first element down - the right thing happens even if
-        [l_val = Infty].
-       *)
-      let e' = update pos step l_val e e_val in
-      Simplify.simplify (Concat (e' :: es))
+  | (pos, l_val, Concat (e :: es)) when S.greater_equal_len (L.get_len e) step ->
+    (* At this point [pos] starts with something that definitely goes into a deeper
+       segment.  Thus it is safe to pass only the first element down - the right thing
+       happens even if [l_val = Infty].  *)
+    let e' = update pos step l_val e e_val in
+    Simplify.simplify (Concat (e' :: es))
 
-    | (((Field _ | Attr _), step') :: _, l_val, e) ->
-      let e_old = Simplify.simplify (Range (e, E.zero, step)) in
-      let e_new = Struct (Str_map.empty, Str_map.empty, step, e_old) in
-      update pos step' l_val e_new e_val
+  | (((Field _ | Attr _), step') :: _, l_val, e) ->
+    let e_old = Simplify.simplify (Range (e, E.zero, step)) in
+    let e_new = Struct (Str_map.empty, Str_map.empty, step, e_old) in
+    update pos step' l_val e_new e_val
 
-    (* Last resort: try to overwrite the value completely *)
-    (* | (((Field _, _) | (Attr _, _)) :: _, _) -> update pos step l_val (Concat []) e_val *)
+(* Last resort: try to overwrite the value completely *)
+(* | (((Field _, _) | (Attr _, _)) :: _, _) -> update pos step l_val (Concat []) e_val *)
 
-    (* | _ -> fail "update: cannot write through pointer" *)
+(* | _ -> fail "update: cannot write through pointer" *)
 
 let update pos step l_val e_host e_val =
   push_debug "update";
@@ -655,7 +654,7 @@ let store : cvm -> unit = fun flag ->
         | _ -> snd (List.hd pos)
       in
       (* update performs simplification already *)
-      to_mem b ( (* silent *) (update pos step l_val e_host) e);
+      to_mem b (update pos step l_val e_host e);
       mark_enabled := false
 
     | _ -> fail "store: pointer expected"
@@ -665,7 +664,8 @@ let value ~expected_type e =
   | Type.Bs_int itype as t ->
     (* begin match expected_sign with *)
     if itype <> expected_type
-    then fail "Expected type %s in expression %s, got %s" (Int_type.to_string expected_type) (E.to_string e) (Type.to_string t)
+    then fail "Expected type %s in expression %s, got %s"
+      (Int_type.to_string expected_type) (E.to_string e) (Type.to_string t)
     else E.Val (e, itype) |> Simplify.simplify
   | _ ->
     E.Val (e, expected_type)
@@ -722,7 +722,9 @@ let rec execute = function
       | [Int i; String s] when i = -1L -> Var (Var.fresh "unknown"), Named (s, None)
       | [Int i; String ""]             -> Int i, Fixed (Int64.to_int i)
       | [Int i; String s]              -> Int i, Named (s, Some (Fixed (Int64.to_int i)))
-      | es -> fail "New: length followed by typename expected on stack, instead found %s" (E.dump_list es)
+      | es ->
+        fail "New: length followed by typename expected on stack, instead found %s"
+          (E.dump_list es)
     in
     iml := !iml @ [Stmt.New (vname, t)];
     S.add_fact (S.is_defined v);

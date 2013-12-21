@@ -60,11 +60,16 @@ let main () =
   dump_called_funs ();
 
 ;;
-begin
-  try main () with
-    Failure s -> begin
-      print_endline s;
-      exit 1;
-    end
-end
 
+(*
+  Trying to get both the full text of the exception and
+  the backtrace. Waiting for a fix for
+  http://caml.inria.fr/mantis/view.php?id=5040
+*)
+
+Printexc.register_printer (function
+  | Failure s -> Some s
+  | _ -> None);
+;;
+
+Printexc.print main ()

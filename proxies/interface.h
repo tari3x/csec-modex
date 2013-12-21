@@ -189,16 +189,4 @@ EXTERN void fresh_ptr(size_t size);
  */
 EXTERN void stack_ptr(const char * name);
 
-/**
- * Specify that the function return value is what's on top of the symbolic stack.
- *
- * Should do nothing in binary case. This function is similar to what lhs_int would be,
- * but it is more safe and versatile, at the cost of not being compatible with binary method.
- * At the same time lhs_int in binary case doesn't make much sense anyway, because it
- * is too short to be reliably unified.
- *
- * Still, when redesigning according to the TODO, it might be better to remove this one.
- */
-// EXTERN void sym_return();
-
 #endif /* PROXY_INTERFACE */

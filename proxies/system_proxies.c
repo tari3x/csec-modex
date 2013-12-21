@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <netdb.h>
 
@@ -66,15 +67,13 @@ EXTERN void *( __attribute__((__cdecl__)) memmove_proxy)(void * dest, void const
 
 extern void *malloc_proxy(size_t size)
 {
-  void * ret = NULL;
-
   mute();
-  ret = malloc(size);
+  void * ret = malloc(size);
   unmute();
 
   NewHeapPtr(size);
+  store_buf(&ret);
 
-  CustomReturn();
   return ret;
 }
 
@@ -183,7 +182,7 @@ extern ssize_t write_proxy(int fd , void const   *buf , size_t n )
   return ret;
 }
 
-int strcmp_proxy(char const   *a , char const   *b )
+int strcmp_proxy(char const   *a , char const  *b )
 {
   mute();
   int ret = strcmp(a, b);
@@ -196,8 +195,8 @@ int strcmp_proxy(char const   *a , char const   *b )
   // No hint, we expect cmp to be rewritten
   SymN("cmp", 2);
   assume_len(sizeof(ret));
+  store_buf(&ret);
 
-  CustomReturn();
   return ret;
 }
 
@@ -213,8 +212,8 @@ int strncmp_proxy(char const *a, char const *b, size_t n)
   SymN("ztp", 1);
   SymN("cmp", 2);
   assume_len(sizeof(ret));
+  store_buf(&ret);
 
-  CustomReturn();
   return ret;
 }
 
@@ -287,3 +286,13 @@ struct hostent *gethostbyname_proxy(const char *name)
   return ret;
 }
 
+
+void __assert_fail_proxy(char const   *__assertion ,
+                         char const   *__file ,
+                         unsigned int __line ,
+                         char const   *__function )
+{
+  mute();
+  __assert_fail(__assertion, __file, __line, __function);
+  unmute();
+}
