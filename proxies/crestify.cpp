@@ -242,6 +242,15 @@ void __CrestBS(int is_signed, int width)
     *out << "BS_unsigned " << width << endl;
 }
 
+void __CrestVal(int is_signed, int width)
+{
+  if(muted) return;
+
+  if(is_signed)
+    *out << "Val_signed " << width << endl;
+  else
+    *out << "Val_unsigned " << width << endl;
+}
 
 void __CrestLoadMem()
 {
@@ -259,7 +268,7 @@ void __CrestLoadCString(__CREST_STR val)
 
   // String constants are stored in the DATA memory segment, so we can just use
   // heap pointer semantics for them.
-  *out << "LoadStr " << endl << buffer2string((const unsigned char *) val, len) << "00" << endl;
+  *out << "LoadStr " << endl << buffer2string((const unsigned char *) val, len) << "\000" << endl;
   *out << "LoadInt " << len << endl;
   __CrestLoadHeapPtr(++lastHeapPtr);
   *out << "StoreMem" << endl;
@@ -419,10 +428,7 @@ void Val(bool is_signed, int width)
   if(muted) return;
 
   __CrestClear(2);
-  if(is_signed)
-    *out << "Val_signed " << width << endl;
-  else
-    *out << "Val_unsigned " << width << endl;
+  __CrestVal(is_signed, width);
 }
 
 
@@ -434,16 +440,14 @@ void LoadStr(const char * str)
   *out << "LoadStr " << endl << str << endl;
 }
 
-/*
-void Sym(const char * sym)
+void SymT(const char * sym)
 {
   if(muted) return;
 
-  // Discard the sym parameter from symbolic stack
+  // Discard the parameters from symbolic stack
   __CrestClear(1);
-  *out << "ApplyAll " << sym << endl;
+  __CrestApply(sym);
 }
-*/
 
 void SymN(const char * sym, int n)
 {
@@ -642,6 +646,7 @@ void NewHeapPtr(size_t buflen)
   if(muted) return;
 
   // Keep buflen on stack
+  __CrestVal(FALSE, sizeof(buflen));
   __CrestLoadHeapPtr(++lastHeapPtr);
 }
 

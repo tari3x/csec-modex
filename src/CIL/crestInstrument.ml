@@ -179,6 +179,7 @@ module Sym = struct
     | CastToInt of Type.t
     | CastToPtr of Type.t
     | CastToOther of Type.t
+    | PtrLen
 
   let unaryOpCode = function
     | Neg -> "neg"  | BNot -> "~"  |  LNot -> "!"
@@ -200,6 +201,9 @@ module Sym = struct
       | MinusPI -> "MinusPI"
       | MinusPP -> "MinusPP"
 
+  let rec repeat n x =
+    if n = 0 then []
+    else x :: repeat (n - 1) x
 
   let toString = function
     | UnOp (op, t) -> sprintf "(%s: %s)" (unaryOpCode op) (Type.toString t)
@@ -207,8 +211,10 @@ module Sym = struct
     | CastToInt t -> sprintf "(CastToInt: %s)" (Type.toString t)
     | CastToPtr t -> sprintf "(CastToPtr: %s)" (Type.toString t)
     | CastToOther t -> sprintf "(CastToOther: %s)" (Type.toString t)
-    | Fun (f, n) -> sprintf "%s/%d" f n
-
+    | PtrLen -> "ptrLen/0"
+    | Fun (f, n) ->
+      if n = 0 then sprintf "(%s : bitstring)" f
+      else sprintf "(%s : %s -> bitstring)" f (String.concat " * " (repeat n "bitstring"))
 end
 
 (*************************************************)
@@ -369,11 +375,12 @@ class crestInstrumentVisitor f =
   (* FIXME: CIL only knows about machine-dependent integer kinds? Yep, so keep thinking. *)
   (** This one doesn't set length of sizeOf, but it can be done extra if needed *)
   let rec instrumentSizeOf : typ -> instr list = function
-    | TPtr _ -> [mkApply (Sym.Fun ("ptrLen", 0))]
-    | t -> match sizeOf t with
-	      | Const (CInt64 _) as c -> [mkLoadInt c]
-	      | SizeOf t'             -> [mkLoadTypeSize (Pretty.sprint 100 (d_typsig () (typeSig t)))]
-	      | _                     -> E.s (error "instrumentSizeOf: unexpected sizeOf result")
+    | TPtr _ -> [mkApply Sym.PtrLen]
+    | t ->
+      match sizeOf t with
+      | Const (CInt64 _) as c -> [mkLoadInt c]
+      | SizeOf t'             -> [mkLoadTypeSize (Pretty.sprint 100 (d_typsig () (typeSig t)))]
+      | _                     -> E.s (error "instrumentSizeOf: unexpected sizeOf result")
 
   (** FIXME: not sound, switch to the symbolic version. *)
   (* let rec instrumentSizeOf : typ -> instr list = function t -> [mkLoadInt (SizeOf t)] *)
@@ -421,17 +428,14 @@ class crestInstrumentVisitor f =
 
   and initHost : lhost -> instr list = function
     | Var v when v.vglob && not (isFunctionType v.vtype) ->
-      if isOpaque v then
-	let host = (Var v, NoOffset) in
-	if isPointerType v.vtype then
-	  [mkLoadStackPtr v.vname]
-          @ setPtrStep v.vtype
-          @ (instrumentLvalNoInit host)
-          @ [mkStore ()]
-	else
-	  [mkApply (Sym.Fun (v.vname, 0))] @ (instrumentLvalNoInit host) @ [mkStore ()]
-      else
-        [mkInit v]
+      if isOpaque v && isPointerType v.vtype
+      then begin
+	[mkLoadStackPtr v.vname]
+        @ setPtrStep v.vtype
+        @ (instrumentLvalNoInit (Var v, NoOffset))
+        @ [mkStore ()]
+      end
+      else [mkInit v]
     | _ -> []
 
   and instrumentLvalWithInit (host, offset) =
@@ -535,18 +539,17 @@ class crestInstrumentVisitor f =
     instr (Var v, NoOffset) init
 
   and instrumentResult : typ -> string -> exp list -> instr list = fun t fname args ->
-	  match t with
+    match t with
     | TVoid _ -> [mkClear (length args)]
-	  | TPtr (t, _) -> [mkClear (length args); mkLoadStackPtr (fname ^ "()"); mkNondet ()] @ (setPtrStep t)
-	  | _ -> [mkApply (Sym.Fun (fname ^ "()", length args)); mkNondet ()]
+    | TPtr (t, _) -> [mkClear (length args); mkLoadStackPtr (fname ^ "()"); mkNondet ()] @ (setPtrStep t)
+    | _ -> [mkApply (Sym.Fun (fname ^ "()", length args)); mkNondet ()]
   in
 
   (*
     A function wrapper.
 
-    The reason we can't just intercept at the call site is that this could be called through
-    a pointer.
-  *)
+    The reason we can't just intercept at the call site is that this could be called
+    through a pointer.  *)
   let opaqueWrapper : varinfo -> global list = fun v ->
 
     (* in calls to vararg funs we don't put parameters on stack *)
@@ -648,10 +651,11 @@ object (self)
 
       let t = typeOfLval f in
       let call =
-        if isVarargFunType t then
-          [mkMute(); i; mkUnmute ()] @ instrumentResult (funReturnType t) "vararg_result" args
-        else
-          [i]
+        if isVarargFunType t
+        then
+          [mkMute(); i; mkUnmute ()]
+          @ instrumentResult (funReturnType t) "vararg_result" args
+        else [i]
       in
 
       let assignRet = match ret with
@@ -685,24 +689,33 @@ object (self)
         DoChildren
 
 
+
   method vglob = function
-    | GVar (v, {init = i}, loc) as g when not (isOpaque v) && not (v.vstorage = Extern) ->
+    | GVar (v, {init = i}, loc) as g when not (v.vstorage = Extern) ->
 
       (*
-      ignore (Pretty.printf "crestifying global %a\n" (printGlobal plainCilPrinter) g);
+        ignore (Pretty.printf "crestifying global %a\n" (printGlobal plainCilPrinter) g);
       *)
 
       markCrestified v;
       let f = emptyFunction ("__crest_" ^ v.vname ^ "_init") in
-      let initialised = makeGlobalVar ("__crest_" ^ v.vname ^ "_initialised") boolType in
-      let doInit = match i with
+      let initialised =
+        makeGlobalVar ("__crest_" ^ v.vname ^ "_initialised") boolType
+      in
+      let doInit =
+        if isOpaque v
+        then
+          FI ([mkApply (Sym.Fun (v.vname, 0))]
+              @ (instrumentLvalNoInit (Var v, NoOffset))
+              @ [mkStore ()])
+        else match i with
         | (Some init) -> FI (instrumentInit v init)
         | None        -> FI []
       in
       let body =
         [mkStmtOneInstr (mkCall f.svar (List.length f.sformals))]
         @
-        cStmts
+          cStmts
           "if(!initialised) {initialised = 1; {%I:doInit}}"
           (fun n t -> makeTempVar f ~name:n t)
           loc
@@ -712,16 +725,17 @@ object (self)
       in
       f.sbody.bstmts <- body;
 
-      (* Sometimes a global is defined in a header without extern, like in rergress.h in
-         cryptokix.  I don't really know how that is valid C.  This usually correlated
-         with giving the global no declaration and no initialisation, so we choose to
-         make the function static to prevent multiple definition errors.  *)
-      if i = None then
-      begin
-        (*
-	      f.svar.vstorage <- Static;
-	      initialised.vstorage <- Static;
-        *)
+        (* Sometimes a global is defined in a header without extern, like in
+           rergress.h in cryptokix.  I don't really know how that is valid C.
+           This usually correlated with giving the global no declaration and no
+           initialisation, so we choose to make the function static to prevent
+           multiple definition errors. *)
+      if i = None && not (isOpaque v)
+      then begin
+          (*
+	    f.svar.vstorage <- Static;
+	    initialised.vstorage <- Static;
+          *)
         E.s (error "globals without initialisers must be declared opaque: %a\n" d_global g);
       end;
 

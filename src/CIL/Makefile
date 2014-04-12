@@ -6,7 +6,7 @@ include $(CSEC_ROOT)/mk/common.mk
 all: CIL leaves.exe calltrace.exe badpairs.exe unreachable.exe calledOpaque.exe
 
 # nums seems to be necessary since 3.12
-BUILD_CMD = ocamlc -g -o $@ unix.cma str.cma nums.cma -I $(CIL_OBJDIR) cil.cma $^
+BUILD_CMD = ocamlc -g -o $@ unix.cma str.cma nums.cma -I $(CIL_OBJDIR) -I $(CIL_ROOT)/_build/ocamlutil cil.cma $^
 
 leaves.exe: common.ml leaves.ml 
 	$(BUILD_CMD)

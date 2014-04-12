@@ -259,7 +259,7 @@ bool check_key_proxy(const unsigned char * host, size_t host_len,
   load_buf(sig, sig_len, "sig");
   load_buf(sigkey, sigkey_len, "sigkey");
 
-  SymN("check_key", 4);
+  SymT("(check_key : bitstring * bitstring * bitstring * bitstring -> bool)");
   SymN("bs_of_truth[1]", 1);
   assume_len(sizeof(ret));
 

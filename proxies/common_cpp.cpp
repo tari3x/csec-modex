@@ -28,8 +28,10 @@ string buffer2string(const unsigned char * buf, int len)
   char b[5];
   for(int i = 0; i < len; i++)
   {
-    // TODO: separate single character printing from print_buffer
-    sprintf(b, "%02x", buf[i]);
+    if((isgraph(buf[i]) && buf[i] != '\\') || buf[i] == ' ')
+      sprintf(b, "%c", buf[i]);
+    else
+      sprintf(b, "\\%.3u", buf[i]);
     s += string(b);
   }
   return s;

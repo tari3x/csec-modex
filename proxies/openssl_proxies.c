@@ -2189,9 +2189,9 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   unmute();
 
   SymN("lenvar", 0);
+  Nondet();
   Hint("len");
   assume_len(sizeof(ret));
-  Nondet();
 
   store_buf((unsigned char  *) &ret);
 

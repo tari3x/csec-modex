@@ -10,511 +10,515 @@ open Common
 (** {1 Types} *)
 (*************************************************)
 
-module Ptr_map: Custom_map with type key = int64
-module Int_map: Custom_map with type key = int
-module Str_map: Custom_map with type key = string
+module Ptr_map : Custom_map with type key = int64
+module Int_map : Custom_map with type key = int
+module Str_map : Custom_map with type key = string
 
-module Type: sig
-  module T: sig
+(* We shall use GADTs to make sure that all our expression are well-typed with
+   respect to the following 3-types: bitstring, int, and bool. There is no
+   significance in int and bool being the same as the system int and bool type,
+   the types are only used as phantom types. *)
 
-    module Int_type: sig
-      module Signedness : sig
-        type t = [ `Signed | `Unsigned ]
-        val to_string : t -> string
-      end
-      type width = int
-      type t
-
-      val signedness : t -> Signedness.t
-      val width : t -> int
-      val create : Signedness.t -> int -> t
-
-      val to_string : t -> string
-      val of_string : string -> t
-
-      val int : t
-      val size_t : t
-    end
-
-    (*
-      Not using CV typet, because it contains options that we don't care about,
-      and so is not equatable.
-    *)
-    (* TODO: use polymorphic variants to prove to the compiler that Cast_to_int may only contain Bs_int *)
-    type t =
-    | Bitstringbot               (** All strings and bottom. *)
-    | Bitstring                  (** All machine-representable strings *)
-    | Fixed of int               (** All strings of a given length *)
-    | Bounded of int             (** All strings up to a given length *)
-    | Bool
-    | Int
-    | Ptr
-    | Bs_int of Int_type.t
-    | Named of string * t option (** A named type with an optional type definition.
-                                     Named (_, None) may not contain bottom. *)
-  end
-
-  type t = T.t =
-           | Bitstringbot               (** All strings and bottom. *)
-           | Bitstring                  (** All machine-representable strings *)
-           | Fixed of int               (** All strings of a given length *)
-           | Bounded of int             (** All strings up to a given length *)
-           | Bool
-           | Int
-           | Ptr
-           | Bs_int of T.Int_type.t
-           | Named of string * t option (** A named type with an optional type definition.
-                                            Named (_, None) may not contain bottom. *)
-
-  val of_string: string -> t
-
-  val to_string: t -> string
-
-  val subtype: t -> t -> bool
-  val intersection : t -> t -> t
-  val union : t -> t -> t
-
-  val strip_name: t -> t
-
-  val has_fixed_length: t -> bool
-end
-
-type imltype = Type.t
-
-module Fun_type : sig
-  type t = imltype list * imltype
-
-  val to_string: t -> string
-end
-
-
-module Sym: sig
-  open Type.T
-
-  module Op: sig
-    module T: sig
-      (* TODO: import these directly from CIL *)
-      type op =
-        Neg                                 (** Unary minus *)
-      | BNot                                (** Bitwise complement (~) *)
-      | LNot                                (** Logical Not (!) *)
-
-      | Plus_a                               (** arithmetic + *)
-        (* We don't use Index_pI *)
-      | Plus_PI                              (** pointer + integer *)
-
-      | Minus_a                              (** arithmetic - *)
-      | Minus_PI                             (** pointer - integer *)
-      | Minus_PP                             (** pointer - pointer *)
-      | Mult                                (** * *)
-      | Div                                 (** / *)
-      | Mod                                 (** % *)
-      | Shiftlt                             (** shift left *)
-      | Shiftrt                             (** shift right *)
-
-      | Lt                                  (** <  (arithmetic comparison) *)
-      | Gt                                  (** >  (arithmetic comparison) *)
-      | Le                                  (** <= (arithmetic comparison) *)
-      | Ge                                  (** >  (arithmetic comparison) *)
-      | Eq                                  (** == (arithmetic comparison) *)
-      | Ne                                  (** != (arithmetic comparison) *)
-      | BAnd                                (** bitwise and *)
-      | BXor                                (** exclusive-or *)
-      | BOr                                 (** inclusive-or *)
-
-      | LAnd                                (** logical and. Unlike other
-                                             * expressions this one does not
-                                             * always evaluate both operands. If
-                                             * you want to use these, you must
-                                             * set {!Cil.use_logical_operators}. *)
-      | LOr                                 (** logical or. Unlike other
-                                             * expressions this one does not
-                                             * always evaluate both operands.  If
-                                             * you want to use these, you must
-                                             * set {!Cil.use_logical_operators}. *)
-
-        (* These are added by us, they are not defined as ops in CIL *)
-      | Cast_to_int
-      | Cast_to_ptr
-      | Cast_to_other
-    end
-
-    type t = T.op
-  end
-
-  module T: sig
-    open Op.T
-
-    type name = string
-    type arity = int
-    type invocation_id = int
-
-    (*
-      TODO: use polymorphic variants and move solver-specific stuff into solver.
-    *)
-    type sym =
-    (* TODO: should take Int_type.t *)
-    | Op of op * Fun_type.t
-
-    | Bs_eq                               (** Bitstring comparison, works on bottoms too. *)
-    | Cmp                                (** Bitstring comparison returning bitstring result.
-                                             Bs_eq(x, y) = Truth(Cmp(x, y)) *)
-
-    | Minus_int                           (** Operators without overflow. Think of them as widening their result
-                                              if necessary *)
-    | Plus_int of arity
-    | Mult_int of arity
-    | Neg_int
-
-    | Lt_int                               (** <  (arithmetic comparison) *)
-    | Gt_int                               (** >  (arithmetic comparison) *)
-    | Le_int                               (** <= (arithmetic comparison) *)
-    | Ge_int                               (** >  (arithmetic comparison) *)
-    | Eq_int                               (** == (arithmetic comparison) *)
-    | Ne_int                               (** != (arithmetic comparison) *)
-
-    | Implies
-    | And of arity
-    | Or of arity
-    | Not
-    | True
-
-    | Ptr_len
-
-    | Cast of Type.t * Type.t
-
-    (**
-       Zero-terminated prefix - up to but not including the first 0.
-       Bottom if the bitstring does not contain zero.
-    *)
-    | Ztp
-    (**
-       Same as Ztp, but returns the argument unchanged instead of bottom.
-    *)
-    | Ztp_safe
-
-    | Replicate
-    | Field_offset
-    | Opaque                             (** Used only in Solver *)
-    | Defined
-    | In_type of Type.t                   (** Defined is the same as (In_type Bitstring) *)
-
-    | Truth_of_bs
-    | BS_of_truth of Int_type.width
-
-    (* The yices versions of len and val, see thesis. *)
-    | Len_y
-    | Val_y of Int_type.t
-
-    (* TODO: kill const, now that Funs carry explicit arities *)
-    | Const of name
-
-    (* FIXME: unify with unknown? *)
-    | Undef of invocation_id             (** With a tag to distinguish different undefs.
-                                             FIXME: Do not create explicitly, use Expr.undef. *)
-
-    | Fun of name * arity
-    (* FIXME: make non-determinism explicit by random sampling, or check that there are no
-       such funs in final output *)
-    | Nondet_fun of name * invocation_id * arity
-  end
-
-  type t = T.sym
-
-  (**
-     Binary or integer arithmetic opeator. Cast not included.
-  *)
-  val is_arithmetic: t -> bool
-  val is_binary_arithmetic: t -> bool
-  val is_binary_comparison: t -> bool
-  val is_integer_comparison: t -> bool
-  (** A symbol that takes boolean arguments and returns a boolean result. *)
-  val is_logical: t -> bool
-
-  (**
-     May return bottom even if all arguments are not bottom.
-  *)
-  val may_fail: t -> bool
-  val never_fails: t -> bool
-
-  val result_type: t -> Type.t
-  val argument_types: t -> Type.t list
-  val arity: t -> int
-
-  val is_infix: t -> bool
-
-  val to_string: t -> string
-  val of_string: string -> t
-
-  val cv_declaration: t -> Fun_type.t -> string
-
-  module Map: Custom_map with type key = t
-end
-
+(** Hex representation: each byte corresponds to two characters. Length is the
+    number of bytes. *)
+type bitstring = string
 
 type intval = int64
 type ptr    = int64
 
-
-(** Hex representation: each byte corresponds to two characters. Length is the number of bytes. *)
-type bitstring = string
-
-
 type id = int
 
-type var = string
+module Kind : sig
+  type 'a t =
+  | Bool : bool t
+  | Int : int t
+  | Bitstring : bitstring t
 
-module Var: sig
-  type t = var
+  val to_string : _ t -> string
 
-  val unfresh: string list -> unit
-  val reset_fresh : unit -> unit
-
-  val fresh: string -> t
-  val fresh_id: string -> int
-
-  module Map: Custom_map with type key = var
+  val equal_kind : 'a t -> 'b t -> ('a, 'b) Type_equal.t option
 end
 
-module Exp: sig
+module Type : sig
+  module Int_type : sig
+    module Signedness : sig
+      type t = [ `Signed | `Unsigned ]
+      val to_string : t -> string
+    end
+    type width = int
+    type t
 
-  open Type.T
-  open Sym.T
+    val signedness : t -> Signedness.t
+    val width : t -> int
+    val create : Signedness.t -> int -> t
 
-  module T: sig
-    type len = exp
+    val to_string : t -> string
+    val of_string : string -> t
 
-    (** Not the same as lhost in CIL *)
-    and base =
-    | Stack of string
-      (** (Old) Name and unique id of variable. Note that this way variables from
-          different calls of the same function will be mapped to the same base, but not
-          variables from different functions. *)
-    | Heap of id * len
-    | Abs of intval
-    (** An absolute pointer value to deal with cases like:
-        {[
-          // signal.h:
-          typedef void ( *__sighandler_t) (int);
-          // signum.h:
-           /* Fake signal functions.  */
-           #define SIG_ERR ((__sighandler_t) -1)       /* Error return.  */
-           #define SIG_DFL ((__sighandler_t) 0)        /* Default action.  */
-           #define SIG_IGN ((__sighandler_t) 1)        /* Ignore signal.  */
-        ]}
-    *)
-
-
-    and offset_val =
-    | Field of string
-    | Attr of string
-    | Index of int (* Not intval, cause ocaml is really clumsy with that - you can't even subtract it easily *)
-      (* For now flat offsets are true integers, unlike in the thesis *)
-    | Flat of len
-    (** Flat offsets always measured in bytes *)
-
-    (** Offset value together with offset step *)
-    and offset = offset_val * len
-
-    and pos = offset list
-
-    (* FIXME: replace information lens with width option. Possibly use named width or some other
-       mechanism to make sure that output is the same on all architectures. The best thing
-       is to implement get_len_value by evaluating the length expression in the yices model (with cache).
-       But this does rely a bit too much on global state - think again!
-
-       Lens and Ints should have a width field, Vars and Syms should be covered by a width
-       annotation. The reason for the difference is that width changes the meaning of
-       Int and Len and is necessary to reconstruct the bitstring that they represent,
-       but not so for Vars and Syms.
-
-       Do we actually need any width information on vars and syms? It is only used for treating arithmetic expressions
-       in the solver, but then you should just add width information to the arithmetic symbols.
-    *)
-
-    (* TODO: use GADTs to enforce well-formedness.
-       You would then need to use two different syms, a binary and an integer
-    *)
-
-    (**
-       The type of symbolic expressions.
-       b exp are expressions that evaluate to bitstrings, i exp evaluate to (mathematical) integers.
-    *)
-    and exp =
-    | Int of intval
-      (** A concrete integer of given width. *)
-
-    | Char of char
-      (** An integer with given ascii value. *)
-
-      (* FIXME: have a separate case for literal strings *)
-    | String of bitstring
-      (** A concrete bitstring in hex representation: each byte corresponds to two characters. *)
-
-    | Var of var
-
-    | Sym of sym * exp list
-      (** [Sym s es] is an application of a symbolic function [s(e1, e2, ...)].
-      *)
-
-    | Range of exp * len * len
-      (** A substring of a given expression with given start position and length.
-          A position is a point between two characters or at the beginning or end of the string.
-          Given a string of length [l], the first position is [0], the last is [l].
-      *)
-
-    | Concat of exp list
-
-    | Len of exp
-
-    | BS of exp * Int_type.t
-
-    | Val of exp * Int_type.t
-
-    | Struct of (exp Str_map.t) * (exp Str_map.t) * len * exp
-      (** The first component are the real fields, the second are the crypto attributes.
-          The last component is the value of underlying memory at the time the struct
-          has been created.  This will get removed as soon as I transition to static
-          implementation. *)
-
-    | Array of (exp Int_map.t) * len * len
-      (** Contains total length and element length.
-
-          A good alternative is to use native array, but it only makes sense if I know
-          the number of elements in advance.  This can be done, but I don't see
-          overwhelming advantages and I'm too lazy to change right now, thus sticking to
-          a sparse representation.
-
-          At some point might have to use [Map] here, if there is need to generalize
-          indices to arbitrary expressions.  *)
-      (* FIXME: find out how to use Map here *)
-
-    | Ptr of base * pos
-      (** Invariants (being reviewed):
-
-          - The offset list is never empty.
-
-          - The sequence of offset steps is decreasing, except that step may be
-          [Unknown] for attribute offsets.
-
-          - An attribute offset always comes last.
-
-          - The first field or context offset is preceded by an index offset.
-
-          - A field, context, or index offset is never preceded by a flat offset.
-      *)
-
-    | Unknown
-      (** Used in length context only, where the value is not known or is not
-          relevant. *)
-      (* FIXME: shouldn't unknown be given an index to prevent it being equal to other
-         unknowns? *)
-    | Annotation of annotation * exp
-
-    and annotation =
-    | Type_hint of imltype
-    | Name of string
-  (* | Width of width *)
+    val int : t
+    val size_t : t
   end
 
-  open T
-  type t = exp
+  (* Not using CV typet, because it contains options that we don't care about, and so is
+     not equatable.  *)
+  (* TODO: use polymorphic variants to prove to the compiler that Cast_to_int may only
+     contain Bs_int *)
+  type 'a t =
+  | Bitstringbot : bitstring t               (** All strings and bottom. *)
+  | Bitstring : bitstring t                  (** All machine-representable strings *)
+  | Fixed : int -> bitstring t               (** All strings of a given length *)
+  | Bounded : int -> bitstring t             (** All strings up to a given length *)
+  | Ptr : bitstring t
+  | Bs_int : Int_type.t -> bitstring t
+  (* A named type with an optional type definition. Named (_, None) may not contain
+     bottom. *)
+  | Named : string * bitstring t option -> bitstring t
+  (* Bool does not include bottom *)
+  (* CR: make sure you can say the same about Bitstring - right now you use it as a
+     synonym for Bitstringbot. *)
+  | Bool : bool t
+  (* Integers and bottom. *)
+  | Int : int t
 
-  module Base_map: Map.S with type key = base
-  module Map: Custom_map with type key = exp
-  module Set: Set.S     with type elt = exp
+  type 'a imltype = 'a t
 
+  module Kind : module type of Kind with type 'a t = 'a Kind.t
+
+  val kind : 'a t -> 'a Kind.t
+
+  type any = Any : 'a t -> any
+
+  val of_string_bitstring : string -> bitstring t
+  val of_string : string -> any
+  val to_string : 'a t -> string
+
+  val subtype : 'a t -> 'a t -> bool
+  val intersection : 'a t -> 'a t -> 'a t
+  val union : 'a t -> 'a t -> 'a t
+
+  val strip_name : 'a t -> 'a t
+
+  val has_fixed_length : bitstring t -> bool
+end
+
+module Fun_type : sig
+  (* TODO: introduce tuple types so that we can check arities of symbols. This
+     will also allow to treat Replicate more gracefully. *)
+  type ('a, 'b) t = 'a Type.t list * 'b Type.t
+
+  val to_string : ('a, 'b) t -> string
+end
+
+module Sym : sig
+  open Type
+
+  module Cmp : sig
+    type t = Lt | Gt | Le | Ge | Eq | Ne
+  end
+
+  module Arith : sig
+    type t = Plus of int | Minus | Mult of int | Div | Neg
+  end
+
+  module Logical : sig
+    type t = And of int | Or of int | Not | Implies | True | Eq
+  end
+
+
+  (** C operators *)
+  module Op : sig
+      (* TODO: import these directly from CIL *)
+    type t =
+      BNot                                (** Bitwise complement (~) *)
+    | LNot                                (** Logical Not (!) *)
+
+    | Op_arith of Arith.t                 (** arithmetic + *)
+    | Op_cmp of Cmp.t                     (** <  (arithmetic comparison) *)
+
+      (* We don't use Index_pI *)
+    | Plus_PI                              (** pointer + int *)
+
+    | Minus_PI                             (** pointer - int *)
+    | Minus_PP                             (** pointer - pointer *)
+    | Mod                                 (** % *)
+    | Shiftlt                             (** shift left *)
+    | Shiftrt                             (** shift right *)
+
+    | BAnd                                (** bitwise and *)
+    | BXor                                (** exclusive-or *)
+    | BOr                                 (** inclusive-or *)
+
+    | LAnd                                (** logical and. Unlike other
+                                           * expressions this one does not
+                                           * always evaluate both operands. If
+                                           * you want to use these, you must
+                                           * set {!Cil.use_logical_operators}. *)
+    | LOr                                 (** logical or. Unlike other
+                                           * expressions this one does not
+                                           * always evaluate both operands.  If
+                                           * you want to use these, you must
+                                           * set {!Cil.use_logical_operators}. *)
+
+    (* These are added by us, they are not defined as ops in CIL *)
+    | Cast_to_int
+    | Cast_to_ptr
+    | Cast_to_other
+  end
+
+  open Op
+
+  type name = string
+  type arity = int
+  type invocation_id = int
+
+  (*
+    TODO: use polymorphic variants and move solver-specific stuff into solver.
+  *)
+  type ('a, 'b) t =
+  (* TODO: should take Int_type.t *)
+  | Op : Op.t * (bitstring, bitstring) Fun_type.t -> (bitstring, bitstring) t
+
+  | Bs_eq : (bitstring, bool) t
+  (** Bitstring comparison, works on bottoms too. *)
+  | Cmp : (bitstring, bitstring) t
+  (* TODO: what about bottoms? *)
+  (** Bitstring comparison returning bitstring result.  Bs_eq(x, y) = Truth(Cmp(x, y)) *)
+
+  | Int_op : Arith.t -> (int, int) t
+  | Int_cmp : Cmp.t -> (int, bool) t
+  | Logical : Logical.t -> (bool, bool) t
+
+  | Ptr_len : (_, int) t
+
+  | Cast : bitstring imltype * bitstring imltype -> (bitstring, bitstring) t
+
+  | Ztp : (bitstring, bitstring) t
+    (**
+       Zero-terminated prefix - up to but not including the first 0.
+       Bottom if the bitstring does not contain zero.
+    *)
+
+  | Ztp_safe : (bitstring, bitstring) t
+  (**
+     Same as Ztp, but returns the argument unchanged instead of bottom.
+  *)
+
+  | Replicate : (bitstring, bitstring) t
+  (** Field_offset is only there for CSur, in which network data is treated as a
+      structure directly. We don't try to prove safety of this. *)
+  | Field_offset : string -> (_, int) t
+  | Opaque : ('a, 'a) t
+  (** Used only in Solver *)
+  | Defined : ('a, bool) t
+  | In_type : 'a imltype -> ('a, bool) t
+  (** Defined is the same as (In_type Bitstring) *)
+
+  | Truth_of_bs : (bitstring, bool) t
+  | BS_of_truth : Int_type.width -> (bool, bitstring) t
+
+  (* The yices versions of len and val, see thesis. *)
+  | Len_y : (bitstring, int) t
+  | Val_y : Int_type.t -> (bitstring, int) t
+
+  (* FIXME: unify with unknown? *)
+  | Undef : invocation_id -> (_, bitstring) t
+  (** With a tag to distinguish different undefs.
+      FIXME: Do not create explicitly, use Expr.undef. *)
+
+  | Fun : name * (arity * 'b Kind.t) -> (bitstring, 'b) t
+
+  type ('a, 'b) sym = ('a, 'b) t
+
+  type bfun = (bitstring, bitstring) t
+
+  type any = Any : ('a, 'b) t -> any
+
+  (**
+     May return bottom even if all arguments are not bottom.
+  *)
+  val may_fail : (_, _) t -> bool
+  val never_fails : (_, _) t -> bool
+
+  val arity : (_, _) t -> int
+
+  val is_infix : (_, _) t -> bool
+
+  val to_string : (_, _) t -> string
+  val of_string : string -> any
+
+  val cv_declaration : ('a, 'b) t -> ('a, 'b) Fun_type.t -> string
+
+  module Key : sig
+    type 'a t = (bitstring, 'a) sym
+    include GADT_key with type 'a t := 'a t
+                     and module Kind = Kind
+  end
+
+  module Map_any : module type of Common.Map_any (Kind) (Key)
+
+  module Map (Value : GADT) : sig
+    type 'a sym = (bitstring, 'a) t
+    type 'a t
+
+    val empty : unit -> 'a t
+    val add : 'a sym -> 'a Value.t -> 'a t -> 'a t
+    val maybe_find : 'a sym -> 'a t -> 'a Value.t option
+    val find : 'a sym -> 'a t -> 'a Value.t
+    val mem : 'a sym -> 'a t -> bool
+    val iter : f:('a sym -> 'a Value.t -> unit) -> 'a t -> unit
+    val disjoint_union : 'a t list -> 'a t
+    val of_list : ('a sym * 'a Value.t) list -> 'a t
+    val to_list : 'a t -> ('a sym * 'a Value.t) list
+    val keys : 'a t -> 'a sym list
+    val values : 'a t -> 'a Value.t list
+    val filter : f:('a sym -> 'a Value.t -> bool) -> 'a t -> 'a t
+  end
+end
+
+module Var : sig
+  type t = string
+  type var = t
+
+  val fresh : string -> t
+
+  val unfresh : string list -> unit
+  val reset_fresh : unit -> unit
+
+  val fresh_id : string -> int
+
+  module Map : Custom_map with type key = t
+end
+
+(**
+   Symbolic expressions.
+*)
+module Exp : sig
+
+  open Type
+
+  type var = Var.t
+
+  type 'a t =
+  | Int : intval -> int t
+
+  | Char : char -> int t
+  (** An int with given ascii value. *)
+
+  | String : char list -> bitstring t
+  (** We use char list instead of string as a reminder to escape each character
+      if it is not printable. *)
+
+  | Var : var * 'a Kind.t -> 'a t
+
+  | Sym : ('a, 'b) Sym.t * 'a t list -> 'b t
+  (** [Sym s es] is an application of a symbolic function [s(e1, e2, ...)].  *)
+
+  | Range : bitstring t * int t * int t -> bitstring t
+  (** A substring of a given expression with given start position and length.  A
+      position is a point between two characters or at the beginning or end of
+      the string.  Given a string of length [l], the first position is [0], the
+      last is [l].  *)
+
+  | Concat : bitstring t list -> bitstring t
+
+  | Len : bitstring t -> int t
+
+  | BS : int t * Int_type.t -> bitstring t
+
+  | Val : bitstring t * Int_type.t -> int t
+
+  | Struct
+      :  (bitstring t Str_map.t) * (bitstring t Str_map.t) * int t * bitstring t
+    -> bitstring t
+  (** The first component are the real fields, the second are the crypto attributes.
+      The last component is the value of underlying memory at the time the struct
+      has been created.  This will get removed as soon as I transition to static
+      implementation. *)
+
+  | Array : (bitstring t Int_map.t) * int t * int t -> bitstring t
+  (** Contains total length and element length.
+
+      A good alternative is to use native array, but it only makes sense if I know the
+      number of elements in advance.  This can be done, but I don't see overwhelming
+      advantages and I'm too lazy to change right now, thus sticking to a sparse
+      representation.
+
+      At some point might have to use [Map] here, if there is need to generalize indices
+      to arbitrary expressions.  *)
+  (* FIXME: find out how to use Map here *)
+
+  | Ptr : base * pos -> bitstring t
+  (** Invariants (being reviewed):
+
+      - The offset list is never empty.
+
+      - The sequence of offset steps is decreasing, except that step may be
+      [Unknown] for attribute offsets.
+
+      - An attribute offset always comes last.
+
+      - The first field or context offset is preceded by an index offset.
+
+      - A field, context, or index offset is never preceded by a flat offset.
+  *)
+
+  | Unknown : 'a Kind.t -> 'a t
+  (** Used in length context only, where the value is not known or is not relevant. *)
+  (* FIXME: shouldn't unknown be given an index to prevent it being equal to other
+     unknowns? *)
+  | Annotation : 'a annotation * 'a t -> 'a t
+
+  and 'a annotation =
+  | Type_hint : 'a imltype -> 'a annotation
+  | Name of string
+  (* | Width of width *)
+
+  (** Not the same as lhost in CIL *)
+  and base =
+  | Stack of string
+  (** (Old) Name and unique id of variable. Note that this way variables from
+      different calls of the same function will be mapped to the same base, but not
+      variables from different functions. *)
+  | Heap of id * int t
+  | Abs of intval
+  (** An absolute pointer value to deal with cases like:
+      {[
+        // signal.h:
+          typedef void ( *__sighandler_t) (int);
+          // signum.h:
+          /* Fake signal functions.  */
+            #define SIG_ERR ((__sighandler_t) -1)       /* Error return.  */
+            #define SIG_DFL ((__sighandler_t) 0)        /* Default action.  */
+            #define SIG_IGN ((__sighandler_t) 1)        /* Ignore signal.  */
+      ]}
+  *)
+
+  and offset_val =
+  | Field of string
+  | Attr of string
+  | Index of int
+  (* Not intval, cause ocaml is really clumsy with that - you can't even
+     subtract it easily *)
+  (* For now flat offsets are true ints, unlike in the thesis *)
+  | Flat of int t
+  (** Flat offsets always measured in bytes *)
+
+  (** Offset value together with offset step *)
+  and offset = offset_val * int t
+
+  and pos = offset list
+
+  type 'a exp = 'a t
+
+  type iterm = int t
+  type bterm = bitstring t
+  type fact = bool t
+
+  type any = Any : 'a t -> any
+
+  (*************************************************)
+  (** {1 Collections} *)
+  (*************************************************)
+
+  module Kind : module type of Kind with type 'a t = 'a Kind.t
+
+  module Base_map : Map.S with type key = base
+
+  module Fact_set : Set.S with type elt = fact
+
+  module Set : sig
+    type 'a exp = 'a t
+    include Set.S with type elt = any
+
+    val add : 'a exp -> t -> t
+    val mem : 'a exp -> t -> bool
+  end
+
+  module Key : sig
+    type 'a t = 'a exp
+    include GADT_key with type 'a t := 'a t
+                     and module Kind = Kind
+  end
+
+  module Map_any : module type of Common.Map_any (Kind) (Key)
 
   (*************************************************)
   (** {1 Traversal} *)
   (*************************************************)
 
+  type 'b map = { f : 'a. 'a t -> 'b }
+  type descend = { descend : 'a. 'a t -> 'a t }
+
   (**
      Does not include lengths for non-range expressions.
   *)
-  val children: t -> t list
+  val map_children : 'b map ->  _ t -> 'b list
+  val iter_children : unit map -> _ t -> unit
 
   (**
      Not going into lengths for non-range expressions.
   *)
-  val descend: (t -> t) -> t -> t
+  val descend : descend -> 'a t -> 'a t
 
   (*************************************************)
   (** {1 Typing } *)
   (*************************************************)
 
-  (**
-     If [typecheck t e] is true and [e] does not evaluate to
-     bottom then [e] is of type [t].
-  *)
-  val typecheck: Type.t -> exp -> unit
-  val itype_exn: exp -> Int_type.t
-  val type_of: exp -> Type.t
+  val invariant : _ t -> unit
+  val itype     : int t -> Int_type.t option
+  val itype_exn : int t -> Int_type.t
+  val kind      : 'a t -> 'a Kind.t
+  val coerce    : 'a Kind.t -> _ t -> 'a t option
 
   (*************************************************)
   (** {1 IDs} *)
   (*************************************************)
 
-  val id: t -> int
+  val id : _ t -> int
 
-  val serialize_state: out_channel -> unit
-  val deserialize_state: in_channel -> unit
+  val serialize_state : out_channel -> unit
+  val deserialize_state : in_channel -> unit
 
   (*************************************************)
   (** {1 Misc} *)
   (*************************************************)
 
-  val var: var -> exp
-  val concat : exp list -> exp
-  val range : exp -> len -> len -> exp
-  val int : int -> exp
+  val var : var -> bterm
+  val concat : bterm list -> bterm
+  val range : bterm -> iterm -> iterm -> bterm
+  val int : int -> int t
+  val string : string -> bterm
 
-  val zero : exp
-  val one  : exp
-  val zero_byte: Int_type.Signedness.t -> exp
+  val zero : iterm
+  val one  : iterm
+  val zero_byte : Int_type.Signedness.t -> bterm
 
-  val sum: exp list -> exp
-  val prod: exp list -> exp
-  val conj: exp list -> exp
-  val disj: exp list -> exp
+  val sum  : iterm list -> iterm
+  val prod : iterm list -> iterm
+  val conj : fact list -> fact
+  val disj : fact list -> fact
 
-  (*
-  (** Arbitrary for now *)
-    val max_len : exp
-  *)
+  val is_cryptographic : bterm -> bool
+  val is_concrete : _ t -> bool
+  val contains_sym : (_, _) Sym.t -> _ t -> bool
 
-  val is_concrete : exp -> bool
-  val is_length : exp -> bool
-  (* val is_comparison: exp -> bool *)
-  (* val is_logical: exp -> bool *)
-  val is_integer : exp -> bool
-  val is_string: exp -> bool
-  val contains_sym: sym -> exp -> bool
+  val vars : _ t -> var list
 
-  val vars: t -> var list
+  val refcount : var -> _ t -> int
 
-  val refcount: var -> t -> int
+  val subst   : var list -> 'b t list  -> 'a t -> 'a t
+  val subst_v : var list -> var list -> 'a t -> 'a t
 
-  (**
-     The first list must contain [Var] expressions only.
-  *)
-  val subst: var list -> exp list -> exp -> exp
-  val subst_v: var list -> var list -> exp -> exp
-  (*
-    val replace: exp list -> exp list -> exp -> exp
-  *)
+  val remove_annotations : 'a t -> 'a t
 
-  val remove_annotations: t -> t
+  (** The truth function from the thesis that takes C bool expressions and converts
+      them to expressions of type Bool.  In particular, all bool C operators (LNot,
+      LAnd, ...) are replaced by "proper" bool operators (Not, And, ...).  *)
+  val truth : bterm -> fact
 
-  (**
-     The truth function from the thesis that takes C boolean
-     expressions and converts them to expressions of type Bool.
-     In particular, all boolean C operators (LNot, LAnd, ...) are
-     replaced by "proper" boolean operators (Not, And, ...).
-  *)
-  val truth: t -> t
+  val len : bterm -> iterm
 
-  val len: t -> t
+  val apply : ('a, 'b) Sym.t -> any list -> 'b t
 
   (*************************************************)
   (** {1 Show} *)
@@ -524,94 +528,90 @@ module Exp: sig
     val clip_enabled: bool ref
   *)
 
-  val to_string: t -> string
-  val dump: t -> string
-  val dump_list: t list -> string
-  val list_to_string: t list -> string
-  val base_to_string: base -> string
-  val offset_to_string: offset -> string
+  val to_string : _ t -> string
+  val dump : _ t -> string
+  val dump_list : _ t list -> string
+  val list_to_string : _ t list -> string
+  val base_to_string : base -> string
+  val offset_to_string : offset -> string
 end
 
+module Pat : sig
+  type t =
+  | VPat of Var.t
+  | FPat : (bitstring, bitstring) Sym.t * t list -> t
+  | Underscore
 
-module Pat: sig
-  open Sym.T
-
-  module T: sig
-    type pat =
-    | VPat of var
-    | FPat of sym * pat list
-    | Underscore
-  end
-
-  type t = T.pat
-
-  val dump: t -> string
+  val dump : t -> string
 end
 
+module Stmt : sig
+  open Type
+  open Exp
 
-module Stmt: sig
-  open Exp.T
-  open Pat.T
+  type t =
+  | Let of Pat.t * bterm
+  (**
+     [Test e; P = if e then P else 0]
+  *)
+  | Fun_test of fact
+  | Eq_test of bterm * bterm
+  | Aux_test of fact
+  | Assume of fact
+  | In of var list
+  | Out of bterm list
+  | New of var * bitstring Type.t
+  | Event of string * bterm list
+  | Yield
+  | Comment of string
 
-  module T: sig
-    type stmt =
-    | Let of pat * exp
-    | Aux_test of exp
-      (**
-         [Test e; P = if e then P else 0]
+  type stmt = t
 
-         [Test] is never auxiliary after symex postprocessing.
-      *)
-    | Test of exp
-      (**
-         [Test_eq] is never auxiliary after symex postprocessing.
-      *)
-    | Test_eq of exp * exp
-    | Assume of exp
-    | In of var list
-    | Out of exp list
-    | New of var * imltype
-    | Event of string * exp list
-    | Yield
-    | Comment of string
-  end
+  val to_string : t -> string
 
-  type t = T.stmt
+  val map_children : 'a Exp.map -> t -> 'a list
+  val iter_children : unit Exp.map -> t -> unit
+  val exists_child : bool Exp.map -> t -> bool
 
-  val to_string: t -> string
+  val descend : Exp.descend -> t -> t
 
-  val children: t -> exp list
+  val subst : var list -> Exp.bterm list -> t -> t
 
-  val descend: (exp -> exp) -> t -> t
+  val vars : t -> var list
 
-  val subst: var list -> exp list -> t -> t
+  val remove_annotations : t -> t
 
-  val vars: t -> var list
-
-  val remove_annotations: t -> t
+  val make_test : fact -> t
 end
 
-open Exp.T
+open Exp
+open Stmt
 
-type iml = Stmt.t list
+type t = stmt list
+type iml = t
 
-type t = iml
+val map : Exp.descend -> t -> t
+val iter : unit Exp.map -> t -> unit
 
-val map: (exp -> exp) -> t -> t
-val iter: (exp -> unit) -> t -> unit
+val refcount : var -> t -> int
 
-val refcount: var -> t -> int
+val vars : t -> var list
 
-val vars: t -> var list
+val free_vars : t -> var list
 
-val free_vars: t -> var list
-
-val to_string: t -> string
+val to_string : t -> string
 
 (**
    Fails on capture.
 *)
-val subst: var list -> exp list -> t -> t
-val subst_v: var list -> var list -> t -> t
+val subst   : var list -> bterm list -> t -> t
+val subst_v : var list -> var   list -> t -> t
 
-(* 490 lines *)
+(* TODO: looks like this might not be necessary *)
+val map_without_auxiliary : Exp.descend -> t -> t
+val remove_auxiliary : t -> t
+
+val filter_with_comments : f:(stmt -> bool) -> t -> t
+val remove_comments : t -> t
+
+(* 570 lines *)

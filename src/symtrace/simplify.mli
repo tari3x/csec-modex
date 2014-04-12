@@ -1,22 +1,25 @@
+open Iml
+open Iml.Exp
+open Iml.Sym
 
-open Iml.Exp.T
-open Iml.Sym.T
+val simplify : 'a Exp.t -> 'a Exp.t
 
-val simplify: exp -> exp
+val minus : iterm -> iterm -> iterm
+val sum : iterm list -> iterm
+val prod : iterm list -> iterm
 
-val minus: exp -> exp -> exp
-val sum: exp list -> exp
-val prod: exp list -> exp
+(** Does not do constant folding - this way we might see more about the history of the
+    expression. *)
+val arith_simplify : iterm -> iterm
 
-(**
-    Does not do constant folding - this way we might see more about the history of the expression. 
-*)
-val arith_simplify : exp -> exp
-  
-(**
-    This is supposed to additionally perform constant folding.
-*)
-val arith_fold : exp -> exp
+(** This is supposed to additionally perform constant folding. *)
+val arith_fold : iterm -> iterm
+
+(*************************************************)
+(** {1 Testing.} *)
+(*************************************************)
+
+val test : unit -> unit
 
 (*---------------------------
   To be removed
@@ -25,4 +28,4 @@ val arith_fold : exp -> exp
 val is_zero_offset_val : offset_val -> bool
 val is_field_offset_val : offset_val -> bool
 
-val full_simplify: exp -> exp
+val full_simplify : 'a Exp.t -> 'a Exp.t

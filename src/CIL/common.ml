@@ -35,13 +35,12 @@ type glob =
 {
   mutable name: string;
   mutable opaque: bool;
-  (**
-    Functions for which neither the return value nor the side effects are relevant,
-    or globals, for which the value is not relevant and fields of which are not accessed by instrumented code.
+  (** Functions for which neither the return value nor the side effects are relevant, or
+      globals, for which the value is not relevant and fields of which are not accessed by
+      instrumented code.
 
-    A function is marked as opaque if it is explicitly listed in the boring section in config file
-    or if it needs to be proxied.
-  *)
+      A function is marked as opaque if it is explicitly listed in the boring section in
+      config file or if it needs to be proxied.  *)
 
   mutable is_proxy: bool;
   mutable needs_proxy: bool;

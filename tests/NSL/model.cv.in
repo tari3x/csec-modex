@@ -3,6 +3,8 @@ channel c_in, c_out.
 
 param N.
 
+type nondet [fixed].
+
 type fixed_20_nonce [fixed, large].
 
 type bounded_40_host.

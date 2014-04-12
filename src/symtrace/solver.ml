@@ -6,16 +6,18 @@
 
 open Common
 
-open Iml
-open Iml.Type.T
-open Iml.Sym.T
-open Iml.Sym.Op.T
-open Iml.Exp.T
+module Core_map = Map
 
-module E = struct
-  include Iml.Exp
-  include Iml.Exp.T
-end
+open Iml
+open Iml.Type
+open Iml.Sym
+open Iml.Sym.Op
+open Iml.Sym.Arith
+open Iml.Sym.Logical
+open Iml.Sym.Cmp
+open Iml.Exp
+
+module E = Iml.Exp
 
 (*************************************************)
 (** {1 Types} *)
@@ -27,8 +29,6 @@ type answer = Yes | No | Maybe
     [true] means definitely true, [false] means we don't know.
 *)
 type pbool = bool
-
-type fact = exp
 
 (*************************************************)
 (** {1 State} *)
@@ -44,7 +44,7 @@ struct
   type t = int * int
   let compare = Pervasives.compare
 end
-module Pair_map = Map.Make (Int_pair)
+module Pair_map = Core_map.Make (Int_pair)
 let eq_cache: pbool Pair_map.t ref = ref Pair_map.empty
 
 let warn_cache = ref E.Set.empty
@@ -61,10 +61,16 @@ let warn_cache = ref E.Set.empty
   output names when they are available.
 *)
 
-let mk_exp_name e =
+let mk_exp_name (type a) (e : a Exp.t) =
   let result = match e with
-    | Var v -> "var_" ^ v
-    | String s -> "string" ^ s
+    | Var (v, _) -> "var_" ^ v
+    | String _ as e ->
+      let escaped =
+        E.to_string e |> String.map (function
+        | '\\' -> '_'
+        | c -> c)
+      in
+      "string_" ^ escaped
     | _ -> "var" ^ (string_of_int (E.id e))
   in
   `Mangled result
@@ -74,27 +80,27 @@ let mk_exp_name e =
 (*************************************************)
 
 let theory =
-  "
-(define-type bitstringbot)
-(define bottom:: bitstringbot)
-(define-type bitstring (subtype (x::bitstringbot) (/= x bottom)))
-
-; These correspond to val and bs functions in the paper
-(define value_unsigned:: (-> bitstringbot nat))
-(define value_signed::   (-> bitstringbot int))
-(define bs_unsigned::    (-> int nat bitstringbot))
-(define bs_signed::      (-> int nat bitstringbot))
-
-; In theory we should have two functions, one using C interpretation of truth, the other
-; using IML interpretation, but these two would be indistinguishable from yices point of
-; view. See the translation function.
-(define truth:: (-> bitstringbot bool))
-
-; The length of bottom is arbitrary.
-(define len::   (-> bitstringbot nat))
-(define range:: (-> bitstringbot nat nat bitstringbot))
-
-(define defined:: (-> bitstringbot bool))
+  "\n\
+(define-type bitstringbot)\n\
+(define bottom:: bitstringbot)\n\
+(define-type bitstring (subtype (x::bitstringbot) (/= x bottom)))\n\
+\n\
+; These correspond to val and bs functions in the paper\n\
+(define value_unsigned:: (-> bitstringbot nat))\n\
+(define value_signed::   (-> bitstringbot int))\n\
+(define bs_unsigned::    (-> int nat bitstringbot))\n\
+(define bs_signed::      (-> int nat bitstringbot))\n\
+\n\
+; In theory we should have two functions, one using C interpretation of truth, the other\n\
+; using IML interpretation, but these two would be indistinguishable from yices point of\n\
+; view. See the translation function.\n\
+(define truth:: (-> bitstringbot bool))\n\
+\n\
+; The length of bottom is arbitrary.\n\
+(define len::   (-> bitstringbot nat))\n\
+(define range:: (-> bitstringbot nat nat bitstringbot))\n\
+\n\
+(define defined :: (-> bitstringbot bool))\n\
 "
 (*
   (define ptr::   (-> nat nat nat))
@@ -118,15 +124,12 @@ let value = function
   | `Unsigned -> Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "value_unsigned")
   | `Signed -> Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "value_signed")
 
-let bs = function
-  |  `Unsigned -> Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "bs_unsigned")
-  |  `Signed -> Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "bs_signed")
-
 let truth () =
     Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "truth")
 
-let bottom () =
-    Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "bottom")
+let bs = function
+  |  `Unsigned -> Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "bs_unsigned")
+  |  `Signed -> Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "bs_signed")
 
 (*
 let ptr () =
@@ -141,32 +144,33 @@ let defined () =
 (*************************************************)
 
 let eq_bitstring es = Sym (Bs_eq, es)
-let eq_int es = Sym (Eq_int, es)
-let not_e = function
-  | Sym (Not, [e]) -> e
-  | e -> Sym (Not, [e])
-let gt a b = Sym (Gt_int, [a; b])
-let ge a b = Sym (Ge_int, [a; b])
+let eq_int es = Sym (Int_cmp Eq, es)
+let not_e (e : fact) : fact =
+  match e with
+  | Sym (Logical Not, [e]) -> e
+  | e -> Sym (Logical Not, [e])
+let gt a b = Sym (Int_cmp Gt, [a; b])
+let ge a b = Sym (Int_cmp Ge, [a; b])
 
-let true_fact: fact = Sym (True, [])
+let true_fact: fact = Sym (Logical True, [])
 
 let is_defined e = Sym (Defined, [e])
 
-let rec in_type e t =
-  let module T = Iml.Type.T in
+let rec in_type (e : bterm) (t : bitstring Type.t) : fact =
+  let module T = Iml.Type in
   match t with
     | T.Bitstringbot -> true_fact
     | T.Bitstring    -> is_defined e
     | T.Fixed n      -> eq_int [E.int n; Len e]
     | T.Bounded n    -> ge (E.int n) (Len e)
-    | T.Bool | T.Int | T.Bs_int _ | T.Ptr ->
+    | T.Bs_int _ | T.Ptr ->
       begin match e with
-        | Sym (sym, _) when Sym.result_type sym = t -> is_defined e
-        | e -> Sym (In_type t, [e])
-          (* fail "%s" (E.to_string (Sym (In_type t, [e]))) *)
-       end
-    | T.Named (name, Some t) -> in_type e t
-    | T.Named (name, None) -> Sym (In_type t, [e])
+      | Sym (Op (_, (_, t')), _) when t = t' -> is_defined e
+      | e -> Sym (In_type t, [e])
+      (* fail "%s" (E.to_string (Sym (In_type t, [e]))) *)
+      end
+    | T.Named (_, Some t) -> in_type e t
+    | T.Named (_, None) -> Sym (In_type t, [e])
 
 (*
   We don't represent integer ranges directly because they are too big for OCaml int64.
@@ -184,19 +188,19 @@ module Range = struct
     && Int_type.width itype <= Int_type.width itype'
 
   let contains itype e =
-    match E.type_of e with
-    | Bs_int itype' when subset itype' itype -> [true_fact]
+    match E.itype e with
+    | Some itype' when subset itype' itype -> [true_fact]
     | _ ->
       let w = Int_type.width itype in
       let a, b = match Int_type.signedness itype with
         | `Unsigned ->
           let n = pow 256 w in
-          E.zero, Sym (Minus_int, [n; E.int 1])
+          E.zero, Sym (Int_op Minus, [n; E.int 1])
         | `Signed ->
           let n = E.prod [E.int 128; pow 256 (w - 1)] in
-          Sym (Neg_int, [n]), Sym (Minus_int, [n; E.int 1])
+          Sym (Int_op Neg, [n]), Sym (Int_op Minus, [n; E.int 1])
       in
-      [Sym (Ge_int, [e; a]); Sym (Le_int, [e; b])]
+      [Sym (Int_cmp Ge, [e; a]); Sym (Int_cmp Le, [e; b])]
 
 end
 
@@ -209,7 +213,7 @@ let warn_on_failed_conditions_ref = ref true
 let warn_on_failed_conditions b =
   warn_on_failed_conditions_ref := b
 
-let debug_expr ?(raise_by = 0) s e =
+let debug_expr s e =
   if debug_enabled () then begin
     prerr_string (decorate_debug s);
     flush stderr;
@@ -226,7 +230,7 @@ let debug_expr ?(raise_by = 0) s e =
 Yices.enable_type_checker true
 ;;
 
-let rec rewrite_ptr e =
+let rec rewrite_ptr : type a. a Exp.t -> a Exp.t = fun e ->
   (*
     To deal with
       <<stack null_ptr; index 0(i8), index 0(i1)>> == <<stack null_ptr; index 0(i1)>>
@@ -236,90 +240,168 @@ let rec rewrite_ptr e =
     | (Index 0, _) -> false
     | _ -> true
   in
-
   match e with
-  | Ptr (pb, eo) -> Var ("ptr_" ^ E.to_string (Ptr (pb, List.filter not_zero eo)))
-  | e -> E.descend rewrite_ptr e
+  | Ptr (pb, eo) ->
+    Var ("ptr_" ^ E.to_string (Ptr (pb, List.filter ~f:not_zero eo)), Kind.Bitstring)
+  | e -> E.descend {E.descend = rewrite_ptr} e
 
-let rec split_and = function
-  | Sym (And _, es) -> List.concat_map split_and es
+let rec split_and (e : fact) =
+  match e with
+  | Sym (Logical And _, es) -> List.concat_map ~f:split_and es
   | e -> [e]
 
-let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
-  (* List of conditions that are already accounted for and don't need to be added again. *)
-  let seen = ref [] in
+module Mode = struct
+  type t = [ `Assert | `Query | `Simplify_step | `Simplify ]
 
-  let rewrite_once ~mode e =
-    let conds = ref [] in
+  let to_string = function
+    | `Assert -> "assert"
+    | `Query -> "query"
+    | `Simplify_step -> "simplify_step"
+    | `Simplify -> "simplify"
+end
 
-    let rec collect e =
-      push_debug "collect";
-      let collect_even_if_simplifying = collect in
-      let collect =
+module Rewrite_key = struct
+  type 'a t = Mode.t * 'a exp
+  module Kind = Kind
+  let kind (_, e) = E.kind e
+  let to_string (mode, e) = Printf.sprintf "%s, %s" (Mode.to_string mode) (E.to_string e)
+end
+
+module Rewrite_result = struct
+  type 'a t = 'a exp * fact list
+  module Kind = Kind
+  let kind (e, _) = E.kind e
+end
+
+module Cache = Common.Map_any (Kind) (Rewrite_key) (Rewrite_result)
+
+(* CR make this a hash table *)
+let rewrite_cache = ref Cache.empty
+
+let rewrite
+    (type a)
+    ~(mode : [ `Assert | `Query | `Simplify_step ])
+    (e : a exp)
+    : a Rewrite_result.t =
+
+  let rec rewrite
+      : type a.
+        mode : Mode.t
+        -> ?assume:fact list
+        -> a exp -> a Rewrite_result.t = fun ~mode ?(assume = []) e ->
+    match Cache.maybe_find (mode, e) !rewrite_cache with
+    | Some result -> result
+    | None ->
+      (* We can't really push assume down into rewriting because then caching
+         would be unsound. *)
+      let result = do_rewrite ~mode e in
+      rewrite_cache := Cache.add (mode, e) result !rewrite_cache;
+      let e, conds = result in
+      let assume = List.concat_map ~f:split_and assume in
+      let conds = List.diff conds assume in
+      e, conds
+
+  and descend_rewrite
+    : type a. mode : Mode.t -> ?assume:fact list -> a exp -> a Rewrite_result.t
+    = fun ~mode ?(assume = []) e ->
+    let all_conds = ref [] in
+    let rewrite : type a. a exp -> a exp = fun e ->
+      let e, conds = rewrite ~mode ~assume e in
+      all_conds := conds @ !all_conds;
+      e
+    in
+    let e = E.descend {E.descend = rewrite} e in
+    e, !all_conds
+
+  (* Application of the chaining rule (see thesis) *)
+  and rewrite_conjunction ~mode es =
+    let rec loop ~result_es ~result_conds = function
+      | [] -> List.dedup result_es, (List.dedup result_conds)
+      | e :: es ->
+        let e', result_conds' = rewrite ~mode e in
+        let result_es' = split_and e' in
+        (* CR use sets *)
+        let result_conds' = List.diff result_conds' result_es in
+        let result_es = result_es' @ result_es in
+        let result_conds = result_conds' @ result_conds in
+        loop ~result_es ~result_conds es
+    in
+    loop ~result_es:[] ~result_conds:[] es
+
+  (* For now I follow the principle that all transformations relating to one
+     syntactic construct should be in one place. Another option would be to
+     split this function into several and get rid of the mode argument. *)
+  and do_rewrite
+      : type a. mode : Mode.t -> a exp -> a Rewrite_result.t = fun ~mode e ->
+    let rewritten_conds = ref Fact_set.empty in
+    let raw_conds = ref Fact_set.empty in
+    let queued_conds = Queue.create () in
+    let add_conditions ?(already_rewritten = false) conds =
+      let conds = List.concat_map conds ~f:split_and in
+      let conds = Fact_set.of_list conds in
+      if already_rewritten
+      then rewritten_conds := Fact_set.union !rewritten_conds conds
+      else begin
+        let conds = Fact_set.diff conds !raw_conds in
+        raw_conds := Fact_set.union !raw_conds conds;
+        List.iter (Fact_set.to_list conds) ~f:(fun cond -> Queue.add cond queued_conds)
+      end
+    in
+    let e_top = e in
+    let rec collect : type a. mode : Mode.t -> a exp -> a exp = fun ~mode e ->
+      let collect_even_if_simplifying e = collect ~mode e in
+      let collect : type a. ?mode : Mode.t -> a exp -> a exp = fun ?(mode = mode) e ->
         match mode with
-        | `Query | `Assert -> collect
-        | `Simplify -> Fn.id
+        | `Query | `Assert | `Simplify -> collect ~mode e
+        | `Simplify_step -> Fn.id e
       in
-      let facts, e' =
-        let e_top = e in
-        (* This is fine by the chaining rule: if the expression itself contains the
-           condition, then we don't need to add the condition in any subsequent
-           rewritings.
-
-           This implies that the order of subexpressions generation in the matching below
-           matters.  For instance, in (e <= e') clause we genereate and rewrite the
-           defined(e), defined(e') clauses first, so they can be reused when rewriting e
-           and e'.
-
-           Of course, no order would violate soundness.  *)
-        seen := e :: !seen;
+      let make_opaque e =
+        begin match mode with
+        | `Simplify | `Simplify_step -> e
+        | `Assert | `Query -> Sym (Opaque, [e])
+        end
+      in
+      let fail_already_rewritten e =
+        fail "Rewriting an expression that is already rewritten: %s" (E.to_string e)
+      in
+      let default e =
+        E.descend {E.descend = collect} e
+      in
+      let e_top = e in
+      let (result : a exp) =
         match e with
         (*
           Rewriting of binary arithmetic to integer arithmetic.
         *)
-        | Sym ((Op (op, ([Bs_int t1; Bs_int t2], _))) as sym, [e1; e2])
-            when Sym.is_binary_comparison sym ->
-          let sym' =
-            begin match op with
-            | Eq -> Eq_int
-            | Ne -> Ne_int
-            | Ge -> Ge_int
-            | Gt -> Gt_int
-            | Le -> Le_int
-            | Lt -> Lt_int
-            | _ -> fail "impossible: binary comparsion %s" (E.to_string e)
-            end
-          in
-          [is_defined e1; is_defined e2],
-          Sym (sym', [Val (e1, t1); Val (e2, t2)]) |> collect
+        | Sym (Truth_of_bs,
+               [Sym ((Op (Op_cmp cmp, ([Bs_int t1; Bs_int t2], _))), [e1; e2])]) ->
+          let sym' = Int_cmp cmp in
+          add_conditions [is_defined e1; is_defined e2];
+          collect (Sym (sym', [Val (e1, t1); Val (e2, t2)]))
 
-        | Sym (sym, [e1; e2]) when Sym.is_integer_comparison sym ->
+        | Sym (Int_cmp _, [e1; e2]) as e ->
           let defined = [is_defined e1; is_defined e2] in
+          (* The chaining rule only matters for assert. *)
           begin match mode with
           | `Assert ->
-            (* Enforce order of evaluation, for assertions only (conditions are
-               rewritten on the outside). *)
-            let defined = List.map collect defined in
-            let e' = E.descend collect e in
-            [], E.conj (defined @ [e'])
-          | `Query | `Simplify ->
+            let defined, defined_conds = rewrite_conjunction ~mode defined in
+            let e, e_conds = descend_rewrite ~mode ~assume:defined e in
+            add_conditions ~already_rewritten:true (defined_conds @ e_conds);
+            E.conj (defined @ [e])
+          | `Simplify | `Simplify_step ->
+            E.descend {E.descend = collect} e
+          | `Query ->
             (* For queries rewrite into a weaker form that allows us to give better
                warnings.  (we get a warning if a side condition does not hold.) *)
-            defined, E.descend collect e
+            add_conditions defined;
+            E.descend {E.descend = collect} e
           end
 
-        | Val ((Sym (sym, [e1; e2])) as e, itype) when Sym.is_binary_arithmetic sym ->
-          let sym' =
-            begin match sym with
-            | Op (Plus_a, _) -> Plus_int 2
-            | Op (Minus_a, _) -> Minus_int
-            | Op (Mult, _) -> Mult_int 2
-            | Op (Div, _) -> fail "solver: support for division not activated: %s" (E.to_string e)
-            | _ -> fail "unexpected binary arithmetic %s" (Sym.to_string sym)
-            end
-          in
+        | Val ((Sym (Op (Op_arith op, _), [e1; e2])) as e, itype) ->
+          let sym' = Int_op op in
           let e'= Sym (sym', [Val (e1, itype); Val (e2, itype)]) in
-          is_defined e :: Range.contains itype e', collect e'
+          add_conditions (is_defined e :: Range.contains itype e');
+          collect e'
 
         | Val ((Sym (Op (Cast_to_int, ([Bs_int itype_from], Bs_int itype_to)), [e])) as cast_e, itype_to') ->
           if itype_to <> itype_to' then
@@ -329,87 +411,113 @@ let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
             if Range.subset itype_from itype_to then []
             else Range.contains itype_to e'
           in
-          is_defined cast_e :: range_cond, collect e'
+          add_conditions (is_defined cast_e :: range_cond);
+          collect e'
 
         | Val (BS (e, itype) as e_bs, itype') ->
-          if itype <> itype' then
-            fail "incompatible Val of BS: %s" (E.to_string e_top);
-          [is_defined e_bs], collect e
+          if itype <> itype'
+          then fail "incompatible Val of BS: %s" (E.to_string e_top)
+          else begin
+            add_conditions [is_defined e_bs];
+            collect e
+          end
 
         | BS (Val (e, itype), itype') as e_bs ->
-          if itype <> itype' then
-            fail "incompatible BS of Val: %s" (E.to_string e_top);
-          [is_defined e_bs], collect e
+          if itype <> itype'
+          then default e
+          (*  fail "incompatible BS of Val: %s" (E.to_string e_top); *)
+          (* Not failing since in normal form we try to see if "msg" is equal to, say
+             ((msg{4, 8})_[u,8])^[u,3] *)
+          else begin
+            add_conditions [is_defined e_bs];
+            collect e
+          end
 
         | Char c ->
-          [], E.int (Char.code c)
+          E.int (Char.code c)
 
-        | Len e ->
+        | Len e as e_top ->
+          let unexpected e =
+            fail "Unexpected len argument: %s" (E.to_string e)
+          in
+          let default e =
+            match mode with
+            | `Simplify | `Simplify_step ->
+              e_top
+            | `Assert | `Query ->
+              add_conditions [is_defined e];
+              Sym (Len_y, [collect e])
+          in
           begin match e with
-
           | BS (_, itype) as e_bs ->
-            [is_defined e_bs], collect (E.int (Int_type.width itype))
+            add_conditions [is_defined e_bs];
+            collect (E.int (Int_type.width itype))
 
           | Sym (BS_of_truth width, _) as e_bs ->
-            [is_defined e_bs], E.int width
+            add_conditions [is_defined e_bs];
+            E.int width
 
           | Sym (Op (_, (_, Bs_int itype)), _) as e_bin ->
-            [is_defined e_bin], collect (E.int (Int_type.width itype))
+            add_conditions [is_defined e_bin];
+            collect (E.int (Int_type.width itype))
 
           | Sym (Op _, _) ->
             assert false
 
           | Concat es ->
-            [], collect (E.sum (List.map (fun e -> Len e) es))
+            collect (E.sum (List.map ~f:(fun e -> Len e) es))
 
           | Range (_, _, l) as e ->
-            [is_defined e], collect l
+            add_conditions [is_defined e];
+            collect l
 
           | String b ->
-            [], E.int (String.length b / 2)
+            E.int (List.length b)
 
           (* This will become unnecessary once pointers are rewritten into vanilla
              expressions, as per thesis *)
           | Ptr _ as e ->
-            [is_defined e], Sym (Ptr_len, [])
+            add_conditions [is_defined e];
+            Sym (Ptr_len, [])
 
           | Struct (_, _, l, _) as e ->
-            [is_defined e], collect l
+            add_conditions [is_defined e];
+            collect l
 
-          | Annotation (a, e) ->
-            [], collect_even_if_simplifying (Len e)
+          | Annotation (_, e) ->
+            collect_even_if_simplifying (Len e)
 
-          | Sym ((Bs_eq | Minus_int | Plus_int _ | Mult_int _ | Neg_int | Le_int | Ge_int
-                     | Lt_int | Gt_int | Eq_int | Ne_int
-                     | Implies | And _ | Or _
-                     | Not | True | Ptr_len | Field_offset | Const _ | Truth_of_bs | Len_y
-                     | Val_y _ | Opaque | Defined | In_type _), _)
-          | Char _ | Val _ | Len _ ->
-            fail "Unexpected len argument: %s" (E.to_string e_top)
+          | Sym ((Opaque), _) as e -> unexpected e
 
-          | Sym ((Replicate | Cmp | Ztp | Ztp_safe | Undef _ | Fun _ | Nondet_fun _ | Cast _), _)
-          | Int _ | Var _ | Unknown | Array _ as e ->
-            match mode with
-            | `Simplify ->
-              [], e_top
-            | `Assert | `Query ->
-              [is_defined e], Sym (Len_y, [collect e])
+          | Sym (Replicate, _) as e -> default e
+          | Sym (Cmp, _) as e -> default e
+          | Sym (Ztp, _) as e -> default e
+          | Sym (Ztp_safe, _) as e -> default e
+          | Sym (Undef _, _) as e -> default e
+          | Sym (Fun _, _) as e -> default e
+          | Sym (Cast _, _) as e -> default e
+          | Var _ as e -> default e
+          | Array _ as e -> default e
+          | Unknown _ as e -> default e
           end
 
         | Sym (Defined, [e]) ->
+          let default e =
+            Sym (Defined, [collect e])
+          in
           begin match e with
           (* Here and below we do not list defined() conditions because those are
              implied by the comparison operators *)
           | Range (e, p, l) ->
-            [], E.conj [ge (Len e) (E.sum [p; l]);
-                        ge p E.zero;
-                        ge l E.zero;] |> collect
+            E.conj [ge (Len e) (E.sum [p; l]);
+                    ge p E.zero;
+                    ge l E.zero;] |> collect
 
           | BS (e, itype) ->
-            [], E.conj (Range.contains itype e) |> collect
+            E.conj (Range.contains itype e) |> collect
 
           | Val (e, itype) ->
-            [], eq_int [E.int (Int_type.width itype); E.len e] |> collect
+            eq_int [E.int (Int_type.width itype); E.len e] |> collect
 
           | Sym (Op (_, (ts, _)), es) ->
             let conds =
@@ -421,30 +529,31 @@ let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
                   fail "unexpected type of op argument: %s: %s"
                     (E.to_string e) (Type.to_string t))
             in
-            [], E.conj conds |> collect
+            collect (E.conj conds)
 
           | Sym (sym, es) ->
-            if Sym.never_fails sym then
-              [], true_fact
-            else if not (Sym.may_fail sym) then
-              [], E.conj (List.map is_defined es) |> collect
-            else
-              begin match mode with
-              | `Simplify | `Query ->
-                [], E.descend collect e_top
-              | `Assert ->
-                let e' = Sym (Defined, [Sym (sym, es) |> collect]) in
-                [], E.conj (e' :: List.map collect (List.map is_defined es))
-              end
+            if Sym.never_fails sym
+            then true_fact
+            else if not (Sym.may_fail sym)
+            then E.conj (List.map ~f:is_defined es) |> collect
+            else begin match mode with
+            | `Simplify | `Simplify_step | `Query ->
+              E.descend {E.descend = collect} e_top
+            | `Assert ->
+              let e' = is_defined (collect (Sym (sym, es))) in
+              E.conj (e' :: List.map ~f:collect (List.map ~f:is_defined es))
+            end
 
           | Len e ->
-            [], Sym (Defined, [e]) |> collect
+            Sym (Defined, [e]) |> collect
 
-          | Int _ | Char _ | String _ | Concat [] ->
-            [], true_fact
+          | Int _ -> true_fact
+          | Char _ -> true_fact
+          | String _ -> true_fact
+          | Concat [] -> true_fact
 
           | Concat es ->
-            [], E.conj (List.map is_defined es) |> collect
+            E.conj (List.map ~f:is_defined es) |> collect
 
           (* This will become unnecessary once pointers are rewritten into vanilla
              expressions, as per thesis *)
@@ -454,30 +563,44 @@ let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
               | Flat e -> Some (is_defined e)
               | Index _ | Attr _ | Field _ -> None
             in
-            [], E.conj (List.filter_map defined_offset pos) |> collect
+            E.conj (List.filter_map ~f:defined_offset pos) |> collect
 
           | Struct (fields, _, _, e) ->
-            [], E.conj (List.map is_defined (is_defined e :: Str_map.values fields)) |> collect
+            E.conj (is_defined e :: List.map ~f:is_defined (Str_map.values fields)) |> collect
 
-          | Annotation (a, e) ->
-            [], Sym (Defined, [e]) |> collect_even_if_simplifying
+          | Annotation (_, e) ->
+            Sym (Defined, [e]) |> collect_even_if_simplifying
 
-          | Var _ | Unknown | Array _ as e->
-            [], Sym (Defined, [collect e])
+          | Var _ as e -> default e
+          | Unknown _ as e -> default e
+          | Array _ as e -> default e
           end
 
         | Sym (Defined, _) -> assert false
 
+        (* Unlike for val and len, we don't need to replace BS by a yices compatible form,
+           because it is defined with bitstringbot as domain in yices, so returning bottom
+           is not a problem.  *)
+        | BS (e, itype) ->
+          let e' = collect ~mode:`Simplify e in
+          if e <> e'
+          (* Re-collecting to deal with things like
+             (len(msg{12, (msg{4, 8})_[u,8]}:fixed_20_nonce))^[u,8] *)
+          then collect (BS (e', itype))
+          (* Need to appply again with our own mode to make sure all yices-compatibility
+             transformations are applied. *)
+          else BS (collect ~mode e', itype)
+
         (*
           Replacing vals by their Yices versions.
         *)
-
         | Val (e, itype) ->
           begin match mode with
-          | `Simplify ->
-            [], e_top
+          | `Simplify | `Simplify_step ->
+            e_top
           | `Query | `Assert ->
-            [is_defined e], Sym (Val_y itype, [collect e])
+            add_conditions [is_defined e];
+            Sym (Val_y itype, [collect e])
           end
 
         (*
@@ -485,71 +608,75 @@ let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
         *)
 
         | Annotation (a, e) ->
-          begin match mode with
-          | `Query | `Assert ->
-            [], collect e
-          | `Simplify ->
-            [], Annotation (a, collect_even_if_simplifying e)
-          end
+          Annotation (a, collect_even_if_simplifying e)
 
+        (* TODO: inline, once GADT pattern matching is sorted. *)
         (* I suppose everything of type bitstringbot can be turned into opaque here. *)
-        | Sym ((Fun _ | Nondet_fun _ | Ztp | Ztp_safe | Undef _ | Cmp), _)
-        | Sym (Op _, _)
-        | BS _
-        | Struct _ | Array _
-        | Concat _ ->
-          begin match mode with
-          | `Simplify ->
-            [], e_top
-          | `Assert | `Query ->
-            [], Sym (Opaque, [e])
-          end
+        | Sym (Fun _, _) as e -> make_opaque e
+        | Sym (Ztp, _) as e -> make_opaque e
+        | Sym (Ztp_safe, _) as e -> make_opaque e
+        | Sym (Undef _, _) as e -> make_opaque e
+        | Sym (Cmp, _) as e -> make_opaque e
+        | Sym (Op _, _) as e -> make_opaque e
+        | Struct _ as e -> make_opaque e
+        | Array _ as e -> make_opaque e
+        | Concat _ as e -> make_opaque e
 
-        | Sym ((Opaque | Len_y | Val_y _), _) as e ->
-          fail "Rewriting an expression that is already rewritten: %s" (E.to_string e)
+        | Sym (Opaque, _) as e -> fail_already_rewritten e
+        | Sym (Len_y, _) as e -> fail_already_rewritten e
+        | Sym (Val_y _, _) as e -> fail_already_rewritten e
 
-        | Sym ((Bs_eq | Minus_int | Plus_int _ | Mult_int _ | Neg_int | Le_int
-                   | Ge_int | Lt_int | Gt_int | Eq_int | Ne_int
-                   | Implies | And _ | Or _
-                   | Not | True | Ptr_len | Cast _ | Replicate | Field_offset
-                   | In_type _ | BS_of_truth _ | Truth_of_bs | Const _), _)
-        | Int _ | String _ | Var _ | Range _ | Ptr _ | Unknown ->
-          [], E.descend collect e
+        | Sym (Bs_eq, _) as e -> default e
+        | Sym (Int_op _, _) as e -> default e
+        | Sym (Int_cmp _, _) as e -> default e
+        | Sym (Logical _, _) as e -> default e
+        | Sym (Ptr_len, _) as e -> default e
+        | Sym (Cast _, _) as e -> default e
+        | Sym (Replicate, _) as e -> default e
+        | Sym (Field_offset _, _) as e -> default e
+        | Sym (In_type _, _) as e -> default e
+        | Sym (BS_of_truth _, _) as e -> default e
+        | Sym (Truth_of_bs, _) as e -> default e
+        | Int _ as e -> default e
+        | String _ as e -> default e
+        | Var _ as e -> default e
+        | Range _ as e -> default e
+        | Ptr _ as e -> default e
+        | Unknown _ as e -> default e
       in
+      push_debug "collect";
+      debug "collect(%s) %s ~> %s"
+        (Mode.to_string mode) (E.to_string e) (E.to_string result);
       pop_debug "collect";
-      debug "collect: %s |- %s ~> %s" (E.list_to_string facts) (E.to_string e) (E.to_string e');
-      conds := facts @ !conds;
-      e'
+      result
     in
-    let e = collect e in
-    let conds = List.diff !conds !seen |> List.nub in
-    seen := conds @ !seen;
+    let e = collect ~mode e in
+    while not (Queue.is_empty queued_conds) do
+      let cond = Queue.pop queued_conds in
+      let cond = collect ~mode:`Query cond in
+      add_conditions ~already_rewritten:true [cond]
+    done;
+    let conds = Fact_set.to_list !rewritten_conds in
+    let conds =
+      match E.kind e with
+      | Kind.Bool -> List.diff conds (split_and e)
+      | Kind.Int -> conds
+      | Kind.Bitstring -> conds
+    in
+    push_debug "rewrite";
+    debug "%s: %s |- %s ~> %s"
+      (Mode.to_string mode) (E.list_to_string conds) (E.to_string e_top) (E.to_string e);
+    pop_debug "rewrite";
     e, conds
-  in
-
-  let cond_mode =
-    match mode with
-    | `Simplify -> `Query
-    | `Query | `Assert -> mode
-  in
-
-  let rec rewrite_cond e =
-    let e, es = rewrite_once ~mode:cond_mode e in
-    split_and e @ List.concat_map rewrite_cond es
   in
 
   debug "rewriting %s" (E.to_string e);
   push_debug "rewrite";
-  let e, conds = rewrite_once ~mode e in
-  let conds =
-    conds
-    |> List.concat_map ~f:rewrite_cond
-    |> List.nub
-    |> List.map ~f:rewrite_ptr
-  in
+  let e, conds = rewrite ~mode:(mode :> Mode.t) e in
+  let conds = List.map conds ~f:rewrite_ptr in
   let e =
     match mode with
-    | `Simplify -> e
+    | `Simplify_step -> e
     | `Assert | `Query -> rewrite_ptr e
   in
   pop_debug "rewrite";
@@ -558,27 +685,24 @@ let rewrite ~(mode:[`Assert | `Query | `Simplify]) e: exp * fact list =
   e, conds
 
 let rewrite_facts ~mode es: fact list * fact list =
-  let es, conds = List.map (rewrite ~mode) es |> List.split in
-  let es = List.nub (List.concat_map split_and es) in
-  let conds = List.nub (List.concat conds) in
-  List.iter (E.typecheck Bool) (es @ conds);
+  let es, conds = List.map ~f:(rewrite ~mode) es |> List.split in
+  let es = List.dedup (List.concat_map ~f:split_and es) in
+  let conds = List.dedup (List.concat conds) in
   es, conds
 
-let is_opaque e =
+let is_opaque (type a) (e : a Exp.t) =
   match rewrite ~mode:`Assert e with
   | Sym (Opaque, _), _ -> true
   | _ -> false
 
-module Type = struct
-  include Type
+module Kind = struct
+  include Kind
 
-  let to_yices_type = function
-    | Bitstringbot   -> Yices.mk_type ctx "bitstringbot"
-    | Bitstring      -> Yices.mk_type ctx "bitstring"
-    | Bs_int _        -> Yices.mk_type ctx "bitstring"
-    | Type.T.Int     -> Yices.mk_type ctx Yices.int_type_name
+  let to_yices_type (type a) (t : a t) =
+    match t with
+    | Bitstring      -> Yices.mk_type ctx "bitstringbot" (* sic *)
+    | Int            -> Yices.mk_type ctx Yices.int_type_name
     | Bool           -> Yices.mk_type ctx Yices.bool_type_name
-    | t              -> fail "to_yices_type: unexpected type: %s" (to_string t)
 end
 
 let add_fact_raw ?(check_consistent = true) y_e =
@@ -603,97 +727,94 @@ let reset_facts : unit -> unit = fun () ->
   Yices.parse_command ctx theory;
   reset_cache ()
 
-let get_decl t (`Mangled name) =
+let get_decl kind (`Mangled name) =
   try Yices.get_var_decl_from_name ctx name
-  with Failure _ -> Yices.mk_var_decl ctx name (Type.to_yices_type t)
+  with Failure _ -> Yices.mk_var_decl ctx name (Kind.to_yices_type kind)
 
-let translate e_top =
+let translate (e_top : fact) =
 
   let module A = Array in
 
-  let mk_var t e =
-    Yices.mk_var_from_decl ctx (get_decl t (mk_exp_name e))
+  let mk_var e =
+    let k = E.kind e in
+    Yices.mk_var_from_decl ctx (get_decl k (mk_exp_name e))
   in
 
-  let rec tr t e =
+  let rec tr : type a. a Exp.t -> Yices.expr = fun e ->
     debug "translating %s" (E.dump e);
-    match e, t with
-      | Int i,                   Type.Int       -> Yices.mk_num ctx (Int64.to_int i)
-      | String s,                Bitstringbot   -> mk_var Bitstring e
+    match e with
+      | Int i                  -> Yices.mk_num ctx (Int64.to_int i)
+      | String _               -> mk_var e
       (* All variables are Bitstringbot except for in eval *)
-      | Var _,                   t              -> mk_var t e
-      (* TODO: mk_var Bool *)
-      | Sym (sym, es), Bool ->
-        begin
-        match sym, es with
-          | (True, [])         -> Yices.mk_true ctx
-          | (Not, [a])         -> Yices.mk_not ctx (tr Bool a)
-          | (And _, [])        -> fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | (And _, es)        -> Yices.mk_and ctx (A.map (tr Bool) (A.of_list es))
-          | (Or _, [])         -> fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | (Or _, es)         -> Yices.mk_or  ctx (A.map (tr Bool) (A.of_list es))
-          | (Implies, [a; b])  -> Yices.mk_ite ctx (tr Bool a) (tr Bool b) (Yices.mk_true ctx)
-          | (Eq_int, [a; b])   -> Yices.mk_eq ctx (tr Type.Int a) (tr Type.Int b)
-          | (Ne_int, [a; b])   -> Yices.mk_diseq ctx (tr Type.Int a) (tr Type.Int b)
-          | (Gt_int, [a; b])   -> Yices.mk_gt ctx (tr Type.Int a) (tr Type.Int b)
-          | (Ge_int, [a; b])   -> Yices.mk_ge ctx (tr Type.Int a) (tr Type.Int b)
-          | (Lt_int, [a; b])   -> Yices.mk_lt ctx (tr Type.Int a) (tr Type.Int b)
-          | (Le_int, [a; b])   -> Yices.mk_le ctx (tr Type.Int a) (tr Type.Int b)
+      | Var _                  -> mk_var e
+      | Range (e, pos, len)    -> Yices.mk_app ctx (range ()) [| tr e; tr pos; tr len |]
+      | Sym (Opaque, [_]) as e -> mk_var e
+      | Annotation(_, e)       -> tr e
+      | BS (e, itype)          ->
+        let sg = Int_type.signedness itype in
+        let width = Int_type.width itype in
+        Yices.mk_app ctx (bs sg) [| Yices.mk_num ctx width; tr e |]
+      | Sym (sym, es) ->
+        begin match sym, es with
+          | (Logical True, [])         -> Yices.mk_true ctx
+          | (Logical Not, [a])         -> Yices.mk_not ctx (tr a)
+          | (Logical (And _), [])      ->
+            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+          | (Logical (And _), es)      -> Yices.mk_and ctx (A.map tr (A.of_list es))
+          | (Logical (Or _), [])       ->
+            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+          | (Logical (Or _), es)       -> Yices.mk_or  ctx (A.map tr (A.of_list es))
+          | (Logical Implies, [a; b])  -> Yices.mk_ite ctx (tr a) (tr b) (Yices.mk_true ctx)
+          | (Int_cmp Eq, [a; b])       -> Yices.mk_eq ctx (tr a) (tr b)
+          | (Int_cmp Ne, [a; b])       -> Yices.mk_diseq ctx (tr a) (tr b)
+          | (Int_cmp Gt, [a; b])       -> Yices.mk_gt ctx (tr a) (tr b)
+          | (Int_cmp Ge, [a; b])       -> Yices.mk_ge ctx (tr a) (tr b)
+          | (Int_cmp Lt, [a; b])       -> Yices.mk_lt ctx (tr a) (tr b)
+          | (Int_cmp Le, [a; b])       -> Yices.mk_le ctx (tr a) (tr b)
 
-          | (Bs_eq, [a; b])    ->
-                Yices.mk_eq ctx (tr Bitstringbot a) (tr Bitstringbot b)
-
-          | (Defined, [e])     -> Yices.mk_app ctx (defined ()) [| tr Bitstringbot e |]
-          | (In_type _, _)     -> mk_var Type.Bool e
+          | (Bs_eq, [a; b])   -> Yices.mk_eq ctx (tr a) (tr b)
+          | (In_type _, _)    -> mk_var e
+          | (Defined, [e])    -> Yices.mk_app ctx (defined ()) [| mk_var e |]
 
           (* C interpretation of truth *)
-          | (Truth_of_bs, [e]) -> Yices.mk_app ctx (truth ()) [| mk_var Bitstringbot e |]
+          | (Truth_of_bs, [e]) -> Yices.mk_app ctx (truth ()) [| mk_var e |]
           (* IML interpretation of truth *)
-          | (Opaque, _)        -> Yices.mk_app ctx (truth ()) [| mk_var Bitstringbot e |]
+          | (Opaque, _)        -> Yices.mk_app ctx (truth ()) [| mk_var e |]
 
-          | _ ->
-            fail "Solver.translate: unexpected type %s of expression %s in fact %s"
-              (Type.to_string t) (E.dump e) (E.dump e_top)
-        end
+          | Int_op Neg, [a]        -> Yices.mk_sub ctx [| Yices.mk_num ctx 0; tr a |]
+          | Int_op Minus, [e1; e2] -> Yices.mk_sub ctx [| tr e1; tr e2 |]
+          | Int_op Minus, _        ->
+            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+          | Int_op (Plus _), []    ->
+            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+          | Int_op (Plus _), es    -> Yices.mk_sum ctx (A.map tr (A.of_list es))
+          | Int_op (Mult _), []    ->
+            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+          | Int_op (Mult _), es    -> Yices.mk_mul ctx (A.map tr (A.of_list es))
+          | Ptr_len, []           -> mk_var e
 
-      | Sym (sym, es), Type.Int ->
-        begin
-        match sym, es with
-          | Neg_int, [a]          -> Yices.mk_sub ctx [| Yices.mk_num ctx 0; tr Type.Int a |]
-          | (Minus_int), [e1; e2] -> Yices.mk_sub ctx [| tr Type.Int e1; tr Type.Int e2 |]
-          | (Minus_int), _        -> fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | (Plus_int _), []      -> fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | (Plus_int _), es      -> Yices.mk_sum ctx (A.map (tr Type.Int) (A.of_list es))
-          | (Mult_int _), []      -> fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | (Mult_int _), es      -> Yices.mk_mul ctx (A.map (tr Type.Int) (A.of_list es))
-          | Ptr_len, []           -> mk_var Type.Int e
-
-          | Len_y, [e]            -> Yices.mk_app ctx (len ())   [| tr Bitstringbot e |]
+          | Len_y, [e]            -> Yices.mk_app ctx (len ())   [| tr e |]
            (* Not sure this is necessary, perhaps could just make it opaque. *)
-          | Val_y itype, [e]      -> Yices.mk_app ctx (value (Int_type.signedness itype))  [| tr Bitstringbot e |]
+          | Val_y itype, [e]      -> Yices.mk_app ctx (value (Int_type.signedness itype))  [| tr e |]
 
           | _ ->
-            fail "Solver.translate: unexpected type %s of expression %s in fact %s" (Type.to_string t) (E.dump e) (E.dump e_top)
+            fail "Solver.translate: unexpected expression %s in fact %s"
+              (E.dump e) (E.dump e_top)
         end
 
-      | Range (e, pos, len),     Bitstringbot -> Yices.mk_app ctx (range ()) [| tr Bitstringbot e;
-                                                                                tr Type.Int pos; tr Type.Int len |]
-      | Sym (Opaque, [_]),       Bitstringbot -> mk_var Bitstringbot e
-
-      | Annotation(_, e),        t            -> tr t e
-
-      | e, t ->
-        fail "Solver.translate: unexpected type %s of expression %s in fact %s" (Type.to_string t) (E.dump e) (E.dump e_top)
+      | e ->
+        fail "Solver.translate: unexpected expression %s in fact %s"
+          (E.dump e) (E.dump e_top)
 
   in
-  with_debug "Solver.translate" (tr Bool) e_top
+  with_debug "Solver.translate" tr e_top
 
 let is_true_raw ?warn_if_false e =
   debug "checking (with auxiliary facts) %s" (E.to_string e);
   push_debug "is_true_raw.translate";
   let ye = translate (not_e e) in
   pop_debug "is_true_raw.translate";
-  debug_expr ~raise_by:0 "checking (yices expression)" ye;
+  debug_expr "checking (yices expression)" ye;
   Yices.push ctx;
   Yices.assert_simple ctx ye;
   let result = match Yices.check ctx with
@@ -722,27 +843,28 @@ let is_true_raw ?warn_if_false e =
   end;
   result
 
-let rec simplify_bool =
+let rec simplify_bool (e : fact) =
   let is_true = function
-    | Sym (And _, []) | Sym (True, []) -> true
+    | Sym (Logical And _, []) -> true
+    | Sym (Logical True, []) -> true
     | _ -> false
   in
-  function
-  | Sym (Implies, [e1; e2]) when is_true e1 -> simplify_bool e2
-  | Sym (And _, [e]) -> simplify_bool e
-  | Sym (sym, _) as e when Sym.is_logical sym -> E.descend simplify_bool e
+  match e with
+  | Sym (Logical Implies, [e1; e2]) when is_true e1 -> simplify_bool e2
+  | Sym (Logical And _, [e]) -> simplify_bool e
+  | Sym (Logical op, es) -> Sym (Logical op, List.map ~f:simplify_bool es)
   | e -> e
 
-let add_fact : exp -> unit = fun e ->
+let add_fact (e : fact) =
   push_debug "add_fact";
   reset_cache ();
   let es', conds = rewrite_facts ~mode:`Assert [e] in
   let warn_if_false = Printf.sprintf "arising from assuming %s" (E.to_string e) in
-  List.iter (fun cond -> is_true_raw ~warn_if_false cond |> ignore) conds;
-  let e = Sym (Implies, [E.conj conds; E.conj es'] ) |> simplify_bool in
-  pop_debug "add_fact";
+  List.iter ~f:(fun cond -> is_true_raw ~warn_if_false cond |> ignore) conds;
+  let e = Sym (Logical Implies, [E.conj conds; E.conj es'] ) |> simplify_bool in
   debug "assuming %s" (E.to_string e);
-  add_fact_raw (translate e)
+  add_fact_raw (translate e);
+  pop_debug "add_fact"
 
 let is_true e: pbool =
   debug "checking %s" (E.to_string e);
@@ -758,8 +880,8 @@ let is_true e: pbool =
       let es', conds = rewrite_facts ~mode:`Query [e] in
       let warn_if_false = Printf.sprintf "arising from querying %s" (E.to_string e) in
       let result =
-           List.for_all (is_true_raw ~warn_if_false) conds
-        && List.for_all (is_true_raw) es'
+           List.for_all ~f:(is_true_raw ~warn_if_false) conds
+        && List.for_all ~f:(is_true_raw) es'
       in
       pop_debug "is_true";
       debug "result (not from cache): %b" result;
@@ -774,8 +896,8 @@ let implies facts hypotheses =
 
   push_debug "implies";
   Yices.push ctx;
-  List.iter add_fact facts;
-  let result = List.for_all (is_true) hypotheses in
+  List.iter ~f:add_fact facts;
+  let result = List.for_all ~f:(is_true) hypotheses in
   Yices.pop ctx;
   pop_debug "implies";
 
@@ -784,9 +906,7 @@ let implies facts hypotheses =
   result
 
 (* TODO: change back to equal when it stabilizes *)
-let equal_bitstring : exp -> exp -> pbool = fun a b ->
-  if a = Unknown || b = Unknown then
-    fail "equal: trying to apply to special length values (Unknown or All)";
+let equal_bitstring (a : bterm) (b : bterm) =
   let a_id, b_id = E.id a, E.id b in
   try Pair_map.find (a_id, b_id) !eq_cache
   with Not_found ->
@@ -794,17 +914,17 @@ let equal_bitstring : exp -> exp -> pbool = fun a b ->
     eq_cache := Pair_map.add (a_id, b_id) result !eq_cache;
     result
 
-let not_equal_bitstring : exp -> exp -> pbool = fun a b ->
+let not_equal_bitstring (a : bterm) (b : bterm) =
   is_true (not_e (eq_bitstring [a; b]))
 
-let greater_equal : exp -> exp -> pbool = fun a b ->
+let greater_equal (a : iterm) (b : iterm) =
   is_true (ge a b)
 
 let equal_int ?(facts = []) a b =
   if facts = [] then is_true (eq_int [a; b])
   else implies facts [eq_int [a; b]]
 
-let greater_equal_len : exp -> exp -> pbool = fun a b ->
+let greater_equal_len (a : iterm) (b : iterm) =
   greater_equal a b
   (* match (a, b) with
     | (All, _) -> true
@@ -812,7 +932,7 @@ let greater_equal_len : exp -> exp -> pbool = fun a b ->
     | (Unknown, _) | (_, Unknown) -> false
     | (x, y) -> greater_equal x y *)
 
-let greater_equal_len_answer : len -> len -> answer = fun a b ->
+let greater_equal_len_answer (a : iterm) (b : iterm) =
   if greater_equal_len a b then
     Yes
   else if greater_equal_len b a then
@@ -830,32 +950,38 @@ let eval e =
 
   let warn_if_false = Printf.sprintf "arising from evaluation of %s" (E.to_string e) in
   let e, conds = rewrite ~mode:`Query e in
+  debug "eval: e = %s, conds = %s" (E.to_string e) (E.list_to_string conds);
   let result =
-    if not (List.for_all (is_true_raw ~warn_if_false) conds)
-    then None
+    if not (List.for_all ~f:(is_true_raw ~warn_if_false) conds)
+    then begin
+      debug "eval: conditions not satisfied";
+      None
+    end
     else begin
       Yices.push ctx;
-      let v = Var.fresh "int_val" in
-      Yices.assert_simple ctx (translate (eq_int [Var v; e]));
+      let v = Var (Var.fresh "int_val", Kind.Int) in
+      Yices.assert_simple ctx (translate (eq_int [v; e]));
       let result =
         match Yices.check ctx with
-        | Yices.False | Yices.Undef -> None
+        | Yices.False | Yices.Undef ->
+          debug "eval: could not find a value";
+          None
         | Yices.True ->
           let model = Yices.get_model ctx in
-          let vy = get_decl Type.Int (mk_exp_name (Var v)) in
+          let vy = get_decl Kind.Int (mk_exp_name v) in
           (*
           debug "eval: got a model:";
-          increase_debug_depth ();
-          if debug_enabled () then Yices.display_model model;
-          decrease_debug_depth ();
+          Yices.display_model model;
           *)
           match Option.try_with (fun () -> Yices.get_int_value model vy) with
-          | None -> None
+          | None ->
+            debug "eval: could not extract value";
+            None
           | Some value ->
             let value = Int32.to_int value in
             debug "eval: a possible value is %d" value;
             (* Make sure the value is unique *)
-            add_fact_raw ~check_consistent:false (translate (not_e (eq_int [Var v; E.int value])));
+            add_fact_raw ~check_consistent:false (translate (not_e (eq_int [v; E.int value])));
             (*
             increase_debug_depth ();
             debug "eval: context for checking uniqueness:";
@@ -864,8 +990,10 @@ let eval e =
             *)
             match Yices.check ctx with
             | Yices.False -> Some value
-            | Yices.Undef -> None
-            | Yices.True  -> None
+            | Yices.Undef
+            | Yices.True  ->
+              debug "value is not unique";
+              None
       in
       Yices.pop ctx;
       result
@@ -882,10 +1010,10 @@ let eval e =
 let simplify e =
   debug "Solver.simplify %s" (E.to_string e);
   push_debug "Solver.simplify";
-  let e', conds = rewrite ~mode:`Simplify e in
+  let e', conds = rewrite ~mode:`Simplify_step e in
   let warn_if_false = Printf.sprintf "arising from simplification of %s" (E.to_string e) in
   let result =
-    if List.for_all (is_true_raw ~warn_if_false) conds then e' else e
+    if List.for_all ~f:(is_true_raw ~warn_if_false) conds then e' else e
   in
   pop_debug "Solver.simplify";
   debug "result: %s" (E.to_string result);
@@ -897,20 +1025,64 @@ let not = not_e
 (** {1 Testing.} *)
 (*************************************************)
 
+let test_implication () =
+  let nonce = Var ("nonce", Kind.Bitstring) in
+  let bs e = BS (e, Int_type.create `Unsigned 4) in
+  assert
+    (implies
+       [eq_int [Len nonce; Int 20L ]]
+       [eq_int [Len nonce; Int 20L ]]);
+  assert
+    (implies
+       [eq_int [Len nonce; Int 20L ]]
+       [eq_bitstring [bs (Len nonce); bs (Int 20L)]])
+
+let test_bs_cancellation1 () =
+  let itype = Int_type.create `Unsigned 4 in
+  let eight = BS (Int 8L, itype) in
+  let e = BS (Annotation (Name "eight", Val (eight, itype)), itype) in
+  assert (is_true (eq_bitstring [e; eight]))
+
+(*
+  msg{4, 8} = (len(msg{12, (msg{4, 8})_[u,8]}:fixed_20_nonce))^[u,8]
+
+  CR: speak about different ways of assuming defined.
+*)
+let test_bs_cancellation2 () =
+  let t = Named ("nonce", Some (Fixed 20)) in
+  let itype = Int_type.create `Unsigned 8 in
+  let l1 = Range (var "msg", Int 4L, Int 8L) in
+  let e1 = Range (var "msg", Int 12L, Val (l1, itype)) in
+  let e2 = Annotation (Type_hint t, e1) in
+  let e3 = BS (Len e2, itype) in
+  assert (implies
+            [is_defined e2]
+            [eq_bitstring [l1; e3]])
+
 let test_annot_equality () =
   let l =
-    Val (Range (Var "msg", Int 4L, Int 8L),
+    Val (Range (Var ("msg", Kind.Bitstring), Int 4L, Int 8L),
          Int_type.create `Unsigned 8)
   in
   let e =
     Annotation (Type_hint (Named ("nonce", Some (Fixed 20))),
-                Range (Var "msg", Int 12L, l))
+                Range (Var ("msg", Kind.Bitstring), Int 12L, l))
   in
   assert (implies [is_defined e] [eq_int [Len e; l]])
 
-let test () =
+let test_eval () =
+  assert (eval (Int 42L) = Some 42)
+
+let with_ctx f =
   Yices.push ctx;
-  test_annot_equality ();
+  f ();
   Yices.pop ctx
+
+let test () =
+  with_ctx test_implication;
+  with_ctx test_annot_equality;
+  with_ctx test_eval;
+  with_ctx test_bs_cancellation1;
+  with_ctx test_bs_cancellation2
 
 (* 870 lines *)

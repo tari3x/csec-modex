@@ -11,7 +11,8 @@ include $(CSEC_ROOT)/mk/common.mk
 OCAMLC = ocamlc
 OCAMLOPT = ocamlopt
 OCAML_INC = -I $(OCAMLYICES_ROOT) -I /usr/local/lib -I cryptoverif -I $(CIL_OBJDIR)
-OCAML_FLAGS = -g $(OCAML_INC) 
+OCAML_FLAGS = -g $(OCAML_INC) -w +a-4
+# @20,@26,@27,@32,@33,@34,@35,@36,@37,@38,@39
 OCAML_LIBS = nums.cma ocamlyices.cma str.cma unix.cma cil.cma
 OCAMLOPT_LIBS = $(OCAML_LIBS:.cma=.cmxa)
 ## OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -package num ocamlyices.cmxa -package str -linkpkg 
@@ -20,7 +21,7 @@ CV_LIB = cryptoverif/cryptoverif.cmx
 
 SRC = ${wildcard *.ml *.mli}
 
-COMMON_CMO = common.cmo iml.cmo solver.cmo simplify.cmo transform_imltrace.cmo symex.cmo
+COMMON_CMO = common.cmo iml.cmo solver.cmo simplify.cmo symex.cmo
 COMMON_CMX = $(COMMON_CMO:.cmo=.cmx)
 
 # doesn't work:

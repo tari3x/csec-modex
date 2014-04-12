@@ -6,11 +6,7 @@
 
 open Common
 
-open Iml
-open Exp
 open Symex
-
-open Transform_imltrace
 
 let setup_debug () =
   set_debug (fun labels ->
@@ -19,9 +15,9 @@ let setup_debug () =
       | None -> false
       | Some i -> i <= n
     in
-    let under l =  List.mem l labels in
+    let under l =  List.mem l ~set:labels in
     under "dummy"
-    || at_most_n_under 0 "execute"
+    || at_most_n_under 2 "execute"
     (* || at_most_n_under 0 "deep_simplify" *)
     (* || at_most_n_under 0 "rewrite" *)
     (* || under "rewrite" *)
@@ -46,9 +42,6 @@ let main () =
   if debug_enabled () then prerr_endline (Iml.to_string client);
   if debug_enabled () then prerr_endline (Iml.to_string server);
   if debug_enabled () then prerr_endline "";
-
-  let client = client |> proc_and_filter in
-  let server = server |> proc_and_filter in
 
   print_endline "let A = ";
   print_endline (Iml.to_string client);
