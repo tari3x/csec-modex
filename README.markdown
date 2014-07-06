@@ -34,11 +34,7 @@ The following dependencies require some extra work:
       deps/ocamlyices/install-yices.sh
     to install yices.
 
-- camlidl. Version 1.05 is bundled with this distribution, you can install it as follows:
-
-        cd deps/camlidl-1.05
-        make
-        sudo make install
+- camlidl. You can get it with opam by running "opam install camlidl".
 
 - the curses library (libncurses-devel in Cygwin) is required by CIL
 

@@ -1,0 +1,634 @@
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Yicesl" rel="Chapter" href="Yicesl.html">
+<link title="Yices" rel="Chapter" href="Yices.html"><title>Index of values</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Index of values</h1>
+<table>
+<tr><td align="left"><br>A</td></tr>
+<tr><td><a href="Yices.html#VALany_type_name">any_type_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td><a href="Yices.html#VALassert_retractable">assert_retractable</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Assert a constraint that can be later retracted.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALassert_simple">assert_simple</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Assert a constraint in the logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALassert_weighted">assert_weighted</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Assert a constraint in the logical context with weight <code class="code">w</code>.
+</div>
+</td></tr>
+<tr><td align="left"><br>B</td></tr>
+<tr><td><a href="Yices.html#VALbool_type_name">bool_type_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td align="left"><br>C</td></tr>
+<tr><td><a href="Yices.html#VALcheck">check</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Check if the logical context is satisfiable.
+</div>
+</td></tr>
+<tr><td align="left"><br>D</td></tr>
+<tr><td><a href="Yices.html#VALdel_context">del_context</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">del_context ctx</code> deletes the given logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALdel_context">del_context</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Delete the given logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALdisplay_model">display_model</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Display the given model in the standard output.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALdump_context">dump_context</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Display the internal representation of the given logical context on <code class="code">stderr</code>.
+</div>
+</td></tr>
+<tr><td align="left"><br>E</td></tr>
+<tr><td><a href="Yices.html#VALenable_log_file">enable_log_file</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Enable a log file that will store the assertions, checks, decls, etc.
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALenable_log_file">enable_log_file</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Enable a log file that will store the assertions, checks, decls, etc.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALenable_type_checker">enable_type_checker</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Force Yices to type check expressions when they are asserted (default = false).
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALenable_type_checker">enable_type_checker</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Force Yices to type check expressions when they are asserted (default = false)
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALevaluate_in_model">evaluate_in_model</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Evaluate a formula in a model.
+</div>
+</td></tr>
+<tr><td align="left"><br>F</td></tr>
+<tr><td><a href="Yices.html#VALfind_weighted_model">find_weighted_model</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">find_weighted_model ctx random</code> searches for a model of the constraints
+  asserted in <code class="code">ctx</code> and compute its cost.
+</div>
+</td></tr>
+<tr><td align="left"><br>G</td></tr>
+<tr><td><a href="Yices.html#VALget_arith_value">get_arith_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_arith_value m v</code> returns the rational value as a pair (numerator, denominator)
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_arith_value_as_string">get_arith_value_as_string</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_arith_value_as_string m d</code> converts the value assigned to a variable,
+  given its variable declaration <code class="code">d</code> in model <code class="code">m</code> to a character string.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_assertion_value">get_assertion_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Return true (false) if the assertion of the given assertion id is satisfied (not
+   satisfied) in the model.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_big_int_value">get_big_int_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td><a href="Yices.html#VALget_bitvector_value">get_bitvector_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_bitvector_value m v n</code> gets the bitvector constant assigned to a
+   variable <code class="code">v</code> in model <code class="code">m</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_bv_value">get_bv_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Alias of <a href="Yices.html#VALget_bitvector_value"><code class="code">Yices.get_bitvector_value</code></a>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_cost">get_cost</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Return the cost of model <code class="code">m</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_cost_as_double">get_cost_as_double</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Return the cost of the model m, converted to a double-precision 
+   floating point number.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_double_value">get_double_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_double_value m v</code> converts the value assigned to variable <code class="code">v</code>
+   in model <code class="code">m</code> to a floating point number and returns it.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_int_value">get_int_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_int_value m v</code> returns the integer value assigned to variable <code class="code">v</code> in model <code class="code">m</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.Future.html#VALget_lite_context">get_lite_context</a> [<a href="Yices.Future.html">Yices.Future</a>]</td>
+<td><div class="info">
+Get the Lite context out of a Full context.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_model">get_model</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Return a model for a satisfiable logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_ratio_value">get_ratio_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td><a href="Yices.html#VALget_scalar_value">get_scalar_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_scalar_value m d</code> gets the value assigned to a variable of scalar
+   type in model <code class="code">m</code> as an integer index.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_scalar_value_name">get_scalar_value_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_scalar_value_name m d</code> gets the value assigned to a variable of
+   scalar type in model <code class="code">m</code> as a string.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_unsat_core">get_unsat_core</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Get the unsat core as an array.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_value">get_value</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_value m v</code> returns the assignment for the variable <code class="code">v</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_var_decl">get_var_decl</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_var_decl e</code> returns the variable declaration object associated with
+   the given name expression.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_var_decl_from_name">get_var_decl_from_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_var_decl_from_name ctx name</code> returns a variable declaration associated with the given name.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALget_var_decl_name">get_var_decl_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">get_var_decl_name d</code> returns a name of a variable declaration.
+</div>
+</td></tr>
+<tr><td align="left"><br>I</td></tr>
+<tr><td><a href="Yices.html#VALinconsistent">inconsistent</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Check whether the logical context is known to be inconsistent.
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALinconsistent">inconsistent</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Return true if the given logical context is inconsistent.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALint_type_name">int_type_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td><a href="Yices.Future.html#VALinterrupt">interrupt</a> [<a href="Yices.Future.html">Yices.Future</a>]</td>
+<td><div class="info">
+Given on yices-help by Bruno Dutertre (2009-12-16)
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALiter_bool_var_decl">iter_bool_var_decl</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<i>(OCaml-specific)</i> Applies a function to each boolean variable declarations of a given context.
+</div>
+</td></tr>
+<tr><td align="left"><br>M</td></tr>
+<tr><td><a href="Yices.html#VALmax_sat">max_sat</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Compute the maximal satisfying assignment for the asserted
+   weighted constraints.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmax_sat_cost_leq">max_sat_cost_leq</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Similar to <a href="Yices.html#VALmax_sat"><code class="code">Yices.max_sat</code></a>, but start looking for models with cost
+   less than of equal to <code class="code">max_cost</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_and">mk_and</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_and ctx args</code> returns an expression representing the conjunction <code class="code">and</code> of the given arguments (as an array).
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_app">mk_app</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_app ctx f a</code> returns a function application term <code class="code">(f a1 ... an)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bitvector_type">mk_bitvector_type</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bitvector_typ ctx size</code> returns the bitvector type of the given size <code class="code">(bv size)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bool_var">mk_bool_var</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bool_var ctx name</code> returns a name expression for the given variable name.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bool_var_decl">mk_bool_var_decl</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bool_var_decl ctx name</code> returns a new boolean variable declaration.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bool_var_from_decl">mk_bool_var_from_decl</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bool_var_from_decl ctx d</code> returns a name expression (instance) using the given variable declaration.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_add">mk_bv_add</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_add ctx a1 a2</code> Bitvector addition
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_and">mk_bv_and</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_and ctx a1 a2</code> Bitwise and
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_concat">mk_bv_concat</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_concat ctx a1 a2</code> Bitvector concatenation
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_constant">mk_bv_constant</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_constant ctx size value</code> creates a bit vector constant of
+   <code class="code">size</code> bits and from the given <code class="code">value</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_constant_from_array">mk_bv_constant_from_array</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_constant ctx size bv</code> creates a bit vector constant from an array
+   of booleans <code class="code">bv</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_extract">mk_bv_extract</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_extract ctx end begin a</code> extracts a subvector from the bitvector <code class="code">a</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_ge">mk_bv_ge</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_ge ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &gt;= a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_gt">mk_bv_gt</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_gt ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &gt; a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_le">mk_bv_le</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_le ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &lt;= a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_lt">mk_bv_lt</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_lt ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &lt; a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_minus">mk_bv_minus</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_minus ctx a1</code> Bitvector opposite
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_mul">mk_bv_mul</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_mul ctx a1 a2</code> Bitvector multiplication
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_not">mk_bv_not</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_not ctx a</code> Bitwise negation
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_or">mk_bv_or</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_or ctx a1 a2</code> Bitwise or
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_sge">mk_bv_sge</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_sge ctx a1 a2</code> Signed comparison: <code class="code">(a1 &gt;= a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_sgt">mk_bv_sgt</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_sgt ctx a1 a2</code> Signed comparison: <code class="code">(a1 &gt; a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_shift_left0">mk_bv_shift_left0</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_shift_left0 ctx a n</code> Left shift by <code class="code">n</code> bits, padding with zeros.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_shift_left1">mk_bv_shift_left1</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_shift_left1 ctx a n</code> Left shift by <code class="code">n</code> bits, padding with ones.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_shift_right0">mk_bv_shift_right0</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_shift_right0 ctx a n</code> Right shift by <code class="code">n</code> bits, padding with zeros.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_shift_right1">mk_bv_shift_right1</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_shift_right1 ctx a n</code> Right shift by <code class="code">n</code> bits, padding with ones.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_sign_extend">mk_bv_sign_extend</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_sign_extend ctx a n</code> returns the sign extension of the bitvector <code class="code">a</code> to <code class="code">n</code> bits.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_sle">mk_bv_sle</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_sle ctx a1 a2</code> Signed comparison: <code class="code">(a1 &lt;= a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_slt">mk_bv_slt</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_slt ctx a1 a2</code> Signed comparison: <code class="code">(a1 &lt; a2)</code>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_sub">mk_bv_sub</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_sub ctx a1 a2</code> Bitvector subtraction
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_type">mk_bv_type</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Alias of <a href="Yices.html#VALmk_bv_type"><code class="code">Yices.mk_bv_type</code></a>
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_bv_xor">mk_bv_xor</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_bv_xor ctx a1 a2</code> Bitwise exclusive or
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_context">mk_context</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_context ()</code> creates a logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALmk_context">mk_context</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Create a logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_diseq">mk_diseq</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_eq ctx a1 a2</code> returns an expression representing <code class="code">a1 /= a2</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_eq">mk_eq</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_eq ctx a1 a2</code> returns an expression representing <code class="code">a1 = a2</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_false">mk_false</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_false ctx</code> returns an expression representing <code class="code">false</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_fresh_bool_var">mk_fresh_bool_var</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_fresh_bool_var ctx</code> returns a fresh boolean variable.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_function_type">mk_function_type</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_function_type ctx d r</code> returns a function type <code class="code">(-&gt; d1 ... dn r)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_function_update">mk_function_update</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_function_update ctx f a v</code> returns a function update term
+   <code class="code">(update f (a1 ... an) v)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_ge">mk_ge</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_ge ctx a1 a2</code> returns an expression representing <code class="code">a1 &gt;= a2</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_gt">mk_gt</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_gt ctx a1 a2</code> returns an expression representing <code class="code">a1 &gt; a2</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_ite">mk_ite</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_ite ctx c t e</code> returns an expression representing <code class="code">(if c t e)</code> (if <i>condition</i> then <i>then-value</i> else <i>else-value</i>).
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_le">mk_le</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_le ctx a1 a2</code> returns an expression representing <code class="code">a1 &lt;= a2</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_lt">mk_lt</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_lt ctx a1 a2</code> returns an expression representing <code class="code">a1 &lt; a2</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_mul">mk_mul</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_mul ctx arr</code> returns an expression representing <code class="code">arr.(0) * ... * arr.(n)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_not">mk_not</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_not ctx a</code> returns an expression representing <code class="code">(not a)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_num">mk_num</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_num ctx n</code> returns an expression representing the given integer.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_num_from_string">mk_num_from_string</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_num_from_string ctx n</code> returns an expression representing the number provided in ASCII format.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_or">mk_or</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_or ctx args</code> returns an expression representing the disjunction <code class="code">or</code> of the given arguments (as an array).
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_sub">mk_sub</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_sub ctx arr</code> returns an expression representing <code class="code">arr.(0) - ... - arr.(n)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_sum">mk_sum</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_sum ctx arr</code> returns an expression representing <code class="code">arr.(0) + ... + arr.(n)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_true">mk_true</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_true ctx</code> returns an expression representing <code class="code">true</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_tuple_literal">mk_tuple_literal</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_tuple_literal ctx a</code> Build the tuple term <code class="code">(tuple a1 ... an)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_tuple_type">mk_tuple_type</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_tuple_type ctx a</code> constructs the tuple type <code class="code">(a0, ..., an)</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_type">mk_type</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_type ctx name</code> returns the type associated with the given name.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_var_decl">mk_var_decl</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_var_decl ctx name type</code> returns a new (global) variable declaration.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALmk_var_from_decl">mk_var_from_decl</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">mk_var_from_decl ctx d</code> returns a name expression (instance) using the given variable declaration.
+</div>
+</td></tr>
+<tr><td align="left"><br>N</td></tr>
+<tr><td><a href="Yices.html#VALnat_type_name">nat_type_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td><a href="Yices.html#VALnumber_type_name">number_type_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td align="left"><br>P</td></tr>
+<tr><td><a href="Yices.html#VALparse_command">parse_command</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">parse_command ctx s</code> parses and executes the command in string <code class="code">s</code>.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALparse_expression">parse_expression</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">parse_expression ctx s</code> parses string <code class="code">s</code> as a Yices expression and return the expression.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALparse_type">parse_type</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">parse_type ctx s</code> parses string <code class="code">s</code> as a Yices type and return the type.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALpop">pop</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Backtrack.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALpp_expr">pp_expr</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Pretty print the given expression in the standard output.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALpush">push</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Create a backtracking point in the given logical context.
+</div>
+</td></tr>
+<tr><td align="left"><br>R</td></tr>
+<tr><td><a href="Yicesl.html#VALread">read</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Process the given command in the given logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALreal_type_name">real_type_name</a> [<a href="Yices.html">Yices</a>]</td>
+<td></td></tr>
+<tr><td><a href="Yices.html#VALreset">reset</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+<code class="code">reset ctx</code> resets the given logical context.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALretract">retract</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Retract a retractable or weighted constraint.
+</div>
+</td></tr>
+<tr><td align="left"><br>S</td></tr>
+<tr><td><a href="Yices.html#VALset_arith_only">set_arith_only</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Inform yices that only arithmetic theory is going to be used.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALset_max_num_conflicts_in_maxsat_iteration">set_max_num_conflicts_in_maxsat_iteration</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Set the maximum number of conflicts that are allowed in a maxsat iteration.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALset_max_num_iterations_in_maxsat">set_max_num_iterations_in_maxsat</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Set the maximum number of iterations in the MaxSAT algorithm.
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALset_maxsat_initial_cost">set_maxsat_initial_cost</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Set the initial cost for a maxsat problem.
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALset_output_file">set_output_file</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Set the file that will store the output produced by yices
+  (e.g., models).
+</div>
+</td></tr>
+<tr><td><a href="Yices.html#VALset_verbosity">set_verbosity</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Set the verbosity level.
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALset_verbosity">set_verbosity</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Set the verbosity level
+</div>
+</td></tr>
+<tr><td align="left"><br>V</td></tr>
+<tr><td><a href="Yices.html#VALversion">version</a> [<a href="Yices.html">Yices</a>]</td>
+<td><div class="info">
+Return the Yices version number.
+</div>
+</td></tr>
+<tr><td><a href="Yicesl.html#VALversion">version</a> [<a href="Yicesl.html">Yicesl</a>]</td>
+<td><div class="info">
+Return the yices version number
+</div>
+</td></tr>
+</table>
+</body>
+</html>

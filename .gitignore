@@ -40,18 +40,32 @@ tests/CryptokiX/*
 tests/minexplib/*
 tests/polarssl-1.1.1/*
 
-deps/camlidl-1.05/compiler/camlidl
-deps/camlidl-1.05/compiler/config.ml
-deps/camlidl-1.05/compiler/lexer_midl.ml
-deps/camlidl-1.05/compiler/linenum.ml
-deps/camlidl-1.05/compiler/parser_midl.ml
-deps/camlidl-1.05/compiler/parser_midl.mli
-deps/camlidl-1.05/compiler/parser_midl.output
 deps/cryptoverif1.11/
 deps/cryptoverif1.12/cryptoverif
 deps/cryptoverif1.13/
 deps/proverif1.84/proverif
 deps/proverif1.84/proveriftotex
+
+deps/cil-1.7.3/Makefile.features
+deps/cil-1.7.3/_build/
+deps/cil-1.7.3/config.h
+deps/cil-1.7.3/config.mk
+deps/cil-1.7.3/doc/header.html
+deps/cil-1.7.3/doc/index.html
+deps/cil-1.7.3/lib/App/Cilly.pm
+deps/cil-1.7.3/lib/App/Cilly/CilConfig.pm
+deps/cil-1.7.3/lib/MYMETA.json
+deps/cil-1.7.3/lib/MYMETA.yml
+deps/cil-1.7.3/lib/blib/
+deps/cil-1.7.3/lib/pm_to_blib
+deps/cil-1.7.3/src/machdep-ml.c
+deps/cil-1.7.3/stamp-h
+
+deps/ocamlyices/.travis-ocaml.sh
+deps/ocamlyices/.travis.yml
+deps/ocamlyices/ml.sed
+deps/ocamlyices/mli.sed
+deps/ocamlyices/test/
 
 mk/pod2html.mk
 

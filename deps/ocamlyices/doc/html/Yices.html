@@ -1,0 +1,822 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Yicesl.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Yicesl" rel="Chapter" href="Yicesl.html">
+<link title="Yices" rel="Chapter" href="Yices.html"><link title="Parameters" rel="Section" href="#2_Parameters">
+<link title="Context management" rel="Section" href="#2_Contextmanagement">
+<link title="Unsatisifiable core" rel="Section" href="#2_Unsatisifiablecore">
+<link title="Model" rel="Section" href="#2_Model">
+<link title="Parsing " rel="Section" href="#2_Parsing">
+<link title="Types" rel="Section" href="#2_Types">
+<link title="Variable declarations and uses" rel="Section" href="#2_Variabledeclarationsanduses">
+<link title="Expressions" rel="Section" href="#2_Expressions">
+<link title="Future" rel="Section" href="#2_Future">
+<link title="Assertions" rel="Subsection" href="#3_Assertions">
+<link title="Checking" rel="Subsection" href="#3_Checking">
+<link title="Function and tuple expressions" rel="Subsection" href="#3_Functionandtupleexpressions">
+<link title="Numeric expressions" rel="Subsection" href="#3_Numericexpressions">
+<link title="Bitvector expressions" rel="Subsection" href="#3_Bitvectorexpressions">
+<link title="Pretty print expressions" rel="Subsection" href="#3_Prettyprintexpressions">
+<title>Yices</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Yicesl.html" title="Yicesl">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Yices.html">Yices</a></h1>
+<pre><span class="keyword">module</span> Yices: <code class="code">sig</code> <a href="Yices.html">..</a> <code class="code">end</code></pre><div class="info">
+Yices binding for Ocaml
+<p>
+
+  See the official <a href="http://yices.csl.sri.com/capi.shtml"> C API documentation</a><br>
+</div>
+<hr width="100%">
+<pre><span id="TYPEcontext"><span class="keyword">type</span> <code class="type"></code>context</span> </pre>
+
+<pre><span id="TYPEtyp"><span class="keyword">type</span> <code class="type"></code>typ</span> </pre>
+
+<pre><span id="TYPEexpr"><span class="keyword">type</span> <code class="type"></code>expr</span> </pre>
+
+<pre><span id="TYPEvar_decl"><span class="keyword">type</span> <code class="type"></code>var_decl</span> </pre>
+
+<pre><span id="TYPEmodel"><span class="keyword">type</span> <code class="type"></code>model</span> </pre>
+
+<pre><span id="TYPEassertion_id"><span class="keyword">type</span> <code class="type"></code>assertion_id</span> = <code class="type">int</code> </pre>
+
+<pre><code><span id="TYPElbool"><span class="keyword">type</span> <code class="type"></code>lbool</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlbool.False"><span class="constructor">False</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlbool.Undef"><span class="constructor">Undef</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlbool.True"><span class="constructor">True</span></span></code></td>
+
+</tr></table>
+
+
+<pre><span id="TYPEunsat_core"><span class="keyword">type</span> <code class="type"></code>unsat_core</span> = <code class="type"><a href="Yices.html#TYPEassertion_id">assertion_id</a> array</code> </pre>
+
+<br>
+<code class="code">context</code> A context sotres a collection of declarations and asserations.
+<p>
+
+  <code class="code">expr</code> Expressions (abstract syntax tree)
+<p>
+
+  <code class="code">typ</code> Types (abstract syntax tree)
+<p>
+
+  <code class="code">var_decl</code> Variable declaration.
+  A declaration consists of a name a type (such as <code class="code">x::bool</code>). An
+  instance of the declaration represents the term <code class="code">x</code>. Instances are also
+  called name expressions. Instances can be created using 
+  <a href="Yices.html#VALmk_bool_var_from_decl"><code class="code">Yices.mk_bool_var_from_decl</code></a> or <a href="Yices.html#VALmk_var_from_decl"><code class="code">Yices.mk_var_from_decl</code></a>.
+<p>
+
+  <code class="code">model</code> Model. A model assigns constant values to variables defined in a context.
+  The context must be known to be consistent for a model to be available.
+  The model is constructed by calling <a href="Yices.html#VALcheck"><code class="code">Yices.check</code></a> (or its relatives) then
+  <a href="Yices.html#VALget_model"><code class="code">Yices.get_model</code></a>.
+<p>
+
+  <code class="code">assertion_id</code> Assertion index, to identify retractable assertions.
+<p>
+
+  <code class="code">unsat_core</code> Arrays of assertion indexes.
+<p>
+
+  <code class="code">lbool</code> Extended booleans: to represent the value of literals in the context<br>
+<pre><span id="VALversion"><span class="keyword">val</span> version</span> : <code class="type">unit -> string</code></pre><div class="info">
+Return the Yices version number.<br>
+</div>
+<br>
+<h2 id="2_Parameters">Parameters</h2><br>
+<pre><span id="VALset_verbosity"><span class="keyword">val</span> set_verbosity</span> : <code class="type">int -> unit</code></pre><div class="info">
+Set the verbosity level.<br>
+</div>
+<pre><span id="VALenable_type_checker"><span class="keyword">val</span> enable_type_checker</span> : <code class="type">bool -> unit</code></pre><div class="info">
+Force Yices to type check expressions when they are asserted (default = false).<br>
+</div>
+<pre><span id="VALenable_log_file"><span class="keyword">val</span> enable_log_file</span> : <code class="type">string -> unit</code></pre><div class="info">
+Enable a log file that will store the assertions, checks, decls, etc.
+<p>
+
+   If the log file is already open, then nothing happens.<br>
+<b>Raises</b> <code>Failure</code> if either:<ul>
+<li>there's already a log file</li>
+<li>if the file cannot be opened for write (or some other file error)</li>
+</ul>
+<br>
+</div>
+<pre><span id="VALset_arith_only"><span class="keyword">val</span> set_arith_only</span> : <code class="type">bool -> unit</code></pre><div class="info">
+Inform yices that only arithmetic theory is going to be used.
+<p>
+
+   This flag usually improves performance (default = false).<br>
+</div>
+<pre><span id="VALset_max_num_conflicts_in_maxsat_iteration"><span class="keyword">val</span> set_max_num_conflicts_in_maxsat_iteration</span> : <code class="type">int -> unit</code></pre><div class="info">
+Set the maximum number of conflicts that are allowed in a maxsat iteration.
+<p>
+
+   If the maximum is reached, then "unknown" (i.e., <code class="code">Undef</code>) is returned by maxsat.<br>
+</div>
+<pre><span id="VALset_max_num_iterations_in_maxsat"><span class="keyword">val</span> set_max_num_iterations_in_maxsat</span> : <code class="type">int -> unit</code></pre><div class="info">
+Set the maximum number of iterations in the MaxSAT algorithm.
+<p>
+
+   If the maximum is reached, then "unknown" (i.e., <code class="code">Undef</code>) is returned by maxsat.<br>
+</div>
+<pre><span id="VALset_maxsat_initial_cost"><span class="keyword">val</span> set_maxsat_initial_cost</span> : <code class="type">int64 -> unit</code></pre><div class="info">
+Set the initial cost for a maxsat problem.<br>
+</div>
+<br>
+<h2 id="2_Contextmanagement">Context management</h2><br>
+<pre><span id="VALmk_context"><span class="keyword">val</span> mk_context</span> : <code class="type">unit -> <a href="Yices.html#TYPEcontext">context</a></code></pre><div class="info">
+<code class="code">mk_context ()</code> creates a logical context.<br>
+</div>
+<pre><span id="VALdel_context"><span class="keyword">val</span> del_context</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> unit</code></pre><div class="info">
+<code class="code">del_context ctx</code> deletes the given logical context.
+<p>
+
+   See <a href="Yices.html#VALmk_context"><code class="code">Yices.mk_context</code></a>.<br>
+</div>
+<pre><span id="VALreset"><span class="keyword">val</span> reset</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> unit</code></pre><div class="info">
+<code class="code">reset ctx</code> resets the given logical context.<br>
+</div>
+<pre><span id="VALdump_context"><span class="keyword">val</span> dump_context</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> unit</code></pre><div class="info">
+Display the internal representation of the given logical context on <code class="code">stderr</code>. 
+<p>
+
+   This function is mostly for debugging.<br>
+</div>
+<pre><span id="VALpush"><span class="keyword">val</span> push</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> unit</code></pre><div class="info">
+Create a backtracking point in the given logical context.
+<p>
+
+   The logical context can be viewed as a stack of contexts.
+   The scope level is the number of elements on this stack. The stack
+   of contexts is simulated using trail (undo) stacks.<br>
+</div>
+<pre><span id="VALpop"><span class="keyword">val</span> pop</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> unit</code></pre><div class="info">
+Backtrack.
+<p>
+
+   Restores the context from the top of the stack, and pops it off the
+   stack.  Any changes to the logical context (by <a href="Yices.html#VALassert_simple"><code class="code">Yices.assert_simple</code></a> or
+   other functions) between the matching <a href="Yices.html#VALpush"><code class="code">Yices.push</code></a> and <code class="code">pop</code>
+   operators are flushed, and the context is completely restored to
+   what it was right before the <a href="Yices.html#VALpush"><code class="code">Yices.push</code></a>.
+<p>
+
+   See <a href="Yices.html#VALpush"><code class="code">Yices.push</code></a>.<br>
+</div>
+<br>
+<h3 id="3_Assertions">Assertions</h3><br>
+<pre><span id="VALassert_simple"><span class="keyword">val</span> assert_simple</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> unit</code></pre><div class="info">
+Assert a constraint in the logical context.
+<p>
+
+   After one assertion, the logical context may become inconsistent.
+   The method <a href="Yices.html#VALinconsistent"><code class="code">Yices.inconsistent</code></a> may be used to check that.<br>
+</div>
+<pre><span id="VALassert_weighted"><span class="keyword">val</span> assert_weighted</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> int64 -> <a href="Yices.html#TYPEassertion_id">assertion_id</a></code></pre><div class="info">
+Assert a constraint in the logical context with weight <code class="code">w</code>.<br>
+<b>Returns</b> An id that can be used to retract the constraint.
+<p>
+
+   See <a href="Yices.html#VALretract"><code class="code">Yices.retract</code></a>.<br>
+</div>
+<pre><span id="VALassert_retractable"><span class="keyword">val</span> assert_retractable</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEassertion_id">assertion_id</a></code></pre><div class="info">
+Assert a constraint that can be later retracted.<br>
+<b>Returns</b> An id that can be used to retract the constraint.
+<p>
+
+   This is similar to <a href="Yices.html#VALassert_weighted"><code class="code">Yices.assert_weighted</code></a>, but the weight is considered to be infinite.
+<p>
+
+   See <a href="Yices.html#VALretract"><code class="code">Yices.retract</code></a>.<br>
+</div>
+<pre><span id="VALretract"><span class="keyword">val</span> retract</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEassertion_id">assertion_id</a> -> unit</code></pre><div class="info">
+Retract a retractable or weighted constraint.
+<p>
+
+   See <a href="Yices.html#VALassert_weighted"><code class="code">Yices.assert_weighted</code></a>
+   and <a href="Yices.html#VALassert_retractable"><code class="code">Yices.assert_retractable</code></a>.<br>
+</div>
+<br>
+<h3 id="3_Checking">Checking</h3><br>
+<pre><span id="VALinconsistent"><span class="keyword">val</span> inconsistent</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> int</code></pre><div class="info">
+Check whether the logical context is known to be inconsistent.
+<p>
+
+   If the function returns true (i.e., a non-zero value) then the context 
+   is inconsistent. If it returns false (i.e., 0) then the context's status
+   is unknown. To determine the status in this case, call <a href="Yices.html#VALcheck"><code class="code">Yices.check</code></a>.<br>
+</div>
+<pre><span id="VALcheck"><span class="keyword">val</span> check</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPElbool">lbool</a></code></pre><div class="info">
+Check if the logical context is satisfiable.
+<p>
+<ul>
+<li><code class="code">True</code> means the context is satisfiable</li>
+<li><code class="code">False</code> means it is unsatisfiable</li>
+<li><code class="code">Undef</code> means it was not possible to decide due to an incompleteness.</li>
+</ul>
+
+   If the context is satisfiable, then <a href="Yices.html#VALget_model"><code class="code">Yices.get_model</code></a> can be used to obtain a model.
+<p>
+
+   <b>Warning!</b> This method ignore the weights associated with the constraints.<br>
+</div>
+<pre><span id="VALmax_sat"><span class="keyword">val</span> max_sat</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPElbool">lbool</a></code></pre><div class="info">
+Compute the maximal satisfying assignment for the asserted
+   weighted constraints.
+<p>
+<ul>
+<li><code class="code">True</code> means the maximal satisfying assignment was found</li>
+<li><code class="code">False</code> means it is unsatisfiable (this may happen if the context has 
+     unweighted constraints)</li>
+<li><code class="code">Undef</code> means it was not possible to decide due to an incompleteness.</li>
+</ul>
+
+   If the result is <code class="code">True</code>, then <a href="Yices.html#VALget_model"><code class="code">Yices.get_model</code></a> can be used to obtain a model.
+<p>
+
+   See <a href="Yices.html#VALassert_weighted"><code class="code">Yices.assert_weighted</code></a><br>
+</div>
+<pre><span id="VALmax_sat_cost_leq"><span class="keyword">val</span> max_sat_cost_leq</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> int64 -> <a href="Yices.html#TYPElbool">lbool</a></code></pre><div class="info">
+Similar to <a href="Yices.html#VALmax_sat"><code class="code">Yices.max_sat</code></a>, but start looking for models with cost
+   less than of equal to <code class="code">max_cost</code>.<br>
+<b>Returns</b> <code class="code">False</code> if such a model doesn't exist.<br>
+</div>
+<pre><span id="VALfind_weighted_model"><span class="keyword">val</span> find_weighted_model</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> bool -> <a href="Yices.html#TYPElbool">lbool</a></code></pre><div class="info">
+<code class="code">find_weighted_model ctx random</code> searches for a model of the constraints
+  asserted in <code class="code">ctx</code> and compute its cost.
+<p>
+
+  If <code class="code">random</code> is true, then random search is used,
+  otherwise, the default decision heuristic is used.
+<p>
+
+  If there are no weighted constaints in <code class="code">ctx</code>, then this function is the
+  same as <a href="Yices.html#VALcheck"><code class="code">Yices.check</code></a>.
+<p>
+
+  Otherwise, it searches for a model that satisfies all the
+  non-weighted constraints but not necessarily the weighted
+  constraints. The function returns <code class="code">True</code> if such a model is
+  found, and the model can be obtained using <a href="Yices.html#VALget_model"><code class="code">Yices.get_model</code></a>.  The
+  cost of this model is the sum of the weights of the unsatisfied
+  weighted constraints.
+<p>
+
+  The function returns <code class="code">False</code> if it cannot find such a model.
+<p>
+
+  The function may also return <code class="code">Undef</code>, if the context contains
+  formulas for which yices is incomplete (e.g., quantifiers). Do not
+  use the model in this case.<br>
+</div>
+<br>
+<h2 id="2_Unsatisifiablecore">Unsatisifiable core</h2><br>
+<pre><span id="VALget_unsat_core"><span class="keyword">val</span> get_unsat_core</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEunsat_core">unsat_core</a></code></pre><div class="info">
+Get the unsat core as an array.
+<p>
+
+   Each element is the id of a retractable assertion.
+<p>
+
+   See <a href="Yices.html#VALassert_retractable"><code class="code">Yices.assert_retractable</code></a>.<br>
+</div>
+<br>
+<h2 id="2_Model">Model</h2><br>
+<pre><span id="VALget_model"><span class="keyword">val</span> get_model</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEmodel">model</a></code></pre><div class="info">
+Return a model for a satisfiable logical context.
+<p>
+
+   <b>Warning!</b><ul>
+<li>The should be only called if <a href="Yices.html#VALcheck"><code class="code">Yices.check</code></a> or <a href="Yices.html#VALmax_sat"><code class="code">Yices.max_sat</code></a> 
+   returned <code class="code">True</code> or <code class="code">Undef</code>.</li>
+<li>Calls to functions which modify the context invalidate the model.</li>
+</ul>
+<br>
+<b>Raises</b> <code>Failure</code> if the model is not available<br>
+</div>
+<pre><span id="VALget_value"><span class="keyword">val</span> get_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> <a href="Yices.html#TYPElbool">lbool</a></code></pre><div class="info">
+<code class="code">get_value m v</code> returns the assignment for the variable <code class="code">v</code>.
+<p>
+
+   The result is <code class="code">Undef</code> if the value of <code class="code">v</code> is a "don't care".
+<p>
+
+   <b>Warning!</b> <code class="code">v</code> must be the declaration of a boolean variable.
+<p>
+
+   See <a href="Yices.html#VALget_int_value"><code class="code">Yices.get_int_value</code></a>, <a href="Yices.html#VALget_arith_value"><code class="code">Yices.get_arith_value</code></a> and <a href="Yices.html#VALget_double_value"><code class="code">Yices.get_double_value</code></a>.<br>
+</div>
+<pre><span id="VALget_int_value"><span class="keyword">val</span> get_int_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> int32</code></pre><div class="info">
+<code class="code">get_int_value m v</code> returns the integer value assigned to variable <code class="code">v</code> in model <code class="code">m</code><br>
+<b>Raises</b> <code>Failure</code> if one of the following errors occurs:<ul>
+<li><code class="code">v</code> is not a proper declaration or not the declaration of a numerical variable</li>
+<li><code class="code">v</code> has no value assigned in model m (typically, this means that <code class="code">v</code> does not 
+   occur in the asserted constraints)</li>
+<li><code class="code">v</code> has a value that cannot be converted to <code class="code">long</code>, because
+   it is rational or too big</li>
+</ul>
+
+   See <a href="Yices.html#VALget_value"><code class="code">Yices.get_value</code></a>, <a href="Yices.html#VALget_arith_value"><code class="code">Yices.get_arith_value</code></a> and <a href="Yices.html#VALget_double_value"><code class="code">Yices.get_double_value</code></a>.<br>
+</div>
+<pre><span id="VALget_arith_value"><span class="keyword">val</span> get_arith_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> int32 * int32</code></pre><div class="info">
+<code class="code">get_arith_value m v</code> returns the rational value as a pair (numerator, denominator)<br>
+<b>Raises</b> <code>Failure</code> if one of the following errors occurs:<ul>
+<li><code class="code">v</code> is not a proper declaration or not the declaration of a numerical variable</li>
+<li><code class="code">v</code> has no value assigned in model m (typically, this means that v does not 
+   occur in the asserted constraints)</li>
+<li><code class="code">v</code> has a value that cannot be converted to <code class="code">long/long</code>, 
+   because the numerator or the denominator is too big</li>
+</ul>
+
+   See <a href="Yices.html#VALget_value"><code class="code">Yices.get_value</code></a>, <a href="Yices.html#VALget_int_value"><code class="code">Yices.get_int_value</code></a> and <a href="Yices.html#VALget_double_value"><code class="code">Yices.get_double_value</code></a>.<br>
+</div>
+<pre><span id="VALget_double_value"><span class="keyword">val</span> get_double_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> float</code></pre><div class="info">
+<code class="code">get_double_value m v</code> converts the value assigned to variable <code class="code">v</code>
+   in model <code class="code">m</code> to a floating point number and returns it.<br>
+<b>Raises</b> <code>Failure</code> if one of the following errors occurs:<ul>
+<li><code class="code">v</code> is not a proper declaration or not the declaration of a numerical variable</li>
+<li><code class="code">v</code> has no value assigned in model <code class="code">m</code> (typically, this means that <code class="code">v</code> does not 
+   occur in the asserted constraints)</li>
+</ul>
+
+   See <a href="Yices.html#VALget_value"><code class="code">Yices.get_value</code></a>, <a href="Yices.html#VALget_int_value"><code class="code">Yices.get_int_value</code></a> and <a href="Yices.html#VALget_arith_value"><code class="code">Yices.get_arith_value</code></a>.<br>
+</div>
+<pre><span id="VALget_arith_value_as_string"><span class="keyword">val</span> get_arith_value_as_string</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> string</code></pre><div class="info">
+<code class="code">get_arith_value_as_string m d</code> converts the value assigned to a variable,
+  given its variable declaration <code class="code">d</code> in model <code class="code">m</code> to a character string.<br>
+</div>
+<pre><span id="VALget_ratio_value"><span class="keyword">val</span> get_ratio_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> Ratio.ratio</code></pre><pre><span id="VALget_big_int_value"><span class="keyword">val</span> get_big_int_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> Big_int.big_int</code></pre><pre><span id="VALget_bitvector_value"><span class="keyword">val</span> get_bitvector_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> int -> bool array</code></pre><div class="info">
+<code class="code">get_bitvector_value m v n</code> gets the bitvector constant assigned to a
+   variable <code class="code">v</code> in model <code class="code">m</code>.
+<p>
+
+   It returns an array of <code class="code">n</code> booleans: <code class="code">bv.(0)</code> is the low-order
+   bit and <code class="code">bv.(n - 1)</code> is the high-order bit.
+<p>
+
+   <code class="code">n</code> should be the size of the bitvector variable <code class="code">v</code>. Otherwise:<ul>
+<li>If <code class="code">n</code> is smaller than <code class="code">v</code>'s size, the <code class="code">n</code> lower-order bits of <code class="code">v</code> are returned.</li>
+<li>If <code class="code">n</code> is larger than <code class="code">v</code>'s size, then the extra high-order bits are set to 0.</li>
+</ul>
+<br>
+<b>Raises</b> <code>Failure</code> if one of the following errors occurs:<ul>
+<li><code class="code">v</code> is not a proper declaration or not the declaration of a bitvector variable</li>
+<li><code class="code">v</code> has no value assigned in model <code class="code">m</code> (typically, this means that <code class="code">v</code> does not 
+   occur in the asserted constraints)</li>
+</ul>
+<br>
+</div>
+<pre><span id="VALget_bv_value"><span class="keyword">val</span> get_bv_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> int -> bool array</code></pre><div class="info">
+Alias of <a href="Yices.html#VALget_bitvector_value"><code class="code">Yices.get_bitvector_value</code></a>.<br>
+</div>
+<pre><span id="VALget_scalar_value"><span class="keyword">val</span> get_scalar_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> int</code></pre><div class="info">
+<code class="code">get_scalar_value m d</code> gets the value assigned to a variable of scalar
+   type in model <code class="code">m</code> as an integer index.
+<p>
+
+   If <code class="code">d</code> is a variable declaration of a scalar type <code class="code">tau</code>, then 
+   <code class="code">tau</code> must have been defined as <code class="code">(define-type tau (scalar e_0 ... e_(n-1)))</code>
+   for some <code class="code">n&gt;0</code>.
+<p>
+
+   This function returns the value of variable <code class="code">d</code> in model <code class="code">m</code> as an index
+   between <code class="code">0</code> and <code class="code">n-1</code> (i.e., if the function returns <code class="code">i</code> then the 
+   value of d is <code class="code">e_i</code>).<br>
+<b>Raises</b> <code>Failure</code> if one of the following error occurs:<ul>
+<li><code class="code">d</code> is not the declaration of a scalar variable</li>
+<li><code class="code">d</code> is not assigned a value in model <code class="code">m</code></li>
+</ul>
+<br>
+</div>
+<pre><span id="VALget_scalar_value_name"><span class="keyword">val</span> get_scalar_value_name</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> string</code></pre><div class="info">
+<code class="code">get_scalar_value_name m d</code> gets the value assigned to a variable of
+   scalar type in model <code class="code">m</code> as a string.
+<p>
+
+   If <code class="code">d</code> is a variable declaration of a scalar type <code class="code">tau</code>, then <code class="code">tau</code> must
+   have been defined as <code class="code">(define-type tau (scalar e_0 ... e_(n-1)))</code>
+   for some <code class="code">n&gt;0</code>.
+<p>
+
+   This function returns the value of variable <code class="code">d</code> in model <code class="code">m</code> as one of the
+   strings <code class="code">e_i</code>.<br>
+<b>Raises</b> <code>Failure</code> if one of the following error occurs:<ul>
+<li><code class="code">d</code> is not the declaration of a scalar variable</li>
+<li><code class="code">d</code> is not assigned a value in model <code class="code">m</code></li>
+</ul>
+<br>
+</div>
+<pre><span id="VALget_assertion_value"><span class="keyword">val</span> get_assertion_value</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEassertion_id">assertion_id</a> -> bool</code></pre><div class="info">
+Return true (false) if the assertion of the given assertion id is satisfied (not
+   satisfied) in the model.
+<p>
+
+   This function is only useful for assertion ids obtained using <a href="Yices.html#VALassert_weighted"><code class="code">Yices.assert_weighted</code></a>,
+   and if <a href="Yices.html#VALmax_sat"><code class="code">Yices.max_sat</code></a> was used to build the model. That is the only scenario where an
+   assertion may not be satisfied in a model produced by yices.<br>
+</div>
+<pre><span id="VALevaluate_in_model"><span class="keyword">val</span> evaluate_in_model</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPElbool">lbool</a></code></pre><div class="info">
+Evaluate a formula in a model.
+<p>
+
+   Model can be obtained via <a href="Yices.html#VALget_model"><code class="code">Yices.get_model</code></a>, after a call to <a href="Yices.html#VALcheck"><code class="code">Yices.check</code></a>,
+   <a href="Yices.html#VALmax_sat"><code class="code">Yices.max_sat</code></a>, or <a href="Yices.html#VALfind_weighted_model"><code class="code">Yices.find_weighted_model</code></a>
+<p>
+<ul>
+<li><code class="code">True</code> means the formula is true in the model</li>
+<li><code class="code">False</code> means the formula is false in the model</li>
+<li><code class="code">Undef</code> means the model does not have enough information.
+     typically this is due to a function application, e.g., 
+     the model defines <code class="code">(f 1)</code> and <code class="code">(f 2)</code>, but the formula references <code class="code">(f 3)</code></li>
+</ul>
+<br>
+</div>
+<pre><span id="VALdisplay_model"><span class="keyword">val</span> display_model</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> unit</code></pre><div class="info">
+Display the given model in the standard output.<br>
+</div>
+<pre><span id="VALget_cost"><span class="keyword">val</span> get_cost</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> int64</code></pre><div class="info">
+Return the cost of model <code class="code">m</code>.
+<p>
+
+   The cost is the sum of the weights of unsatisfied constraints.
+<p>
+
+   <b>Warning!</b> The model cost is computed automatically by <a href="Yices.html#VALmax_sat"><code class="code">Yices.max_sat</code></a> but 
+   not by <a href="Yices.html#VALcheck"><code class="code">Yices.check</code></a>. If <a href="Yices.html#VALcheck"><code class="code">Yices.check</code></a> returns <code class="code">True</code> (or <code class="code">Undef</code>),
+   you can to call <code class="code">compute_model_cost</code> to compute the cost explicitly.
+   <b>But this function does not seem to exist yet... MD</b><br>
+</div>
+<pre><span id="VALget_cost_as_double"><span class="keyword">val</span> get_cost_as_double</span> : <code class="type"><a href="Yices.html#TYPEmodel">model</a> -> float</code></pre><div class="info">
+Return the cost of the model m, converted to a double-precision 
+   floating point number.<br>
+</div>
+<pre><span id="VALiter_bool_var_decl"><span class="keyword">val</span> iter_bool_var_decl</span> : <code class="type">(<a href="Yices.html#TYPEvar_decl">var_decl</a> -> unit) -> <a href="Yices.html#TYPEcontext">context</a> -> unit</code></pre><div class="info">
+<i>(OCaml-specific)</i> Applies a function to each boolean variable declarations of a given context.<br>
+</div>
+<br>
+<h2 id="2_Parsing">Parsing </h2><br>
+<pre><span id="VALparse_expression"><span class="keyword">val</span> parse_expression</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">parse_expression ctx s</code> parses string <code class="code">s</code> as a Yices expression and return the expression.
+  The string must use the Yices input language (not SMT-LIB).<br>
+</div>
+<pre><span id="VALparse_type"><span class="keyword">val</span> parse_type</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEtyp">typ</a></code></pre><div class="info">
+<code class="code">parse_type ctx s</code> parses string <code class="code">s</code> as a Yices type and return the type.
+  The string must uses the Yices input language (not SMT-LIB).<br>
+</div>
+<pre><span id="VALparse_command"><span class="keyword">val</span> parse_command</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> unit</code></pre><div class="info">
+<code class="code">parse_command ctx s</code> parses and executes the command in string <code class="code">s</code>.
+  s must use the Yices input language.<br>
+</div>
+<br>
+<h2 id="2_Types">Types</h2><br>
+<pre><span id="VALmk_type"><span class="keyword">val</span> mk_type</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEtyp">typ</a></code></pre><div class="info">
+<code class="code">mk_type ctx name</code> returns the type associated with the given name. If the type
+   does not exist, a new uninterpreted type is created.
+<p>
+
+   <i>Remark:</i> number, real, int, nat, bool, any are builtin types.<br>
+</div>
+<pre><span id="VALnumber_type_name"><span class="keyword">val</span> number_type_name</span> : <code class="type">string</code></pre><pre><span id="VALreal_type_name"><span class="keyword">val</span> real_type_name</span> : <code class="type">string</code></pre><pre><span id="VALint_type_name"><span class="keyword">val</span> int_type_name</span> : <code class="type">string</code></pre><pre><span id="VALnat_type_name"><span class="keyword">val</span> nat_type_name</span> : <code class="type">string</code></pre><pre><span id="VALbool_type_name"><span class="keyword">val</span> bool_type_name</span> : <code class="type">string</code></pre><pre><span id="VALany_type_name"><span class="keyword">val</span> any_type_name</span> : <code class="type">string</code></pre><pre><span id="VALmk_bitvector_type"><span class="keyword">val</span> mk_bitvector_type</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> int -> <a href="Yices.html#TYPEtyp">typ</a></code></pre><div class="info">
+<code class="code">mk_bitvector_typ ctx size</code> returns the bitvector type of the given size <code class="code">(bv size)</code>.
+<p>
+
+   The size must be positive.<br>
+</div>
+<pre><span id="VALmk_bv_type"><span class="keyword">val</span> mk_bv_type</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> int -> <a href="Yices.html#TYPEtyp">typ</a></code></pre><div class="info">
+Alias of <a href="Yices.html#VALmk_bv_type"><code class="code">Yices.mk_bv_type</code></a><br>
+</div>
+<pre><span id="VALmk_function_type"><span class="keyword">val</span> mk_function_type</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEtyp">typ</a> array -> <a href="Yices.html#TYPEtyp">typ</a> -> <a href="Yices.html#TYPEtyp">typ</a></code></pre><div class="info">
+<code class="code">mk_function_type ctx d r</code> returns a function type <code class="code">(-&gt; d1 ... dn r)</code>.<br>
+</div>
+<pre><span id="VALmk_tuple_type"><span class="keyword">val</span> mk_tuple_type</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEtyp">typ</a> array -> <a href="Yices.html#TYPEtyp">typ</a></code></pre><div class="info">
+<code class="code">mk_tuple_type ctx a</code> constructs the tuple type <code class="code">(a0, ..., an)</code>.<br>
+</div>
+<br>
+<h2 id="2_Variabledeclarationsanduses">Variable declarations and uses</h2><br>
+<pre><span id="VALmk_bool_var_decl"><span class="keyword">val</span> mk_bool_var_decl</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEvar_decl">var_decl</a></code></pre><div class="info">
+<code class="code">mk_bool_var_decl ctx name</code> returns a new boolean variable declaration.<br>
+<b>Raises</b> <code>Failure</code> if a variable already exists with the same name.
+<p>
+
+   <i>Remark:</i> Short for <code class="code">mk_var_decl ctx name (mk_type ctx "bool")</code>.<br>
+</div>
+<pre><span id="VALmk_var_decl"><span class="keyword">val</span> mk_var_decl</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEtyp">typ</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a></code></pre><div class="info">
+<code class="code">mk_var_decl ctx name type</code> returns a new (global) variable declaration. It is an error to create two variables
+   with the same name.<br>
+</div>
+<pre><span id="VALget_var_decl_from_name"><span class="keyword">val</span> get_var_decl_from_name</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEvar_decl">var_decl</a></code></pre><div class="info">
+<code class="code">get_var_decl_from_name ctx name</code> returns a variable declaration associated with the given name.<br>
+<b>Raises</b> <code>Failure</code> if there is no variable declaration associated with the given name.<br>
+</div>
+<pre><span id="VALget_var_decl"><span class="keyword">val</span> get_var_decl</span> : <code class="type"><a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a></code></pre><div class="info">
+<code class="code">get_var_decl e</code> returns the variable declaration object associated with
+   the given name expression.
+<p>
+
+   <b>Warning!</b> <code class="code">e</code> must be a name expression created using methods such
+   as: <a href="Yices.html#VALmk_bool_var"><code class="code">Yices.mk_bool_var</code></a>, <a href="Yices.html#VALmk_fresh_bool_var"><code class="code">Yices.mk_fresh_bool_var</code></a>, or <a href="Yices.html#VALmk_bool_var_from_decl"><code class="code">Yices.mk_bool_var_from_decl</code></a>.<br>
+</div>
+<pre><span id="VALget_var_decl_name"><span class="keyword">val</span> get_var_decl_name</span> : <code class="type"><a href="Yices.html#TYPEvar_decl">var_decl</a> -> string</code></pre><div class="info">
+<code class="code">get_var_decl_name d</code> returns a name of a variable declaration.<br>
+</div>
+<pre><span id="VALmk_var_from_decl"><span class="keyword">val</span> mk_var_from_decl</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_var_from_decl ctx d</code> returns a name expression (instance) using the given variable declaration.<br>
+</div>
+<pre><span id="VALmk_bool_var_from_decl"><span class="keyword">val</span> mk_bool_var_from_decl</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEvar_decl">var_decl</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bool_var_from_decl ctx d</code> returns a name expression (instance) using the given variable declaration.<br>
+</div>
+<pre><span id="VALmk_bool_var"><span class="keyword">val</span> mk_bool_var</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bool_var ctx name</code> returns a name expression for the given variable name.
+<p>
+
+   <code class="code">mk_bool_var ctx n1 = mk_bool_var ctx n2</code> when <code class="code">n1 = n2</code>.
+<p>
+
+   See <a href="Yices.html#VALmk_bool_var_decl"><code class="code">Yices.mk_bool_var_decl</code></a>, <a href="Yices.html#VALmk_fresh_bool_var"><code class="code">Yices.mk_fresh_bool_var</code></a>, <a href="Yices.html#VALmk_bool_var_from_decl"><code class="code">Yices.mk_bool_var_from_decl</code></a>.<br>
+</div>
+<pre><span id="VALmk_fresh_bool_var"><span class="keyword">val</span> mk_fresh_bool_var</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_fresh_bool_var ctx</code> returns a fresh boolean variable.<br>
+</div>
+<br>
+<h2 id="2_Expressions">Expressions</h2><br>
+<pre><span id="VALmk_true"><span class="keyword">val</span> mk_true</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_true ctx</code> returns an expression representing <code class="code">true</code>.<br>
+</div>
+<pre><span id="VALmk_false"><span class="keyword">val</span> mk_false</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_false ctx</code> returns an expression representing <code class="code">false</code>.<br>
+</div>
+<pre><span id="VALmk_or"><span class="keyword">val</span> mk_or</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_or ctx args</code> returns an expression representing the disjunction <code class="code">or</code> of the given arguments (as an array).
+<p>
+
+   <b>Warning!</b> the length of the array must be greater than 0.<br>
+</div>
+<pre><span id="VALmk_and"><span class="keyword">val</span> mk_and</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_and ctx args</code> returns an expression representing the conjunction <code class="code">and</code> of the given arguments (as an array).
+<p>
+
+   <b>Warning!</b> the length of the array must be greater than 0.<br>
+</div>
+<pre><span id="VALmk_not"><span class="keyword">val</span> mk_not</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_not ctx a</code> returns an expression representing <code class="code">(not a)</code>.<br>
+</div>
+<pre><span id="VALmk_eq"><span class="keyword">val</span> mk_eq</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_eq ctx a1 a2</code> returns an expression representing <code class="code">a1 = a2</code>.<br>
+</div>
+<pre><span id="VALmk_diseq"><span class="keyword">val</span> mk_diseq</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_eq ctx a1 a2</code> returns an expression representing <code class="code">a1 /= a2</code>.<br>
+</div>
+<pre><span id="VALmk_ite"><span class="keyword">val</span> mk_ite</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_ite ctx c t e</code> returns an expression representing <code class="code">(if c t e)</code> (if <i>condition</i> then <i>then-value</i> else <i>else-value</i>).<br>
+</div>
+<br>
+<h3 id="3_Functionandtupleexpressions">Function and tuple expressions</h3><br>
+<pre><span id="VALmk_app"><span class="keyword">val</span> mk_app</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_app ctx f a</code> returns a function application term <code class="code">(f a1 ... an)</code>.
+<p>
+
+   The type of <code class="code">f</code> must be a function type, and its arity must
+   be equal to the number of arguments, that is the size of the array <code class="code">a</code>.<br>
+</div>
+<pre><span id="VALmk_function_update"><span class="keyword">val</span> mk_function_update</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_function_update ctx f a v</code> returns a function update term
+   <code class="code">(update f (a1 ... an) v)</code>.
+<p>
+
+   The type of <code class="code">f</code> must be a function type, and its arity must
+   be equal to the number of arguments, that is the size of the array <code class="code">a</code>.<br>
+</div>
+<pre><span id="VALmk_tuple_literal"><span class="keyword">val</span> mk_tuple_literal</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_tuple_literal ctx a</code> Build the tuple term <code class="code">(tuple a1 ... an)</code>.<br>
+</div>
+<br>
+<h3 id="3_Numericexpressions">Numeric expressions</h3><br>
+<pre><span id="VALmk_num"><span class="keyword">val</span> mk_num</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> int -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_num ctx n</code> returns an expression representing the given integer.<br>
+</div>
+<pre><span id="VALmk_num_from_string"><span class="keyword">val</span> mk_num_from_string</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> string -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_num_from_string ctx n</code> returns an expression representing the number provided in ASCII format.<br>
+</div>
+<pre><span id="VALmk_sum"><span class="keyword">val</span> mk_sum</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_sum ctx arr</code> returns an expression representing <code class="code">arr.(0) + ... + arr.(n)</code>.
+<p>
+
+   <b>Warning!</b> <code class="code">Array.length arr</code> must be greater than zero.<br>
+</div>
+<pre><span id="VALmk_sub"><span class="keyword">val</span> mk_sub</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_sub ctx arr</code> returns an expression representing <code class="code">arr.(0) - ... - arr.(n)</code>.
+<p>
+
+   <b>Warning!</b> <code class="code">Array.length arr</code> must be greater than zero.<br>
+</div>
+<pre><span id="VALmk_mul"><span class="keyword">val</span> mk_mul</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_mul ctx arr</code> returns an expression representing <code class="code">arr.(0) * ... * arr.(n)</code>.
+<p>
+
+   <b>Warning!</b> <code class="code">Array.length arr</code> must be greater than zero.<br>
+</div>
+<pre><span id="VALmk_lt"><span class="keyword">val</span> mk_lt</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_lt ctx a1 a2</code> returns an expression representing <code class="code">a1 &lt; a2</code>.<br>
+</div>
+<pre><span id="VALmk_le"><span class="keyword">val</span> mk_le</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_le ctx a1 a2</code> returns an expression representing <code class="code">a1 &lt;= a2</code>.<br>
+</div>
+<pre><span id="VALmk_gt"><span class="keyword">val</span> mk_gt</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_gt ctx a1 a2</code> returns an expression representing <code class="code">a1 &gt; a2</code>.<br>
+</div>
+<pre><span id="VALmk_ge"><span class="keyword">val</span> mk_ge</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_ge ctx a1 a2</code> returns an expression representing <code class="code">a1 &gt;= a2</code>.<br>
+</div>
+<br>
+<h3 id="3_Bitvectorexpressions">Bitvector expressions</h3><br>
+<pre><span id="VALmk_bv_constant"><span class="keyword">val</span> mk_bv_constant</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> int -> int32 -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_constant ctx size value</code> creates a bit vector constant of
+   <code class="code">size</code> bits and from the given <code class="code">value</code>.
+<p>
+
+   <code class="code">size</code> must be positive.<br>
+</div>
+<pre><span id="VALmk_bv_constant_from_array"><span class="keyword">val</span> mk_bv_constant_from_array</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> bool array -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_constant ctx size bv</code> creates a bit vector constant from an array
+   of booleans <code class="code">bv</code>.
+<p>
+
+   Bit <code class="code">i</code> of the bitvector is set to 0 if <code class="code">bv.(i)</code> is <code class="code">false</code>
+   and to 1 if <code class="code">bv.(i)</code> is <code class="code">true</code>.<br>
+</div>
+<pre><span id="VALmk_bv_add"><span class="keyword">val</span> mk_bv_add</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_add ctx a1 a2</code> Bitvector addition
+<p>
+
+   <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_sub"><span class="keyword">val</span> mk_bv_sub</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_sub ctx a1 a2</code> Bitvector subtraction
+<p>
+
+   <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_mul"><span class="keyword">val</span> mk_bv_mul</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_mul ctx a1 a2</code> Bitvector multiplication
+<p>
+
+   <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size. The result is
+   truncated to that size too, e.g., multiplication of two 8-bit vectors
+   gives an 8-bit result.<br>
+</div>
+<pre><span id="VALmk_bv_minus"><span class="keyword">val</span> mk_bv_minus</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_minus ctx a1</code> Bitvector opposite
+<p>
+
+   <code class="code">a1</code> must be bitvector expression. The result is <code class="code">(- a1)</code>.<br>
+</div>
+<pre><span id="VALmk_bv_concat"><span class="keyword">val</span> mk_bv_concat</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_concat ctx a1 a2</code> Bitvector concatenation
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be two bitvector expressions. <code class="code">a1</code> is the left
+  part of the result and <code class="code">a2</code> the right part.
+<p>
+
+  Assuming <code class="code">a1</code> and <code class="code">a2</code> have <code class="code">n1</code> and <code class="code">n2</code> bits, respectively,
+  then the result is a bitvector <code class="code">concat</code> of size <code class="code">n1 + n2</code>.  Bit
+  0 of <code class="code">concat</code> is bit 0 of <code class="code">a2</code> and bit <code class="code">n2</code> of <code class="code">concat</code> is bit 0
+  of <code class="code">a1</code>.<br>
+</div>
+<pre><span id="VALmk_bv_and"><span class="keyword">val</span> mk_bv_and</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_and ctx a1 a2</code> Bitwise and
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_or"><span class="keyword">val</span> mk_bv_or</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_or ctx a1 a2</code> Bitwise or
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_xor"><span class="keyword">val</span> mk_bv_xor</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_xor ctx a1 a2</code> Bitwise exclusive or
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_not"><span class="keyword">val</span> mk_bv_not</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_not ctx a</code> Bitwise negation<br>
+</div>
+<pre><span id="VALmk_bv_extract"><span class="keyword">val</span> mk_bv_extract</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> int -> int -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_extract ctx end begin a</code> extracts a subvector from the bitvector <code class="code">a</code>.
+<p>
+
+  <code class="code">a</code> must a bitvector expression of size <code class="code">n</code> with <code class="code">begin &lt; end &lt; n</code>.
+  The result is the subvector from <code class="code">a[begin]</code> to <code class="code">a[end]</code>.<br>
+</div>
+<pre><span id="VALmk_bv_sign_extend"><span class="keyword">val</span> mk_bv_sign_extend</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> int -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_sign_extend ctx a n</code> returns the sign extension of the bitvector <code class="code">a</code> to <code class="code">n</code> bits.
+<p>
+
+  Append <code class="code">n</code> times the most-significant bit of <code class="code">a</code> to the left of <code class="code">a</code>.<br>
+</div>
+<pre><span id="VALmk_bv_shift_left0"><span class="keyword">val</span> mk_bv_shift_left0</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> int -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_shift_left0 ctx a n</code> Left shift by <code class="code">n</code> bits, padding with zeros.<br>
+</div>
+<pre><span id="VALmk_bv_shift_left1"><span class="keyword">val</span> mk_bv_shift_left1</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> int -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_shift_left1 ctx a n</code> Left shift by <code class="code">n</code> bits, padding with ones.<br>
+</div>
+<pre><span id="VALmk_bv_shift_right0"><span class="keyword">val</span> mk_bv_shift_right0</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> int -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_shift_right0 ctx a n</code> Right shift by <code class="code">n</code> bits, padding with zeros.<br>
+</div>
+<pre><span id="VALmk_bv_shift_right1"><span class="keyword">val</span> mk_bv_shift_right1</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> int -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_shift_right1 ctx a n</code> Right shift by <code class="code">n</code> bits, padding with ones.<br>
+</div>
+<br>
+<h4 id="4_Unsignedcomparison">Unsigned comparison</h4><br>
+<pre><span id="VALmk_bv_lt"><span class="keyword">val</span> mk_bv_lt</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_lt ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &lt; a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_le"><span class="keyword">val</span> mk_bv_le</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_le ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &lt;= a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_gt"><span class="keyword">val</span> mk_bv_gt</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_gt ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &gt; a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_ge"><span class="keyword">val</span> mk_bv_ge</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_ge ctx a1 a2</code> Unsigned comparison: <code class="code">(a1 &gt;= a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<br>
+<h4 id="4_Signedcomparison">Signed comparison</h4><br>
+<pre><span id="VALmk_bv_slt"><span class="keyword">val</span> mk_bv_slt</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_slt ctx a1 a2</code> Signed comparison: <code class="code">(a1 &lt; a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_sle"><span class="keyword">val</span> mk_bv_sle</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_sle ctx a1 a2</code> Signed comparison: <code class="code">(a1 &lt;= a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_sgt"><span class="keyword">val</span> mk_bv_sgt</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_sgt ctx a1 a2</code> Signed comparison: <code class="code">(a1 &gt; a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<pre><span id="VALmk_bv_sge"><span class="keyword">val</span> mk_bv_sge</span> : <code class="type"><a href="Yices.html#TYPEcontext">context</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a> -> <a href="Yices.html#TYPEexpr">expr</a></code></pre><div class="info">
+<code class="code">mk_bv_sge ctx a1 a2</code> Signed comparison: <code class="code">(a1 &gt;= a2)</code>
+<p>
+
+  <code class="code">a1</code> and <code class="code">a2</code> must be bitvector expression of same size.<br>
+</div>
+<br>
+<h3 id="3_Prettyprintexpressions">Pretty print expressions</h3><br>
+<pre><span id="VALpp_expr"><span class="keyword">val</span> pp_expr</span> : <code class="type"><a href="Yices.html#TYPEexpr">expr</a> -> unit</code></pre><div class="info">
+Pretty print the given expression in the standard output.<br>
+</div>
+<br>
+<h2 id="2_Future">Future</h2><br>
+<pre><span class="keyword">module</span> <a href="Yices.Future.html">Future</a>: <code class="code">sig</code> <a href="Yices.Future.html">..</a> <code class="code">end</code></pre><div class="info">
+Untested and potentially harmful features
+</div>
+</body></html>

@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Yices.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Yicesl" rel="Chapter" href="Yicesl.html">
+<link title="Yices" rel="Chapter" href="Yices.html"><title>Yicesl</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Yices.html" title="Yices">Next</a>
+</div>
+<h1>Module <a href="type_Yicesl.html">Yicesl</a></h1>
+<pre><span class="keyword">module</span> Yicesl: <code class="code">sig</code> <a href="Yicesl.html">..</a> <code class="code">end</code></pre><div class="info">
+Light Yices binding for Ocaml
+<p>
+
+  See the official <a href="http://yices.csl.sri.com/capil.shtml"> C API Lite documentation</a>
+  and the <a href="http://yices.csl.sri.com/language.shtml"> input language specification</a>.<br>
+</div>
+<hr width="100%">
+<pre><span id="TYPEcontext"><span class="keyword">type</span> <code class="type"></code>context</span> </pre>
+
+<br>
+Type represeting a context<br>
+<pre><span id="VALset_verbosity"><span class="keyword">val</span> set_verbosity</span> : <code class="type">int -> unit</code></pre><div class="info">
+Set the verbosity level<br>
+</div>
+<pre><span id="VALversion"><span class="keyword">val</span> version</span> : <code class="type">unit -> string</code></pre><div class="info">
+Return the yices version number<br>
+</div>
+<pre><span id="VALenable_type_checker"><span class="keyword">val</span> enable_type_checker</span> : <code class="type">bool -> unit</code></pre><div class="info">
+Force Yices to type check expressions when they are asserted (default = false)<br>
+</div>
+<pre><span id="VALenable_log_file"><span class="keyword">val</span> enable_log_file</span> : <code class="type">string -> unit</code></pre><div class="info">
+Enable a log file that will store the assertions, checks, decls, etc.
+  If the log file is already open, then nothing happens.<br>
+</div>
+<pre><span id="VALmk_context"><span class="keyword">val</span> mk_context</span> : <code class="type">unit -> <a href="Yicesl.html#TYPEcontext">context</a></code></pre><div class="info">
+Create a logical context.<br>
+</div>
+<pre><span id="VALdel_context"><span class="keyword">val</span> del_context</span> : <code class="type"><a href="Yicesl.html#TYPEcontext">context</a> -> unit</code></pre><div class="info">
+Delete the given logical context.<br>
+</div>
+<pre><span id="VALread"><span class="keyword">val</span> read</span> : <code class="type"><a href="Yicesl.html#TYPEcontext">context</a> -> string -> unit</code></pre><div class="info">
+Process the given command in the given logical context. The command must
+  use Yices input language.<br>
+<b>Raises</b> <code>Failure</code> if the command failed. The message is provided by Yices 
+  (C API Lite <code class="code">yicesl_get_last_error_message</code>).<br>
+</div>
+<pre><span id="VALinconsistent"><span class="keyword">val</span> inconsistent</span> : <code class="type"><a href="Yicesl.html#TYPEcontext">context</a> -> bool</code></pre><div class="info">
+Return true if the given logical context is inconsistent.<br>
+</div>
+<pre><span id="VALset_output_file"><span class="keyword">val</span> set_output_file</span> : <code class="type">string -> unit</code></pre><div class="info">
+Set the file that will store the output produced by yices
+  (e.g., models). The default behavior is to send the output to standard output.<br>
+</div>
+</body></html>

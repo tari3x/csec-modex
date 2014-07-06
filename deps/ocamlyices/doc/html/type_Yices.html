@@ -1,0 +1,259 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Yicesl" rel="Chapter" href="Yicesl.html">
+<link title="Yices" rel="Chapter" href="Yices.html"><title>Yices</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;context<br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;typ<br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;expr<br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;var_decl<br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;model<br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;assertion_id&nbsp;=&nbsp;int<br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;lbool&nbsp;=&nbsp;<span class="constructor">False</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Undef</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">True</span><br>
+&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;unsat_core&nbsp;=&nbsp;<span class="constructor">Yices</span>.assertion_id&nbsp;array<br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;version&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_version"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;set_verbosity&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_set_verbosity"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;enable_type_checker&nbsp;:&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_enable_type_checker"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;enable_log_file&nbsp;:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_enable_log_file"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;set_arith_only&nbsp;:&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_set_arith_only"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;set_max_num_conflicts_in_maxsat_iteration&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_set_max_num_conflicts_in_maxsat_iteration"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;set_max_num_iterations_in_maxsat&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_set_max_num_iterations_in_maxsat"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;set_maxsat_initial_cost&nbsp;:&nbsp;int64&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_set_maxsat_initial_cost"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_context&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.context<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_context"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;del_context&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_del_context"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;reset&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_reset"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;dump_context&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_dump_context"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;push&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_push"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;pop&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_pop"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;assert_simple&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_assert"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;assert_weighted&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.assertion_id<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_assert_weighted"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;assert_retractable&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.assertion_id<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_assert_retractable"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;retract&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.assertion_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_retract"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;inconsistent&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_inconsistent"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;check&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.lbool&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_check"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;max_sat&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.lbool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_max_sat"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;max_sat_cost_leq&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.lbool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_max_sat_cost_leq"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;find_weighted_model&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.lbool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_find_weighted_model"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_unsat_core&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.unsat_core<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_get_unsat_core"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_model&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.model<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_model"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.lbool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_value"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_int_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int32<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_int_value"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_arith_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int32&nbsp;*&nbsp;int32<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_arith_value"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_double_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_double_value"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_arith_value_as_string&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_arith_value_as_string"</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_ratio_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ratio</span>.ratio<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_big_int_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Big_int</span>.big_int<br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_bitvector_value&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_bitvector_value"</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_bv_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;array<br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_scalar_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_scalar_value"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_scalar_value_name&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_scalar_value_name"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_assertion_value&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.assertion_id&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_assertion_value"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;evaluate_in_model&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.lbool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_evaluate_in_model"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;display_model&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_display_model"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_cost&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int64&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_cost"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_cost_as_double&nbsp;:&nbsp;<span class="constructor">Yices</span>.model&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;float<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_cost_as_double"</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;iter_bool_var_decl&nbsp;:&nbsp;(<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;parse_expression&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_parse_expression"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;parse_type&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_parse_type"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;parse_command&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_parse_command"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_type&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_type"</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;number_type_name&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;real_type_name&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;int_type_name&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;nat_type_name&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bool_type_name&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;any_type_name&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bitvector_type&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bitvector_type"</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mk_bv_type&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ<br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_function_type&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_function_type"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_tuple_type&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_tuple_type"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bool_var_decl&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bool_var_decl"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_var_decl&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.typ&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_var_decl"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_var_decl_from_name&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_var_decl_from_name"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_var_decl&nbsp;:&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_var_decl"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_var_decl_name&nbsp;:&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_var_decl_name"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_var_from_decl&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_var_from_decl"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bool_var_from_decl&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.var_decl&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bool_var_from_decl"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bool_var&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bool_var"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_fresh_bool_var&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_fresh_bool_var"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_true&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_true"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_false&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_false"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_or&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_or"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_and&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_and"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_not&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_not"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_eq&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_eq"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_diseq&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_diseq"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_ite&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_ite"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_app&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_app"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_function_update&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_function_update"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_tuple_literal&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_tuple_literal"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_num&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_num"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_num_from_string&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_num_from_string"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_sum&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_sum"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_sub&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_sub"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_mul&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_mul"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_lt&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_lt"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_le&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_le"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_gt&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_gt"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_ge&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_ge"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_constant&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int32&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_constant"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_constant_from_array&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_constant_from_array"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_add&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_add"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_sub&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_sub"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_mul&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_mul"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_minus&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_minus"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_concat&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_concat"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_and&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_and"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_or&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_or"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_xor&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_xor"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_not&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_not"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_extract&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_extract"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_sign_extend&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_sign_extend"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_shift_left0&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_shift_left0"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_shift_left1&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_shift_left1"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_shift_right0&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_shift_right0"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_shift_right1&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_shift_right1"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_lt&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_lt"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_le&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_le"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_gt&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_gt"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_ge&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_ge"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_slt&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_slt"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_sle&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_sle"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_sgt&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_sgt"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;mk_bv_sge&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yices</span>.expr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_mk_bv_sge"</span><br>
+&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;pp_expr&nbsp;:&nbsp;<span class="constructor">Yices</span>.expr&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_pp_expr"</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Future</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;interrupt&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_interrupt"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">external</span>&nbsp;get_lite_context&nbsp;:&nbsp;<span class="constructor">Yices</span>.context&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yicesl</span>.context<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<span class="string">"camlidl_yices_yices_get_lite_context"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+<span class="keyword">end</span></code></body></html>

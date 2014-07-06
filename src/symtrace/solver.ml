@@ -650,7 +650,7 @@ let add_fact_raw ?(check_consistent = true) y_e =
   debug_expr "asserting_y " y_e;
   Yices.assert_simple ctx y_e;
 
-  if check_consistent && Yices.inconsistent ctx = 1 then
+  if check_consistent && Yices.inconsistent ctx then
   begin
     (* dump_context ctx; *)
     debug_expr "add_fact: the context has become inconsistent: " y_e;
