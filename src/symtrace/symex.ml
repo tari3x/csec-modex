@@ -29,10 +29,11 @@ type nargs = int
 type cvm =
     (* loading *)
   | Load_int of intval
-  | Load_str of char list
+  | Load_string of char list
+  | Load_c_string of char list
   | Load_char of char
   | Load_stack_ptr of string (** name of variable; step init to 0 (invalid value) *)
-  | Load_heap_ptr of int (** stack: buffer length; step init to 0 *)
+  | Fresh_heap_ptr (** stack: buffer length; step init to 0 *)
   | Load_buf (** stack: ptr, len *)
   | Load_mem (** stack: ptr; use ptr step as len. *)
   | Load_all (** stack: ptr; load the whole buffer *)
@@ -87,10 +88,80 @@ type cvm =
   | Copy_ctx (** stack: to, from; both consumed *)
   | Out
 
-    (* misc *)
+  (* misc *)
   | Call of string * nargs
   | Return
   | Comment
+
+(*************************************************)
+(** {1 Debug} *)
+(*************************************************)
+
+let fail_mode = ref false
+
+let fail_buf = ref ""
+
+let output a =
+  let output s =
+    if !fail_mode
+    then fail_buf := !fail_buf ^ ("\n  " ^ s)
+    else if debug_enabled ()
+    then prerr_endline (decorate_debug s)
+  in
+  Printf.ksprintf output a
+
+module Loc = struct
+  type t =
+    { fname : string
+    ; mutable line  : string
+    ; call_id : int
+    }
+
+  let to_string t =
+    Printf.sprintf "%s[%d, %s]" t.fname t.call_id t.line
+
+  (** The ids for the calls on the call stack *)
+  let call_id : int ref = ref 0
+
+  (** Current call stack, used for debug purposes only *)
+  let stack : t Stack.t = Stack.create ()
+
+  let set_line l =
+    let top = Stack.top stack in
+    top.line <- l
+
+  let call f =
+    Stack.push
+      { fname = f
+      ; line = Printf.sprintf "<top of %s>" f
+      ; call_id = next call_id}
+      stack
+
+  let return () =
+    let result = to_string (Stack.pop stack) in
+    if Stack.is_empty stack
+    then fail "Returned from main";
+    result
+
+  let reset () =
+    Stack.clear stack;
+    call_id := 0;
+    call "main"
+
+  let () = reset ()
+
+  let current () =
+    to_string (Stack.top stack)
+
+  let call_stack () =
+    Stack.to_list stack
+    |> List.map ~f:to_string
+    |> String.concat "\n"
+
+  let dump_stack () =
+    Stack.iter (fun loc ->
+      output "#  %s" (to_string loc)) stack
+end
 
 
 (*************************************************)
@@ -109,27 +180,19 @@ let iml: iml ref = ref []
 (** All the functions called so far, for debug purposes only *)
 let called_functions: string list ref = ref []
 
-(** Current call stack, used for debug purposes only *)
-let call_stack: string Stack.t = Stack.create ()
-
-(** The ids for the calls on the call stack *)
-let call_id : int ref = ref 0
-
-(** The ids used for stack pointers. *)
-let cur_ptr_id : int ref = ref 0
+let cur_stack_ptr_id : int ref = ref 0
+let cur_heap_ptr_id : int ref = ref 0
 
 (** The number of instructions executed so far *)
 let done_instr : int ref = ref 0
-
-let last_comment = ref ""
 
 let reset_state : unit -> unit = fun () ->
   (* don't reset the Exp state *)
   mem := Base_map.empty;
   Stack.clear stack;
   iml := [];
-  Stack.clear call_stack;
-  call_id := 0
+  Loc.reset ();
+  S.reset_facts ()
 
 (*************************************************)
 (** {1 Helpers} *)
@@ -137,10 +200,8 @@ let reset_state : unit -> unit = fun () ->
 
 let ptr_len = Sym (Ptr_len, [])
 
-let make_assumptions : unit -> unit = fun () ->
-  (* FIXME: remove this later when all symbolic sizes are being used properly *)
-  S.add_fact (S.ge (E.int 8) ptr_len);
-  S.add_fact (S.gt ptr_len E.zero)
+let fresh_heap_ptr l =
+  Ptr (Heap (increment cur_heap_ptr_id, l), [Flat E.zero, Int 1L])
 
 (* TODO: move as much as possible into invariant *)
 let check_well_formed (type a) (e : a exp) =
@@ -209,13 +270,14 @@ let is_interface_fun : string -> bool = fun s ->
               "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail";
               (* Internal interface functions: *)
               "load_buf"; "load_all"; "load_ctx"; "load_int"; "load_str";
-              "symL"; "symN"; "symNE"; "input"; "newTN"; "newTL"; "newL";
+              "symL"; "symN"; "symNE"; "input"; "newTL"; "newT";
               "varsym"; "var"; "varWithBufInit"; "varL"; "output";
               "store_buf"; "store_all"; "store_ctx"; "event";
               "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int";
               "get_attr_int"; "copy_ctx"; "copy_attr_ex"; "copy_attr";
               "clear_attr"; "concrete_val"; "fresh_ptr"; "test_intype"; "assume_intype";
-              "len"; "assume"; "assume_len"; "clear"; "duplicate"; "store_len"]
+              "len"; "assume"; "assume_len"; "assume_len_at_most";
+              "clear"; "duplicate"; "store_len"]
 
 let interesting (type a) (e : a exp) =
   match e with
@@ -228,32 +290,15 @@ let interesting (type a) (e : a exp) =
 (** {1 Fail} *)
 (*************************************************)
 
-let fail_mode = ref false
-
-let fail_buf = ref ""
-
-let output a =
-  let output s =
-    if !fail_mode then
-      fail_buf := !fail_buf ^ ("\n  " ^ s)
-    else
-      if debug_enabled () then prerr_endline (decorate_debug s)
-  in
-  Printf.ksprintf output a
-
-
 (** Non-destructive. *)
 let dump_stack () =
   Stack.iter (fun (Any e) -> output "# %s" (E.dump e)) stack
 
-let dump_call_stack () =
-  Stack.iter (fun fname -> output "#  %s" fname) call_stack
-
-let _dump_memory : unit -> unit = fun () ->
-    let dump_cell (b : base) (e : bterm) =
-        output "%s => %s"(E.base_to_string b) (E.dump e)
-    in
-    Base_map.iter dump_cell !mem
+let _dump_memory () =
+  let dump_cell (b : base) (e : bterm) =
+    output "%s => %s" (E.base_to_string b) (E.dump e)
+  in
+  Base_map.iter dump_cell !mem
 
 let dump_called_funs: unit -> unit = fun () ->
   (* output called functions *)
@@ -263,14 +308,14 @@ let dump_called_funs: unit -> unit = fun () ->
 let failfun () =
   fail_mode := true;
   output "Instructions Executed: %d" !done_instr;
-  output "Last comment: %s" !last_comment;
+  output "Location: %s" (Loc.current ());
   output ("Call stack:");
-  dump_call_stack ();
+  Loc.dump_stack ();
   (* E.clip_enabled := false; *)
   output ("Execution stack:");
   dump_stack ();
   (*
-  debug ("symbolic memory:");
+  output ("symbolic memory:");
   dump_memory ();
   debug ("generated iml:");
   iter prerr_endline (map E.dump (filter interesting_event !iml));
@@ -325,9 +370,9 @@ let rec flatten_index_deep : pos -> pos = function
     FIXME: this will be simplified.
 *)
 let rec extract (pos: pos) (l : iterm option) (e : bterm) : bterm =
-  debug "extract, e_host: %s" (E.dump e);
-  debug "extract, pos: %s" (String.concat ", " (List.map ~f:E.offset_to_string pos));
-  debug "extract, len: %s" (Option.to_string E.dump l);
+  DEBUG "extract, e_host: %s" (E.dump e);
+  DEBUG "extract, pos: %s" (String.concat ", " (List.map ~f:E.offset_to_string pos));
+  DEBUG "extract, len: %s" (Option.to_string E.dump l);
   match (pos, l, e) with
     | ((Field s, _) :: os', _, Struct (fields, _, _, e_old)) ->
       begin
@@ -341,16 +386,25 @@ let rec extract (pos: pos) (l : iterm option) (e : bterm) : bterm =
       extract os' l e'
 
     | ((Index i, step) :: pos', l, Array (cells, len, elt_size)) ->
-      (* trying to catch a situation where pointer to the start of array is used to extract a big piece of array *)
+      (* trying to catch a situation where pointer to the start of array is used to
+         extract a big piece of array *)
       (* TODO: simplify the control here *)
       let inside_cell = match l with
         | Some l -> S.greater_equal_len_answer elt_size l = S.Yes
         | None -> false
       in
-      if not inside_cell then
-        extract pos l (flatten_array cells)
-      else
-      begin
+      let take_until_end =
+        match l with
+        | Some l -> S.equal_int l len
+        | None -> true
+      in
+      if not inside_cell
+      then begin
+        (* If we want the whole array, don't flatten it. *)
+        if i = 0 && take_until_end then e
+        else extract pos l (flatten_array cells)
+      end
+      else begin
 	if S.equal_int step elt_size then
 	  let e' = try Int_map.find i cells
 	    with Not_found -> fail "extract: array index not initialised: %s" (string_of_int i) in
@@ -368,12 +422,14 @@ let rec extract (pos: pos) (l : iterm option) (e : bterm) : bterm =
     | ((Index _, _) :: _, l, e) ->
       extract (flatten_index pos) l e
 
-    | (pos, Some l, Array (cells, _, l')) ->
-        if pos = [] && S.equal_int l l' then e else
-        extract pos (Some l) (flatten_array cells)
-
-    | (pos, None, Array (cells, _, _)) ->
-        extract pos None (flatten_array cells)
+    | (pos, l, Array (cells, _, l')) ->
+      let take_until_end =
+        match l with
+        | None -> true
+        | Some l -> S.equal_int l l'
+      in
+      if pos = [] && take_until_end then e
+      else extract pos l (flatten_array cells)
 
     | ((Flat oe, _) :: os', l, e) ->
       let e' = Simplify.full_simplify (Range (e, oe, Simplify.minus (L.get_len e) oe)) in
@@ -418,11 +474,13 @@ let rec update
     (l_val : iterm option)
     (e_host : bterm)
     (e_val : bterm) =
-  debug "update, e_host: %s" (E.dump e_host);
-  debug "update, e_val: %s"  (E.dump e_val);
-  debug "update, pos: %s" (String.concat ", " (List.map ~f:E.offset_to_string pos));
-  debug "update, step: %s" (E.dump step);
-  debug "update, l_val: %s" (Option.to_string E.dump l_val);
+  DEBUG "update, e_host: %s" (E.dump e_host);
+  DEBUG "update, e_val: %s"  (E.dump e_val);
+  DEBUG "update, pos: %s" (String.concat ", " (List.map ~f:E.offset_to_string pos));
+  DEBUG "update, step: %s" (E.dump step);
+  DEBUG "update, l_val: %s" (Option.to_string E.dump l_val);
+  if not (S.is_true (E.is_defined e_val))
+  then fail "Cannot prove %s when storing to memory." (E.to_string (E.is_defined e_val));
   match (pos, l_val, e_host) with
   | ((Index _, _) :: _, None, Array (cells, _, _)) ->
     update pos step None (flatten_array cells) e_val
@@ -507,8 +565,15 @@ let rec update
       Simplify.full_simplify (Concat ([e_val; e']))
     (* here we essentially replace e by undef which is sound *)
     | S.No -> e_val
+    (* Sound here too, we shall not allow access otuside e_val. The reason this is a
+       warning and not a fail is that variables do not get cleared when entering a
+       function a second time, so if you have a local variable that contains data of
+       symbolic length (like temp variable in CSur my_decrypt function, you might get into
+       trouble. *)
     | S.Maybe ->
-      fail "update: cannot decide which is greater: %s or %s" (E.to_string e_len) (E.to_string l_val)
+      warn "update: cannot decide which is greater: %s or %s, erasing current cell contents"
+        (E.to_string e_len) (E.to_string l_val);
+      e_val
     end
 
   | (pos, l_val, Concat (e :: es)) when S.greater_equal_len (L.get_len e) step ->
@@ -534,7 +599,6 @@ let update pos step l_val e_host e_val =
   pop_debug "update";
   result
 
-
 (*************************************************)
 (** {1 Execution Functions} *)
 (*************************************************)
@@ -552,7 +616,7 @@ let take_stack_with_kind (type a) (kind : a Kind.t) : a exp =
   let Any e = take_stack_any () in
   match E.coerce kind e with
   | Some e ->
-    debug "taking %s" (E.dump e);
+    DEBUG "taking %s" (E.dump e);
     e
   | None ->
     fail "Take stack: wrong kind of %s, expected %s, got %s"
@@ -569,44 +633,42 @@ let take_n_stack_any n =
   List.map (1 -- n) ~f:(fun _ -> take_stack_any ()) |> List.rev
 
 let to_stack e =
-  debug "pushing %s" (E.dump e);
+  DEBUG "pushing %s" (E.dump e);
   Stack.push (Any e) stack
 
 let to_mem b e =
   check_well_formed e;
-  debug "storing %s" (E.dump e);
+  DEBUG "storing %s" (E.dump e);
   mem := Base_map.add b e !mem
 
 let add_stmt s =
-  iml := !iml @ [Stmt.Comment !last_comment; s]
+  iml := !iml @ [Stmt.Comment (Loc.current ()); s]
 
 (*
   None means take all that's in the buffer.
 *)
 let load (l : iterm option) (p : bterm) =
   if interesting p then mark_enabled := true;
-  debug "load, p: %s" (E.dump p);
+  DEBUG "load, p: %s" (E.dump p);
   match p with
     | Ptr (b, pos) ->
-      let e = Base_map.find b !mem in
+      begin match Option.try_with (fun () -> Base_map.find b !mem) with
+      | None -> fail "load_mem: reading uninitialised memory"
+      | Some e ->
       (* extract already does the simplification *)
-      let e'= extract pos l e in
-      to_stack e';
-      mark_enabled := false
+        let e'= extract pos l e in
+        to_stack e';
+        mark_enabled := false
+      end
 
     | _ -> fail "load: ptr expected"
 
 let get_step : offset list -> iterm = comp snd List.last
 
 let load_p : bool -> unit = fun use_step ->
-  try
-    let e = take_stack () in
-    match e with
-    | Ptr (_, pos) as p -> load (if use_step then Some (get_step pos) else None) p
-    | _ -> fail "load_mem: ptr expected"
-  with
-  | Not_found   -> fail "load_mem: reading uninitialised memory"
-  | Stack.Empty -> fail "load_mem: not enough elements on stack"
+  match take_stack () with
+  | Ptr (_, pos) as p -> load (if use_step then Some (get_step pos) else None) p
+  | _ -> fail "load_mem: ptr expected"
 
 let store : cvm -> unit = fun flag ->
   let get_length e =
@@ -619,8 +681,8 @@ let store : cvm -> unit = fun flag ->
 
   if interesting p then mark_enabled := true;
 
-  debug "store, p: %s" (E.dump p);
-  debug "store, e: %s" (E.dump e);
+  DEBUG "store, p: %s" (E.dump p);
+  DEBUG "store, e: %s" (E.dump e);
   match p with
   | Ptr (b, pos) ->
     let e_host = try Base_map.find b !mem with Not_found -> Concat [] in
@@ -636,7 +698,7 @@ let store : cvm -> unit = fun flag ->
       | Heap (_, len) -> len
       | _ -> snd (List.hd pos)
     in
-      (* update performs simplification already *)
+    (* update performs simplification already *)
     to_mem b (update pos step l_val e_host e);
     mark_enabled := false
 
@@ -674,8 +736,17 @@ let rec execute = function
   | Load_int ival ->
     to_stack (Int ival)
 
-  | Load_str s ->
+  | Load_string s ->
     to_stack (String s)
+
+  | Load_c_string s ->
+    let s = s @ [Char.chr 0] in
+    let l = List.length s in
+    let p = fresh_heap_ptr (Int (Int64.of_int l)) in
+    to_stack (String s);
+    to_stack p;
+    execute Store_mem;
+    to_stack p
 
   | Load_char c ->
     (* Character literals in C have type int *)
@@ -684,18 +755,18 @@ let rec execute = function
   | Load_stack_ptr name ->
     to_stack (Ptr (Stack name, [Index 0, Unknown Kind.Int]))
 
-  | Load_heap_ptr id ->
+  | Fresh_heap_ptr ->
     let l = take_stack_int () in
-    to_stack (Ptr (Heap (id, l), [Flat E.zero, Unknown Kind.Int]))
+    to_stack (fresh_heap_ptr l)
 
   | In ->
     let l = take_stack () in
     let vname = Var.fresh "" in
     let v = Var (vname, Kind.Bitstring) in
     (* The expected type is the type of the argument of In in C *)
-    let fact = S.eq_int [E.Len v; value ~expected_type:Int_type.size_t l] in
+    let fact = E.eq_int [E.Len v; value ~expected_type:Int_type.size_t l] in
     (* Inputs are defined in IML. *)
-    S.add_fact (S.is_defined v);
+    S.add_fact (E.is_defined v);
     S.add_fact fact;
     iml := !iml @ [Stmt.In [vname]; Stmt.make_test fact];
     to_stack v
@@ -706,17 +777,20 @@ let rec execute = function
     let l = take_stack_int () in
     let l, t =
       match l, t with
-      | Int i, String s when i = -1L -> Var (Var.fresh "unknown", Kind.Int), Named (String.implode s, None)
-      | Int i, String []             -> Int i, Fixed (Int64.to_int i)
-      | Int i, String s              -> Int i, Named (String.implode s, Some (Fixed (Int64.to_int i)))
+      | Int i, String s when i = -1L -> None, Named (String.implode s, None)
+      | Int i, String []             -> Some (Int i), Fixed (Int64.to_int i)
+      | Int i, String s              -> Some (Int i), Named (String.implode s, Some (Fixed (Int64.to_int i)))
       | l, _ ->
         fail "New: length followed by typename expected on stack, instead found %s, %s"
           (E.dump l) (E.dump l)
     in
     let v = Var (vname, Type.kind t) in
     iml := !iml @ [Stmt.New (vname, t)];
-    S.add_fact (S.is_defined v);
-    S.add_fact (S.eq_int [E.len v; l]);
+    S.add_fact (E.is_defined v);
+    begin match l with
+    | None -> ()
+    | Some l -> S.add_fact (E.eq_int [E.len v; l])
+    end;
     to_stack v
 
   | Env v ->
@@ -749,6 +823,13 @@ let rec execute = function
     let (Sym.Any sym) = Sym.of_string s in
     let args = take_n_stack_any (Sym.arity sym) in
     let e' = E.apply sym args in
+    begin match sym with
+    | Op (Op.Minus_PP, _) ->
+      let e' = Simplify.full_simplify e' in
+      to_stack (E.is_defined e');
+      execute Assume
+    | _ -> ()
+    end;
     to_stack e'
 
   | Truth ->
@@ -774,7 +855,7 @@ let rec execute = function
   | In_type tname ->
     let t = Type.of_string_bitstring tname in
     let e = take_stack() in
-    to_stack (S.in_type e t)
+    to_stack (E.in_type e t)
 
   | Apply_nondet ->
     begin match take_stack () with
@@ -785,7 +866,7 @@ let rec execute = function
       to_stack (Sym (Fun (f, (arity + 1, kind)),
                      args @ [Var (v, Kind.Bitstring)]))
     | Ptr (Stack name, pos)  ->
-      to_stack (Ptr (Stack (name ^ "[" ^ (string_of_int (increment cur_ptr_id)) ^ "]"), pos))
+      to_stack (Ptr (Stack (name ^ "[" ^ (string_of_int (increment cur_stack_ptr_id)) ^ "]"), pos))
     | e -> fail "Nondet: unexpected value on stack: %s" (E.to_string e)
     end
 
@@ -803,14 +884,14 @@ let rec execute = function
 
   | Branch dir ->
     let e = take_stack_bool () |> Simplify.full_simplify in
-    debug "branch: %s" (E.dump e);
-    if not (E.is_concrete e) then
-    begin
-      debug "branch is not concrete";
-      let e = if dir then e else S.not e in
-      if not (S.is_true e) then
-      begin
-        debug "branch has non-constant condition, adding test statement";
+    DEBUG "branch: %s" (E.dump e);
+    if not (E.is_concrete e)
+    then begin
+      DEBUG "branch is not concrete";
+      let e = if dir then e else E.negation e in
+      if not (S.is_true e)
+      then begin
+        DEBUG "branch has non-constant condition, adding test statement";
         add_stmt (Stmt.make_test e);
         S.add_fact e
       end
@@ -821,23 +902,30 @@ let rec execute = function
     (* This is a bit stupid: we often cannot simplify an expression before assuming it,
        because parts of it may be undefined. *)
     S.add_fact e;
-    debug "add fact: %s" (E.dump e);
+    DEBUG "add fact: %s" (E.dump e);
     let e = Simplify.full_simplify e in
-    debug "add assume statement: %s" (E.dump e);
+    DEBUG "add assume statement: %s" (E.dump e);
     add_stmt (Stmt.Assume e)
 
   | Hint h ->
     let e = take_stack () |> Simplify.full_simplify in
+    begin match e with
+    | E.BS _ ->
+      warn "Applying a hint to %s will prevent further simplifications" (E.to_string e);
+    | _ -> ()
+    end;
     let vname = Var.fresh h in
     let v = Var (vname, Kind.Bitstring) in
-    S.add_fact (S.eq_bitstring [v; e]);
+    S.add_fact (E.eq_bitstring [v; e]);
+    if S.is_true (E.is_defined e)
+    then S.add_fact (E.is_defined v);
     iml := !iml @ [Let (Pat.VPat vname, Annotation(Name vname, e))];
     to_stack v;
-    debug "attaching hint %s to %s" h (E.dump e)
+    DEBUG "attaching hint %s to %s" h (E.dump e)
 
   | Type_hint t ->
     let e = take_stack () in
-    debug "attaching type hint %s to %s" t (E.dump e);
+    DEBUG "attaching type hint %s to %s" t (E.dump e);
     to_stack (Annotation (E.Type_hint (Type.of_string_bitstring t), e))
 
   | Set_ptr_step ->
@@ -908,11 +996,11 @@ let rec execute = function
     let Any e = take_stack_any () in
     (*
     let l = fresh_len e in
-    S.add_fact (S.ge l E.zero);
+    S.add_fact (E.ge l E.zero);
     let e = L.set_len e l in
     *)
     let e = Simplify.full_simplify e in
-    debug "Done, simplified: %s" (E.dump e);
+    DEBUG "Done, simplified: %s" (E.dump e);
     (* debug ("do_done, with new len: " ^ E.dump e); *)
     check_well_formed e;
     to_stack e
@@ -945,30 +1033,62 @@ let rec execute = function
 
     increase_indent ();
 
-    Stack.push (Printf.sprintf "%s[%d, %s]" fname !call_id !last_comment) call_stack;
-    call_id := !call_id + 1;
-    debug "# Entering %s, new call stack:" fname;
-    dump_call_stack ();
-    debug ("# execution stack:");
+    Loc.call fname;
+    DEBUG "# Entering %s, new call stack:" fname;
+    Loc.dump_stack ();
+    DEBUG "# execution stack:";
     dump_stack ();
     if not (is_interface_fun fname) && Stack.length stack != nargs then
       warn "Wrong number of elements on stack when entering %s" fname
 
   | Return ->
-    let fname = Stack.pop call_stack in
-    debug "returning from %s" fname;
+    let fname = Loc.return () in
+    DEBUG "returning from %s" fname;
     decrease_indent ()
 
   | Comment -> ()
 
 
 (*************************************************)
+(** {1 Init} *)
+(*************************************************)
+
+let make_assumptions : unit -> unit = fun () ->
+  (* FIXME: remove this later when all symbolic sizes are being used properly *)
+  S.add_fact (E.ge (E.int 8) ptr_len);
+  S.add_fact (E.gt ptr_len E.zero)
+
+let init_argv n =
+  let load_var_ptr name =
+    let v = Var (name, Kind.Bitstring) in
+    let fact = E.is_defined (Sym (Ztp, [v])) in
+    to_stack fact;
+    execute Assume;
+    to_stack v;
+    let p = fresh_heap_ptr (E.Len v) in
+    to_stack p;
+    execute Store_all;
+    to_stack p
+  in
+  load_var_ptr "argv0";
+  for i = 1 to n - 1 do
+    load_var_ptr (Printf.sprintf "argv%d" i);
+    execute Append;
+  done;
+  let argv = Ptr (Stack "argv", [Index 0, Sym (Ptr_len, [])]) in
+  to_stack argv;
+  execute Store_buf;
+  let argc = E.BS (Int (Int64.of_int n), Int_type.int) in
+  to_stack argc;
+  to_stack argv
+
+(*************************************************)
 (** {1 Execution Loop} *)
 (*************************************************)
 
-let execute_file : in_channel -> iml = fun file ->
+let execute_file (file : in_channel) : iml =
 
-  let rec execute' = fun () ->
+  let rec execute' () =
     let line = input_line file in
     let toks = String.words line in
     if List.length toks = 0 then fail "empty instruction: %s" line;
@@ -979,7 +1099,10 @@ let execute_file : in_channel -> iml = fun file ->
     in
     let cmd =
       try match List.hd toks with
-          | "//"             -> last_comment := line; warning_location := line; Comment
+          | "//"             ->
+            Loc.set_line line;
+            warning_location := Loc.call_stack ();
+            Comment
           | "LoadBuf"        -> Load_buf
           | "LoadMem"        -> Load_mem
           | "LoadAll"        -> Load_all
@@ -989,10 +1112,11 @@ let execute_file : in_channel -> iml = fun file ->
           | "BS_unsigned"    -> BS (Int_type.create `Unsigned (int_of_string (List.nth toks 1)))
           | "Val_signed"     -> Val (Int_type.create `Signed (int_of_string (List.nth toks 1)))
           | "Val_unsigned"   -> Val (Int_type.create `Unsigned  (int_of_string (List.nth toks 1)))
-          | "LoadStr"        -> Load_str (String.unescape (input_line file))
+          | "LoadStr"        -> Load_string (String.unescape (input_line file))
+          | "LoadCStr"       -> Load_c_string (String.unescape (input_line file))
           | "LoadChar"       -> Load_char (List.nth toks 1).[0]
           | "LoadStackPtr"   -> Load_stack_ptr (List.nth toks 1) (* (int_of_string (List.nth toks 2)) *)
-          | "LoadHeapPtr"    -> Load_heap_ptr (int_of_string (List.nth toks 1))
+          | "FreshHeapPtr"   -> Fresh_heap_ptr
           | "In"             -> In
           | "New"            -> New
           | "Env"            -> Env (List.nth toks 1)
@@ -1030,12 +1154,12 @@ let execute_file : in_channel -> iml = fun file ->
     in
     begin match cmd with
       | Call _ | Return -> ()
-      | Apply s -> debug "Apply %s" s
-      | Load_str s -> debug "LoadStr %s" (String.escaped (String.implode s))
-      | _ -> debug "%s" line
+      | Apply s -> DEBUG "Apply %s" s
+      | Load_string s -> DEBUG "LoadStr %s" (String.escaped (String.implode s))
+      | _ -> DEBUG "%s" line
     end;
-    debug "stack depth = %s" (string_of_int (Stack.length stack));
-    debug "instruction %d" !done_instr;
+    DEBUG "stack depth = %s" (string_of_int (Stack.length stack));
+    DEBUG "instruction %d" !done_instr;
     execute cmd;
     (* if (line <> "Indent") && (line <> "Dedent") then *)
     done_instr := !done_instr + 1;
@@ -1043,6 +1167,7 @@ let execute_file : in_channel -> iml = fun file ->
   in
 
   make_assumptions ();
+  init_argv 5;
   try with_debug "execute" execute' () with End_of_file -> ();
 
   if Stack.length stack <> 1 then
@@ -1061,13 +1186,15 @@ let raw_out : out_channel -> iml -> iml -> unit = fun c client server ->
   output_value c client;
   output_value c server;
   E.serialize_state c;
-  output_value c !cur_ptr_id
+  output_value c !cur_stack_ptr_id;
+  output_value c !cur_heap_ptr_id
 
 let raw_in (c : in_channel) : iml * iml =
   let (client : iml) = input_value c in
   let (server : iml) = input_value c in
   E.deserialize_state c;
-  cur_ptr_id := input_value c;
+  cur_stack_ptr_id := input_value c;
+  cur_heap_ptr_id := input_value c;
   Var.unfresh (Iml.vars (client : iml));
   Var.unfresh (Iml.vars (server : iml));
   (client, server)

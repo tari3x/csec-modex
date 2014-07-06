@@ -31,12 +31,12 @@ query secret nonce1.
   In the output this process is erased and replaced by the actual extracted model, 
   so soundness is not compromised.
 *)
-let A = 
+let client = 
   in(c_in, ()); 
   new nonce1: fixed_20; 
   yield .
   
-let B = 0 .
+let server = 0 .
 
 (************************
   <Environment>
@@ -51,5 +51,5 @@ process
   new pad: fixed_21;
 
   out(c_out, ());
-  (A | B)
+  (client | server)
 )

@@ -14,6 +14,8 @@
 
 #include <netdb.h>
 
+#include <arpa/inet.h>
+
 #include "interface.h"
 
 #include "common_internal.h"
@@ -29,7 +31,8 @@ EXTERN int ( __attribute__((__cdecl__)) memcmp_proxy)(void const * a, void const
 
   SymN("cmp", 2);
   assume_intype("bitstring");
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   StoreBuf(&ret);
 
   return ret;
@@ -120,11 +123,10 @@ extern void *memset_proxy(void *s , int c , size_t n )
 
   ret = s;
 
-  load_int(c, FALSE, sizeof(char), "");
-
-  // FIXME: this is wrong, n should go on stack
-  SymN("replicate", 1);
-  assume_len(n);
+  load_buf(&c, sizeof(c), "");
+  load_buf(&n, sizeof(n), "");
+  SymN("replicate", 2);
+  assume_len(&n, FALSE, sizeof(n));
 
   store_buf(s);
 
@@ -148,12 +150,13 @@ extern ssize_t read_proxy(int fd , void *buf , size_t nbytes )
 {
   mute();
   ssize_t ret = read(fd, buf, nbytes);
-  unmute();
 
   if(ret != nbytes)
   {
-    proxy_fail("read_proxy: ret != nbytes not handled yet");
+    proxy_fail("read_proxy: ret != nbytes not handled yet, ret = %d, nbytes = %d\n",
+               ret, nbytes);
   }
+  unmute();
 
   ret = nbytes;
 
@@ -167,12 +170,11 @@ extern ssize_t write_proxy(int fd , void const   *buf , size_t n )
 {
   mute();
   ssize_t ret = write(fd, buf, n);
-  unmute();
-
   if(ret != n)
   {
     proxy_fail("write_proxy: ret != n not handled yet");
   }
+  unmute();
 
   ret = n;
 
@@ -194,7 +196,8 @@ int strcmp_proxy(char const   *a , char const  *b )
   SymN("ztp", 1);
   // No hint, we expect cmp to be rewritten
   SymN("cmp", 2);
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   return ret;
@@ -211,7 +214,8 @@ int strncmp_proxy(char const *a, char const *b, size_t n)
   load_buf((const unsigned char*) b, n, "");
   SymN("ztp", 1);
   SymN("cmp", 2);
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   return ret;
@@ -231,7 +235,7 @@ char *strcpy_proxy(char * dest , char const * src )
 
   load_all((const unsigned char*) src, "");
   SymN("ztp", 1);
-  duplicate();
+  Done();
   test_intype("bitstring");
   load_int(0, FALSE, sizeof(char), "");
   Append();
@@ -251,41 +255,49 @@ size_t strlen_proxy(const char *s)
   // Expect to be simplified to ztpSafe when possible.
   Done();
   test_intype("bitstring");
-  len(sizeof(ret));
+  len(FALSE, sizeof(ret));
   store_buf((const unsigned char*) &ret);
 
   return ret;
 }
 
-/*
-    struct hostent
-    {
-      char *h_name;                 // Official name of host.
-      char **h_aliases;             // Alias list.
-      int h_addrtype;               // Host address type.
-      int h_length;                 // Length of address.
-      char **h_addr_list;           // List of addresses from name server.
-    #if defined __USE_MISC || defined __USE_GNU
-    # define        h_addr  h_addr_list[0] // Address, for backward compatibility.
-    #endif
-    };
-*/
-struct hostent *gethostbyname_proxy(const char *name)
-{
-  mute();
-  struct hostent * ret = gethostbyname(name);
-  unmute();
+// CR: this calls several opaque functions directly.
+// Will need to exclude vararg functions from bad_opaque_calls output.
+/* /\*
+ *     struct hostent
+ *     {
+ *       char *h_name;                 // Official name of host.
+ *       char **h_aliases;             // Alias list.
+ *       int h_addrtype;               // Host address type.
+ *       int h_length;                 // Length of address.
+ *       char **h_addr_list;           // List of addresses from name server.
+ *     #if defined __USE_MISC || defined __USE_GNU
+ *     # define        h_addr  h_addr_list[0] // Address, for backward compatibility.
+ *     #endif
+ *     };
+ * *\/
+ * struct hostent *gethostbyname_proxy(const char *name)
+ * {
+ *   mute();
+ *   struct hostent * ret = gethostbyname(name);
+ *   unmute();
+ *
+ *   char * varname = (char *) malloc(strlen(name) + strlen("host_address_") + 1);
+ *   sprintf(varname, "host_address_%s", name);
+ *
+ *   fresh_ptr(sizeof(char*));
+ *   StoreBuf(&ret->h_addr_list);
+ *   varWithBufInit(varname, (unsigned char *) &ret->h_addr, (unsigned char *) &ret->h_length, sizeof(ret->h_length));
+ *
+ *   return ret;
+ * } */
 
-  char * varname = (char *) malloc(strlen(name) + strlen("host_address_") + 1);
-  sprintf(varname, "host_address_%s", name);
 
-  fresh_ptr(sizeof(char*));
-  StoreBuf(&ret->h_addr_list);
-  varWithBufInit(varname, (unsigned char *) &ret->h_addr, (unsigned char *) &ret->h_length, sizeof(ret->h_length));
+////////////////////
+// BORING
+////////////////////
 
-  return ret;
-}
-
+// CR: update the model to leak all arguments.
 
 void __assert_fail_proxy(char const   *__assertion ,
                          char const   *__file ,
@@ -296,3 +308,145 @@ void __assert_fail_proxy(char const   *__assertion ,
   __assert_fail(__assertion, __file, __line, __function);
   unmute();
 }
+
+int socket_proxy(int domain ,
+                 int type ,
+                 int protocol )
+{
+  mute();
+  int ret = socket(domain, type, protocol);
+  unmute();
+
+  input("socket_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+uint16_t htons_proxy(uint16_t hostshort )
+{
+  mute();
+  uint16_t ret = htons(hostshort);
+  unmute();
+
+  input("htons_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+uint32_t htonl_proxy(uint32_t hostlong )
+{
+  mute();
+  uint32_t ret = htonl(hostlong);
+  unmute();
+
+  input("htonl_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+int setsockopt_proxy(int fd ,
+                     int level ,
+                     int optname ,
+                     void const   *optval ,
+                     socklen_t optlen )
+{
+  mute();
+  int ret = setsockopt(fd, level, optname, optval, optlen);
+  unmute();
+
+  input("setsockopt_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+int listen_proxy(int fd ,
+                 int n )
+{
+  mute();
+  int ret = listen(fd, n);
+  unmute();
+
+  input("listen_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+in_addr_t inet_addr_proxy(char const   *cp )
+{
+  mute();
+  in_addr_t ret = inet_addr(cp);
+  unmute();
+
+  input("inet_addr_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+int bind_proxy(int fd ,
+               struct sockaddr  const  *addr ,
+               socklen_t len )
+{
+  mute();
+  int ret = bind(fd, addr, len);
+  unmute();
+
+  input("bind_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+int connect_proxy(int fd ,
+                  struct sockaddr  const  *addr ,
+                  socklen_t len )
+{
+  mute();
+  int ret = connect(fd, addr, len);
+  unmute();
+
+  input("connect_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+int accept_proxy(int fd , struct sockaddr * __restrict addr ,
+                        socklen_t * __restrict addr_len )
+{
+  mute();
+  int ret = accept(fd, addr, addr_len);
+  unmute();
+
+  input("accept_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+int close_proxy(int fd )
+{
+  mute();
+  int ret = close(fd);
+  unmute();
+
+  input("close_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+
+void exit_proxy(int status)
+{
+  mute();
+  exit(status);
+  unmute();
+}
+
+
+int atoi_proxy(char const   *nptr )
+{
+  mute();
+  int ret = atoi(nptr);
+  unmute();
+
+  input("atoi_result", sizeof(ret));
+  store_buf(&ret);
+  return ret;
+}
+

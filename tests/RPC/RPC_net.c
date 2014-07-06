@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "ProgrammingInterface.h"
 
@@ -72,6 +73,12 @@ void send(channel_c *c, dbytes_c *b)
 		exit(0);
 	}
 
+        // BUGFIX: we pass this to BIO_write as int
+        if(b->length > INT_MAX){
+          fprintf(stderr, "Error: message length too large (in send()).\n");
+          exit(0);
+        }
+
 	while (sent < sizeof(b->length))
 	{
 		if ((tmp = BIO_write(c, &(b->length), sizeof(b->length) - sent)) <= 0)
@@ -95,7 +102,7 @@ void send(channel_c *c, dbytes_c *b)
 
 	if (sent == b->length)
 		return;
-	
+
 	fprintf(stderr, "Error: Network error (in send()).\n");
 	exit(0);
 }
@@ -111,7 +118,7 @@ dbytes_c *recv(channel_c *c)
 		fprintf(stderr, "Error: Invalid argument (to recv()).\n");
 		exit(0);
 	}
-	
+
 	res = malloc(sizeof(*res));
 	if (res == NULL)
 	{
@@ -128,6 +135,12 @@ dbytes_c *recv(channel_c *c)
 		}
 		received += tmp;
 	}
+
+        // BUGFIX: we pass this to BIO_read as int
+        if(res->length > INT_MAX){
+          fprintf(stderr, "Error: received length too large (in recv()).\n");
+          exit(0);
+        }
 
 	res->address = malloc(res->length);
 	if (res->address == NULL)

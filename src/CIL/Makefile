@@ -3,27 +3,32 @@ CSEC_ROOT = ../..
 
 include $(CSEC_ROOT)/mk/common.mk
 
-all: CIL leaves.exe calltrace.exe badpairs.exe unreachable.exe calledOpaque.exe
+COMMON = common.mli common.ml
+
+all: CIL leaves.exe calltrace.exe badpairs.exe unreachable.exe calledOpaque.exe bad_opaque_calls.exe
 
 # nums seems to be necessary since 3.12
 BUILD_CMD = ocamlc -g -o $@ unix.cma str.cma nums.cma -I $(CIL_OBJDIR) -I $(CIL_ROOT)/_build/ocamlutil cil.cma $^
 
-leaves.exe: common.ml leaves.ml 
+leaves.exe: $(COMMON) leaves.ml 
 	$(BUILD_CMD)
 
-calltrace.exe: common.ml calltrace.ml 
+calltrace.exe: $(COMMON) calltrace.ml 
 	$(BUILD_CMD)
 
-badpairs.exe: common.ml badpairs.ml 
+badpairs.exe: $(COMMON) badpairs.ml 
 	$(BUILD_CMD)
 
-unreachable.exe: common.ml mark.ml unreachable.ml 
+unreachable.exe: $(COMMON) mark.ml unreachable.ml 
 	$(BUILD_CMD)
 
-calledOpaque.exe: common.ml mark.ml calledOpaque.ml 
+calledOpaque.exe: $(COMMON) mark.ml calledOpaque.ml 
 	$(BUILD_CMD)
 
-dumpBoring.exe: common.ml dumpBoring.ml 
+dumpBoring.exe: $(COMMON) dumpBoring.ml 
+	$(BUILD_CMD)
+
+bad_opaque_calls.exe: $(COMMON) bad_opaque_calls.ml
 	$(BUILD_CMD)
 
 CIL:

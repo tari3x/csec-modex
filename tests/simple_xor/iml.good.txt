@@ -1,9 +1,75 @@
 let A = 
-
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv0)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv1)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv2)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv3)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv4)) in
+new var1: fixed_20;
+let nonce1 = var1 (* named nonce1 *) in
+(* assume_intype[17, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume Defined(pad) in
+(* assume_len[18, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(pad) = 21 in
+let xor1 = XOR((1)^[u,1]|nonce1, pad) (* named xor1 *) in
+(* assume_len[22, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(xor1) = 21 in
+in(c, var2);
+ifaux len(var2) = 112 then 
+let BIO_new_connect_result1 = var2 (* named BIO_new_connect_result1 *) in
+in(c, var3);
+ifaux len(var3) = 8 then 
+let BIO_ctrl_result1 = var3 (* named BIO_ctrl_result1 *) in
+(* socket_connect[24, // net.c:50] *)
+ifaux ¬((BIO_ctrl_result1)_[s,8] <= 0) then 
+let msg1 = xor1 (* named msg1 *) in
+out(c, msg1);
 
 let B = 
-new nonce1<20>;
-let var1 = i1|nonce1 in
-let xor1 = XOR(var1, pad)<21> in
-out(c, xor1);
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv0)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv1)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv2)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv3)) in
+(* main[0, <top of main>] *)
+assume Defined(Ztp(argv4)) in
+in(c, var4);
+ifaux len(var4) = 112 then 
+let BIO_new_accept_result1 = var4 (* named BIO_new_accept_result1 *) in
+in(c, var5);
+ifaux len(var5) = 8 then 
+let BIO_ctrl_result2 = var5 (* named BIO_ctrl_result2 *) in
+(* socket_listen[7, // net.c:21] *)
+ifaux ¬((BIO_ctrl_result2)_[s,8] <= 0) then 
+in(c, var6);
+ifaux len(var6) = 8 then 
+let BIO_ctrl_result3 = var6 (* named BIO_ctrl_result3 *) in
+(* socket_listen[7, // net.c:28] *)
+ifaux ¬((BIO_ctrl_result3)_[s,8] <= 0) then 
+in(c, var7);
+ifaux len(var7) = 112 then 
+let BIO_pop_result1 = var7 (* named BIO_pop_result1 *) in
+in(c, var8);
+ifaux len(var8) = 4 then 
+let BIO_free_result1 = var8 (* named BIO_free_result1 *) in
+in(c, var9);
+ifaux len(var9) = ((21)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+let msg2 = var9 (* named msg2 *) in
+in(c, var10);
+ifaux len(var10) = 1 then 
+let msg3 = var10 (* named msg3 *) in
+(* assume_intype[39, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume Defined(pad) in
+(* assume_len[40, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(pad) = 21 in
+let xor2 = XOR(msg2, pad) (* named xor2 *) in
+(* assume_len[44, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(xor2) = 21 in
 

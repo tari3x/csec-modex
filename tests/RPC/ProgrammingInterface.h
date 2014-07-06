@@ -1,3 +1,7 @@
+
+#define MAX_REQUEST_LEN 2000
+#define MAX_RESPONSE_LEN 2000
+
 // Concrete types
 typedef struct dbytes_s
 {
@@ -12,7 +16,7 @@ typedef bytes_c usage_c;
 typedef bytes_c string_c;
 
 // Strings, Unicode and Base64
-string_c *fromString(char *addr, unsigned long len);
+string_c *fromString(char *addr, unsigned long len, unsigned char * csec_var_name);
 
 dstr_c *str(string_c *str);
 

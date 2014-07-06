@@ -5,10 +5,6 @@
 *)
 
 
-(*************************************************)
-(** {1 Lists} *)
-(*************************************************)
-
 module List = struct
   include ListLabels
 
@@ -240,25 +236,15 @@ end
 (** {1 Stacks} *)
 (*************************************************)
 
-(* The order is deepest first *)
-let rec pop_all : 'a Stack.t -> 'a list = fun stack ->
-  try
-    let t = Stack.pop stack in
-    pop_all stack @ [t]
-  with
-    Stack.Empty -> []
+module Stack = struct
+  include Stack
 
-(* The order is deepest first *)
-let rec pop_n : 'a Stack.t -> int -> 'a list = fun stack i ->
-  if i = 0 then [] else
-  let t = Stack.pop stack in
-  pop_n stack (i - 1) @ [t]
-
-let peek : 'a Stack.t -> 'a = fun s ->
-  let a = Stack.pop s in
-  Stack.push a s;
-  a
-
+  let to_list t =
+    let result = ref [] in
+    Stack.iter (fun x ->
+      result := x :: !result) t;
+    List.rev !result
+end
 
 (*************************************************)
 (** {1 IO} *)
@@ -341,6 +327,10 @@ let increment : int ref -> int = fun id ->
   if !id = 0 then fail "fresh_id: overflow";
   !id
 
+let test_result ~expect actual to_string =
+  if expect <> actual
+  then fail "Expected: \n%s\ngot \n%s\n" (to_string expect) (to_string actual)
+
 module Option = struct
   let try_with f = try Some (f ()) with _ -> None
 
@@ -368,6 +358,11 @@ end
 module Fn = struct
   let id x = x
 end
+
+let next counter =
+  let n = !counter in
+  counter := n + 1;
+  n
 
 (*************************************************)
 (** {1 Debug} *)
@@ -413,21 +408,21 @@ let decorate_debug s =
   in
   Printf.sprintf "%s%s" mark s
 
+(*
 let debug a =
   let debug s =
     if not (debug_enabled ()) then ()
     else prerr_endline (decorate_debug s);
   in
   Printf.ksprintf debug a
+*)
 
 let push_debug label =
   debug_labels := label :: !debug_labels;
-  if debug_enabled ()
-  then debug ">>> %s" label
+  DEBUG ">>> %s" label
 
 let pop_debug label =
-  if debug_enabled ()
-  then debug "<<< %s" label;
+  DEBUG "<<< %s" label;
   match !debug_labels with
   | l :: labels when l = label ->
     debug_labels := labels
@@ -511,8 +506,10 @@ module type Custom_map = sig
 
   val maybe_find: key -> 'a t -> 'a option
 
-  val disjoint_union: 'a t list -> 'a t
-  val merge : f:('a -> 'a -> 'a option) -> 'a t list -> 'a t
+  val disjoint_union:   'a t list -> 'a t
+  val compatible_union: 'a t list -> 'a t
+
+  val merge : f:(key -> 'a -> 'a -> 'a option) -> 'a t list -> 'a t
 
   val keys: 'a t -> key list
   val values: 'a t -> 'a list
@@ -530,8 +527,10 @@ module Custom_map (M : Custom_key): (Custom_map with type key = M.t) = struct
   let find k m =
     try find k m
     with Not_found ->
+      push_debug "Custom_map.find";
       (* This isn't always an error, so using debug which can be silenced. *)
-      debug "key not found: %s" (M.to_string k);
+      DEBUG "key not found: %s" (M.to_string k);
+      pop_debug "Custom_map.find";
       raise Not_found
 
   let maybe_find k m =
@@ -547,14 +546,21 @@ module Custom_map (M : Custom_key): (Custom_map with type key = M.t) = struct
     List.fold_left ~f:(merge f) ~init:empty ms
 
   let merge ~f ts =
-    let f _ a b =
+    let f k a b =
       match a, b with
       | None, None -> None
       | Some a, None
       | None, Some a -> Some a
-      | Some a, Some b -> f a b
+      | Some a, Some b -> f k a b
     in
     List.fold_left ~f:(merge f) ~init:empty ts
+
+  let compatible_union ts =
+    let f k a b =
+      if a = b then Some a
+      else fail "Map.compatible_union: unequal values for %s" (M.to_string k)
+    in
+    merge ~f ts
 
   let keys m =
     let (keys, _) = List.split (bindings m) in
@@ -606,6 +612,7 @@ sig
   val iter : t -> unit consumer -> unit
   val of_list : ('a Key.t * 'a Value.t) list -> t
   val disjoint_union : t list -> t
+  val compatible_union : t list -> t
 end = struct
   module Value_box = struct
     type t = Value : 'a Value.t -> t

@@ -24,11 +24,6 @@
 
 int muted = 0;
 
-/**
- * The last heap ptr id used by memory allocation functions.
- */
-int lastHeapPtr = 0;
-
 int lastFreshVar = 0;
 
 /**
@@ -48,27 +43,6 @@ void __CrestLoadHeapPtr(int id)
   *out << "LoadHeapPtr " << id << endl;
   *out << "LoadInt 1" << endl;
   *out << "SetPtrStep" << endl;
-}
-
-void __CrestLoadVarPtr(__CREST_STR varname)
-{
-  if(muted) return;
-
-  *out << "Env " << varname << endl;
-  __CrestApply("ztp/1");
-  *out << "InType bitstring" << endl;
-  *out << "Assume " << endl;
-
-  *out << "Env " << varname << endl;
-  *out << "Dup " << endl;
-  *out << "Len " << endl;
-  __CrestLoadHeapPtr(++lastHeapPtr);
-  *out << "StoreAll" << endl;
-
-  // A cumbersome way to recreate the same pointer on stack
-  *out << "Env " << varname << endl;
-  *out << "Len " << endl;
-  __CrestLoadHeapPtr(lastHeapPtr);
 }
 
 
@@ -92,30 +66,6 @@ void __CrestInit()
     out = &cout;
   else
     out = new ofstream(getenv("CVM_OUTPUT"));
-
-  // load the argc, assume it is 5
-  __CrestLoadInt(5);
-  __CrestBS(true, sizeof(5));
-
-  // construct argv with two parameters
-
-  __CrestLoadVarPtr("argv0");
-  __CrestLoadVarPtr("argv1");
-  Append();
-  __CrestLoadVarPtr("argv2");
-  Append();
-  __CrestLoadVarPtr("argv3");
-  Append();
-  __CrestLoadVarPtr("argv4");
-  Append();
-  __CrestLoadStackPtr("argv");
-  __CrestApply("ptrLen/0");
-  __CrestSetPtrStep();
-  __CrestStoreBuf();
-  __CrestLoadStackPtr("argv");
-  __CrestApply("ptrLen/0");
-  __CrestSetPtrStep();
-  // *out << "Hint argv" << endl;
 }
 
 void __CrestClear(__CREST_VALUE n)
@@ -265,15 +215,7 @@ void __CrestLoadCString(__CREST_STR val)
   if(muted) return;
 
   int len = strlen(val);
-
-  // String constants are stored in the DATA memory segment, so we can just use
-  // heap pointer semantics for them.
-  *out << "LoadStr " << endl << buffer2string((const unsigned char *) val, len) << "\000" << endl;
-  *out << "LoadInt " << len << endl;
-  __CrestLoadHeapPtr(++lastHeapPtr);
-  *out << "StoreMem" << endl;
-  *out << "LoadInt " << len << endl;
-  __CrestLoadHeapPtr(lastHeapPtr);
+  *out << "LoadCStr " << endl << buffer2string((const unsigned char *) val, len) << endl;
 }
 
 void __CrestLoadString(__CREST_STR val)
@@ -289,7 +231,8 @@ void __CrestLoadTypeSize(__CREST_STR val)
   if(muted) return;
 
   *out << "LoadStr " << endl << val << endl;
-  __CrestApplyN("SizeOf", 1);
+  __CrestApplyN("DummyOfType", 1);
+  *out << "Len" << endl;
 }
 
 void __CrestLoadChar(__CREST_CHAR c)
@@ -355,6 +298,15 @@ void __CrestTruth()
   if(muted) return;
 
   *out << "Truth" << endl;
+}
+
+void __CrestAssumeDefined()
+{
+  if(muted) return;
+
+  *out << "Dup" << endl;
+  *out << "InType bitstring" << endl;
+  *out << "Assume" << endl;
 }
 
 
@@ -647,7 +599,7 @@ void NewHeapPtr(size_t buflen)
 
   // Keep buflen on stack
   __CrestVal(FALSE, sizeof(buflen));
-  __CrestLoadHeapPtr(++lastHeapPtr);
+  *out << "FreshHeapPtr" << endl;
 }
 
 void LoadStackPtr(const char * name)

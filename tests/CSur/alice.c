@@ -1,4 +1,4 @@
-/* 
+/*
 Ce fichier d�crit le protocole du point de vue de "Alice"
 */
 
@@ -8,7 +8,7 @@ Ce fichier d�crit le protocole du point de vue de "Alice"
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <string.h>  
+#include <string.h>
 
 #include "needham_type.h"
 #include "common.h"
@@ -16,12 +16,13 @@ Ce fichier d�crit le protocole du point de vue de "Alice"
 #include "primitives_crypt.h"
 
 #ifdef CSEC_VERIFY
-  #include <proxies/common.h>
+#include <proxies/common.h>
+#include "proxies.h"
 #endif
 
-/* 
- A -> B : {Na, A}_pub(B). 
- B -> A : {Na, Nb}_pub(A). 
+/*
+ A -> B : {Na, A}_pub(B).
+ B -> A : {Na, Nb}_pub(A).
  A -> B : { Nb }_Pub(B).
 */
 
@@ -44,7 +45,7 @@ Ce fichier d�crit le protocole du point de vue de "Alice"
 
 /* Rule from Bob. */
 
-/* knows(crypt([Na;nOnceB([Xa;Xb])], pub(Xa))) 
+/* knows(crypt([Na;nOnceB([Xa;Xb])], pub(Xa)))
                                   <= knows(crypt([Na; Xa] , pub(Xb))). */
 
 int main(int argc, char **argv) {
@@ -71,10 +72,14 @@ int main(int argc, char **argv) {
   BIGNUM *cipher_3;
 
   /* Les cl�s. */
-  
+
   struct nskey_s *alice_key;
   struct nskey_s *bob_key;
 
+#ifdef CSEC_VERIFY
+  // teach csec something it needs to know about field offsets
+  struct_properties();
+#endif
 
   /* Defines parameters for protocols analysis. */
   /* A : defines agent "Alice" of the protocol. */
@@ -94,25 +99,25 @@ int main(int argc, char **argv) {
   char * bob_mod = bob_mod_key;
 
 #ifdef CSEC_VERIFY
-  make_str_sym(alice_pub, "alice_pub_key");
-  make_str_sym(alice_priv, "alice_priv_key");
-  make_str_sym(alice_mod, "alice_mod_key");
+  readenv(alice_pub, NULL, "alice_pub_key");
+  readenv(alice_priv, NULL, "alice_priv_key");
+  readenv(alice_mod, NULL, "alice_mod_key");
 
-  make_str_sym(bob_pub, "bob_pub_key");
-  make_str_sym(bob_priv, "bob_priv_key");
-  make_str_sym(bob_mod, "bob_mod_key");
+  readenv(bob_pub, NULL, "bob_pub_key");
+  readenv(bob_priv, NULL, "bob_priv_key");
+  readenv(bob_mod, NULL, "bob_mod_key");
 #endif
 
   key_of_string( alice_pub, alice_priv, alice_mod, alice_key);
   key_of_string( bob_pub, bob_priv, bob_mod, bob_key);
 
   /* Defines public and private keys. */
-  /* %    *alice_key -> pub_exp rec pub(A) 
+  /* %    *alice_key -> pub_exp rec pub(A)
       and *alice_key -> priv_exp rec prv(A). % */
-  
+
   /* %    *bob_key -> pub_exp rec pub(B)
       and *bob_key -> priv_exp rec prv(B). % */
-    
+
   /* */
 #ifdef VERBOSE
   printf("\nAlice's key = ");
@@ -120,7 +125,7 @@ int main(int argc, char **argv) {
   printf("\nBob's key = ");
   printf_keys(bob_key);
 #endif
-  
+
   /* Initialisation des parametres d'Alice.       */
   /* Initialisation du port et du nom par d�faut. */
   alice_port = PORT_ALICE;
@@ -149,7 +154,7 @@ int main(int argc, char **argv) {
   printf("\n Connecting Bob(%s) on port %d\n", bob, bob_port);
 #endif
 
-  conn_fd = connect_socket(bob, bob_port); 
+  conn_fd = connect_socket(bob, bob_port);
 
 #ifdef VERBOSE
   printf("Connecting Bob ok");
@@ -167,13 +172,13 @@ int main(int argc, char **argv) {
   alice_mess_1.msg_type = MSG1;
   alice_mess_1.msg.msg1.id = ALICE_ID;
   memcpy(alice_mess_1.msg.msg1.nonce, nonceA, sizeof(nonceA));
-  
+
   // printf("\nAlice : nonceA = ");
   // print_buffer(nonceA, SIZENONCE);
   // printf("\nAlice : alice_mess_1.msg.msg1.nonce = ");
   // print_buffer(alice_mess_1.msg.msg1.nonce, SIZENONCE);
 
-  /* % alice_mess_1 rec [Na;A] | nonceA rec Na. % */ 
+  /* % alice_mess_1 rec [Na;A] | nonceA rec Na. % */
 
   /* crypto comments for First message. */
   /* % alice_mess_1 rec [A;noncea([A;B])]. % */
@@ -215,7 +220,7 @@ int main(int argc, char **argv) {
   if ((strncmp((char *) alice_mess_2.msg.msg2.nonce1, (char *) nonceA , sizeof(nonceA)))==0)
     {
 #ifdef VERBOSE
-      printf("\nOk NonceA in second message matches that in first message"); 
+      printf("\nOk NonceA in second message matches that in first message");
       fflush(stdout);
 #endif
 #ifdef CSEC_VERIFY
@@ -225,14 +230,14 @@ int main(int argc, char **argv) {
   else
     {
 #ifdef VERBOSE
-      printf("\nNonceA does not match\n"); 
+      printf("\nNonceA does not match\n");
       fflush(stdout);
 #endif
       exit(1);
     }
 
   alice_mess_3.msg_type = MSG3;
-  memcpy(alice_mess_3.msg.msg3.nonce, 
+  memcpy(alice_mess_3.msg.msg3.nonce,
          alice_mess_2.msg.msg2.nonce2,
          sizeof(alice_mess_2.msg.msg2.nonce2));
 
@@ -254,7 +259,7 @@ int main(int argc, char **argv) {
   */
 
   write(conn_fd, BN_bn2hex(cipher_3), 128);
-  
+
 #ifdef VERBOSE
   printf("\nSession complete, ");
   printf("\n nonceA = ");
@@ -266,7 +271,7 @@ int main(int argc, char **argv) {
   printf("\n");
   fflush(stdout);
 #endif
- 
+
   close(conn_fd);
 
   /* Protocol context.                 */

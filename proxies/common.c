@@ -49,7 +49,7 @@ void readenvL(const unsigned char * buf, size_t len, const char * name)
 {
   Env(name);
   assume_intype("bitstring");
-  assume_len(len);
+  assume_len(&len, FALSE, sizeof(len));
 
   // See readenv for why we use StoreAll
   StoreAll(buf);
@@ -58,20 +58,10 @@ void readenvL(const unsigned char * buf, size_t len, const char * name)
 void make_sym(const unsigned char * buf, size_t len, const char * s)
 {
   SymN(s, 0);
-  assume_len(len);
+  assume_len(&len, FALSE, sizeof(len));
   Hint(s);
   Nondet();
   store_buf(buf);
-}
-
-void make_str_sym(const char * str, const char * s)
-{
-  // OLD: Length value not really used so far, but might be if someone calls strlen for instance.
-  // But then need a non-zero assumption anyway, so will wait what becomes necessary
-  SymN(s, 0);
-  Hint(s);
-  Nondet();
-  store_all((unsigned char *) str);
 }
 
 void event0(const char * s)

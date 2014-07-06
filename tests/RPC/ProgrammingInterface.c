@@ -6,11 +6,17 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <limits.h>
+
+#ifdef CSEC_VERIFY
+  #include <proxies/common.h>
+#endif
+
 typedef struct dbytes_s
 {
 	unsigned char *address;
 	unsigned long length;
-	
+
 } bytes_c;
 
 typedef bytes_c dbytes_c;
@@ -28,28 +34,28 @@ bytes_c *cpy(bytes_c *b)
 		fprintf(stderr, "Error: Invalid argument (to cpy()).\n");
 		exit(0);
 	}
-	
+
 	ret = malloc(sizeof(*ret));
 	if (ret == NULL)
 	{
 		fprintf(stderr, "Error: Out of Memory (in cpy()).\n");
 		exit(0);
 	}
-	
+
 	ret->address = malloc(b->length);
 	if (ret->address == NULL)
 	{
 		fprintf(stderr, "Error: Out of Memory (in cpy()).\n");
 		exit(0);
 	}
-	
+
 	memcpy(ret->address, b->address, b->length);
 	ret->length = b->length;
-	
+
 	return ret;
 }
 
-string_c *fromString(char *addr, unsigned long len)
+string_c *fromString(char *addr, unsigned long len, unsigned char * csec_var_name)
 {
 	dstr_c *res;
 
@@ -75,6 +81,22 @@ string_c *fromString(char *addr, unsigned long len)
 
 	memcpy(res->address, addr, len);
 	res->length = len;
+
+#ifdef CSEC_VERIFY
+        if(csec_var_name != NULL)
+          readenv(res->address, &(res->length), csec_var_name);
+#endif
+
+        // BUGFIX
+
+        // We convert these lengths to integers when calling openssl functions,
+        // so we check in advance that this will not overflow.
+        if (res->length > INT_MAX)
+        {
+		fprintf(stderr, "Error: String too long (in fromString()).\n");
+		exit(0);
+	}
+
 
 	return res;
 }
@@ -114,13 +136,13 @@ dbytes_c *concat(dbytes_c *b1, dbytes_c *b2)
 {
 	dbytes_c *ret;
 	unsigned long totLen;
-	
+
 	if (b1 == NULL || b2 == NULL)
 	{
 		fprintf(stderr, "Error: Out of Memory (in concat()).\n");
 		exit(0);
 	}
-	
+
 	totLen = b1->length + b2->length;
 	ret = malloc(sizeof(*ret));
 	if (ret == NULL)
@@ -128,8 +150,8 @@ dbytes_c *concat(dbytes_c *b1, dbytes_c *b2)
 		fprintf(stderr, "Error: Out of Memory (in concat()).\n");
 		exit(0);
 	}
-	
-	// TODO: Original mistake, preserve to verify later:
+
+	// BUGFIX: Original mistake, preserve to verify later:
 	// ret->address = malloc(totLen);
 	ret->address = malloc(totLen + sizeof(b1->length) + sizeof(char));
 	if (ret->address == NULL)
@@ -137,14 +159,14 @@ dbytes_c *concat(dbytes_c *b1, dbytes_c *b2)
 		fprintf(stderr, "Error: Out of Memory (in concat()).\n");
 		exit(0);
 	}
-	
+
 	memcpy(ret->address, &(b1->length), sizeof(b1->length));
 	memcpy(ret->address + sizeof(b1->length),  "|", sizeof(char));
 	memcpy(ret->address + sizeof(b1->length) + sizeof(char), b1->address, b1->length);
 	memcpy(ret->address + sizeof(b1->length) + sizeof(char) + b1->length, b2->address, b2->length);
-	
+
 	ret->length = totLen + sizeof(b1->length) + sizeof(char);
-	
+
 	return ret;
 }
 
@@ -157,10 +179,18 @@ void iconcat(dbytes_c *ab, dbytes_c *a, dbytes_c *b)
 		fprintf(stderr, "Error: Invalid argument (to iconcat).\n");
 		exit(0);
 	}
-	
+
+        // BUGFIX:
+        if (ab->length < sizeof(aLen) + sizeof(char))
+	{
+          fprintf(stderr, "Error: This byte array is not a valid concatenation.\n");
+          exit(0);
+	}
+
 	totLen = ab->length - sizeof(aLen) - sizeof(char);
+
 	memcpy(&aLen, ab->address, sizeof(aLen));
-	
+
 	// FIXME: restore when you can prove that (int) 7c = i127
 	// if (aLen > totLen || ab->address[sizeof(aLen)] != '|')
 	if (aLen > totLen || memcmp(ab->address + sizeof(aLen), "|", 1))
@@ -169,7 +199,7 @@ void iconcat(dbytes_c *ab, dbytes_c *a, dbytes_c *b)
 		exit(0);
 	}
 	bLen = totLen - aLen;
-	
+
 	a->address = malloc(aLen);
 	b->address = malloc(bLen);
 	if (a->address == NULL || b->address == NULL)
@@ -177,13 +207,13 @@ void iconcat(dbytes_c *ab, dbytes_c *a, dbytes_c *b)
 		fprintf(stderr, "Error: Out of Memory (in iconcat()).\n");
 		exit(0);
 	}
-	
+
 	memcpy(a->address, (ab->address + sizeof(aLen) + sizeof(char)), aLen);
 	memcpy(b->address, (ab->address + sizeof(aLen) + sizeof(char) + aLen), bLen);
-	
+
 	a->length = aLen;
 	b->length = bLen;
-	
+
 	return;
 }
 

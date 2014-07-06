@@ -5,8 +5,8 @@
 
 
 
-#ifndef PROXIES_H
-#define PROXIES_H
+#ifndef OPENSSL_PROXIES_H
+#define OPENSSL_PROXIES_H
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
@@ -555,4 +555,4 @@ extern int X509_STORE_CTX_init_proxy(X509_STORE_CTX *ctx , X509_STORE *store , X
                                      struct stack_st_X509 *chain ) ;
 #pragma cilnoremove("X509_STORE_CTX_init_proxy")
 
-#endif /* PROXIES_H */
+#endif /* OPENSSL_PROXIES_H */

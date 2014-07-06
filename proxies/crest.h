@@ -199,7 +199,7 @@ EXTERN void __CrestLoadMem() __SKIP;
 EXTERN void __CrestLoadCString(__CREST_STR val) __SKIP;
 EXTERN void __CrestLoadString(__CREST_STR val) __SKIP;
 EXTERN void __CrestLoadChar(__CREST_CHAR val) __SKIP;
-EXTERN void __CrestLoadTypeSize(__CREST_STR val) __SKIP;
+EXTERN void __CrestLoadTypeSize(__CREST_STR ctype) __SKIP;
 // EXTERN void __CrestSetLen() __SKIP;
 EXTERN void __CrestSetPtrStep() __SKIP;
 EXTERN void __CrestLoadStackPtr(__CREST_STR var) __SKIP;
@@ -208,6 +208,7 @@ EXTERN void __CrestIndexOffset(__CREST_STR type) __SKIP;
 EXTERN void __CrestLocation(__CREST_STR) __SKIP;
 EXTERN void __CrestDone() __SKIP;
 EXTERN void __CrestTruth() __SKIP;
+EXTERN void __CrestAssumeDefined() __SKIP;
 
 ///////////////////////////////////////////////////////
 // Helpers, to be called only from instrumented code

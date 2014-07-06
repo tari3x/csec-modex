@@ -288,6 +288,7 @@ class crestInstrumentVisitor f =
   let locationFunc     = mkInstFunc "Location" [strArg] in
   let doneFunc         = mkInstFunc "Done" [] in
   let truthFunc        = mkInstFunc "Truth" [] in
+  let assumeDefinedFunc = mkInstFunc "AssumeDefined" [] in
 
   (*
    * Functions to create calls to the above instrumentation functions.
@@ -369,6 +370,7 @@ class crestInstrumentVisitor f =
   let mkInit v                 = mkInstCall invokeFunc [mkFunAddr (initFunc v)] in
   let mkDone ()                = mkInstCall doneFunc [] in
   let mkTruth ()               = mkInstCall truthFunc [] in
+  let mkAssumeDefined ()       = mkInstCall assumeDefinedFunc [] in
 
   let mkRef v = mkLoadStackPtr (mkUniqueName v) in
 
@@ -438,8 +440,7 @@ class crestInstrumentVisitor f =
       else [mkInit v]
     | _ -> []
 
-  and instrumentLvalWithInit (host, offset) =
-    initHost host @ instrumentLvalNoInit (host, offset)
+  and initLval (host, offset) = initHost host
 
   and instrumentCast : typ -> typ -> instr list = fun t_from t_to ->
     let t_from = unrollType t_from in
@@ -470,8 +471,8 @@ class crestInstrumentVisitor f =
           instrumentConst c
 
       | Lval lv ->
-          checkHasAddress lv;
-          (instrumentLvalWithInit lv) @ [mkLoadMem ()]
+        checkHasAddress lv;
+        initLval lv @ instrumentLvalNoInit lv @ [mkLoadMem ()]
 
       | SizeOf t ->
           instrumentSizeOf t @ [mkBS (isSigned !kindOfSizeOf) (bytesSizeOfInt !kindOfSizeOf)]
@@ -513,10 +514,11 @@ class crestInstrumentVisitor f =
         end
 
       | AddrOf lv ->
-          (instrumentLvalWithInit lv)
+        initLval lv @ instrumentLvalNoInit lv
 
       | StartOf lv ->
-          (instrumentLvalWithInit (addOffsetLval (Index (zero, NoOffset)) lv))
+        let lv = addOffsetLval (Index (zero, NoOffset)) lv in
+        initLval lv @ instrumentLvalNoInit lv
 
       | AlignOf _
       | AlignOfE _
@@ -525,8 +527,9 @@ class crestInstrumentVisitor f =
         E.s (error "unsupported expression: %a" d_exp e)
 
   and instrumentAssignment ?(do_init = true) lv e =
-    (instrumentExpr e)
-    @ (if do_init then instrumentLvalWithInit lv else instrumentLvalNoInit lv)
+    (if do_init then initLval lv else [])
+    @ instrumentExpr e
+    @ instrumentLvalNoInit lv
     @ [mkStore ()]
 
   and instrumentInit : varinfo -> init -> instr list = fun v init ->
@@ -554,45 +557,49 @@ class crestInstrumentVisitor f =
 
     (* in calls to vararg funs we don't put parameters on stack *)
     if isVarargFunType v.vtype then []
-	  else if StrSet.mem v.vname !opaqueWrappers then []
+    else if StrSet.mem v.vname !opaqueWrappers then []
+    else
+      begin
+	opaqueWrappers := StrSet.add v.vname !opaqueWrappers;
+
+	let nameFormal : varinfo -> varinfo = fun v ->
+	  if v.vname = "" then v.vname <- "__crest_tmp" ^ (string_of_int (getNewId ()));
+	  v
+	in
+
+	let v' = opaque v in
+	let f = emptyFunction "" in
+	f.svar <- v';
+	setFunctionTypeMakeFormals f (typeOfLval (Var v', NoOffset));
+	setFormals f (map nameFormal f.sformals);
+
+	let returnType = funReturnType v'.vtype in
+	let args = map (fun v -> Lval (Var v, NoOffset)) f.sformals in
+
+	let (call, returnInstrumentation, returnInstruction) =
+	  if isVoidType returnType then
+	    (Call (None, Lval (Var v, NoOffset), args, locUnknown),
+             [mkReturn 1],
+             [])
 	  else
-	  begin
-	    opaqueWrappers := StrSet.add v.vname !opaqueWrappers;
+	    let ret = makeLocalVar f "__crest_ret" returnType in
+	    (Call (Some (Var ret, NoOffset), Lval (Var v, NoOffset), args, locUnknown),
+             [mkReturn 1],
+	     [Return (Some (Lval (Var ret, NoOffset)), locUnknown)])
+	in
 
-	    let nameFormal : varinfo -> varinfo = fun v ->
-	      if v.vname = "" then v.vname <- "__crest_tmp" ^ (string_of_int (getNewId ()));
-	      v
-	    in
+	let opaqueResult = instrumentResult returnType v.vname args in
+	let body =
+          [Instr ([mkCallOpaque v (List.length f.sformals)]
+                  @ opaqueResult
+                  @ [mkMute (); call; mkUnmute ()]
+                  @ returnInstrumentation)]
+          @ returnInstruction
+        in
 
-	    let v' = opaque v in
-		  let f = emptyFunction "" in
-	    f.svar <- v';
-	    setFunctionTypeMakeFormals f (typeOfLval (Var v', NoOffset));
-	    setFormals f (map nameFormal f.sformals);
-
-	    let returnType = funReturnType v'.vtype in
-	    let args = map (fun v -> Lval (Var v, NoOffset)) f.sformals in
-
-	    let (call, returnInstrumentation, returnInstruction) =
-	      if isVoidType returnType then
-	        (Call (None, Lval (Var v, NoOffset), args, locUnknown),
-           [mkReturn 1],
-           [])
-	      else
-	        let ret = makeLocalVar f "__crest_ret" returnType in
-	        (Call (Some (Var ret, NoOffset), Lval (Var v, NoOffset), args, locUnknown),
-           [mkReturn 1],
-	         [Return (Some (Lval (Var ret, NoOffset)), locUnknown)])
-	    in
-
-	    let opaqueResult = instrumentResult returnType v.vname args in
-	    let body = [Instr ([mkCallOpaque v (List.length f.sformals)]
-                  @ opaqueResult @ [mkMute (); call; mkUnmute ()] @ returnInstrumentation)]
-                 @ returnInstruction in
-
-		  f.sbody.bstmts <- map mkStmt body;
-		  [GFun (f, locUnknown)]
-    end
+	f.sbody.bstmts <- map mkStmt body;
+	[GFun (f, locUnknown)]
+      end
   in
 
 object (self)
@@ -643,7 +650,7 @@ object (self)
       self#queueInstr (instrumentAssignment lv e);
       SkipChildren
 
-      (* Don't instrument calls to instrumentation functions themselves. *)
+    (* Don't instrument calls to instrumentation functions themselves. *)
     | Call (_, Lval (Var f, NoOffset), _, _) when shouldSkipFunction f ->
       SkipChildren
 
@@ -658,14 +665,19 @@ object (self)
         else [i]
       in
 
-      let assignRet = match ret with
+      let init_ret, assign_ret =
+        match ret with
 	| Some lv ->
 	  checkHasAddress lv;
-	  (instrumentLvalWithInit lv) @ [mkStore ()]
+	  initLval lv, (instrumentLvalNoInit lv @ [mkStore ()])
 	| _ ->
-	  if isVoidFunType t then [] else [mkClear 1]
+	  if isVoidFunType t then [], [] else [], [mkClear 1]
       in
-      ChangeTo ([mkLocation l] @ (concatMap instrumentExpr args) @ call @ assignRet)
+      ChangeTo ([mkLocation l]
+                @ init_ret
+                @ concatMap instrumentExpr args
+                @ call
+                @ assign_ret)
 
       (* FIXME: for functions called through pointers make sure they are not symbolic *)
     | _ -> DoChildren
@@ -679,7 +691,10 @@ object (self)
     if shouldSkipFunction f.svar then
       SkipChildren
     else
-      let instParam v = (instrumentLvalWithInit (Var v, NoOffset)) @ [mkStore ()] in
+      let instParam v =
+        let lv = (Var v, NoOffset) in
+        initLval lv @ instrumentLvalNoInit lv @ [mkStore ()]
+      in
       let (_, _, isVarArgs, _) = splitFunctionType f.svar.vtype in
         if (not isVarArgs) then
           iter (flip prependToBlock f.sbody) (List.map instParam f.sformals)
@@ -688,88 +703,88 @@ object (self)
         prependToBlock [mkCall f.svar (List.length f.sformals)] f.sbody;
         DoChildren
 
-
-
   method vglob = function
-    | GVar (v, {init = i}, loc) as g when not (v.vstorage = Extern) ->
+  | GVar (v, {init = i}, loc) as g ->
 
-      (*
-        ignore (Pretty.printf "crestifying global %a\n" (printGlobal plainCilPrinter) g);
-      *)
+    assert (v.vstorage <> Extern);
 
-      markCrestified v;
-      let f = emptyFunction ("__crest_" ^ v.vname ^ "_init") in
-      let initialised =
-        makeGlobalVar ("__crest_" ^ v.vname ^ "_initialised") boolType
-      in
-      let doInit =
-        if isOpaque v
-        then
-          FI ([mkApply (Sym.Fun (v.vname, 0))]
-              @ (instrumentLvalNoInit (Var v, NoOffset))
-              @ [mkStore ()])
-        else match i with
-        | (Some init) -> FI (instrumentInit v init)
-        | None        -> FI []
-      in
-      let body =
-        [mkStmtOneInstr (mkCall f.svar (List.length f.sformals))]
-        @
-          cStmts
-          "if(!initialised) {initialised = 1; {%I:doInit}}"
-          (fun n t -> makeTempVar f ~name:n t)
-          loc
-          [ ("initialised", Fv initialised); ("doInit", doInit) ]
-        @
-          [mkStmtOneInstr (mkReturn 1)]
-      in
-      f.sbody.bstmts <- body;
+    (*
+      ignore (Pretty.printf "crestifying global %a\n" (printGlobal plainCilPrinter) g);
+    *)
 
-        (* Sometimes a global is defined in a header without extern, like in
-           rergress.h in cryptokix.  I don't really know how that is valid C.
-           This usually correlated with giving the global no declaration and no
-           initialisation, so we choose to make the function static to prevent
-           multiple definition errors. *)
-      if i = None && not (isOpaque v)
-      then begin
-          (*
-	    f.svar.vstorage <- Static;
-	    initialised.vstorage <- Static;
-          *)
-        E.s (error "globals without initialisers must be declared opaque: %a\n" d_global g);
-      end;
+    markCrestified v;
+    let f = emptyFunction ("__crest_" ^ v.vname ^ "_init") in
+    let initialised =
+      makeGlobalVar ("__crest_" ^ v.vname ^ "_initialised") boolType
+    in
+    let doInit =
+      if isOpaque v
+      then FI ([mkApply (Sym.Fun (v.vname, 0));
+                mkAssumeDefined ()]
+               @ (instrumentLvalNoInit (Var v, NoOffset))
+               @ [mkStore ()])
+      else match i with
+      | (Some init) -> FI (instrumentInit v init)
+      | None        -> FI []
+    in
+    let body =
+      [mkStmtOneInstr (mkCall f.svar (List.length f.sformals))]
+      @
+        cStmts
+        "if(!initialised) {initialised = 1; {%I:doInit}}"
+        (fun n t -> makeTempVar f ~name:n t)
+        loc
+        [ ("initialised", Fv initialised); ("doInit", doInit) ]
+      @
+        [mkStmtOneInstr (mkReturn 1)]
+    in
+    f.sbody.bstmts <- body;
 
-      ChangeTo [g;
-                GVar (initialised, {init = Some (SingleInit (integer 0))}, loc);
-                GFun (f, loc)]
+      (* Sometimes a global is defined in a header without extern, like in
+         rergress.h in cryptokix.  I don't really know how that is valid C.
+         This usually correlated with giving the global no declaration and no
+         initialisation, so we choose to make the function static to prevent
+         multiple definition errors. *)
+    if i = None && not (isOpaque v)
+    then begin
+        (*
+	  f.svar.vstorage <- Static;
+	  initialised.vstorage <- Static;
+        *)
+      E.s (error "globals without initialisers must be declared opaque: %a\n" d_global g);
+    end;
 
-    | GFun (f, loc) as g ->
+    ChangeTo [g;
+              GVar (initialised, {init = Some (SingleInit (integer 0))}, loc);
+              GFun (f, loc)]
+
+  | GFun (f, loc) as g ->
       (* ignore (Pretty.printf "visiting function definition %a\n" (printGlobal defaultCilPrinter) g); *)
       (* FIXME: why are functions for which we introduce an opaque wrapper considered crestified? *)
       (* FIXME: looks like the svar here is never static? *)
-      markCrestified f.svar;
-      if needsOpaqueWrapper f.svar then
+    markCrestified f.svar;
+    if needsOpaqueWrapper f.svar then
       begin
         (* ignore (Pretty.printf "the function needs an opaque wrapper\n"); *)
         (* opaqueDefNames := f.svar.vname :: !opaqueDefNames; *)
         ChangeTo ([g] @ opaqueWrapper f.svar)
       end
-      else
+    else
       begin
         (* ignore (Pretty.printf "the function doesn't need an opaque wrapper\n"); *)
         DoChildren
       end
 
-    | GVarDecl (v, loc) as g when needsOpaqueWrapper v ->
+  | GVarDecl (v, loc) as g when needsOpaqueWrapper v ->
       (* ignore (Pretty.printf "visiting function declaration %a\n" (printGlobal defaultCilPrinter) g); *)
       (* The reason we put a definition here is that some opaque functions might be defined in non-crestified code. *)
-      ChangeTo ([g] @ opaqueWrapper v)
+    ChangeTo ([g] @ opaqueWrapper v)
 
-    | GVarDecl (v, loc) as g when not (isOpaque v) && not (isFunctionType v.vtype) ->
-      let f = initFunc v in
-      ChangeTo [g; GVarDecl (f, loc)]
+  | GVarDecl (v, loc) as g when not (isOpaque v) && not (isFunctionType v.vtype) ->
+    let f = initFunc v in
+    ChangeTo [g; GVarDecl (f, loc)]
 
-    | _ -> DoChildren
+  | _ -> DoChildren
 
 end
 
@@ -808,32 +823,32 @@ let feature : featureDescr =
     fd_description = "instrument a program for symbolic execution";
     fd_extraopt = [
       ("--root",
-          Arg.String setRootPath,
-        " The root folder of the compilation.");
+       Arg.String setRootPath,
+       " The root folder of the compilation.");
       ("--csec-config", Arg.String (fun s -> Mark.config := s),
-        " The csec instrumentation configuration file.");
+       " The csec instrumentation configuration file.");
     ];
     fd_post_check = true;
     fd_doit =
       function (f: file) ->
         setSrcPath f;
-        if not (Mark.shouldSkip f) then
-        begin
-	        Mark.markGlobals f;
-	        (* Simplify the code:
-	         *  - simplifying expressions with complex memory references
-	         *  - converting loops and switches into goto's and if's (* FIXME: do I like this? *)
-	         *  - transforming functions to have exactly one return *)
+        if not (Mark.shouldSkip f)
+        then begin
+	  Mark.markGlobals f;
+	    (* Simplify the code:
+	     *  - simplifying expressions with complex memory references
+	     *  - converting loops and switches into goto's and if's (* FIXME: do I like this? *)
+	     *  - transforming functions to have exactly one return *)
           Simplemem.feature.fd_doit f ;
-	        (* iterGlobals f prepareGlobalForCFG ; *)
+	    (* iterGlobals f prepareGlobalForCFG ; *)
           Oneret.feature.fd_doit f ;
-	        (* Finally instrument the program. *)
-	        visitCilFile (new opaqueReplaceVisitorClass) f;
-	        let instVisitor = new crestInstrumentVisitor f in
-	           visitCilFile (instVisitor :> cilVisitor) f;
-	        (* Add a function to initialize the instrumentation library. *)
-	        addCrestInitializer f ;
-	        writeInfo f
+	    (* Finally instrument the program. *)
+	  visitCilFile (new opaqueReplaceVisitorClass) f;
+	  let instVisitor = new crestInstrumentVisitor f in
+	  visitCilFile (instVisitor :> cilVisitor) f;
+	    (* Add a function to initialize the instrumentation library. *)
+	  addCrestInitializer f ;
+	  writeInfo f
         end
-}
+  }
 

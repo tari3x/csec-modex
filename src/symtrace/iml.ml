@@ -542,6 +542,7 @@ module Sym = struct
         if Char.lowercase c <> c
         then fail "function names must start with lowercase letters: %s" sym;
         *)
+        (* CR: we are discarding the types of the arguments! *)
         Any (Fun (sym, (Fun_type.arity t, kind)))
       | Some op ->
         match kind with
@@ -555,6 +556,7 @@ module Sym = struct
       match sym with
       | "=" -> Any Bs_eq
       | "EqInt" -> Any (Int_cmp Cmp.Eq)
+      | "LeInt" -> Any (Int_cmp Cmp.Le)
       | "ptrLen" -> Any Ptr_len
       | "ztp" -> Any Ztp
       | "ztpSafe" -> Any Ztp_safe
@@ -567,6 +569,12 @@ module Sym = struct
         Any (Fun (s, (n, Kind.Bitstring)))
     end
     else fail "Sym.of_string: %s" s
+
+  let of_string_bitstring s =
+    let Any sym = of_string s in
+    match sym with
+    | Fun (_, (_, Kind.Bitstring)) as f -> f
+    | sym -> fail "Sym.of_string_bitstring: %s" (to_string sym)
 
   let may_fail (type a) (type b) (t : (a, b) t) =
     match t with
@@ -1361,6 +1369,8 @@ module Exp = struct
   let disj es = Sym (Sym.Logical (Sym.Logical.Or  (List.length es)), es)
 
   let rec is_concrete : type a. a t -> bool = function
+    (* CR: think more about this. *)
+    | Sym (Field_offset _, []) -> false
     | Var _ -> false
     | e -> map_children {f = is_concrete} e |> List.all
 
@@ -1469,6 +1479,81 @@ module Exp = struct
       | Fun _, _ -> apply_with_kind sym Kind.Bitstring
 
       | _ -> fail "Apply: kind mismatch: %s(%s)" (Sym.to_string sym) (list_to_string es)
+
+
+  (*************************************************)
+  (** {1 Facts} *)
+  (*************************************************)
+
+  let eq_bitstring es = Sym (Bs_eq, es)
+  let eq_int es = Sym (Int_cmp Cmp.Eq, es)
+  let negation (e : fact) : fact =
+    match e with
+    | Sym (Logical Logical.Not, [e]) -> e
+    | e -> Sym (Logical Logical.Not, [e])
+  let gt a b = Sym (Int_cmp Cmp.Gt, [a; b])
+  let ge a b = Sym (Int_cmp Cmp.Ge, [a; b])
+
+  let true_fact: fact = Sym (Logical Logical.True, [])
+
+  let is_defined e = Sym (Defined, [e])
+
+  let conjunction es =
+    Sym (Logical (Logical.And (List.length es)), es)
+
+  let implication es1 es2 =
+    Sym (Logical Logical.Implies, [conjunction es1; conjunction es2])
+
+  let rec in_type (e : bterm) (t : bitstring Type.t) : fact =
+    let module T = Type in
+    match t with
+    | T.Bitstringbot -> true_fact
+    | T.Bitstring    -> is_defined e
+    | T.Fixed n      -> eq_int [int n; Len e]
+    | T.Bounded n    -> ge (int n) (Len e)
+    | T.Bs_int _ | T.Ptr ->
+      begin match e with
+      | Sym (Op (_, (_, t')), _) when t = t' -> is_defined e
+      | e -> Sym (In_type t, [e])
+       (* fail "%s" (E.to_string (Sym (In_type t, [e]))) *)
+      end
+    | T.Named (_, Some t) -> in_type e t
+    | T.Named (_, None) -> Sym (In_type t, [e])
+
+   (*
+     We don't represent integer ranges directly because they are too big for OCaml int64.
+   *)
+  module Range = struct
+    type t = Int_type.t
+
+     (* Don't raise to the power explicitly, to avoid overflow *)
+    let pow a n =
+      if n = 0 then one
+      else prod (List.replicate n (int a))
+
+    let subset itype itype' =
+      (Int_type.signedness itype = Int_type.signedness itype'
+      && Int_type.width itype <= Int_type.width itype')
+      || (Int_type.signedness itype = `Unsigned
+         && Int_type.width itype <= Int_type.width itype' - 1)
+
+    let get_itype = itype
+
+    let contains itype e =
+      match get_itype e with
+      | Some itype' when subset itype' itype -> [true_fact]
+      | _ ->
+        let w = Int_type.width itype in
+        let a, b = match Int_type.signedness itype with
+          | `Unsigned ->
+            let n = pow 256 w in
+            zero, Sym (Int_op Arith.Minus, [n; int 1])
+          | `Signed ->
+            let n = prod [int 128; pow 256 (w - 1)] in
+            Sym (Int_op Arith.Neg, [n]), Sym (Int_op Arith.Minus, [n; int 1])
+        in
+        [Sym (Int_cmp Cmp.Ge, [e; a]); Sym (Int_cmp Cmp.Le, [e; b])]
+  end
 end
 
 
@@ -1596,11 +1681,18 @@ module Stmt = struct
     let open Sym in
     match e with
     | Sym (Bs_eq, [e1; e2]) as e ->
-      if Exp.is_cryptographic e1 && Exp.is_cryptographic e2
+      if (Exp.is_cryptographic e1 && Exp.is_cryptographic e2)
       then Eq_test (e1, e2)
       else Aux_test e
     | Sym (Fun _, _) as e -> Fun_test e
     | e -> Aux_test e
+
+  let fact = function
+    | Fun_test fact | Aux_test fact | Assume fact -> [fact]
+    | Eq_test (e1, e2) -> [Exp.eq_bitstring [e1; e2]]
+    | In vs -> List.map vs ~f:(fun v -> Exp.is_defined (Var (v, Kind.Bitstring)))
+    | New (v, t) -> [Exp.in_type (Var (v, Kind.Bitstring)) t]
+    | _ -> []
 end
 
 open Stmt

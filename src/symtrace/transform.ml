@@ -28,10 +28,6 @@ let mk_arg_len id =
 
 let mk_formal_args n = List.map ~f:mk_arg (0 -- (n - 1))
 
-(*************************************************)
-(** {1 Types} *)
-(*************************************************)
-
 module Sym_defs = struct
   include Sym.Map(E)
 
@@ -48,6 +44,19 @@ module Sym_defs = struct
     prerr_endline "";
     iter ~f:(fun sym def -> prerr_endline (show_fun sym def)) defs;
     prerr_endline ""
+
+  (* Writing a recursive expansion is a bit more tricky since you would need to know the
+     kind of the map. *)
+  let expand_top_def t e =
+    match e with
+    | Sym (Fun _ as sym, es) ->
+      begin match maybe_find sym t with
+      | None -> e
+      | Some def ->
+        let xs = mk_formal_args (List.length es) in
+        E.subst xs es def
+      end
+    | e -> e
 end
 
 (**
@@ -80,10 +89,6 @@ let new_concat_sym ~arity =
 let new_parser_sym () =
   make_sym ("parse" ^ string_of_int (increment parser_id)) ~arity:1
 
-let test_result ~expect actual =
-  if expect <> actual
-  then fail "Expected: \n%s\ngot \n%s\n" (Iml.to_string expect) (Iml.to_string actual)
-
 (*************************************************)
 (** {1 Typing} *)
 (*************************************************)
@@ -96,6 +101,7 @@ module Type_ctx : sig
   val add : Var.t -> bitstring Type.t -> t -> t
   val maybe_find : Var.t -> t -> bitstring Type.t option
   val find : Var.t -> t -> bitstring Type.t
+  val mem : Var.t -> t -> bool
   val merge : t list -> t
   val of_list : (Var.t * bitstring Type.t) list -> t
   val to_list : t -> (Var.t * bitstring Type.t) list
@@ -113,7 +119,7 @@ end = struct
     prerr_endline ""
 
   let merge ts =
-    let merge_types t1 t2 = Some (Type.intersection t1 t2) in
+    let merge_types _key t1 t2 = Some (Type.intersection t1 t2) in
     merge ~f:merge_types ts
 end
 
@@ -354,10 +360,10 @@ end = struct
     debug ("typecheck: context = " ^ dump_list ctx);
     *)
 
-    let arg_facts = List.map2 ~f:S.in_type args arg_types in
-    let res_fact = S.in_type e_f res_type in
+    let arg_facts = List.map2 ~f:E.in_type args arg_types in
+    let res_fact = E.in_type e_f res_type in
 
-    debug "proving type %s" (Sym.cv_declaration f (arg_types, res_type));
+    DEBUG "proving type %s" (Sym.cv_declaration f (arg_types, res_type));
     S.implies (arg_facts @ facts) [res_fact]
 
   let erase_type_annotations p =
@@ -376,7 +382,7 @@ end = struct
 
     let typefacts ctx =
       Type_ctx.to_list ctx
-      |> List.map ~f:(fun (v, t) -> S.in_type (Var (v, Type.kind t)) t)
+      |> List.map ~f:(fun (v, t) -> E.in_type (Var (v, Type.kind t)) t)
     in
 
     let rec check_exp
@@ -387,7 +393,7 @@ end = struct
           let t = Type_ctx.find v ctx in
           if not (S.implies
                     (facts @ typefacts ctx)
-                    [S.in_type (Var (v, Type.kind t')) t'])
+                    [E.in_type (Var (v, Type.kind t')) t'])
           then fail  "cannot prove type: %s: %s" v (Type.to_string t');
           cast t t' e
 
@@ -551,7 +557,7 @@ end = struct
     let p' = check (Sym_defs.empty ()) fun_types var_types [] p in
     let expect =
       [Fun_test (Sym (aux, [Sym (cast, [Sym (f, [v])])]))] in
-    test_result ~expect p'
+    test_result ~expect p' Iml.to_string
 
   let test () =
     test_cond_checking ()
@@ -559,48 +565,74 @@ end
 
 
 (*************************************************)
-(** {1 Facts} *)
+(** {1 XOR rewriting} *)
 (*************************************************)
 
-(* Perhaps merge it with solver facts? *)
-module CV_fact = struct
-  type t = Forall of (var * bitstring Type.t) list * fact
+(* Make sure that XOR will be treated as cryptographic function. *)
+(* CR-someday: this might be done on a per-case bases using a plugin. *)
 
-  let make fun_types (e : fact) : t =
-    let ts = Typing.infer_exp fun_types Bool e in
-    Forall (Type_ctx.to_list ts, e)
+let rewrite_xor p =
 
-  let to_string (Forall (args, e)) =
-    let show_var (v, t) = v ^ ": " ^ Type.to_string t in
-    "forall " ^ String.concat ", " (List.map ~f:show_var args) ^ ";\n\t" ^ E.to_string e ^ "."
-end
+  let assumptions = ref [] in
 
-(*
-
-(*************************************************)
-(** {1 Crypto rewriting} *)
-(*************************************************)
-
-let rewrite e =
   let rec rewrite : type a. a exp -> a exp = function
-    | Sym (Fun ("HMAC", 3), [String hash; msg; key]) ->
-      Sym (Fun ("HMAC_" ^ hash, 2), [msg; key])
-    | Sym (Fun ("SHA256", _), [e]) ->
-      (* we cannot use a CV rewrite rule cause the key needs to be freshly generated *)
-      let sha256key = Var "SHA256_key" in
-      Sym (Fun ("SHA_hash", 2), [sha256key; e])
-    (*
-    | Sym (("If_eq", _), [Sym (("DSA_verify", _), es, l, tag); e_one], l', tag') when S.equal_len e_one one ->
-      Sym (("If", Prefix), [Sym (("DSA_check", Prefix), es, l, tag)], l', tag')
-    *)
+    | Sym (Op (BXor, ([t1; t2], t)), [e1; e2]) ->
+      let e1 = rewrite e1 in
+      let e2 = rewrite e2 in
+      let e = Sym (Fun ("XOR", (2, Kind.Bitstring)), [e1; e2]) in
+      let fact =
+        E.implication
+          [E.in_type e1 t1; E.in_type e2 t2]
+          [E.in_type e t]
+      in
+      assumptions := Assume fact :: !assumptions;
+      e
     | e -> E.descend {E.descend = rewrite} e
   in
-  rewrite e
+  let rewrite s =
+    let s = Stmt.descend {E.descend = rewrite} s in
+    let result = !assumptions @ [s] in
+    assumptions := [];
+    result
+  in
+  List.concat_map ~f:rewrite p
 
-let rewrite_crypto p =
-  Iml.map {E.descend = rewrite} p
+(*************************************************)
+(** {1 Crypto-arithmetic comparison rewriting} *)
+(*************************************************)
 
+(* Deal with DSA_verify(...) == 1
+
+   We can't easily turn this into bitstring comparison because Val is not necessarily
+   injective.
 *)
+let rewrite_crypto_arithmetic_comparisons p =
+  let is_interesting = function
+    | Var _ -> true
+    | Sym (Fun _, _) -> true
+    | _ -> false
+  in
+  let rewrite s =
+    match s with
+    | Aux_test (Sym (Int_cmp Cmp.Eq, [Val (e, _); Int n])) when is_interesting e ->
+      (* Because we preserve the original test, we don't need to mention the conversion
+         type. *)
+      let f = Printf.sprintf "value_equal_%d" (Int64.to_int n) in
+      [s; Fun_test (Sym (Fun (f, (1, Kind.Bool)), [e]))]
+    | s -> [s]
+  in
+  List.concat_map ~f:rewrite p
+
+(*************************************************)
+(** {1 Error if IML contains undef *)
+(*************************************************)
+
+let error_if_undefs p =
+  let rec error : type a. a exp -> unit = function
+    | Sym (Undef _, _) -> fail "IML contains undef"
+    | e -> E.iter_children {E.f = error} e
+  in
+  Iml.iter {E.f = error} p
 
 (*************************************************)
 (** {1 Let simplification} *)
@@ -760,13 +792,23 @@ let normal_form p =
         Var (v, Kind.Bitstring)
     in
 
+    let is_length_of e_l e =
+      match e_l with
+      | BS (l, _) ->
+        S.equal_int l (Len e)
+      | e_l ->
+        match Simplify.full_simplify (Len e) with
+        | Val (e_l', _) ->
+          S.equal_bitstring e_l e_l'
+        | _ -> false
+    in
+
     (* remove expressions that are themselves lengths of an expression that follows *)
     let rec remove_lens = function
-      | BS (e_len, _) as e :: es ->
-        if List.exists ~f:(fun e' -> S.equal_int e_len (Len e')) es
+      | e :: es ->
+        if List.exists ~f:(fun e' -> is_length_of e e') es
         then remove_lens es
         else e :: remove_lens es
-      | e :: es -> e :: remove_lens es
       | [] -> []
     in
 
@@ -822,8 +864,8 @@ let normal_form p =
       | e, _ -> fail "normal_form: unexpected parser subexpression %s" (E.dump e) (* mk_var (extract e) *)
 
     and extract_fun = function
-      | Sym (Fun (f, t), es)  ->
-        Sym (Fun (f, t), List.map ~f:extract_fun (es : bterm list))
+      | Sym (Fun _ as f, es)  ->
+        Sym (f, List.map ~f:extract_fun (es : bterm list))
       | e -> mk_var (extract e)
 
     and extract (e : bterm) =
@@ -831,8 +873,8 @@ let normal_form p =
       | Concat es ->
         let args = remove_lens (List.filter ~f:(non is_tag) es) in
         let es = explicate_lens args es in
-        debug "extract concat: args = %s" (E.list_to_string args);
-        debug "extract concat: es = %s" (E.list_to_string es);
+        DEBUG "extract concat: args = %s" (E.list_to_string args);
+        DEBUG "extract concat: es = %s" (E.list_to_string es);
         Concat (List.map ~f:extract_concat es)
 
       | Range (Range _, _, _) ->
@@ -848,7 +890,7 @@ let normal_form p =
 
       | Annotation (a, e) -> Annotation (a, mk_var (extract e))
 
-      | e when not (is_cryptographic e) -> extract_non_cryptographic e
+      | e when not (E.is_cryptographic e) -> extract_non_cryptographic e
 
       | _ -> assert false
     in
@@ -861,16 +903,16 @@ let normal_form p =
         S.add_fact e;
         Assume e :: normalize p
       | Let (VPat v, e) :: p ->
-        S.add_fact (S.eq_bitstring [Var (v, Kind.Bitstring); e]);
+        S.add_fact (E.eq_bitstring [Var (v, Kind.Bitstring); e]);
         let e = extract e in
         sort_defs !defs @ (Let (VPat v, e) :: normalize p)
       | Let _ :: _ ->
         fail "normal_form: impossible: let patterns unexpected"
       | In vs as s :: p ->
-        List.iter ~f:(fun v -> S.add_fact (S.is_defined (Var (v, Kind.Bitstring)))) vs;
+        List.iter ~f:(fun v -> S.add_fact (E.is_defined (Var (v, Kind.Bitstring)))) vs;
         s :: normalize p
       | New (v, t) as s :: p ->
-        S.add_fact (S.in_type (Var (v, Kind.Bitstring)) t);
+        S.add_fact (E.in_type (Var (v, Kind.Bitstring)) t);
         s :: normalize p
       | (Fun_test _ | Eq_test _ | Out _ | Event _ | Yield | Comment _ ) as s :: p ->
         let move_out_bitstring (e : bterm) =
@@ -878,7 +920,7 @@ let normal_form p =
           | Concat _ | Range _ | Annotation _ -> mk_var (extract e)
           | Var _ -> extract e
           | Sym (Fun _, _) -> extract e
-          | e when not (is_cryptographic e) -> mk_var (extract e)
+          | e when not (E.is_cryptographic e) -> mk_var (extract e)
           | e ->
             fail "Normal form: impossible: %s" (E.to_string e)
         in
@@ -903,10 +945,6 @@ let normal_form p =
   pop_debug "normal_form";
   simplify_lets p
 
-let test_result ~expect actual =
-  if expect <> actual
-  then fail "Expected: \n%s\ngot \n%s\n" (Iml.to_string expect) (Iml.to_string actual)
-
 let test_normal_form_concat () =
   let var v = Var (v, Kind.Bitstring) in
   let itype = Int_type.create `Unsigned 8 in
@@ -917,11 +955,11 @@ let test_normal_form_concat () =
                   Annotation (Type_hint t, e1); var "nonce"; var "host"]
   in
   let p = [ New ("nonce", t)
-          ; Assume (S.is_defined e)
+          ; Assume (E.is_defined e)
           ; Out [e] ]
   in
   let p' = [ New ("nonce", t)
-           ; Assume (S.is_defined e)
+           ; Assume (E.is_defined e)
            ; Let (VPat "var3", e1)
            ; Let (VPat "var4", Annotation (Type_hint t, var "var3"))
            ; Let (VPat "var5", Concat [ E.string "msg"
@@ -930,7 +968,7 @@ let test_normal_form_concat () =
                                       ; var "var4"; var "nonce"; var "host"])
            ; Out [var "var5"] ]
   in
-  test_result ~expect:p' (normal_form p);
+  test_result ~expect:p' (normal_form p) Iml.to_string;
   S.reset_facts ()
 
 let test_normal_form_fun () =
@@ -938,12 +976,12 @@ let test_normal_form_fun () =
   let var v = Var (v, Kind.Bitstring) in
   let e_c = Concat [var "msg1"; var "msg2"] in
   let e = Sym (f, [e_c]) in
-  let p = [ Assume (S.is_defined e); Out [e] ] in
-  let p' = [ Assume (S.is_defined e)
+  let p = [ Assume (E.is_defined e); Out [e] ] in
+  let p' = [ Assume (E.is_defined e)
            ; Let (VPat "var1", e_c)
            ; Out [Sym (f, [var "var1"])] ]
   in
-  test_result ~expect:p' (normal_form p);
+  test_result ~expect:p' (normal_form p) Iml.to_string;
   S.reset_facts ()
 
 (*************************************************)
@@ -967,7 +1005,7 @@ let extract_arithmetic p : iml * bitstring Sym_defs.t =
   let defs = ref [] in
 
   let extract = function
-    | Let (v, e) when not (is_cryptographic e) ->
+    | Let (v, e) when not (E.is_cryptographic e) ->
       let vs, def = extract_def e in
       let f = make_sym (Var.fresh "arithmetic") ~arity:(List.length vs) in
       defs := (f, def) :: !defs;
@@ -978,75 +1016,51 @@ let extract_arithmetic p : iml * bitstring Sym_defs.t =
   let p = List.map ~f:extract p in
   p, Sym_defs.of_list !defs
 
-(*
-  This should be covered by extract_arithmetic
-
-(*************************************************)
-(** {1 Constants} *)
-(*************************************************)
-
-(*
-  TODO: just return Const symbols in a sym_def
-*)
-(**
-  Returns definitions of extracted constants.
-*)
-let extract_constants concats p: iml * exp Var.Map.t =
-
-  let defs = ref Var.Map.empty in
-
-  let mk_const name def =
-    defs := Var.Map.add name def !defs;
-    Var name
-  in
-
-  let rec extract e =
-    match e with
-    | Int ival -> mk_const ("integer_" ^ Int64.to_string ival) e
-    | String s -> mk_const ("string_" ^ s) e
-    | Sym (c, []) when Sym.Map.mem c concats ->
-      let def = find_definition c concats in
-      mk_const ("const_" ^ (Sym.to_string c)) def
-
-    | e -> E.descend extract e
-  in
-
-  let p = map_without_auxiliary extract p in
-  p, !defs
-*)
+let is_injective_arithmetic = function
+  | Sym (Op (Op.Cast_to_int, ([Bs_int t1], Bs_int t2)), [Var _]) ->
+    Int_type.signedness t1 = Int_type.signedness t2
+    && Int_type.width t1 <= Int_type.width t2
+  | _ -> false
 
 (*************************************************)
 (** {1 Concatenations} *)
 (*************************************************)
 
 (**
-  If [use_type_info], we don't require lengths for arguments of fixed-length types.
+   If [use_type_info], we don't require lengths for arguments of fixed-length types.
 *)
-let is_injective_concat _sym def =
+let is_injective_concat fun_types sym def =
   (*
-  debug "is_injective_concat: %s" (E.to_string def);
+    DEBUG "is_injective_concat: %s" (E.to_string def);
   *)
-	match def with
+  let args_that_should_have_lens ts es =
+    let rec collect ts es =
+      match ts, es with
+      | t :: ts, (Var _) :: es when Type.has_fixed_length t ->
+        collect ts es
+      | _ :: ts, (Var _ as v) :: es ->
+        v :: collect ts es
+      | ts, _ :: es ->
+        collect ts es
+      | [], [] -> []
+      | _ -> assert false
+    in
+    collect ts es
+  in
+  match def with
   | Concat es ->
-    (* if use_type_info then
-      fail ("use_type_info: fix code")
+    let (ts, _) = Fun_type_ctx.find sym fun_types in
+    let args = args_that_should_have_lens ts es in
+    let args_with_lens =
+      List.filter_map ~f:(function BS (Len v, _) -> Some v | _ -> None) es
+    in
+    let args_without_lens = List.diff args args_with_lens in
       (*
-	    let (ts, _) =
-	      try List.assoc name !fun_types
-	      with Not_found -> fail ("is_injective_concat: concat " ^ name ^ " has no type") in
-	    check ts [] es
+        DEBUG "args: %s" (E.list_to_string args);
+        DEBUG "lens: %s" (E.list_to_string lens);
+        DEBUG "args_without_lens: %s" (E.list_to_string args_without_lens);
       *)
-    else *) begin
-      let args = List.filter ~f:(function Var _ -> true | _ -> false) es in
-      let args_with_lens = List.filter_map ~f:(function BS (Len v, _) -> Some v | _ -> None) es in
-      let args_without_lens = List.diff args args_with_lens in
-      (*
-      debug "args: %s" (E.list_to_string args);
-      debug "lens: %s" (E.list_to_string lens);
-      debug "args_without_lens: %s" (E.list_to_string args_without_lens);
-      *)
-      List.length args_without_lens <= 1
-    end
+    List.length args_without_lens <= 1
   | _ -> false
 
 let extract_concats p: iml * bitstring Sym_defs.t =
@@ -1065,13 +1079,11 @@ let extract_concats p: iml * bitstring Sym_defs.t =
 
   let extract = function
     | Let (v, (Concat es as e)) ->
-      debug "extract, e = %s" (E.dump (Concat es));
+      DEBUG "extract, e = %s" (E.dump (Concat es));
       let vs, def = extract_def e in
       let f_c = new_concat_sym ~arity:(List.length vs) in
-      if not (is_injective_concat f_c def)
-      then warn "Concat not injective: %s" (Sym_defs.show_fun f_c def);
       concats := (f_c, def) :: !concats;
-      debug "extract, e_new = %s" (E.dump def);
+      DEBUG "extract, e_new = %s" (E.dump def);
       begin match def with
         | Concat es when is_trivial_concat es ->
           fail
@@ -1086,31 +1098,74 @@ let extract_concats p: iml * bitstring Sym_defs.t =
   let p = List.map ~f:extract p in
   p, Sym_defs.of_list !concats
 
-type encoder_fact =
-  | Disjoint of bfun * bfun
-  | Equal of bfun * bfun
+let warn_on_non_injective_concats fun_types concats =
+  Sym_defs.iter concats ~f:(fun f_c def ->
+    if not (is_injective_concat fun_types f_c def)
+    then warn "Concat not injective: %s" (Sym_defs.show_fun f_c def))
 
-let encoder_fact (s, e) (s', e') =
+(*************************************************)
+(** {1 Facts} *)
+(*************************************************)
 
-  let rec scan es es' =
-    debug "encoder_fact: matching %s and %s" (E.dump_list es) (E.dump_list es');
-    match es, es' with
-      | e :: es, e' :: es' when S.equal_bitstring e e' -> scan es es'
+module Aux_fact = struct
+  type fun_decl = (bitstring, bitstring) Fun_type.t * bfun
+
+  type t =
+  | Disjoint of fun_decl * fun_decl
+  | Equal of fun_decl * fun_decl
+
+  (* CR: if two aligned arguments are of different types, then generate no fact straight
+     away, to avoid warnings. *)
+  let fun_fact fun_types (s, e) (s', e') =
+    let rec facts n ts ts' =
+      match ts, ts' with
+      | t :: ts, t' :: ts' ->
+        if t = t'
+        then
+          let v = Var (mk_arg n, Kind.Bitstring) in
+          E.in_type v t :: facts (n + 1) ts ts'
+        else facts (n + 1) ts ts'
+      | [], _ | _, [] -> []
+    in
+    let ts, _  as t  = Fun_type_ctx.find s  fun_types in
+    let ts', _ as t' = Fun_type_ctx.find s' fun_types in
+    let facts = facts 0 ts ts' in
+    let rec scan es es' =
+      DEBUG "encoder_fact: matching %s and %s" (E.dump_list es) (E.dump_list es');
+      match es, es' with
+      | e :: es, e' :: es' when S.equal_bitstring ~facts e e' -> scan es es'
       | e :: _, e' :: _
-        when is_tag e && is_tag e' && S.equal_int (Len e) (Len e') ->
-        Some (Disjoint (s, s'))
-      | [], [] -> Some (Equal (s, s'))
+        when is_tag e && is_tag e' && S.equal_int ~facts (Len e) (Len e') ->
+        Some (Disjoint ((t, s), (t', s')))
+      | [], [] -> Some (Equal ((t, s), (t', s')))
       | _ -> None
-  in
-  match e, e' with
+    in
+    match e, e' with
     | Concat es, Concat es' -> scan es es'
-    | _ -> failwith "encoder_fact: impossible"
+    | e, e' ->
+      if e = e' then Some (Equal ((t, s), (t', s'))) else None
 
-let rec encoder_facts
-    : (bfun * bitstring Sym_defs.def) list -> encoder_fact list = function
-  | c :: cs ->
-    List.filter_map ~f:(encoder_fact c) cs @ encoder_facts cs
-  | [] -> []
+  let rec fun_facts fun_types (cs : (bfun * bitstring Sym_defs.def) list) : t list =
+    match cs with
+    | c :: cs ->
+      List.filter_map ~f:(fun_fact fun_types c) cs @ fun_facts fun_types cs
+    | [] -> []
+
+  let is_valid = function
+    | Equal ((t1, _), (t2, _)) -> t1 = t2
+    | Disjoint (((_, t1), _), ((_, t2), _)) -> t1 = t2
+
+  let fun_facts fun_types cs =
+    List.filter (fun_facts fun_types cs) ~f:is_valid
+end
+
+module CV_fact = struct
+  type t = Forall of (var * bitstring Type.t) list * fact
+
+  let make fun_types (e : fact) : t =
+    let ts = Typing.infer_exp fun_types Bool e in
+    Forall (Type_ctx.to_list ts, e)
+end
 
 (*************************************************)
 (** {1 Extracting Parsers} *)
@@ -1120,7 +1175,7 @@ let extract_parsers p =
   let parsers = ref [] in
   let extract = function
     | Let (v_pat, (Range (Var (v, _), _, _) as e)) ->
-      debug "adding parser for the expression %s" (E.to_string e);
+      DEBUG "adding parser for the expression %s" (E.to_string e);
       let vs, def = extract_def e in
       if vs <> [v] then fail "extract_parsers: impossible";
       let f_p = new_parser_sym () in
@@ -1158,6 +1213,36 @@ let extract_auxiliary p : iml * bool Sym_defs.t =
   p, Sym_defs.of_list !arities
 
 (*************************************************)
+(** {1 Removing Redundant Test Conditions} *)
+(*************************************************)
+
+let remove_redundant_auxiliary defs var_types p =
+  let rec remove_casts : type a. a exp -> a exp = function
+    | Sym (Cast _, [e]) -> remove_casts e
+    | e -> E.descend {descend = remove_casts } e
+  in
+  let assume_var_types () =
+    Type_ctx.to_list var_types
+    |> List.iter ~f:(fun (v, t) ->
+      S.add_fact (E.in_type (Var (v, Kind.Bitstring)) t))
+  in
+  let rec remove = function
+    | [] -> []
+    | stmt :: p ->
+      match stmt with
+      | Fun_test fact ->
+        let fact = remove_casts fact |> Sym_defs.expand_top_def defs in
+        if S.is_true fact
+        then remove p else stmt :: remove p
+      | stmt ->
+        List.iter (Stmt.fact stmt) ~f:S.add_fact;
+        stmt :: remove p
+  in
+  S.reset_facts ();
+  assume_var_types ();
+  remove p
+
+(*************************************************)
 (** {1 Parsing Rules} *)
 (*************************************************)
 
@@ -1193,9 +1278,9 @@ let compute_parsing_rules
   let apply_parser f_p parser_def f_c concat_def =
     let arg = mk_arg 0 in
     let e = E.subst [arg] [concat_def] parser_def in
-    debug "apply_parser: e after subst arg = %s" (E.dump e);
+    DEBUG "apply_parser: e after subst arg = %s" (E.dump e);
     let e' = Simplify.full_simplify e in
-    debug "apply_parser %s to %s: \n  %s \n  ~> %s  \n" (Sym.to_string f_p) (Sym.to_string f_c)
+    DEBUG "apply_parser %s to %s: \n  %s \n  ~> %s  \n" (Sym.to_string f_p) (Sym.to_string f_c)
                                                        (E.dump e) (E.dump e');
     if check_type (Sym.arity f_c) f_p f_c e'
     then [((f_p, f_c), e')]
@@ -1207,10 +1292,10 @@ let compute_parsing_rules
     let (ts, _) = Fun_type_ctx.find f_c fun_types in
     let arg_facts =
       List.mapi ts ~f:(fun i t ->
-        S.in_type (Var (mk_arg i, Kind.Bitstring)) t)
+        E.in_type (Var (mk_arg i, Kind.Bitstring)) t)
     in
     List.iter arg_facts ~f:S.add_fact;
-    (* S.add_fact (S.is_defined concat_def); *)
+    (* S.add_fact (E.is_defined concat_def); *)
 
     (* We expect some conditions to fail when the parser doesn't match. *)
     S.warn_on_failed_conditions false;
@@ -1261,13 +1346,14 @@ let show_parsing_eq ?fun_types (((p, c), e): parsing_eq) =
 let well_formed e_c =
   let args = List.filter ~f:(function Var _         -> true | _ -> false) e_c in
   let lens = List.filter ~f:(function BS (Len _, _) -> true | _ -> false) e_c in
-  (* debug "well_formed: %s, args = %s, lens = %s" (E.list_to_string e_c) (E.list_to_string args) (E.list_to_string lens); *)
+  (* DEBUG "well_formed: %s, args = %s, lens = %s"
+     (E.list_to_string e_c) (E.list_to_string args) (E.list_to_string lens); *)
   if not (List.distinct args) || not (List.distinct lens) then false
   else
     let args_with_lens =
       List.map lens ~f:(function BS (Len v, _) -> v | _ -> fail "well_formed: impossible")
     in
-    (* debug "well_formed: args_with_lens = %s" (E.list_to_string args_with_lens); *)
+    (* DEBUG "well_formed: args_with_lens = %s" (E.list_to_string args_with_lens); *)
     match List.multidiff (=) args args_with_lens with
       | [e] -> e = List.last e_c
       | _ -> false
@@ -1282,7 +1368,7 @@ let rec mk_parsers ls ps es e_c =
           | _, [] ->
             Sym (Int_op Minus, [Len x; Simplify.sum ls])
           | Var _ as v, _ ->
-            (* debug "looking for %s in %s" (E.dump v) (E.dump_list es); *)
+            (* DEBUG "looking for %s in %s" (E.dump v) (E.dump_list es); *)
             (* Need comparison in this order as es will contain lengths of lengths *)
             List.combine es ps
             |> List.first_some ~f:(function
@@ -1306,7 +1392,7 @@ let rec tag_facts ps e_c =
     | _ :: ps, (BS (Len _, _) | Var _) :: e_c ->
       tag_facts ps e_c
     | p :: ps, e_t :: e_c ->
-      S.eq_bitstring [p; e_t] :: tag_facts ps e_c
+      E.eq_bitstring [p; e_t] :: tag_facts ps e_c
     | [], [] -> []
     | _ -> failwith "tag_facts: impossible"
 
@@ -1319,8 +1405,8 @@ let inrange facts e c_def =
     push_debug "inrange";
 
     let ps = mk_parsers [] [] [] e_c in
-    debug "inrange: parsers: %s\n" (E.list_to_string ps);
-    let fields = List.map ~f:S.is_defined ps in
+    DEBUG "inrange: parsers: %s\n" (E.list_to_string ps);
+    let fields = List.map ~f:E.is_defined ps in
     let tags = tag_facts ps e_c in
 
     let parse_facts = List.map ~f:(E.subst [x] [e]) (fields @ tags) in
@@ -1331,38 +1417,48 @@ let inrange facts e c_def =
 
   | _ -> false
 
-let check_concat_safety facts e c c_def =
-  debug "Checking parsing safety of %s(...) = %s" (Sym.to_string c) (E.to_string e);
-  let result = is_injective_concat c c_def && inrange facts e c_def in
-  debug "Result = %b" result;
+let check_concat_safety fun_types facts e c c_def =
+  DEBUG "Checking parsing safety of %s(...) = %s" (Sym.to_string c) (E.to_string e);
+  let result = is_injective_concat fun_types c c_def && inrange facts e c_def in
+  DEBUG "Result = %b" result;
   result
 
-let match_concat parsing_eqs facts p e (c, c_def) =
+let match_concat fun_types parsing_eqs facts p e (c, c_def) =
   match maybe_assoc (p, c) parsing_eqs with
   | Some (Var (v, Kind.Bitstring)) ->
-    debug "Found parsing equation for %s(%s)" (Sym.to_string p) (Sym.to_string c);
-    if not (check_concat_safety facts e c c_def)
+    DEBUG "Found parsing equation for %s(%s)" (Sym.to_string p) (Sym.to_string c);
+    if not (check_concat_safety fun_types facts e c c_def)
     then None
     else
       let vs = mk_formal_args (Sym.arity c) in
       Some (c, List.find_index_exn ((=) v) vs)
   | _ ->
-    debug "Found no parsing equation for %s(%s)" (Sym.to_string p) (Sym.to_string c);
+    DEBUG "Found no parsing equation for %s(%s)" (Sym.to_string p) (Sym.to_string c);
     None
 
-let safe_parse (concats : bitstring Sym_defs.t) parsing_eqs facts f_p e =
-  debug "Checking parsing safety for %s(%s)"
-    (Sym.to_string f_p) (E.to_string e);
+let safe_parse fun_types (concats : bitstring Sym_defs.t) parsing_eqs facts f_p e =
+  DEBUG "Checking parsing safety for %s(%s)" (Sym.to_string f_p) (E.to_string e);
   let result =
-    List.first_some ~f:(match_concat parsing_eqs facts f_p e) (Sym_defs.to_list concats)
+    List.filter_map
+      ~f:(match_concat fun_types parsing_eqs facts f_p e)
+      (Sym_defs.to_list concats)
   in
   match result with
-  | None ->
-    debug "Parsing %s(%s) is not safe" (Sym.to_string f_p) (E.to_string e);
+  | [] ->
+    DEBUG "Parsing %s(%s) is not safe" (Sym.to_string f_p) (E.to_string e);
     None
-  | Some (c, i) ->
-    debug "%s(%s) safely parses %s at position %d"
+  | [c, i] ->
+    DEBUG "%s(%s) safely parses %s at position %d"
       (Sym.to_string f_p) (E.to_string e) (Sym.to_string c) i;
+    Some (c, i)
+  | (c, i) :: _ :: _ as cs ->
+    let cs =
+      List.map cs ~f:(fun (c, i) ->
+        Printf.sprintf "%s at position %d" (Sym.to_string c) i)
+      |> String.concat ", "
+    in
+    warn "Several safe parsing candidates for %s: %s, taking first"
+      (Sym.to_string f_p) cs;
     Some (c, i)
 
 (*************************************************)

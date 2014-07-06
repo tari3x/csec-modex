@@ -1,12 +1,12 @@
 /* Ce fichier d�crit le protocole de Needman schroder pour Bob. */
 
-/* 
+/*
    A --> B : { A , Na }_{pub(B)}
    B --> A : { Na, Nb }_{pub(A)}
    A --> B : { Nb }_{pub(b)}
 */
 
-/* B doit d'abord initialiser une socket pour recevoir des 
+/* B doit d'abord initialiser une socket pour recevoir des
    informations de "A". */
 #include <openssl/bn.h>
 #include <openssl/rand.h>
@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include <string.h>  
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -25,7 +25,8 @@
 #include "primitives_crypt.h"
 
 #ifdef CSEC_VERIFY
-  #include <proxies/common.h>
+#include <proxies/common.h>
+#include "proxies.h"
 #endif
 
 /* */
@@ -34,7 +35,7 @@ int main(int argc, char **argv) {
 
   int conn_fd;    /* */
   int listen_fd;  /* */
-  
+
   char bob[30];
   int  bob_port;
   int nb;
@@ -58,6 +59,11 @@ int main(int argc, char **argv) {
   struct nskey_s *alice_key;
   struct nskey_s *bob_key;
 
+#ifdef CSEC_VERIFY
+  // teach csec something it needs to know about field offsets
+  struct_properties();
+#endif
+
   /* Defines parameters for protocols analysis. */
   /* A : defines agent "Alice" of the protocol. */
   /* B : defines agent "Bob" of the protocol.   */
@@ -75,22 +81,22 @@ int main(int argc, char **argv) {
   char * bob_mod = bob_mod_key;
 
 #ifdef CSEC_VERIFY
-  make_str_sym(alice_pub, "alice_pub_key");
-  make_str_sym(alice_priv, "alice_priv_key");
-  make_str_sym(alice_mod, "alice_mod_key");
+  readenv(alice_pub, NULL, "alice_pub_key");
+  readenv(alice_priv, NULL, "alice_priv_key");
+  readenv(alice_mod, NULL, "alice_mod_key");
 
-  make_str_sym(bob_pub, "bob_pub_key");
-  make_str_sym(bob_priv, "bob_priv_key");
-  make_str_sym(bob_mod, "bob_mod_key");
+  readenv(bob_pub, NULL, "bob_pub_key");
+  readenv(bob_priv, NULL, "bob_priv_key");
+  readenv(bob_mod, NULL, "bob_mod_key");
 #endif
 
   key_of_string( alice_pub, alice_priv, alice_mod, alice_key);
   key_of_string( bob_pub, bob_priv, bob_mod, bob_key);
 
   /* Defines public and private keys. */
-  /* %    *alice_key -> pub_exp rec pub(A) 
+  /* %    *alice_key -> pub_exp rec pub(A)
       and *alice_key -> priv_exp rec prv(A). % */
-  
+
   /* %    *bob_key -> pub_exp rec pub(B)
       and *bob_key -> priv_exp rec prv(B). % */
 
@@ -112,7 +118,7 @@ int main(int argc, char **argv) {
     exit(1);
 
   /* Cr�ation d'une socket pour la reception. */
-  listen_fd = create_bind_socket(bob_port);  
+  listen_fd = create_bind_socket(bob_port);
 #ifdef VERBOSE
   printf("Waiting for Alice's connection on (%s) port %d...\n",bob,bob_port);
 #endif
@@ -152,8 +158,8 @@ int main(int argc, char **argv) {
   // print_buffer(nonceB, 16);
 
   bob_mess_2.msg_type = MSG2;
-  memcpy(bob_mess_2.msg.msg2.nonce1, 
-         bob_mess_1.msg.msg1.nonce, 
+  memcpy(bob_mess_2.msg.msg2.nonce1,
+         bob_mess_1.msg.msg1.nonce,
          sizeof(bob_mess_1.msg.msg1.nonce));
   memcpy(bob_mess_2.msg.msg2.nonce2, nonceB, sizeof(nonceB));
 
@@ -167,7 +173,7 @@ int main(int argc, char **argv) {
   my_cypher( &bob_mess_2, alice_key, cipher_2);
   /* printf("\n Bob's ciphertext ");
      print_message(cipher); */
-  
+
 #ifdef VERBOSE
   printf("\nBob: ciphertext sent [2] = %s", BN_bn2hex(cipher_2));
 #endif
@@ -183,16 +189,16 @@ int main(int argc, char **argv) {
 #endif
 
   BN_hex2bn(&cipher_3, temp);
-  
+
   /* printf("\nBob phase [2-3] "); */
   /* printf("\n A -> B  "); print_message(cipher); */
   my_decypher(cipher_3, bob_key, &bob_mess_3);
-  
-  /* printf("\n A -> B (mess 3): "); 
+
+  /* printf("\n A -> B (mess 3): ");
      printf_message(&bob_mess_3); */
 
   /* On v�rifie que c'est bien le bon nonceB. */
-  
+
   // printf("\nBob : bob_mess_3.msg.msg3.nonce = ");
   // print_buffer(bob_mess_3.msg.msg3.nonce, sizeof(nonceB));
 
@@ -222,9 +228,9 @@ int main(int argc, char **argv) {
       fflush(stdout);
 #endif
     };
-  
+
   close(conn_fd);
-  
+
   /* There rules come from alice. */
   /* knows rec crypt([nOnceA([alice;bob]); alice], pub(bob)). */
   /* knows rec crypt(nOnceB([alice;bob]), pub(bob)).  */
@@ -234,7 +240,7 @@ int main(int argc, char **argv) {
   /* conjecture knows rec crypt([nOnceA([alice;bob]); alice] , pub(bob)). */
   /* conjecture X rec crypt([nOnceA([alice;bob]); alice], pub(bob)) | *cipher_1 as X. */
   /* conjecture bob_mess_1 rec [nOnceA([alice;bob]); alice]. */
-  /* conjecture nonceB rec nOnceB([alice;bob]).  */ 
+  /* conjecture nonceB rec nOnceB([alice;bob]).  */
   /* conjecture bob_mess_2 rec [nOnceA([alice;bob]);nOnceB([alice;bob])]. */
   /* conjecture X rec crypt([nOnceA([alice;bob]);nOnceB([alice;bob])],pub(alice)) | *cipher_2 as X.  */
   /* conjecture X rec crypt(nOnceB([alice;bob]), pub(bob)) | *cipher_3 as X. */

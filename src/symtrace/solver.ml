@@ -140,71 +140,6 @@ let defined () =
     Yices.mk_var_from_decl ctx (Yices.get_var_decl_from_name ctx "defined")
 
 (*************************************************)
-(** {1 Building facts} *)
-(*************************************************)
-
-let eq_bitstring es = Sym (Bs_eq, es)
-let eq_int es = Sym (Int_cmp Eq, es)
-let not_e (e : fact) : fact =
-  match e with
-  | Sym (Logical Not, [e]) -> e
-  | e -> Sym (Logical Not, [e])
-let gt a b = Sym (Int_cmp Gt, [a; b])
-let ge a b = Sym (Int_cmp Ge, [a; b])
-
-let true_fact: fact = Sym (Logical True, [])
-
-let is_defined e = Sym (Defined, [e])
-
-let rec in_type (e : bterm) (t : bitstring Type.t) : fact =
-  let module T = Iml.Type in
-  match t with
-    | T.Bitstringbot -> true_fact
-    | T.Bitstring    -> is_defined e
-    | T.Fixed n      -> eq_int [E.int n; Len e]
-    | T.Bounded n    -> ge (E.int n) (Len e)
-    | T.Bs_int _ | T.Ptr ->
-      begin match e with
-      | Sym (Op (_, (_, t')), _) when t = t' -> is_defined e
-      | e -> Sym (In_type t, [e])
-      (* fail "%s" (E.to_string (Sym (In_type t, [e]))) *)
-      end
-    | T.Named (_, Some t) -> in_type e t
-    | T.Named (_, None) -> Sym (In_type t, [e])
-
-(*
-  We don't represent integer ranges directly because they are too big for OCaml int64.
-*)
-module Range = struct
-  type t = Int_type.t
-
-  (* Don't raise to the power explicitly, to avoid overflow *)
-  let pow a n =
-    if n = 0 then E.one else
-    E.prod (List.replicate n (E.int a))
-
-  let subset itype itype' =
-    Int_type.signedness itype = Int_type.signedness itype'
-    && Int_type.width itype <= Int_type.width itype'
-
-  let contains itype e =
-    match E.itype e with
-    | Some itype' when subset itype' itype -> [true_fact]
-    | _ ->
-      let w = Int_type.width itype in
-      let a, b = match Int_type.signedness itype with
-        | `Unsigned ->
-          let n = pow 256 w in
-          E.zero, Sym (Int_op Minus, [n; E.int 1])
-        | `Signed ->
-          let n = E.prod [E.int 128; pow 256 (w - 1)] in
-          Sym (Int_op Neg, [n]), Sym (Int_op Minus, [n; E.int 1])
-      in
-      [Sym (Int_cmp Ge, [e; a]); Sym (Int_cmp Le, [e; b])]
-
-end
-
-(*************************************************)
 (** {1 Debug} *)
 (*************************************************)
 
@@ -484,6 +419,10 @@ let rewrite
             add_conditions [is_defined e];
             collect l
 
+          | Array (_, l, _) as e ->
+            add_conditions [is_defined e];
+            collect l
+
           | Annotation (_, e) ->
             collect_even_if_simplifying (Len e)
 
@@ -497,7 +436,6 @@ let rewrite
           | Sym (Fun _, _) as e -> default e
           | Sym (Cast _, _) as e -> default e
           | Var _ as e -> default e
-          | Array _ as e -> default e
           | Unknown _ as e -> default e
           end
 
@@ -568,12 +506,14 @@ let rewrite
           | Struct (fields, _, _, e) ->
             E.conj (is_defined e :: List.map ~f:is_defined (Str_map.values fields)) |> collect
 
+          | Array (elems, _, _) ->
+            E.conj (List.map (Int_map.values elems) ~f:is_defined) |> collect
+
           | Annotation (_, e) ->
             Sym (Defined, [e]) |> collect_even_if_simplifying
 
           | Var _ as e -> default e
           | Unknown _ as e -> default e
-          | Array _ as e -> default e
           end
 
         | Sym (Defined, _) -> assert false
@@ -621,6 +561,7 @@ let rewrite
         | Struct _ as e -> make_opaque e
         | Array _ as e -> make_opaque e
         | Concat _ as e -> make_opaque e
+        | Sym (Field_offset _, _) as e -> make_opaque e
 
         | Sym (Opaque, _) as e -> fail_already_rewritten e
         | Sym (Len_y, _) as e -> fail_already_rewritten e
@@ -633,7 +574,6 @@ let rewrite
         | Sym (Ptr_len, _) as e -> default e
         | Sym (Cast _, _) as e -> default e
         | Sym (Replicate, _) as e -> default e
-        | Sym (Field_offset _, _) as e -> default e
         | Sym (In_type _, _) as e -> default e
         | Sym (BS_of_truth _, _) as e -> default e
         | Sym (Truth_of_bs, _) as e -> default e
@@ -645,7 +585,7 @@ let rewrite
         | Unknown _ as e -> default e
       in
       push_debug "collect";
-      debug "collect(%s) %s ~> %s"
+      DEBUG "collect(%s) %s ~> %s"
         (Mode.to_string mode) (E.to_string e) (E.to_string result);
       pop_debug "collect";
       result
@@ -664,13 +604,13 @@ let rewrite
       | Kind.Bitstring -> conds
     in
     push_debug "rewrite";
-    debug "%s: %s |- %s ~> %s"
+    DEBUG "%s: %s |- %s ~> %s"
       (Mode.to_string mode) (E.list_to_string conds) (E.to_string e_top) (E.to_string e);
     pop_debug "rewrite";
     e, conds
   in
 
-  debug "rewriting %s" (E.to_string e);
+  DEBUG "rewriting %s" (E.to_string e);
   push_debug "rewrite";
   let e, conds = rewrite ~mode:(mode :> Mode.t) e in
   let conds = List.map conds ~f:rewrite_ptr in
@@ -680,8 +620,8 @@ let rewrite
     | `Assert | `Query -> rewrite_ptr e
   in
   pop_debug "rewrite";
-  debug "resulting e = %s" (E.to_string e);
-  debug "resulting conds = %s" (E.list_to_string conds);
+  DEBUG "resulting e = %s" (E.to_string e);
+  DEBUG "resulting conds = %s" (E.list_to_string conds);
   e, conds
 
 let rewrite_facts ~mode es: fact list * fact list =
@@ -741,7 +681,7 @@ let translate (e_top : fact) =
   in
 
   let rec tr : type a. a Exp.t -> Yices.expr = fun e ->
-    debug "translating %s" (E.dump e);
+    DEBUG "translating %s" (E.dump e);
     match e with
       | Int i                  -> Yices.mk_num ctx (Int64.to_int i)
       | String _               -> mk_var e
@@ -810,9 +750,9 @@ let translate (e_top : fact) =
   with_debug "Solver.translate" tr e_top
 
 let is_true_raw ?warn_if_false e =
-  debug "checking (with auxiliary facts) %s" (E.to_string e);
+  DEBUG "checking (with auxiliary facts) %s" (E.to_string e);
   push_debug "is_true_raw.translate";
-  let ye = translate (not_e e) in
+  let ye = translate (negation e) in
   pop_debug "is_true_raw.translate";
   debug_expr "checking (yices expression)" ye;
   Yices.push ctx;
@@ -823,7 +763,7 @@ let is_true_raw ?warn_if_false e =
     | Yices.True  -> false
   in
   Yices.pop ctx;
-  debug "check result = %s" (string_of_bool result);
+  DEBUG "check result = %s" (string_of_bool result);
   begin match warn_if_false with
   | None -> ()
   | Some err ->
@@ -833,7 +773,7 @@ let is_true_raw ?warn_if_false e =
         (*
           Returns NULL model:
           push ctx;
-          assert_simple ctx (silent translate (not_e e));
+          assert_simple ctx (silent translate (negation e));
           let model = get_model ctx in
           display_model model;
           pop ctx;
@@ -862,18 +802,18 @@ let add_fact (e : fact) =
   let warn_if_false = Printf.sprintf "arising from assuming %s" (E.to_string e) in
   List.iter ~f:(fun cond -> is_true_raw ~warn_if_false cond |> ignore) conds;
   let e = Sym (Logical Implies, [E.conj conds; E.conj es'] ) |> simplify_bool in
-  debug "assuming %s" (E.to_string e);
+  DEBUG "assuming %s" (E.to_string e);
   add_fact_raw (translate e);
   pop_debug "add_fact"
 
 let is_true e: pbool =
-  debug "checking %s" (E.to_string e);
+  DEBUG "checking %s" (E.to_string e);
   let id = E.id e in
   let result =
     match Option.try_with (fun () -> Int_map.find id !cache) with
     | Some result ->
       (* This debug is 25 % performance penalty: *)
-      debug "result (from cache) = %s" (string_of_bool result);
+      DEBUG "result (from cache) = %s" (string_of_bool result);
       result
     | None ->
       push_debug "is_true";
@@ -884,7 +824,7 @@ let is_true e: pbool =
         && List.for_all ~f:(is_true_raw) es'
       in
       pop_debug "is_true";
-      debug "result (not from cache): %b" result;
+      DEBUG "result (not from cache): %b" result;
       result
   in
   cache := Int_map.add id result !cache;
@@ -892,7 +832,7 @@ let is_true e: pbool =
 
 let implies facts hypotheses =
 
-  debug "checking implication: \n  %s\n  =>\n  %s" (E.list_to_string facts) (E.list_to_string hypotheses);
+  DEBUG "checking implication: \n  %s\n  =>\n  %s" (E.list_to_string facts) (E.list_to_string hypotheses);
 
   push_debug "implies";
   Yices.push ctx;
@@ -901,21 +841,25 @@ let implies facts hypotheses =
   Yices.pop ctx;
   pop_debug "implies";
 
-  debug "implication result: %b" result;
+  DEBUG "implication result: %b" result;
 
   result
 
 (* TODO: change back to equal when it stabilizes *)
-let equal_bitstring (a : bterm) (b : bterm) =
-  let a_id, b_id = E.id a, E.id b in
-  try Pair_map.find (a_id, b_id) !eq_cache
-  with Not_found ->
-    let result = is_true (eq_bitstring [a; b]) in
-    eq_cache := Pair_map.add (a_id, b_id) result !eq_cache;
-    result
+let equal_bitstring ?(facts = []) (a : bterm) (b : bterm) =
+  if facts <> []
+  then implies facts [eq_bitstring [a; b]]
+  else begin
+    let a_id, b_id = E.id a, E.id b in
+    try Pair_map.find (a_id, b_id) !eq_cache
+    with Not_found ->
+      let result = is_true (eq_bitstring [a; b]) in
+      eq_cache := Pair_map.add (a_id, b_id) result !eq_cache;
+      result
+  end
 
 let not_equal_bitstring (a : bterm) (b : bterm) =
-  is_true (not_e (eq_bitstring [a; b]))
+  is_true (negation (eq_bitstring [a; b]))
 
 let greater_equal (a : iterm) (b : iterm) =
   is_true (ge a b)
@@ -950,11 +894,11 @@ let eval e =
 
   let warn_if_false = Printf.sprintf "arising from evaluation of %s" (E.to_string e) in
   let e, conds = rewrite ~mode:`Query e in
-  debug "eval: e = %s, conds = %s" (E.to_string e) (E.list_to_string conds);
+  DEBUG "eval: e = %s, conds = %s" (E.to_string e) (E.list_to_string conds);
   let result =
     if not (List.for_all ~f:(is_true_raw ~warn_if_false) conds)
     then begin
-      debug "eval: conditions not satisfied";
+      DEBUG "eval: conditions not satisfied";
       None
     end
     else begin
@@ -964,27 +908,27 @@ let eval e =
       let result =
         match Yices.check ctx with
         | Yices.False | Yices.Undef ->
-          debug "eval: could not find a value";
+          DEBUG "eval: could not find a value";
           None
         | Yices.True ->
           let model = Yices.get_model ctx in
           let vy = get_decl Kind.Int (mk_exp_name v) in
           (*
-          debug "eval: got a model:";
+          DEBUG "eval: got a model:";
           Yices.display_model model;
           *)
           match Option.try_with (fun () -> Yices.get_int_value model vy) with
           | None ->
-            debug "eval: could not extract value";
+            DEBUG "eval: could not extract value";
             None
           | Some value ->
             let value = Int32.to_int value in
-            debug "eval: a possible value is %d" value;
+            DEBUG "eval: a possible value is %d" value;
             (* Make sure the value is unique *)
-            add_fact_raw ~check_consistent:false (translate (not_e (eq_int [v; E.int value])));
+            add_fact_raw ~check_consistent:false (translate (negation (eq_int [v; E.int value])));
             (*
             increase_debug_depth ();
-            debug "eval: context for checking uniqueness:";
+            DEBUG "eval: context for checking uniqueness:";
             if debug_enabled () then Yices.dump_context ctx;
             decrease_debug_depth ();
             *)
@@ -992,7 +936,7 @@ let eval e =
             | Yices.False -> Some value
             | Yices.Undef
             | Yices.True  ->
-              debug "value is not unique";
+              DEBUG "value is not unique";
               None
       in
       Yices.pop ctx;
@@ -1002,13 +946,20 @@ let eval e =
   pop_debug "eval";
   result
 
+let eval = function
+  | Int n ->
+    let n = Int64.to_int n in
+    DEBUG "eval of integer %d, nothing to do" n;
+    Some n
+  | e -> eval e
+
 (*************************************************)
 (** {1 Simplification.} *)
 (*************************************************)
 
 (* TODO: cache? *)
 let simplify e =
-  debug "Solver.simplify %s" (E.to_string e);
+  DEBUG "Solver.simplify %s" (E.to_string e);
   push_debug "Solver.simplify";
   let e', conds = rewrite ~mode:`Simplify_step e in
   let warn_if_false = Printf.sprintf "arising from simplification of %s" (E.to_string e) in
@@ -1016,10 +967,8 @@ let simplify e =
     if List.for_all ~f:(is_true_raw ~warn_if_false) conds then e' else e
   in
   pop_debug "Solver.simplify";
-  debug "result: %s" (E.to_string result);
+  DEBUG "result: %s" (E.to_string result);
   result
-
-let not = not_e
 
 (*************************************************)
 (** {1 Testing.} *)

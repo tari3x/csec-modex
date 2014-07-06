@@ -44,7 +44,7 @@ CILLY_FLAGS = --dofunreplace --csec-config=$(CSEC_CONF_OUT) --funreplaceoutput=$
 # We want to keep these separate for cmake because it checks for existence of CC.
 # At the same time openssl compilation breaks if you overwrite CFLAGS, so there I pass CC="$(CC) $(CFLAGS)".
 CC = $(CILLY)
-CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(OPENSSL)/include -I$(CSEC_ROOT)/include $(CILLY_FLAGS) -DCSEC_VERIFY
+CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(OPENSSL)/include -I$(CSEC_ROOT) $(CILLY_FLAGS) -DCSEC_VERIFY
 
 # need to use filename instead of -lcrypto because the linker tends to pick up the system version
 # LDLIBS += $(BASE_LIB) $(PROXY_LIB) $(BASE_LIB) $(EXTRA_DEPS)
@@ -117,21 +117,21 @@ mark:
 iml: iml.out
 
 ifdef DEBUG_IML
-iml.out iml.raw.out: $(CVM) $(IMLTRACE)
+iml.out: $(CVM) $(IMLTRACE)
 	{ $(IMLTRACE) $(CVM) iml.raw.out | tee iml.out; } 2>&1 | tee iml.debug.out
 else
-iml.out iml.raw.out: $(CVM) $(IMLTRACE)
+iml.out: $(CVM) $(IMLTRACE)
 	{ $(IMLTRACE) $(CVM) iml.raw.out | tee iml.out; } > iml.debug.out 2>&1
 endif
 
-
+iml.raw.out: iml.out
 
 ############################
 ## ProVerif
 ############################
 
 ifndef PV_OUTPUTS 
-  PV_INPUTS = $(shell find . -name "*.pv.in")
+  PV_INPUTS = $(wildcard *.pv.in)
   PV_OUTPUTS = $(PV_INPUTS:.in=.out)
 endif
 
@@ -156,9 +156,14 @@ pv_full: $(PV_OUTPUTS)
 ############################
 
 ifndef CV_OUTPUTS 
-  CV_INPUTS = $(shell find . -name "*.cv.in")
+  CV_INPUTS = $(wildcard *.cv.in)
   CV_OUTPUTS = $(CV_INPUTS:.in=.out)
 endif
+
+CV_OUTPUTS_NOAUX = $(CV_OUTPUTS:.out=.noaux.out)
+
+cv_model: $(CV_OUTPUTS)
+cv_model_noaux: $(CV_OUTPUTS_NOAUX)
 
 cv: $(CV_OUTPUTS)
 	for f in $(CV_OUTPUTS); do\
@@ -170,9 +175,17 @@ cv_full: $(CV_OUTPUTS)
 		$(CRYPTOVERIF) -lib $(CV_DEFAULT) $$f;\
 	done
 
+cv_noaux: $(CV_OUTPUTS_NOAUX)
+	for f in $(CV_OUTPUTS_NOAUX); do\
+		$(CRYPTOVERIF) -lib $(CV_DEFAULT) $$f;\
+	done
+
 %.cv.out: iml.raw.out $(CV_DEFAULT).cvl %.cv.in $(CVTRACE)
 	{ $(CVTRACE) iml.raw.out $(CV_DEFAULT) $*.cv.in | tee $@; } > $*.cv.debug.out 2>&1
 
+%.cv.noaux.out: %.cv.out
+	sed -e '/if auxiliary/s/if \(auxiliary.*\)/(*ifx \1*)/' $< > $@
+	
 #cvmodel.out: iml.raw.out $(CV_DEFAULT).cvl cvtemplate.in $(CVTRACE)
 #	{ $(CVTRACE) iml.raw.out $(CV_DEFAULT) cvtemplate.in | tee $@; } > cvmodel.debug.out 2>&1
 
@@ -254,6 +267,8 @@ funlist: funlist_compile funlist_run
 funlist_compile: callgraph.out globs.out
 	@echo "==== Reachable functions not proxied, opaque or crestified:"
 	@$(CSEC_ROOT)/src/CIL/leaves.exe
+	@echo "==== Opaque functions called from proxy functions:"
+	@$(CSEC_ROOT)/src/CIL/bad_opaque_calls.exe
 	@echo "==== Bad pairs:"
 	@$(CSEC_ROOT)/src/CIL/badpairs.exe
 	@echo "==== Unreachable boring functions:"
@@ -266,7 +281,7 @@ funlist_compile: callgraph.out globs.out
 # This one depends on running the program.
 funlist_run: called.out
 	@echo "==== Called boring functions:"
-	@$(CSEC_ROOT)/src/CIL/calledOpaque $(CSEC_CONF) "called.out"
+	@$(CSEC_ROOT)/src/CIL/calledOpaque.exe $(CSEC_CONF) "called.out"
 
 ############################
 ## Misc

@@ -124,7 +124,6 @@ module Sym : sig
     type t = And of int | Or of int | Not | Implies | True | Eq
   end
 
-
   (** C operators *)
   module Op : sig
       (* TODO: import these directly from CIL *)
@@ -203,6 +202,9 @@ module Sym : sig
      Same as Ztp, but returns the argument unchanged instead of bottom.
   *)
 
+  (* Takes two bitstring arguments: the character to replicate and the
+     replication length encoded in some manner. The length of the replication is
+     set using an assertion.*)
   | Replicate : (bitstring, bitstring) t
   (** Field_offset is only there for CSur, in which network data is treated as a
       structure directly. We don't try to prove safety of this. *)
@@ -245,6 +247,7 @@ module Sym : sig
 
   val to_string : (_, _) t -> string
   val of_string : string -> any
+  val of_string_bitstring : string -> bfun
 
   val cv_declaration : ('a, 'b) t -> ('a, 'b) Fun_type.t -> string
 
@@ -498,6 +501,10 @@ module Exp : sig
   val conj : fact list -> fact
   val disj : fact list -> fact
 
+  (* CR-someday: this is not a full abstraction since [Transformations.normal_form]
+     explicitly enumerates the caess of this function. However, changing this function
+     will cause [normal_form] to fail, so at least we will notice. Think of some
+     refactoring to make this better. *)
   val is_cryptographic : bterm -> bool
   val is_concrete : _ t -> bool
   val contains_sym : (_, _) Sym.t -> _ t -> bool
@@ -519,6 +526,33 @@ module Exp : sig
   val len : bterm -> iterm
 
   val apply : ('a, 'b) Sym.t -> any list -> 'b t
+
+
+  (*************************************************)
+  (** {1 Facts} *)
+  (*************************************************)
+
+  val eq_bitstring : bterm list -> fact
+  val eq_int : iterm list -> fact
+  val gt : iterm -> iterm -> fact
+  val ge : iterm -> iterm -> fact
+
+  val is_defined : _ exp -> fact
+
+  val true_fact : fact
+
+  val in_type : bterm -> bitstring Type.t -> fact
+
+  val negation : fact -> fact
+  val implication : fact list -> fact list -> fact
+
+  module Range : sig
+    type t = Int_type.t
+
+    val contains : t -> iterm -> fact list
+    val subset : t -> t -> bool
+  end
+
 
   (*************************************************)
   (** {1 Show} *)
@@ -582,6 +616,8 @@ module Stmt : sig
   val remove_annotations : t -> t
 
   val make_test : fact -> t
+
+  val fact : t -> fact list
 end
 
 open Exp

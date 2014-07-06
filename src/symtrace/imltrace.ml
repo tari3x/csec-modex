@@ -17,7 +17,8 @@ let setup_debug () =
     in
     let under l =  List.mem l ~set:labels in
     under "dummy"
-    || at_most_n_under 2 "execute"
+    || at_most_n_under 1 "dummy"
+    || at_most_n_under 1 "execute"
     (* || at_most_n_under 0 "deep_simplify" *)
     (* || at_most_n_under 0 "rewrite" *)
     (* || under "rewrite" *)

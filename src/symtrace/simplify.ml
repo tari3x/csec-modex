@@ -72,7 +72,7 @@ let arith_simplify_eq eq want_fold (e : iterm)  =
     | e -> e
   in
 
-  debug "arith_simplify: %s" (E.dump e);
+  DEBUG "arith_simplify: %s" (E.dump e);
   e (* |> simplify_sums Plus_a Minus_a  *) |> simplify_sums |> elim_one
 
 (* Not using equal_int as equality, in order not to trigger extra warnings *)
@@ -85,16 +85,6 @@ let op op es =
 let minus e1 e2 = op Minus [e1; e2]
 let sum es = E.sum es |> arith_simplify
 let prod es = E.prod es |> arith_simplify
-
-let equal_offset : offset -> offset -> S.pbool = function (o_val1, step1) -> function (o_val2, step2) ->
-  let eq_val = match o_val1, o_val2 with
-    | Index i, Index j -> i = j
-    | Flat a, Flat b -> S.equal_int a b
-    | Field f, Field g -> f = g
-    | Attr f, Attr g -> f = g
-    | _ -> false
-  in
-  eq_val && S.equal_int step1 step2
 
 let is_zero_offset_val : offset_val -> bool = function
   | Index 0 -> true
@@ -131,7 +121,7 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
 
   let undef l =
     let e = Sym (Undef (Var.fresh_id "undef"), []) in
-    S.add_fact (S.eq_int [Len e; l]);
+    S.add_fact (E.eq_int [Len e; l]);
     e
   in
 
@@ -205,9 +195,20 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
     | os :: pos' when is_zero_offset os -> skip_zeros pos'
     | pos -> pos
 
-  and flatten_index : pos -> pos = function
-    | (Index i, step) :: pos' -> (Flat (prod [step; (E.int i)]), step) :: pos'
-    | pos -> pos
+  and flatten_offset = function
+    | Flat e, _ -> e
+    | Index i, step -> prod [step; (E.int i)]
+    | Field f, _ -> Sym (Field_offset f, [])
+    | Attr _, _ ->
+      fail "trying to subtract pointers with attribute offsets."
+
+  and flatten_pos pos =
+    sum (List.map pos ~f:flatten_offset)
+
+  and ptr_step = function
+    | [_, step] -> step
+    | _ :: pos -> ptr_step pos
+    | [] -> fail "ptr_step"
 
   and subtract_pp pos1 pos2 =
     match skip_zeros pos1, skip_zeros pos2 with
@@ -219,17 +220,12 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
       if S.equal_int step1 step2 then E.int (i - j)
       else fail "subtract_pp: pointers have different steps (1)"
 
-    | pos1', pos2' ->
-      match flatten_index pos1', flatten_index pos2' with
-      | [Flat a, step1], [Flat b, step2] ->
-	if S.equal_int step1 step2 then op Minus [a; b]
-	else fail "subtract_pp: pointers have different steps (2)"
-
-      | os1 :: pos1'', os2 :: pos2'' ->
-	if equal_offset os1 os2 then subtract_pp pos1'' pos2''
-	else fail "subtract_pp: pointers have incompatible offsets (1)"
-
-      | _ -> fail "subtract_pp: pointers have incompatible offsets (2)"
+    | pos1, pos2 ->
+      let e1 = flatten_pos pos1 in
+      let e2 = flatten_pos pos2 in
+      if S.equal_int (ptr_step pos1) (ptr_step pos2)
+      then op Minus [e1; e2]
+      else fail "subtract_pp: pointers have different steps (2)"
 
   and strip_int_cast = function
     | Sym (Op (Cast_to_int, _), [e]) -> strip_int_cast (e : bterm)
@@ -268,7 +264,7 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
       let contains t e =
         match t with
         | Bs_int itype ->
-          List.for_all ~f:S.is_true (S.Range.contains itype e)
+          List.for_all ~f:S.is_true (E.Range.contains itype e)
         | _ -> assert false
       in
       if t2 = t3 then simplify e2 else
@@ -292,10 +288,10 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
 
     | Val (e2, itype) ->
       begin match e2 with
-        | Sym (Op (Cast_to_int, ([Bs_int t1], (Bs_int t2))), [e1]) when S.Range.subset t1 t2 ->
+        | Sym (Op (Cast_to_int, ([Bs_int t1], (Bs_int t2))), [e1]) when E.Range.subset t1 t2 ->
           assert (itype = t2);
           Val (e1, t1) |> simplify
-        | BS (e1, itype) when List.for_all ~f:S.is_true (S.Range.contains itype e1) -> e1
+        | BS (e1, itype) when List.for_all ~f:S.is_true (E.Range.contains itype e1) -> e1
         | _ -> default e_orig
       end
 
@@ -315,6 +311,19 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
 
     | Sym (Int_op _, _) -> arith_simplify e_orig
 
+    | Sym (Ztp, [String cs]) as e ->
+      let rec up_to_zero acc = function
+        | [] -> None
+        | c :: cs ->
+          if Char.code c = 0
+          then Some (List.rev acc)
+          else up_to_zero (c :: acc) cs
+      in
+      begin match up_to_zero [] cs with
+      | Some cs -> String cs
+      | None -> e
+      end
+
     | Sym (Ztp, [Concat es]) ->
       let rec apply_ztp acc = function
         | e :: _ when S.equal_bitstring e (E.zero_byte `Signed) ->
@@ -331,8 +340,8 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
         let e_len = Len e in
         let new_len = arith_simplify len in
         let e_new = Range (e, pos, new_len) in
-        debug "simplify: e_len = %s" (E.dump e_len);
-        debug "simplify: new_len = %s" (E.dump new_len);
+        DEBUG "simplify: e_len = %s" (E.dump e_len);
+        DEBUG "simplify: new_len = %s" (E.dump new_len);
         match e with
         (* OLD?: unfortunately e_len is not always known, so we need the disjunction *)
         (* e when S.greater_equal_len new_len e_len -> e *)
@@ -380,11 +389,11 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
     | e -> default e
   in
 
-  debug "simplify: %s" (E.dump e);
+  DEBUG "simplify: %s" (E.dump e);
   push_debug "simplify";
   let e = simplify e in
   pop_debug "simplify";
-  debug "simplify result: %s" (E.dump e);
+  DEBUG "simplify result: %s" (E.dump e);
   e
 
 let rec deep_simplify : type a. a exp -> a exp = fun e ->
@@ -394,12 +403,12 @@ let rec deep_simplify : type a. a exp -> a exp = fun e ->
   else E.descend {E.descend = deep_simplify} e
 
 let rec full_simplify e =
-  debug "full_simplify: %s" (E.dump e);
+  DEBUG "full_simplify: %s" (E.dump e);
   push_debug "full_simplify";
   let e'= deep_simplify e in
   let result = if e' = e then e' else full_simplify e' in
   pop_debug "full_simplify";
-  debug "full_simplify result: %s" (E.dump result);
+  DEBUG "full_simplify result: %s" (E.dump result);
   result
 
 

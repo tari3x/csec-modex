@@ -1,58 +1,107 @@
 
-channel c_in, c_out. 
+channel c_in, c_out.
 
 param N.
 
 (************************
-  Types
+Types
 *************************)
 
 type fixed_20 [fixed, large].
 type fixed_21 [fixed, large].
 
 (************************
-  XOR
+XOR
 *************************)
 
 expand Xor(fixed_21, XOR).
 
 
 (*************************** 
- Constants 
+  Formatting Functions 
+***************************)
+
+(* conc1 := (1)^[u,1]|arg0 *)
+fun conc1(fixed_20): fixed_21 [compos].
+
+
+
+(*************************** 
+  Arithmetic Functions 
 ***************************)
 
 
 (*************************** 
-  Formatting Functions 
+  Auxiliary Tests 
 ***************************)
 
-(* conc1/1 := tag(i1)<1>|arg(i0)<lenarg(i0)> *)
-fun conc1(fixed_20): fixed_21 [compos].
+(* auxiliary1 := len(arg0) = 112 *)
+fun auxiliary1(bitstring): bool.
 
+(* auxiliary1_prime := len(arg0) = 112 *)
+fun auxiliary1_prime(bitstring): bool.
+
+(* auxiliary2 := len(arg0) = 8 *)
+fun auxiliary2(bitstring): bool.
+
+(* auxiliary2_prime := len(arg0) = 8 *)
+fun auxiliary2_prime(bitstring): bool.
+
+(* auxiliary3 := ¬((arg0)_[s,8] <= 0) *)
+fun auxiliary3(bitstring): bool.
+
+(* auxiliary3_prime := ¬((arg0)_[s,8] <= 0) *)
+fun auxiliary3_prime(bitstring): bool.
 
 
 (*************************** 
   Zero Functions 
 ***************************)
 
-fun Zfixed_21(fixed_21): fixed_21.
+fun Zbitstring(bitstring): bitstring.
+
+fun Zbitstring_prime(bitstring): bitstring.
+
 fun Zfixed_20(fixed_20): fixed_20.
 
-(*************************** 
-  Length-Regularity 
-***************************)
+fun Zfixed_20_prime(fixed_20): fixed_20.
 
-fun Zconc1(fixed_20): fixed_21.
-forall var1: fixed_20;
-  Zfixed_21(conc1(var1)) = Zconc1(Zfixed_20(var1)).
+fun Zfixed_21(fixed_21): fixed_21.
+
+fun Zfixed_21_prime(fixed_21): fixed_21.
+
+const zero_fixed_20: fixed_20.
+
+const zero_fixed_21: fixed_21.
+
 
 (*************************** 
   Typecasting 
 ***************************)
 
 
+(*************************** 
+  Auxiliary Facts 
+***************************)
+
+forall arg0: bitstring;
+	auxiliary2(arg0) = auxiliary2_prime(Zbitstring(arg0)).
+forall arg0: bitstring;
+	auxiliary1(arg0) = auxiliary1_prime(Zbitstring(arg0)).
+
+(*************************** 
+  Zero Facts 
+***************************)
+
+forall arg0: fixed_20;
+	Zfixed_21(conc1(arg0)) = Zfixed_21_prime(conc1(Zfixed_20(arg0))).
+forall x: fixed_20;
+	Zfixed_20(x) = zero_fixed_20().
+forall x: fixed_21;
+	Zfixed_21(x) = zero_fixed_21().
+
 (************************
-  <Query>
+<Query>
 *************************)
 
 query secret nonce1.
@@ -62,28 +111,32 @@ query secret nonce1.
   Model 
 ***************************)
 
-let A = 
-in(c_in, ());
-yield.
-
-let B = 
-in(c_in, ());
+let client = 
+in(c_in, (var2: bitstring, BIO_ctrl_result1: bitstring));
 new nonce1: fixed_20;
-let xor1 = XOR(conc1(nonce1), pad) in
-out(c_out, (xor1)); 0 .
+let var11 = conc1(nonce1) in
+let msg1 = XOR(var11, pad) in
+if auxiliary1(var2) then 
+if auxiliary2(BIO_ctrl_result1) then 
+if auxiliary3(BIO_ctrl_result1) then 
+out(c_out, msg1); 0 .
+
+let server = 
+in(c_in, ());
+yield .
 
 (************************
-  <Environment>
+<Environment>
 *************************)
 
 
 process
 ! N (
-  in(c_in, ());
+in(c_in, ());
 
-  (* one-time pad *)
-  new pad: fixed_21;
+(* one-time pad *)
+new pad: fixed_21;
 
-  out(c_out, ());
-  (A | B)
+out(c_out, ());
+(client | server)
 )

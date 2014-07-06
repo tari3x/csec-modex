@@ -3,10 +3,10 @@ CFLAGS += -DVERBOSE
 LDLIBS += -lssl -lcrypto
  
 # $(shell find -name "*.c" -not -name "*.cil.c")
-SRC := $(filter-out $(wildcard *.cil.c), $(wildcard *.c))
+SRC := ProgrammingInterface.c RPC.c RPC_funs.c RPC_net.c
 
-P1 = RPC.server
-P2 = RPC.client
+P1 = server.exe
+P2 = client.exe
 
 P1_CMD = server
 P2_CMD = client

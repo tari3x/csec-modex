@@ -14,17 +14,29 @@ type fixed_20_hash [fixed].
   MAC
 ********************)
 
-type mkeyseed [fixed, large].
-type mkey [bounded].
+type bounded_1000_mkeyseed [fixed, large].
+type bounded_1000_mkey [bounded].
 type macinput.
 (* type macres. *)
 proba Pmac.
 
-expand UF_CMA_mac(mkeyseed, mkey, bitstring, fixed_20_hash, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+expand UF_CMA_mac(bounded_1000_mkeyseed, bounded_1000_mkey, bitstring, fixed_20_hash, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
 
-forall m: bitstring, k: mkey, r: fixed_20_hash;
+forall m: bitstring, k: bounded_1000_mkey, r: fixed_20_hash;
   ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
 
+fun HMAC(bitstring, bitstring, bounded_1000_mkey): fixed_20_hash.
+  
+const arithmetic1: bitstring.
+
+(* ASSERT_DEFINITION
+  arithmetic1/0
+  "sha1"
+*)
+
+forall m: bitstring, k: bounded_1000_mkey;
+  HMAC(arithmetic1, m, k) = HMAC_sha1(m, k).
+  
 (******************** 
   <Query>
 ********************)
@@ -39,9 +51,8 @@ query x: bounded_1000_payload, y:bounded_1000_payload;
   <Model>
 *************************)
 
-let A = 0 .
-  
-let B = 0 .
+let client = 0 .
+let server = 0 .
 
 (************************
   <Environment>
@@ -52,9 +63,9 @@ process
 ! N (
   in(c_in, (payload: bounded_1000_payload));
 
-  new keyseed: mkeyseed; 
+  new keyseed: bounded_1000_mkeyseed; 
   let key = mkgen(keyseed) in
 
   out(c_out, ());
-  (!N A | !N B)
+  (!N client | !N server)
 )

@@ -1,4 +1,4 @@
- 
+
 (*
     Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
     This file is distributed as part of csec-tools under a BSD license.
@@ -9,41 +9,35 @@
 (**
   Lists all functions declared boring that are not reachable from "main" through functions
   that are neither opaque nor proxied.
-  
+
   Quadratic implementation.
-*) 
+*)
 
 open List
 
 open Common
 
-let isBad : vertex -> bool = fun v ->
-  let glob = try 
-    StrMap.find v !globs
-    with Not_found -> fail ("isBad, not found: " ^ v) 
-  in not glob.crestified
+let isBad glob =
+  not glob.crestified
 
-let isHandled : vertex -> bool = fun v ->
-  let glob = try 
-    StrMap.find v !globs
-    with Not_found -> fail ("isHandled, not found: " ^ v) in 
-  glob.proxied  || glob.opaque || (isInterfaceFun v)
+let isHandled glob =
+  glob.proxied  || glob.opaque || (isInterfaceFun glob.name)
 
-let reachable : vertex -> graph -> vertex list = fun v g ->
-  
+let reachable v g =
+
   (* Make this a set if you don't want to be quadratic *)
-  let visited : vertex list ref = ref [] in
+  let visited : glob list ref = ref [] in
 
-  let children : vertex -> vertex list = fun v ->
-  map snd (filter (fun (src, _) -> src = v) g)
+  let children : glob -> glob list = fun v ->
+    map snd (filter (fun (src, _) -> src = v) g)
   in
-  
-  let rec visit : vertex -> unit = fun v -> 
-    if not (mem v !visited) then
-    begin
+
+  let rec visit v =
+    if not (mem v !visited)
+    then begin
       visited := v :: !visited;
-      if not (isHandled v) then 
-        iter visit (children v)
+      if not (isHandled v)
+      then  iter visit (children v)
     end
   in
   visit v; !visited
@@ -52,5 +46,11 @@ let reachable : vertex -> graph -> vertex list = fun v g ->
 begin
   readInfo "callgraph.out" "globs.out";
   Mark.readConfig Sys.argv.(1);
-  iter print_endline (diff !Mark.boringNames (reachable "main" !callgraph)) 
+  let main = StrMap.find "main" !globs in
+  let callgraph = get_callgraph () in
+  let reachable =
+    reachable main callgraph
+    |> List.map (fun glob -> glob.name)
+  in
+  iter print_endline (diff !Mark.boringNames reachable)
 end;

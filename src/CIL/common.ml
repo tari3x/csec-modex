@@ -6,30 +6,97 @@
 
 open Str
 open Filename
-open List
 open Sys
 
 open Cil
 
 module E = Errormsg
 
+module List = ListLabels
+
+(*************************************************)
+(** {1 General Purpose} *)
+(*************************************************)
+
+let trim : string -> string = function s ->
+  replace_first (regexp "^[ \t\n]+") "" (replace_first (regexp "[ \t\n]+$") "" s)
+
+let snd3 (_, a, _) = a
+
+let flip f x y = f y x
+
+let words : string -> string list = Str.split (Str.regexp "[ \t]+")
+
+let open_append fname =
+  open_out_gen [Open_append; Open_creat; Open_text] 0o700 fname
+
+let fail : string -> 'a = fun s -> failwith s
+
+let some: 'a option -> 'a = function
+  | Some a -> a
+  | None   -> failwith "some called with None"
+
+let readFile : string -> string list = fun name ->
+  let f = open_in name in
+
+  let rec read : unit -> string list = fun () ->
+    (* Stay tail-recursive, make sure not to create nested exception handlers at
+       runtime. *)
+    match
+      try Some (trim (input_line f))
+      with End_of_file -> None with
+    | Some s -> s :: read ()
+    | None   -> []
+  in
+  read()
+
+let (|>) a f = f a
+
+module Option = struct
+  type 'a t = 'a option
+
+  let value ~default = function
+    | Some x -> x
+    | None -> default
+ end
+
+(*************************************************)
+(** {2 Lists} *)
+(*************************************************)
+
+
+let filter_out : ('a -> bool) -> 'a list -> 'a list = fun p ->
+  List.filter ~f:(fun a -> not (p a))
+
+let remove : 'a -> 'a list -> 'a list = fun a -> filter_out (fun b -> a = b)
+
+(** Set difference *)
+let rec diff : 'a list -> 'a list -> 'a list = fun xs -> function
+  | []      -> xs
+  | y :: ys -> diff (remove y xs) ys
+
+let intersect: 'a list -> 'a list -> 'a list = fun xs ys ->
+  List.filter ~f:(fun y -> List.mem y xs) ys
+
+let nub: 'a list -> 'a list = fun l ->
+  let rec nub' = fun ls ->
+    function
+      | (x::xs) when List.mem x ls -> nub' ls xs
+      | (x::xs) -> x :: nub' (x::ls) xs
+      | [] -> []
+  in
+  nub' [] l
+
 (*************************************************)
 (** {1 Types} *)
 (*************************************************)
 
-type vertex = string
+(** Information that I collect about globals. Another options is to keep it in [varinfo]
+    instead, but that is more cumbersome to parse: you need to additionally provide headers
+    for all types, so it could become a mess.
 
-type edge = vertex * vertex
-
-type graph = edge list
-
-(**
-  Information that I collect about globals. Another options is to keep it in [varinfo] instead, but
-  that is more cumbersome to parse: you need to additionally provide headers for all types, so it
-  could become a mess.
-
-  Another problem is that [varinfo] only holds the location of the declaration, whereas I am more interested
-  in the definition instead.
+    Another problem is that [varinfo] only holds the location of the declaration, whereas
+    I am more interested in the definition instead.
 *)
 type glob =
 {
@@ -49,7 +116,12 @@ type glob =
   mutable is_fun: bool;
   mutable locdef: string option;
   mutable stor: storage;
+  (* mutable is_vararg : bool *)
 }
+
+type 'a edge = 'a * 'a
+
+type 'a graph = 'a edge list
 
 (* What you gonna do about full source file paths? Answer: give config a full root path *)
 
@@ -101,69 +173,7 @@ let defs: string list ref = ref []
 let globs : glob StrMap.t ref = ref StrMap.empty
 
 (** Which globals are referenced from which? *)
-let callgraph : graph ref = ref []
-
-
-(*************************************************)
-(** {1 General Purpose} *)
-(*************************************************)
-
-let trim : string -> string = function s ->
-  replace_first (regexp "^[ \t\n]+") "" (replace_first (regexp "[ \t\n]+$") "" s)
-
-let snd3 (_, a, _) = a
-
-let flip f x y = f y x
-
-let words : string -> string list = Str.split (Str.regexp "[ \t]+")
-
-let open_append fname =
-  open_out_gen [Open_append; Open_creat; Open_text] 0o700 fname
-
-let fail : string -> 'a = fun s -> failwith s
-
-let some: 'a option -> 'a = function
-  | Some a -> a
-  | None   -> failwith "some called with None"
-
-let readFile : string -> string list = fun name ->
-  let f = open_in name in
-
-  let rec read : unit -> string list = fun () ->
-    (* Stay tail-recursive, make sure not to create nested exception handlers at runtime. *)
-    match
-      try Some (trim (input_line f))
-      with End_of_file -> None with
-    | Some s -> s :: read ()
-    | None   -> []
-  in
-  read()
-
-
-(*************************************************)
-(** {2 Lists} *)
-(*************************************************)
-
-
-let filter_out : ('a -> bool) -> 'a list -> 'a list = fun p -> filter (fun a -> not (p a))
-
-let remove : 'a -> 'a list -> 'a list = fun a -> filter_out (fun b -> a = b)
-
-(** Set difference *)
-let rec diff : 'a list -> 'a list -> 'a list = fun xs -> function
-  | []      -> xs
-  | y :: ys -> diff (remove y xs) ys
-
-let intersect: 'a list -> 'a list -> 'a list = fun xs ys -> filter (fun y -> mem y xs) ys
-
-let nub: 'a list -> 'a list = fun l ->
-  let rec nub' = fun ls ->
-    function
-      | (x::xs) when mem x ls -> nub' ls xs
-      | (x::xs) -> x :: nub' (x::ls) xs
-      | [] -> []
-  in
-  nub' [] l
+let callgraph : string graph ref = ref []
 
 
 (*************************************************)
@@ -174,16 +184,16 @@ let nub: 'a list -> 'a list = fun l ->
   FIXME: Have a __proxy__ attribute on interface functions.
 *)
 let isInterfaceFun : string -> bool = fun s ->
-  mem s ["event0"; "event1"; "event2"; "event3"; "event4"; "readenv"; "readenvE"; "readenvL";
-         "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail";
-         (* Internal interface functions: *)
-         "load_buf"; "load_alll"; "load_ctx"; "load_int"; "load_str";
-         "symL"; "symN"; "symNE"; "input"; "newTN"; "newTL"; "newL";
-         "varsym"; "var"; "varWithBUfInit"; "varL"; "output";
-         "store_buf"; "store_all"; "store_ctx"; "event";
-         "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int";
-         "get_attr_int"; "copy_ctx"; "copy_attr_ex"; "copy_attr";
-         "clear_attr"; "concrete_val"; "fresh_ptr"; "append_zero"; "typehint"]
+  List.mem s ["event0"; "event1"; "event2"; "event3"; "event4"; "readenv"; "readenvE"; "readenvL";
+              "make_str_sym"; "make_sym"; "mute"; "unmute"; "fail";
+              (* Internal interface functions: *)
+              "load_buf"; "load_alll"; "load_ctx"; "load_int"; "load_str";
+              "symL"; "symN"; "symNE"; "input"; "newTN"; "newTL"; "newL";
+              "varsym"; "var"; "varWithBUfInit"; "varL"; "output";
+              "store_buf"; "store_all"; "store_ctx"; "event";
+              "add_to_attr"; "set_attr_str"; "set_attr_buf"; "set_attr_int";
+              "get_attr_int"; "copy_ctx"; "copy_attr_ex"; "copy_attr";
+              "clear_attr"; "concrete_val"; "fresh_ptr"; "append_zero"; "typehint"]
 
 
 (*************************************************)
@@ -196,21 +206,23 @@ let setRootPath: string -> unit = fun path ->
   else
     compilationRoot := path ^ "/"
 
+let setSrcPath (f : file) =
+  if !compilationRoot = ""
+  then fail "setSrcPath: compilation root not set";
 
-let setSrcPath : file -> unit = fun f ->
-  if !compilationRoot = "" then
-    fail "setSrcPath: compilation root not set";
-
-  let cName = try chop_extension f.fileName ^ ".c"
-              with Invalid_argument _ -> failwith "setSrcPath: source name without extension" in
+  let cName =
+    try chop_extension f.fileName ^ ".c"
+    with Invalid_argument _ -> failwith "setSrcPath: source name without extension"
+  in
 
   (* there should be a library function to compute canonical file names *)
   let cName = global_replace (regexp "^\\./") "" cName in
 
   let fullPath =
-    if Filename.is_relative cName then
-      Filename.concat (getcwd ()) cName
-    else cName in
+    if Filename.is_relative cName
+    then Filename.concat (getcwd ()) cName
+    else cName
+  in
 
   srcPath := global_replace (regexp_string !compilationRoot) "" fullPath
 
@@ -220,15 +232,16 @@ let setSrcPath : file -> unit = fun f ->
 
 (* TODO: think of eventually making some of these functions exclusive to marking code *)
 
-(**
-  Generates a descriptive global (across the whole compilation) unique identifier for a variable.
-  One identifer corresponds to one physical variable in the linked executable.
+(** Generates a descriptive global (across the whole compilation) unique identifier for a
+    variable.  One identifer corresponds to one physical variable in the linked
+    executable.
 
-  We use a single global name for static functions. This makes it easier to designate them
-  in configuration files. At the same time this makes it problematic to have two static functions of the same
-  name in different files.
+    We use a single global name for static functions. This makes it easier to designate
+    them in configuration files. At the same time this makes it problematic to have two
+    static functions of the same name in different files.
 
-  This is addressed in {!readGlobs} by checking that no two globs have same names but different locdefs.
+    This is addressed in {!readGlobs} by checking that no two globs have same names but
+    different locdefs.
 *)
 (*
   This is also called from crestInstrument to give names to stack locations.
@@ -255,7 +268,7 @@ let addGlob : varinfo -> glob = fun v ->
         crestified = false;
         is_fun = isFunctionType v.vtype;
         locdef = None;
-        stor = v.vstorage
+        stor = v.vstorage;
       }
     in
     globs := StrMap.add key g !globs;
@@ -307,14 +320,19 @@ let addDef : varinfo -> location -> unit = fun v _ ->
 *)
 let getGlob : varinfo -> glob = fun v -> StrMap.find (mkUniqueName v) !globs
 
+let get_callgraph () =
+  List.map !callgraph ~f:(fun (v, w) ->
+    let v = StrMap.find v !globs in
+    let w = StrMap.find w !globs in
+    v, w)
+
 (*
 let globKeyByName : string -> string = fun name ->
   fst (StrMap.choose (StrMap.filter (fun _ g -> g.name = name) !globs))
 *)
 
 let isOpaque : varinfo -> bool = fun v ->
-  try let g = getGlob v in
-      g.opaque
+  try let g = getGlob v in g.opaque
   with Not_found -> false
 
 let needsProxy : varinfo -> bool = fun v ->
@@ -341,15 +359,15 @@ let isProxy : varinfo -> bool = fun v ->
 let isProxy: varinfo -> bool = function v ->
   string_match (regexp ".*_proxy$") v.vname 0
 
-
+let proxy_name name = name ^ "_proxy"
 
 (*************************************************)
 (** {1 Information Input and Output} *)
 (*************************************************)
 
-let writeGraph : graph -> string -> unit = fun g outname ->
+let writeGraph : string graph -> string -> unit = fun g outname ->
   let c = open_out outname in
-  iter (fun (parent, child) -> output_string c (parent ^ " " ^ child ^ "\n")) g;
+  List.iter g ~f:(fun (parent, child) -> output_string c (parent ^ " " ^ child ^ "\n"));
   close_out c
 
 let writeGlob : out_channel -> string -> glob -> unit = fun c key g ->
@@ -399,11 +417,11 @@ let rec nextNonemptyLine: in_channel -> string = fun file ->
   if trim line = "" then nextNonemptyLine file else line
 
 
-let rec readGraph : in_channel -> graph = fun file ->
+let rec readGraph : in_channel -> string graph = fun file ->
   try
     let line = nextNonemptyLine file in
     let toks = words line in
-    (nth toks 0, nth toks 1) :: readGraph file
+    (List.nth toks 0, List.nth toks 1) :: readGraph file
   with
     End_of_file -> []
 
@@ -424,7 +442,7 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
         crestified = false;
         is_fun = false;
         locdef = None;
-        stor = NoStorage
+        stor = NoStorage;
       }
     in
     globs := StrMap.add key g !globs;
@@ -436,8 +454,9 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
     let line = nextNonemptyLine file in
     let toks = words line in
     let (key, field) =
-      if nth toks 1 = "~" then (nth toks 0, nth toks 2)
-        else fail (Printf.sprintf "readGlobField: unexpected format %s" line) in
+      if List.nth toks 1 = "~"
+      then (List.nth toks 0, List.nth toks 2)
+      else fail (Printf.sprintf "readGlobField: unexpected format %s" line) in
     let g = globByKey key in
     begin match field with
       | "name" ->
@@ -468,6 +487,6 @@ let readGlobs : in_channel -> glob StrMap.t = fun file ->
   begin try readField (); with End_of_file -> () end;
   !globs
 
-let readInfo : string -> string -> unit = fun graphname globname ->
-  callgraph := readGraph (open_in graphname);
-  globs := readGlobs (open_in globname)
+let readInfo ~graph_file ~glob_file =
+  callgraph := readGraph (open_in graph_file);
+  globs := readGlobs (open_in glob_file)

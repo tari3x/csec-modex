@@ -17,7 +17,8 @@ let main () =
   setup_debug ();
   Solver.test ();
   Simplify.test ();
-  Transform.test ()
+  Transform.test ();
+  Cv_transform.test ()
 
 ;;
 

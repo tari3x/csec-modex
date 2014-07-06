@@ -22,7 +22,6 @@ void client(dstr_c *a, dstr_c *b, key_c *k, dstr_c *s)
 #endif
 
 #ifdef CSEC_VERIFY
-	readenv(s->address, &(s->length), "request");
 	event1("client_begin", s->address, s->length);
 #endif
 
@@ -42,6 +41,12 @@ void client(dstr_c *a, dstr_c *b, key_c *k, dstr_c *s)
 
 	iconcat(recv(c), &pload2, &mac2);
 	t = iutf8(&pload2);
+        // BUGFIX
+        if(t->length > MAX_RESPONSE_LEN)
+        {
+          fprintf(stderr, "Response too long.\n");
+          return 1;
+        }
 	hmacsha1Verify(k, response(s, t), &mac2);
 #ifdef VERBOSE
 	printf("Received and authenticated response\n");
@@ -71,6 +76,12 @@ void server(dstr_c *a, dstr_c *b, key_c *k)
 
 	iconcat(recv(c), &pload, &mac);
 	s = iutf8(&pload);
+        // BUGFIX
+        if(s->length > MAX_REQUEST_LEN)
+        {
+          fprintf(stderr, "Request too long.\n");
+          return 1;
+        }
 	hmacsha1Verify(k, request(s), &mac);
 #ifdef VERBOSE
 	printf("Received and authenticated request\n");
@@ -86,6 +97,11 @@ void server(dstr_c *a, dstr_c *b, key_c *k)
 
 #ifdef CSEC_VERIFY
 	readenv(t->address, &(t->length), "response");
+        if(t->length > MAX_RESPONSE_LEN)
+	{
+          fprintf(stderr, "Response too long.\n");
+          return 1;
+	}
 	event2("server_reply", s->address, s->length, t->address, t->length);
 #endif
 
@@ -117,18 +133,21 @@ int main(int argc, char *argv[])
 	}
 
 	SSL_load_error_strings();
-  
-	alice = str(fromString("Alice", 5));
-	bob = str(fromString("Bob", 3));
 
-	k = fromString("ThisIsASharedKey", 16);
-#ifdef CSEC_VERIFY
-	readenv(k->address, &(k->length), "keyAB");
-#endif
+	alice = str(fromString("Alice", 5, NULL));
+	bob = str(fromString("Bob", 3, NULL));
 
-	s = str(fromString("ThisIsAPayload", 14));
+	k = fromString("ThisIsASharedKey", 16, "keyAB");
 
-	// FIXME: make it properly
+	s = str(fromString("ThisIsAPayload", 14, "request"));
+        // BUGFIX
+        if(s->length > MAX_REQUEST_LEN)
+	{
+          fprintf(stderr, "Request too long.\n");
+          return 1;
+	}
+
+	// FIXME: do it properly
 	int isClient = 0;
 
 	isClient = !strncmp(argv[1], "client", 6);

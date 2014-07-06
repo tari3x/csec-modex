@@ -4,6 +4,20 @@
 #include "common.h"
 #include "interface.h"
 
+extern int dsa_init(DSA *dsa);
+
+// Hide the modification of the flags field.
+int dsa_init_proxy(DSA *dsa)
+{
+  mute();
+  int ret = dsa_init(dsa);
+  unmute();
+
+  ret = 1;
+  return ret;
+}
+
+
 /*
  * We do splitting into r and s because it was used in the metering protocol.
  * For well-behaved protocols it should be enough to just use the sig attribute.
@@ -19,6 +33,17 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
 //  symL("dsa_sign_new_bn");
 //  store_buf((unsigned char *) &(ret->s), sizeof(ret->s), "s");
 
+  // CR: eventually we want to say that the length of the signature is at most
+  // dlen * 2 + overhead, but right now this is awkward to express.
+  if(dlen != 32)
+    proxy_fail("wrong digest length");
+
+  size_t max_sig_len = 100;
+  size_t max_half_sig_len = 50;
+
+  fresh_ptr(sizeof(DSA_SIG));
+  store_buf(&ret);
+
   fresh_ptr(sizeof(BIGNUM));
   store_buf((unsigned char *) &(ret->r));
   fresh_ptr(sizeof(BIGNUM));
@@ -26,18 +51,27 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
 
   load_buf(dgst, dlen, "dgst");
   load_ctx(dsa, "skey", "skey");
-  newTL(-1, "DSA_seed", "seed");
+  newT("DSA_seed", "seed");
   SymN("DSA_sign", 3);
+  // CR: what are conditions for successful signing?
+  // Try test_intype instead, also below.
+  assume_intype("bitstring");
+  assume_len_at_most(&max_sig_len , FALSE, sizeof(max_sig_len));
   Hint("dsa_sig");
   store_ctx(ret, "sig");
 
+
   load_ctx(ret, "sig", NULL);
   SymN("DSA_r", 1);
+  assume_intype("bitstring");
+  assume_len_at_most(&max_half_sig_len , FALSE, sizeof(max_half_sig_len));
   Hint("dsa_sig_r");
   store_ctx(ret->r, "val");
 
   load_ctx(ret, "sig", NULL);
   SymN("DSA_s", 1);
+  assume_intype("bitstring");
+  assume_len_at_most(&max_half_sig_len , FALSE, sizeof(max_half_sig_len));
   Hint("dsa_sig_s");
   store_ctx(ret->s, "val");
 
@@ -57,6 +91,7 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *si
   load_ctx(sig->s, "val", "dsa_sig_s");
 
   SymN("DSA_combine", 2);
+  assume_intype("bitstring");
   Hint("dsa_sig");
 
   store_ctx(sig, "sig");
@@ -65,8 +100,10 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *si
   load_ctx(dsa, "pkey", "pkey");
   load_ctx(sig, "sig", "sig");
   SymN("DSA_verify", 3);
+  assume_intype("bitstring");
   Hint("sig_verification");
-  assume_len(sizeof(ret));
+  size_t ret_len = sizeof(ret);
+  assume_len(&ret_len, FALSE, sizeof(ret_len));
   store_buf((unsigned char *) &ret);
 
   return ret;

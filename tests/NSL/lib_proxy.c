@@ -8,7 +8,7 @@
 #include <proxies/common.h>
 #include <proxies/interface.h>
 // Temporary
-#include <crest.h>
+#include <proxies/crest.h>
 
 extern void nonce_proxy(unsigned char * N)
 {
@@ -31,7 +31,8 @@ extern size_t encrypt_len_proxy(unsigned char * key, size_t keylen, unsigned cha
   load_buf(in, inlen, "");
   SymN("encrypt_len", 1);
   assume_intype("bitstring");
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   // Give a hint to make sure the function application is exposed to CV,
   // so that we can communicate length-regularity properties.
   Hint("len");
@@ -80,7 +81,8 @@ extern size_t decrypt_len_proxy(unsigned char * key, size_t keylen, unsigned cha
 
   test_intype("bitstring");
 
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   Done();
 
   store_buf(&ret);
@@ -261,7 +263,8 @@ bool check_key_proxy(const unsigned char * host, size_t host_len,
 
   SymT("(check_key : bitstring * bitstring * bitstring * bitstring -> bool)");
   SymN("bs_of_truth[1]", 1);
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
 
   store_buf(&ret);
 

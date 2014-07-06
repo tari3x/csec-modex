@@ -60,7 +60,7 @@ EXTERN void load_str(const char * str);
 /**
  * Consumes the stack top.
  */
-EXTERN void len(size_t lenlen);
+EXTERN void len(bool is_signed, size_t lenlen);
 
 /**
  * Does not consume the stack top.
@@ -76,7 +76,8 @@ EXTERN void assume(int fact);
 /**
  * Does not consume the stack top.
  */
-EXTERN void assume_len(size_t len);
+EXTERN void assume_len(const unsigned char * len, bool is_signed, size_t width);
+EXTERN void assume_len_at_most(const unsigned char * len, bool is_signed, size_t width);
 
 EXTERN void duplicate();
 EXTERN void clear(int n);
@@ -85,9 +86,9 @@ EXTERN void input(const char * hint, size_t len);
 
 /**
  * Create a nonce, given length and optional type alias (pass type = NULL to omit).
- * Pass -1 as len to create a nonce of an unknown length, having type (Named type).
  */
 EXTERN void newTL(size_t len, const char * type, const char * hint);
+EXTERN void newT(const char * type, const char * hint);
 
 /**
  * Create a nonce, of a given type and unknown length

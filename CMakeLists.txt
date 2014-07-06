@@ -8,23 +8,14 @@ set(CSEC_ROOT ${CMAKE_BINARY_DIR} CACHE PATH "The root folder of the compilation
 # To upgrade to new CIL:
 # - link all your sources under CIL/src directory
 # - add all your modules to src/cil.mllib
-# /configure EXTRAFEATURES="fundefs funreplace crestInstrument"
+# ./configure EXTRAFEATURES="fundefs funreplace crestInstrument"
 
 set(CIL_ROOT ${CSEC_ROOT}/deps/cil-1.7.3)
 
 # find ARCHOS as configured by CIL
-if(NOT EXISTS ${CIL_ROOT}/config.mk)
-  execute_process(COMMAND ./configure WORKING_DIRECTORY ${CIL_ROOT})
-endif(NOT EXISTS ${CIL_ROOT}/config.mk)
-
 execute_process(COMMAND sed -n "s/.*ARCHOS=\\(.*\\)/\\1/p" ${CIL_ROOT}/config.mk
                 OUTPUT_VARIABLE ARCHOS
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-                
-#configure_file (mk/archos.mk.in mk/archos.mk)
-# execute_process(COMMAND make -sf mk/archos.mk
-#                 OUTPUT_VARIABLE ARCHOS 
-#                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(CIL_OBJDIR ${CIL_ROOT}/_build/src/ CACHE PATH "CIL object folder")
 set(CIL_LIB ${CIL_OBJDIR}/cil.a CACHE FILEPATH "Location of the CIL library")
@@ -32,27 +23,9 @@ set(CILLY ${CIL_ROOT}/bin/cilly CACHE FILEPATH "Location of the CIL front-end")
 
 set(CIL_DIR ${CSEC_ROOT}/src/CIL)
 
-set(CIL_SRC ${CIL_DIR}/crestInstrument.ml ${CIL_DIR}/funreplace.ml ${CIL_DIR}/mark.ml)
-
-add_custom_command(OUTPUT ${CIL_ROOT}/Makefile
-                     COMMAND ./configure
-                     WORKING_DIRECTORY ${CIL_ROOT}
-                     VERBATIM)
-
-add_custom_command(OUTPUT ${CIL_LIB} 
-                     COMMAND make
-                     DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
-                     WORKING_DIRECTORY ${CIL_DIR}
-                     VERBATIM)
-
-add_custom_target(src_CIL 
-                    COMMAND make
-                    DEPENDS ${CIL_ROOT}/Makefile ${CIL_SRC}
-                    WORKING_DIRECTORY ${CIL_DIR}
-                    VERBATIM)
+file(GLOB CIL_SRC "${CIL_DIR}/*.ml")
 
 set(CMAKE_C_COMPILER ${CILLY})
-
 
 ######## test CIL as compiler ###########################
 
@@ -79,48 +52,9 @@ execute_process(COMMAND ocamlc -where
 set(OCAMLYICES_ROOT ${CSEC_ROOT}/deps/ocamlyices)
 set(OCAMLYICES ${OCAMLYICES_ROOT}/ocamlyices.cmxa ${OCAMLYICES_ROOT}/yices.cmi)
 
-add_custom_command(OUTPUT ${OCAMLYICES_ROOT}/Makefile
-                     COMMAND ./configure --enable-custom
-                     WORKING_DIRECTORY ${OCAMLYICES_ROOT}
-                     VERBATIM)
-
-add_custom_command(OUTPUT ${OCAMLYICES}
-                    COMMAND make
-                    DEPENDS ${OCAMLYICES_ROOT}/Makefile
-                    WORKING_DIRECTORY ${OCAMLYICES_ROOT}
-                    VERBATIM)
-
-######## deps/openssl ###########################
-
-# set(OPENSSL ${CSEC_ROOT}/deps/openssl-1.0.0d)
-# 
-# add_custom_command(OUTPUT ${OPENSSL}/Makefile
-#                     COMMAND ./Configure ${OPENSSL_CONFIG}
-#                     WORKING_DIRECTORY ${OPENSSL}
-#                     VERBATIM)
-# 
-# add_custom_command(OUTPUT ${OPENSSL}/libcrypto.a ${OPENSSL}/libssl.a 
-#                     COMMAND make clean
-#                     COMMAND make 
-#                     DEPENDS ${OPENSSL}/Makefile
-#                     WORKING_DIRECTORY ${OPENSSL}
-#                     VERBATIM)
-
 ######## deps/openssl-crestified ###########################
 
 set(OPENSSL_CRESTIFIED ${CSEC_ROOT}/tests/openssl-1.0.0d)
-# 
-# add_custom_command(OUTPUT ${OPENSSL_CRESTIFIED}/Makefile
-#                     COMMAND ./Configure ${OPENSSL_CONFIG}
-#                     WORKING_DIRECTORY ${OPENSSL_CRESTIFIED}
-#                     VERBATIM)
-# 
-# add_custom_command(OUTPUT ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTIFIED}/libssl_sym.a 
-#                     COMMAND make clean
-#                     COMMAND make -f ${CSEC_ROOT}/mk/openssl.mk sym
-#                     DEPENDS ${OPENSSL_CRESTIFIED}/Makefile
-#                     WORKING_DIRECTORY ${OPENSSL_CRESTIFIED}
-#                     VERBATIM)
 
 ######## deps/cryptoverif ###########################
 
@@ -130,61 +64,15 @@ set(CRYPTOVERIF ${CV_ROOT}/cryptoverif)
 
 set(CV_DEFAULT ${CV_ROOT}/default)
 
-add_custom_command(OUTPUT ${CRYPTOVERIF}
-                    COMMAND ./build
-                    WORKING_DIRECTORY ${CV_ROOT}
-                    VERBATIM)
-
 ######## deps/proverif ###########################
 
 set(PV_ROOT ${CSEC_ROOT}/deps/proverif1.84)
 
 set(PROVERIF ${PV_ROOT}/proverif)
 
-add_custom_command(OUTPUT ${PROVERIF}
-                    COMMAND ./build
-                    WORKING_DIRECTORY ${PV_ROOT}
-                    VERBATIM)
-
 ######## include ################################
 
 set(PROXIES ${CSEC_ROOT}/proxies CACHE PATH "The proxy libraries location")
-
-set(HEADERS include/crest.h include/proxies/common.h include/proxies/interface.h
-            include/proxies/openssl_proxies-1.0.0.h
-            include/proxies/openssl_proxies.h
-            include/proxies/system_proxies.h)
-
-# include/proxies/openssl-proxies-0.9.8o.h 
-
-set(HEADERS_ORIG 
-            ${PROXIES}/crest.h ${PROXIES}/common.h ${PROXIES}/interface.h
-            ${PROXIES}/openssl_proxies-1.0.0.h
-            ${PROXIES}/openssl_proxies.h
-            ${PROXIES}/system_proxies.h)
-
-# ${PROXIES}/openssl_proxies-0.9.8o.h  
-
-list(LENGTH HEADERS NUM_HEADERS)
-math(EXPR NUM_HEADERS "${NUM_HEADERS} - 1")
-
-foreach(I RANGE ${NUM_HEADERS})
-
-  list(GET HEADERS ${I} HEADER)
-  list(GET HEADERS_ORIG ${I} HEADER_ORIG)
-  
-  get_filename_component(HEADER_PATH ${HEADER} PATH)
-  
-  add_custom_command(OUTPUT ${HEADER}
-                      COMMAND mkdir ARGS -p ${HEADER_PATH}
-                      COMMAND cp ${HEADER_ORIG} ${HEADER}
-                      DEPENDS ${HEADER_ORIG})
-
-endforeach(I RANGE NUM_HEADERS)
-
-add_custom_target(include 
-                    DEPENDS ${HEADERS})
-                    
 
 ######## src/symtrace ##############################
 
@@ -194,178 +82,14 @@ set(IMLTRACE ${SYMTRACE_DIR}/imltrace${CMAKE_EXECUTABLE_SUFFIX})
 set(PITRACE  ${SYMTRACE_DIR}/pitrace${CMAKE_EXECUTABLE_SUFFIX})
 set(CVTRACE  ${SYMTRACE_DIR}/cvtrace${CMAKE_EXECUTABLE_SUFFIX})
 
-set(SYMTRACE_SRC ${SYMTRACE_DIR}/execute.ml ${SYMTRACE_DIR}/exp.ml ${SYMTRACE_DIR}/imltrace.ml ${SYMTRACE_DIR}/pitrace.ml
-                 ${SYMTRACE_DIR}/simplify.ml ${SYMTRACE_DIR}/solver_yices.ml ${SYMTRACE_DIR}/solver.ml ${SYMTRACE_DIR}/types.ml
-                 ${SYMTRACE_DIR}/utils.ml)
+file(GLOB SYMTRACE_SRC "${SYMTRACE_DIR}/*.ml" "${SYMTRACE_DIR}/cryptoverif/*.ml")
 
-add_custom_command(OUTPUT ${IMLTRACE} ${PITRACE} ${CVTRACE}
-                    COMMAND make
-                    DEPENDS ${OCAMLYICES_ROOT}/ocamlyices.cmxa ${SYMTRACE_SRC}
-                    WORKING_DIRECTORY ${SYMTRACE_DIR}
-                    VERBATIM)
-
-add_custom_target(src_symtrace 
-                    COMMAND make
-                    WORKING_DIRECTORY ${SYMTRACE_DIR}
-                    VERBATIM)
-                
 ######## proxies ##############################
 
-add_subdirectory(proxies)
+# add_subdirectory(proxies)
 
-set(LIBSSL_PROXY_SYM ${PROXIES}/libssl_proxy_sym.a)
+set(LIBSSL_PROXY_SYM ${PROXIES}/libopenssl-proxies.a ${PROXIES}/libsystem-proxies.a ${PROXIES}/libcrestify.a)
 
-#add_custom_command(OUTPUT ${LIBSSL_PROXY_SYM}
-#                    COMMAND make
-#                    WORKING_DIRECTORY ${PROXIES}
-#                    DEPENDS ${CIL_LIB} include/crest.h 
-#                    VERBATIM)
-                
-######## tests ##############################
-
-# ${OPENSSL_CRESTIFIED}/libcrypto_sym.a ${OPENSSL_CRESTIFIED}/libssl_sym.a
-set(TEST_DEPS ${HEADERS} ${OPENSSL}/libcrypto.a ${OPENSSL}/libssl.a  
-               ${OCAMLYICES} ${LIBSSL_PROXY_SYM} ${IMLTRACE} ${PITRACE} ${CVTRACE} ${PROVERIF} ${CRYPTOVERIF})
-               
-######## tests/simple_hash ##############################
-
-set(SIMPLE_HASH tests/simple_hash)
-
-add_custom_target(simple_hash ALL
-                    COMMAND make -f Makefile.csec
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${SIMPLE_HASH}
-                    VERBATIM)
-
-add_custom_target(simple_hash_check
-                    COMMAND make -f Makefile.csec check
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${SIMPLE_HASH}
-                    VERBATIM)
-
-######## tests/simple_xor ##############################
-
-set(SIMPLE_XOR tests/simple_xor)
-
-add_custom_target(simple_xor ALL
-                    COMMAND make -f Makefile.csec
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${SIMPLE_XOR}
-                    VERBATIM)
-
-add_custom_target(simple_xor_check
-                    COMMAND make -f Makefile.csec check
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${SIMPLE_XOR}
-                    VERBATIM)
-
-
-######## tests/RPC ##############################
-
-set(RPC tests/RPC)
-
-add_custom_target(RPC ALL
-                    COMMAND make -f Makefile.csec
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${RPC}
-                    VERBATIM)
-
-add_custom_target(RPC_check
-                    COMMAND make -f Makefile.csec check
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${RPC}
-                    VERBATIM)
-
-######## tests/RPC-enc ##############################
-
-set(RPC_ENC tests/RPC-enc)
-
-add_custom_target(RPC_enc ALL
-                    COMMAND make -f Makefile.csec
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${RPC_ENC}
-                    VERBATIM)
-
-add_custom_target(RPC_enc_check
-                    COMMAND make -f Makefile.csec check
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${RPC_ENC}
-                    VERBATIM)
-
-######## tests/CSur ##############################
-
-set(CSUR tests/CSur)
-
-add_custom_target(CSur ALL
-                    COMMAND make -f Makefile.csec
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${CSUR}
-                    VERBATIM)
-
-add_custom_target(CSur_check
-                    COMMAND make -f Makefile.csec check
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${CSUR}
-                    VERBATIM)
-
-######## tests/NSL ##############################
-
-set(NSL tests/NSL)
-
-add_custom_target(NSL ALL
-                    COMMAND make -f Makefile.csec
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${NSL}
-                    VERBATIM)
-
-add_custom_target(NSL_check
-                    COMMAND make -f Makefile.csec check
-                    DEPENDS ${TEST_DEPS}
-                    WORKING_DIRECTORY ${NSL}
-                    VERBATIM)
-
-######## check ##############################
-
-add_custom_target(check)
-
-add_dependencies(check simple_hash_check simple_xor_check RPC_check RPC_enc_check CSur_check NSL_check )
-
-######## README ##############################
-
-# doesn't work for some reason, even though works in command line
-add_custom_target(readme
-                    COMMAND markdown README.markdown > README.html
-                    OUTPUT README.html
-                    DEPENDS README.markdown
-                    WORKING_DIRECTORY ${CSEC_ROOT}
-                    VERBATIM)
-
-######## clean ##############################
-
-# Not cleaning in dependencies:
-# ${CIL_ROOT} ${OPENSSL} ${PV_ROOT}
-set(CLEAN_DIRS ${OCAMLYICES_ROOT} ${PROXIES} src/CIL src/symtrace ${RPC} ${SIMPLE_HASH} ${SIMPLE_XOR} ${CSUR} ${NSL})
-
-set(i 1)
-
-add_custom_target(cleanup)
-
-foreach(DIR ${CLEAN_DIRS})
-
-  math(EXPR i "${i} + 1")
-
-  string(REPLACE "/" "_" SUFFIX ${DIR})
-
-  # I wish COMMENT would be shown in make help too
-  add_custom_target(cleanup_${i}
-                      COMMAND make clean
-                      COMMENT make clean in ${DIR}
-                      WORKING_DIRECTORY ${DIR})
-
-  add_dependencies(cleanup cleanup_${i})
-
-endforeach(DIR)
- 
 ######## CONFIG ##############################
 
 configure_file (mk/common.mk.in mk/common.mk)

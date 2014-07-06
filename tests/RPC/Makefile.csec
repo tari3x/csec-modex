@@ -3,7 +3,7 @@ CSEC_ROOT = ../..
 
 include Makefile.common
 
-all: iml pv cv
+all: iml cv_full
 
 eclipse-all: orig sym
 
@@ -12,6 +12,3 @@ PROXY_LIBS = $(PROXIES)/libsystem-proxies.a $(PROXIES)/libopenssl-proxies.a $(PR
 BUILD_CMD = $(MAKE) -f Makefile.run compile CC="$(CC)" CFLAGS="$(CFLAGS)" LDLIBS="$(LDLIBS)"
 
 include $(CSEC_ROOT)/mk/main.mk
-
-clean::
-	$(RM) client server

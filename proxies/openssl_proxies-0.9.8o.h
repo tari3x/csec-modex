@@ -4,8 +4,8 @@
 // See LICENSE file for copyright notice.
 
 
-#ifndef PROXIES_H
-#define PROXIES_H
+#ifndef OPENSSL_PROXIES_H
+#define OPENSSL_PROXIES_H
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
@@ -198,4 +198,4 @@ extern char *BN_bn2hex_proxy(BIGNUM const   *a ) ;
 
 extern unsigned long lh_strhash_proxy(char const   *c ) ;
 
-#endif /* PROXIES_H */
+#endif /* OPENSSL_PROXIES_H */

@@ -26,7 +26,8 @@ void server(unsigned char * key, ulong key_len)
   // receive the message length
   recv(b, (unsigned char*) &msg_len, sizeof(msg_len));
   if(msg_len < sizeof(payload_len)) fail("Server: message too short");
-  if(msg_len > sizeof(payload_len) + 1 + MAX_PAYLOAD_LEN + SHA1_LEN) fail("Server: message too long");
+  if(msg_len > sizeof(payload_len) + 1 + MAX_PAYLOAD_LEN + SHA1_LEN)
+    fail("Server: message too long");
 
   // allocate the message and the hash buffers
   unsigned char * buf = malloc(msg_len);
@@ -43,7 +44,8 @@ void server(unsigned char * key, ulong key_len)
 
   // Check the payload length.
   // The first condition is not implied by the second because of overflow possibility.
-  if((payload_len > MAX_PAYLOAD_LEN) || (sizeof(payload_len) + 1 + payload_len + SHA1_LEN != msg_len))
+  if((payload_len > MAX_PAYLOAD_LEN)
+     || (sizeof(payload_len) + 1 + payload_len + SHA1_LEN != msg_len))
     fail("payload_len wrong");
 
   // check the tag
@@ -63,23 +65,23 @@ void server(unsigned char * key, ulong key_len)
   unsigned int md_len;
   HMAC(EVP_sha1(), key, key_len, body, body_len, hmac, &md_len);
 
-  #ifdef CSEC_VERIFY
-    typehint(msg_hmac, SHA1_LEN, "fixed_20_hash");
-  #endif
+#ifdef CSEC_VERIFY
+  typehint(msg_hmac, SHA1_LEN, "fixed_20_hash");
+#endif
 
   if(!memcmp(hmac, msg_hmac, SHA1_LEN))
   // if(1)
   {
-    #ifdef VERBOSE
-        printf("received and verified ");
-        fwrite(payload, payload_len, sizeof(char), stdout);
-        printf("\n");
-        fflush(stdout);
-    #endif
+#ifdef VERBOSE3
+    printf("received and verified ");
+    fwrite(payload, payload_len, sizeof(char), stdout);
+    printf("\n");
+    fflush(stdout);
+#endif
 
-    #ifdef CSEC_VERIFY
-      event1("server_recv", payload, payload_len);
-    #endif
+#ifdef CSEC_VERIFY
+    event1("server_recv", payload, payload_len);
+#endif
   }
   else
     fail("MAC check failed");
@@ -103,4 +105,4 @@ int main(int argc, char ** argv)
 
   return 0;
 }
- 
+

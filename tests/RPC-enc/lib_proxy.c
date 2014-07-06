@@ -6,7 +6,7 @@
 
 #include <proxies/common.h>
 #include <proxies/interface.h>
-#include <proxies/system-proxies.h>
+#include <proxies/system_proxies.h>
 
 #include <string.h>
 

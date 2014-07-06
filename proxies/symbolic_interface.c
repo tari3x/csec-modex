@@ -36,13 +36,23 @@ void assume(int fact)
   Assume();
 }
 
-void assume_len(size_t len)
+void assume_len(const unsigned char * len, bool is_signed, size_t width)
 {
   Dup();
   Len();
-  LoadBuf(&len, sizeof(len));
-  Val(FALSE, sizeof(len));
+  LoadBuf(len, width);
+  Val(is_signed, width);
   SymN("EqInt", 2);
+  Assume();
+}
+
+void assume_len_at_most(const unsigned char * len, bool is_signed, size_t width)
+{
+  Dup();
+  Len();
+  LoadBuf(len, width);
+  Val(is_signed, width);
+  SymN("LeInt", 2);
   Assume();
 }
 
@@ -77,10 +87,10 @@ void load_str(const char * str)
   LoadStr(str);
 }
 
-void len(size_t lenlen)
+void len(bool is_signed, size_t lenlen)
 {
   Len();
-  BS(FALSE, lenlen);
+  BS(is_signed, lenlen);
   Done();
 }
 
@@ -101,6 +111,17 @@ void newTL(size_t len, const char * type, const char * hint)
   Done();
   if(hint != NULL) Hint(hint);
 }
+
+void newT(const char * type, const char * hint)
+{
+  LoadInt(-1);
+  if(type == NULL) LoadStr("");
+  else LoadStr(type);
+  New();
+  Done();
+  if(hint != NULL) Hint(hint);
+}
+
 
 /*
 void newTN(const char * type, const char * hint, size_t * len)

@@ -47,6 +47,7 @@
  *
  */
 
+#include "system_proxies.h"
 #include "openssl_proxies.h"
 
 // for undefining the BN_num_bytes
@@ -66,7 +67,7 @@ int EVP_Cipher_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned cha
   // FIXME: output the IV as well!
   SymN("EVP_Cipher", 3);
   Hint("enc");
-  assume_len(inl);
+  assume_len(&inl, FALSE, sizeof(inl));
   Nondet();
 
   int ret = EVP_Cipher(ctx, out, in, inl);
@@ -265,7 +266,7 @@ int EVP_VerifyFinal_proxy(EVP_MD_CTX *ctx , unsigned char const   *sigbuf ,
 
   SymN("EVP_VerifyFinal", 2);
   Hint("sig");
-  assume_len(siglen);
+  assume_len(&siglen, FALSE, sizeof(siglen));
 
   store_buf(sigbuf);
 
@@ -288,7 +289,7 @@ int EVP_SignFinal_proxy(EVP_MD_CTX *ctx , unsigned char *md , unsigned int *s ,
   // FIXME: relying on concrete value of s?
   SymN("EVP_SignFinal", 2);
   Hint("sig");
-  assume_len(*s);
+  assume_len(s, FALSE, sizeof(*s));
   Nondet();
 
   store_buf(md);
@@ -307,7 +308,7 @@ int EVP_DigestFinal_ex_proxy(EVP_MD_CTX *ctx , unsigned char *md ,
   // FIXME: relying on concrete value of s?
   SymN("EVP_DigestFinal_ex", 2);
   Hint(2);
-  assume_len(*s);
+  assume_len(s, FALSE, sizeof(*s));
   Nondet();
 
   store_buf(md);
@@ -329,7 +330,7 @@ int EVP_MD_CTX_copy_ex_proxy(EVP_MD_CTX *out , EVP_MD_CTX const   *in )
 {
   copy_ctx(out, in);
 
-  return EVP_MD_CTX_copy(out, in);
+  return EVP_MD_CTX_copy_ex(out, in);
 }
 
 
@@ -361,7 +362,7 @@ EVP_MD const *EVP_MD_CTX_md_proxy(EVP_MD_CTX const   *ctx )
     load_ctx(ctx, "key", "key");
     SymN("EVP_DigestSign", 3);
     Hint("sig");
-    assume_len(*siglen);
+    assume_len(siglen, FALSE, sizeof(*siglen));
     Nondet();
     store_buf(sigret);
 
@@ -392,7 +393,7 @@ extern int i2d_X509_proxy(X509 *a , unsigned char **out )
 
     SymN("i2d_X509", 1);
     Hint("DER");
-    assume_len(ret);
+    assume_len(&ret, TRUE, sizeof(ret));
 
     if(notnull)
       store_buf(*out - ret);
@@ -502,7 +503,12 @@ extern EVP_MD const   *EVP_sha1_proxy(void)
 {
   EVP_MD const * ret;
 
+  mute();
   ret = EVP_sha1();
+  unmute();
+
+  fresh_ptr(sizeof(*ret));
+  store_buf(&ret);
 
   set_attr_str(ret, "type", "sha1");
 
@@ -708,7 +714,7 @@ extern HMAC_RET_TYPE HMAC_Final_proxy(HMAC_CTX *ctx , unsigned char *md , unsign
 
   SymN("HMAC", 3);
   Hint("hash");
-  assume_len(*len);
+  assume_len(len, FALSE, sizeof(*len));
 
   store_buf(md);
 
@@ -718,12 +724,13 @@ extern HMAC_RET_TYPE HMAC_Final_proxy(HMAC_CTX *ctx , unsigned char *md , unsign
 }
 
 /*
-   HMAC() computes the message authentication code of the n  bytes at d using the hash function evp_md
-   and the key key which is key_len bytes long.
+   HMAC() computes the message authentication code of the n bytes at d using the
+   hash function evp_md and the key key which is key_len bytes long.
 
-   It places the result in md (which must have space for the output of the hash function,
-   which is no more than EVP_MAX_MD_SIZE bytes). If md is NULL, the digest is placed in a static array.
-   The size of the output is placed in md_len, unless it is NULL.
+   It places the result in md (which must have space for the output of the hash
+   function, which is no more than EVP_MAX_MD_SIZE bytes). If md is NULL, the
+   digest is placed in a static array.  The size of the output is placed in
+   md_len, unless it is NULL.
 
    HMAC() returns a pointer to the message authentication code.
  */
@@ -733,12 +740,18 @@ extern unsigned char *HMAC_proxy(EVP_MD const   *evp_md , void const   *key ,
                                  unsigned int *md_len )
 {
   // FIXME: this thing crashes if md_len is NULL, do the right thing
-  if(md_len != NULL) *md_len = 0; // just making sure it's initialised.
+  if(md_len != NULL) *md_len = 0; // just making sure it's initialized.
 
+  mute();
   unsigned char * ret = HMAC(evp_md, key, key_len, d, n, md, md_len);
+  unmute();
 
   if(md != NULL)
     ret = md;
+  else {
+    fresh_ptr(sizeof(*ret));
+    store_buf(&ret);
+  }
 
   if(md_len != NULL)
     *md_len = concrete_val(*md_len);
@@ -749,7 +762,7 @@ extern unsigned char *HMAC_proxy(EVP_MD const   *evp_md , void const   *key ,
 
   SymN("HMAC", 3);
   Hint("hash");
-  assume_len(*md_len);
+  assume_len(md_len, FALSE, sizeof(*md_len));
 
   store_buf(ret);
 
@@ -771,7 +784,8 @@ int SHA256_Init_proxy(SHA256_CTX *c)
 
   SymN("SHA256_Init", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   clear_attr(c, "msg");
@@ -787,7 +801,8 @@ int SHA256_Update_proxy(SHA256_CTX *c, const void *data, size_t len)
 
   SymN("SHA256_Update", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t ret_len = sizeof(ret);
+  assume_len(&ret_len, FALSE, sizeof(ret_len));
   store_buf(&ret);
 
   add_to_attr(c, "msg", data, len);
@@ -803,14 +818,17 @@ int SHA256_Final_proxy(unsigned char *md, SHA256_CTX *c)
 
   SymN("SHA256_Final", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
+  varsym("SHA256_key");
   load_ctx(c, "msg", "msg");
 
-  SymN("SHA256", 1);
+  SymN("SHA_hash", 2);
   Hint("hash");
-  assume_len(32);
+  size_t len = 32;
+  assume_len(&len, FALSE, sizeof(len));
 
   store_buf(md);
 
@@ -841,7 +859,7 @@ extern int EVP_EncryptUpdate_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, int 
 
   SymN("encPart", 5);
   Hint("partial_enc");
-  assume_len(*outl);
+  assume_len(outl, TRUE, sizeof(*outl));
   Nondet();
 
   store_buf(out);
@@ -879,7 +897,7 @@ extern int EVP_EncryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , int
 
   SymN("encFin", 5);
   Hint("partial_enc");
-  assume_len(*outl);
+  assume_len(outl, TRUE, sizeof(*outl));
   Nondet();
 
   store_buf(out);
@@ -914,7 +932,7 @@ extern int EVP_DecryptUpdate_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , in
 
   SymN("decPart", 5);
   Hint("partial_dec");
-  assume_len(*outl);
+  assume_len(outl, TRUE, sizeof(*outl));
   Nondet();
 
   store_buf(out);
@@ -939,7 +957,7 @@ extern int EVP_DecryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *outm , in
 
   SymN("decFin", 5);
   Hint("partial_dec");
-  assume_len(*outl);
+  assume_len(outl, TRUE, sizeof(*outl));
   Nondet();
 
   store_buf(outm);
@@ -1252,12 +1270,16 @@ extern EVP_CIPHER const   *EVP_aes_256_cbc_proxy(void)
  */
 extern int RAND_bytes_proxy(unsigned char *buf , int num )
 {
+  mute();
   int ret = RAND_bytes(buf, num);
+  if(ret != 1)
+    proxy_fail("RAND_bytes failed");
+  unmute();
 
   newTL(num, NULL, "nonce");
   store_buf(buf);
 
-  return ret;
+  return 1;
 }
 
 /*
@@ -1275,7 +1297,7 @@ extern int RAND_pseudo_bytes_proxy(unsigned char *buf , int num )
 
   SymN("RAND_pseudo_bytes", 0);
   Hint("nonce");
-  assume_len(num);
+  assume_len(&num, TRUE, sizeof(num));
   Nondet();
 
   store_buf(buf);
@@ -1450,7 +1472,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
 
       SymN("EVP_PKEY_decrypt", 2);
       Hint("dec");
-      assume_len(*outlen);
+      assume_len(outlen, FALSE, sizeof(*outlen));
 
       store_buf(out);
     }
@@ -1512,7 +1534,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
 
       SymN("EVP_PKEY_verify", 2);
       Hint("sig");
-      assume_len(siglen);
+      assume_len(&siglen, FALSE, sizeof(siglen));
 
       store_buf(sig);
     }
@@ -1541,8 +1563,8 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
     {
       SymN("lenvar", 0);
       Hint("enc_len");
-      assume_len(sizeof(*outlen));
-      Nondet();
+      size_t len = sizeof(*outlen);
+      assume_len(&len, FALSE, sizeof(len));
 
       store_buf((unsigned char *) outlen);
 
@@ -1552,7 +1574,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
       SymN("EVP_PKEY_encrypt", 2);
       Hint("penc");
       Nondet();
-      assume_len(*outlen);
+      assume_len(outlen, FALSE, sizeof(*outlen));
 
       store_buf(out);
     }
@@ -1577,7 +1599,8 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
     {
       SymN("lenvar", 0);
       Hint("sig_len");
-      assume_len(sizeof(*siglen));
+      size_t len = sizeof(*siglen);
+      assume_len(&len, FALSE, sizeof(len));
       Nondet();
 
       store_buf((unsigned char *) siglen);
@@ -1586,7 +1609,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
       load_ctx(ctx, "key", "pkey");
 
       SymN("EVP_PKEY_sign", 2);
-      assume_len(*siglen);
+      assume_len(siglen, FALSE, sizeof(*siglen));
       Nondet();
 
       store_buf(sig);
@@ -1632,7 +1655,8 @@ int BN_rand_range_proxy(BIGNUM *rnd , BIGNUM const   *range )
 
   SymN("BN_rand_range_result", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   load_ctx(range, "val", "range");
@@ -1686,7 +1710,8 @@ int BN_add_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *b )
 
   SymN("BN_add_result", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   load_ctx(a, "val", "a");
@@ -1713,7 +1738,8 @@ int BN_div_proxy(BIGNUM *dv , BIGNUM *rem , BIGNUM const   *m ,
 
   SymN("BN_div_result", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   if(dv != NULL){
@@ -1822,11 +1848,11 @@ int BN_num_bits_proxy(BIGNUM const   *a )
   int ret = BN_num_bits(a);
   unmute();
 
-  load_ctx(a, "val", "bignum");
+  load_ctx(a, "val", NULL);
 
   SymN("BN_num_bits", 1);
-  assume_len(sizeof(ret));
-  Hint("len");
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
 
   store_buf((void*) &ret);
 
@@ -1848,14 +1874,13 @@ int BN_num_bits_proxy(BIGNUM const   *a )
 int BN_num_bytes_proxy(const BIGNUM *a)
 {
   mute();
-  int ret = (BN_num_bits(a)+7)/8;
+  int ret = (BN_num_bits_proxy(a)+7)/8;
   unmute();
 
-  load_ctx(a, "val", "bignum");
+  load_ctx(a, "val", NULL);
 
-  SymN("len", 1);
-  assume_len(sizeof(ret));
-  Hint("len");
+  len(TRUE, sizeof(ret));
+  assume_intype("bitstring");
 
   store_buf((void*) &ret);
 
@@ -1877,13 +1902,13 @@ extern BIGNUM *BN_bin2bn_proxy(unsigned char const *s , int len , BIGNUM *ret )
   unmute();
 
   fresh_ptr(sizeof(*ret2));
-  store_buf(&ret);
+  store_buf(&ret2);
 
   BIGNUM * result;
   // FIXME: nontrivial branching
   if(ret == NULL) result = ret2; else result = ret;
 
-  load_buf(s, len, "val");
+  load_buf(s, len, NULL);
   store_ctx(result, "val");
 
   return result;
@@ -1898,18 +1923,15 @@ extern BIGNUM *BN_bin2bn_proxy(unsigned char const *s , int len , BIGNUM *ret )
 extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
 {
   mute();
-  size_t ret = BN_bn2bin(a, to);
+  int ret = BN_bn2bin(a, to);
   unmute();
 
-  load_ctx(a, "val", "val");
-
-  SymN("len", 1);
-  assume_len(sizeof(ret));
-  Hint("len");
-
+  load_ctx(a, "val", NULL);
+  len(TRUE, sizeof(ret));
+  assume_intype("bitstring");
   store_buf((void *)&ret);
 
-  load_ctx(a, "val", "val");
+  load_ctx(a, "val", NULL);
   store_buf(to);
 
   return ret;
@@ -1922,7 +1944,11 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
  */
 extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , BIGNUM const   *m , BN_CTX *ctx )
 {
+  mute();
   int ret = BN_mod_exp(r, a, p, m, ctx);
+  if(ret != 1)
+    proxy_fail("BN_mod_exp failed");
+  unmute();
 
   load_ctx(a, "val", "bignum");
   load_ctx(p, "val", "bignum");
@@ -1930,10 +1956,11 @@ extern int BN_mod_exp_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *p , 
 
   SymN("mod_exp", 3);
   Hint("bignum");
+  assume_intype("bitstring");
 
   store_ctx(r, "val");
 
-  return ret;
+  return 1;
 }
 
 /*
@@ -1949,7 +1976,9 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
 
   int create_new = (a != NULL) && (*a == NULL);
 
+  mute();
   int ret = BN_hex2bn(a, str);
+  unmute();
 
   load_all(str, "hex");
 
@@ -1958,15 +1987,14 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
 
   SymN("BN_hex2bn", 1);
   Hint("bignum");
+  test_intype("bitstring");
 
   store_ctx(&dummy, "val");
 
   load_ctx(&dummy, "val", "");
 
-  SymN("len", 1);
-  Hint("len");
-  assume_len(sizeof(ret));
-
+  len(TRUE, sizeof(ret));
+  assume_intype("bitstring");
   store_buf((void *) &ret);
 
   if(a != NULL)
@@ -1995,13 +2023,21 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
  */
 extern char *BN_bn2hex_proxy(BIGNUM const   *a )
 {
+  mute();
   char * ret = BN_bn2hex(a);
+  if(ret == NULL)
+    proxy_fail("BN_bn2hex failed");
+  unmute();
 
   load_ctx(a, "val", "");
 
   SymN("BN_bn2hex", 1);
   Hint("hex");
+  assume_intype("bitstring");
 
+  // CR: the allocated length is not known
+  fresh_ptr(sizeof(ret));
+  store_buf(&ret);
   store_all(ret);
 
   return ret;
@@ -2019,7 +2055,8 @@ int BN_set_word_proxy(BIGNUM *a, unsigned long w)
 
   SymN("BN_set_word_result", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   load_buf((unsigned char *)&w, sizeof(w), "wordval");
@@ -2031,6 +2068,7 @@ int BN_set_word_proxy(BIGNUM *a, unsigned long w)
 /*
  * rr = a1^p1 * a2*p2 mod m
  */
+// CR: What if m = 0?
 int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
                            BIGNUM const   *p1 , BIGNUM const   *a2 ,
                            BIGNUM const   *p2 , BIGNUM const   *m ,
@@ -2042,7 +2080,8 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
 
   SymN("BN_mod_exp2_mont_result", 0);
   Nondet();
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
   store_buf(&ret);
 
   load_ctx(a1, "val", "a1");
@@ -2052,6 +2091,9 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
   load_ctx(m, "val", "bignum");
 
   SymN("mod_exp2", 5);
+  // Relying on the fact that anything stored to memory or context is not
+  // bottom.
+  assume_intype("bitstring");
   Hint("rr");
 
   store_ctx(rr, "val");
@@ -2073,9 +2115,31 @@ int BN_mod_exp_mont_proxy(BIGNUM *rr , BIGNUM const   *a ,
   load_ctx(m, "val", "bignum");
 
   SymN("mod_exp", 3);
+  // Relying on the fact that anything stored to memory or context is not
+  // bottom.
+  assume_intype("bitstring");
   Hint("rr");
 
   store_ctx(rr, "val");
+
+  return ret;
+}
+
+void BN_CTX_init_proxy(BN_CTX *c )
+{
+  mute();
+  BN_CTX_init(c);
+  unmute();
+}
+
+int BN_print_fp_proxy(FILE *fp , BIGNUM const   *a )
+{
+  mute();
+  int ret = BN_print_fp(fp, a);
+  unmute();
+
+  input("BN_print_fp_result", sizeof(ret));
+  store_buf(&ret);
 
   return ret;
 }
@@ -2120,7 +2184,7 @@ int DSA_generate_key_proxy(DSA *a)
   store_buf(&keylen, sizeof(keylen));
 */
 
-  newTL(-1, "DSA_keyseed", "keyseed");
+  newT("DSA_keyseed", "keyseed");
   store_ctx(a, "keyseed");
 
   load_ctx(a, "keyseed", "keyseed");
@@ -2166,7 +2230,6 @@ DSA *DSA_new_method_proxy(ENGINE *engine)
   return ret;
 }
 
-
 /**
  * d2i_DSA_PUBKEY() and i2d_DSA_PUBKEY() decode and encode an DSA
  * public key using a SubjectPublicKeyInfo (certificate public key)
@@ -2175,42 +2238,44 @@ DSA *DSA_new_method_proxy(ENGINE *engine)
  * Behaves as follows, with out = pp:
  *
  * i2d_X509() encodes the structure pointed to by x into DER format.
- * If out is not NULL is writes the DER encoded data to the buffer at
+ * If *out is not NULL is writes the DER encoded data to the buffer at
  * *out, and increments it to point after the data just written.  If
  * the return value is negative an error occurred, otherwise it
  * returns the length of the encoded data.
  */
 int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
 {
-  unsigned char *p = *pp;
-
   mute();
-  size_t ret = i2d_DSA_PUBKEY(a, pp);
+  unsigned char *old_pp = *pp;
+  int ret = i2d_DSA_PUBKEY(a, pp);
+  unsigned char *new_pp = *pp;
+  *pp = old_pp;
   unmute();
 
-  SymN("lenvar", 0);
-  Nondet();
-  Hint("len");
-  assume_len(sizeof(ret));
+  load_ctx(a, "pkey", "dsa_pkey");
+  SymN("i2d_DSA_PUBKEY", 1);
+  Hint("DER");
+  store_len(&ret, sizeof(ret), TRUE);
+  // DER remains on stack ...
 
-  store_buf((unsigned char  *) &ret);
-
-  if(p == NULL)
+  void *p;
+  if(*pp == NULL)
   {
-    fresh_ptr(sizeof(DSA));
+    fresh_ptr(ret);
     store_buf(pp);
     p = *pp;
   }
-  else
-    *pp = p + ret;
+  else {
+    p = *pp;
+    *pp = *pp + ret;
+  }
 
-  load_ctx(a, "pkey", "dsa_pkey");
-
-  SymN("i2d_DSA_PUBKEY", 1);
-  Hint("DER");
-  assume_len(ret);
-
+  // DER is stored here
   store_buf(p);
+
+  mute();
+  *pp = new_pp;
+  unmute();
 
   return ret;
 }
@@ -2274,7 +2339,8 @@ unsigned long lh_strhash_proxy(char const   *c )
 
   SymN("lh_strhash", 1);
   Hint("strhash");
-  assume_len(sizeof(ret));
+  size_t len = sizeof(ret);
+  assume_len(&len, FALSE, sizeof(len));
 
   store_buf((void *) &ret);
 
@@ -2407,7 +2473,7 @@ extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa )
 
     SymN("RSA_verify", 2);
     Hint("sig");
-    assume_len(siglen);
+    assume_len(&siglen, FALSE, sizeof(siglen));
 
     store_buf(sigbuf);
   }
@@ -2433,7 +2499,7 @@ extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , uns
 
   SymN("RSA_public_encrypt", 2);
   Hint("enc");
-  assume_len(ret);
+  assume_len(&ret, TRUE, sizeof(ret));
   Nondet();
 
   store_buf(to);
@@ -2461,7 +2527,7 @@ extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , un
   // FIXME: relying on concrete value?
   SymN("RSA_private_decrypt", 2);
   Hint("dec");
-  assume_len(ret);
+  assume_len(&ret, TRUE, sizeof(ret));
 
   store_buf(to);
 
@@ -2488,7 +2554,7 @@ extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_l
 
   SymN("RSA_sign", 2);
   Hint("sig");
-  assume_len(*siglen);
+  assume_len(siglen, FALSE, sizeof(*siglen));
   Nondet();
 
   store_buf(sigret);

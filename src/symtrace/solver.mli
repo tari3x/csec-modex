@@ -17,30 +17,6 @@ type answer = Yes | No | Maybe
 type pbool = bool
 
 (*************************************************)
-(** {1 Building facts} *)
-(*************************************************)
-
-val eq_bitstring : bterm list -> fact
-val eq_int : iterm list -> fact
-val not : fact -> fact
-val gt : iterm -> iterm -> fact
-val ge : iterm -> iterm -> fact
-
-val is_defined : _ exp -> fact
-
-val true_fact : fact
-
-val in_type : bterm -> bitstring Type.t -> fact
-
-module Range : sig
-  type t = Int_type.t
-
-  val contains : t -> iterm -> fact list
-  val subset : t -> t -> bool
-end
-
-
-(*************************************************)
 (** {1 Checking facts} *)
 (*************************************************)
 
@@ -50,7 +26,7 @@ val reset_facts : unit -> unit
 
 val is_true : fact -> pbool
 
-val equal_bitstring : bterm -> bterm -> pbool
+val equal_bitstring : ?facts:fact list -> bterm -> bterm -> pbool
 
 val not_equal_bitstring : bterm -> bterm -> pbool
 

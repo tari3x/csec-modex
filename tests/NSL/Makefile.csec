@@ -3,7 +3,7 @@ CSEC_ROOT = ../..
 
 include Makefile.common
 
-all: iml cv_full # pv
+all: iml cv_full
 
 eclipse-all: compile
 

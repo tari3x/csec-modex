@@ -39,8 +39,6 @@ void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenle
 void readenvL(const unsigned char * buf, size_t len, const char * s);
 // shouldn't use this at all?
 void make_sym(const unsigned char * buf, size_t len, const char * s);
-// void make_simple_sym(const unsigned char * buf, size_t len, const char * s);
-void make_str_sym(const char * str, const char * sym);
 void event0(const char * s);
 void event1(const char * s, const unsigned char * buf, size_t len);
 void event2(const char * s, const unsigned char * buf1, size_t len1,
@@ -65,3 +63,4 @@ void append_zero(const unsigned char * buf);
 
 
 #endif /* PROXY_COMMON */
+

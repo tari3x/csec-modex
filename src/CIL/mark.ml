@@ -9,7 +9,7 @@ open Cil
 open Common
 
 open Str
-open List
+open ListLabels
 
 (*************************************************)
 (** {1 Marking of Globals} *)
@@ -19,8 +19,8 @@ let config = ref ""
 let markingDone = ref false
 let configDone = ref false
 
-(** 
-  The following lists should not be used by any instrumentation code. 
+(**
+  The following lists should not be used by any instrumentation code.
   They are only kept accessible for the purpose of config file analysis.
 *)
 let proxyNames = ref []
@@ -34,34 +34,34 @@ let readConfig : string -> unit = fun name ->
   if not !configDone && name <> "" then
   begin
     configDone := true;
-	
+
 	  let curList : string list ref ref = ref proxyNames in
-	      
+
 	  let f = open_in name in
-	
+
 	  let chooseList : string -> unit = fun s ->
 	    curList := match s with
 	    | "==== Functions" -> proxyNames
 	    | "==== Types"     -> typeNames
 	    | "==== Blacklist" -> blacklist
 	    | "==== Boring"    -> boringNames
-      | "==== Files"     -> fileNames
+            | "==== Files"     -> fileNames
 	    | ""               -> !curList
 	    | _ -> fail ("readConfig: unexpected section in config file :" ^ s)
 	  in
-	  
+
 	  let rec read : unit -> unit = fun () ->
 	    let s = trim (input_line f) in
 	    if s = ""      then read () else
 	    if s.[0] = '/' then read () else
-	    if s.[0] = '=' then begin chooseList s; read () end 
+	    if s.[0] = '=' then begin chooseList s; read () end
 	    else
 	    begin
 	      !curList := s :: !(!curList);
 	      read ()
 	    end
 	  in
-	  
+
 	  try read () with End_of_file -> ()
   end
 
@@ -78,86 +78,86 @@ let rec stripPtr : typ -> typ = function
 
 class markVisitorClass = object
   inherit nopCilVisitor
- 
-  method vvrbl : varinfo -> varinfo visitAction = function 
-    | v when v.vglob ->
-        begin
-        match v.vtype with
-          | TFun (ret, args, _, _) ->
+
+  method vvrbl : varinfo -> varinfo visitAction = function
+  | v when v.vglob ->
+    begin
+      match v.vtype with
+      | TFun (ret, args, _, _) ->
             (* print_endline ("considering function " ^ v.vname); *)
-          
-            let funTypes = map stripPtr (ret :: (map snd3 (argsToList args))) in
-          
-            if (mem v.vname !proxyNames) ||
-               ((exists (flip mem !typeNames) (map typeName funTypes)) && not (isProxy v) && not (mem v.vname !blacklist)) then
-                    markNeedsProxy v;
-              
-          | _ -> ()
-        end;
-	
-        if needsProxy v || mem v.vname !boringNames then
-          markOpaque v;
 
-        addRef v;
+        let funTypes = map stripPtr (ret :: (map snd3 (argsToList args))) in
 
-        addChild !currentGlobal v;
-    	
-        SkipChildren
-      
-    | _ -> SkipChildren
+        if (mem v.vname !proxyNames)
+          || ((exists (mem ~set:(!typeNames)) (map typeName funTypes))
+              && not (isProxy v)
+              && not (mem v.vname ~set:!blacklist))
+        then markNeedsProxy v;
+
+      | _ -> ()
+    end;
+
+    if needsProxy v || mem v.vname !boringNames then
+      markOpaque v;
+
+    addRef v;
+
+    addChild !currentGlobal v;
+
+    SkipChildren
+
+  | _ -> SkipChildren
 
   method vinst(i) =
-    
+
     (* ignore (Pretty.printf "marking instruction %a\n" (printInstr plainCilPrinter) i); *)
     match i with
-      | Call (_, Lval (Var f, _), [_; CastE (_, Const (CStr s))], _) when f.vname = "dlsym" ->
-            
-        let v = makeVarinfo true s (TFun (TVoid [], None, false, [])) in
-        addRef v;
-        addChild !currentGlobal v;
-        
-        SkipChildren
+    | Call (_, Lval (Var f, _), [_; CastE (_, Const (CStr s))], _) when f.vname = "dlsym" ->
 
-      | _ -> DoChildren
+      let v = makeVarinfo true s (TFun (TVoid [], None, false, [])) in
+      addRef v;
+      addChild !currentGlobal v;
+
+      SkipChildren
+
+    | _ -> DoChildren
 
   method vglob : global -> global list visitAction = function
-    | GVar (v, _, loc) ->
-       
-      addDef v loc; 
-      if mem v.vname !boringNames then
-        markOpaque v;
-        
-      DoChildren
+  | GVar (v, _, loc) ->
 
-    | GFun (f, loc) -> 
+    addDef v loc;
+    if mem v.vname !boringNames then
+      markOpaque v;
+
+    DoChildren
+
+  | GFun (f, loc) ->
       (* addChild g f.svar; (* Add a self-reference. Why are we doing this? *) *)
-      addDef f.svar loc; 
-      
-      if needsProxy f.svar || mem f.svar.vname !boringNames then
-        markOpaque f.svar;
+    addDef f.svar loc;
 
-      if isProxy f.svar then markIsProxy f.svar;
-                  
-      DoChildren
-   
-    | _ -> DoChildren
+    if needsProxy f.svar || mem f.svar.vname !boringNames then
+      markOpaque f.svar;
+
+    if isProxy f.svar then markIsProxy f.svar;
+
+    DoChildren
+
+  | _ -> DoChildren
 
 end
 
 (**
-    Assumes that setSrcPath has been called. 
+   Assumes that setSrcPath has been called.
 *)
 let shouldSkip: file -> bool = fun f ->
   readConfig !config;
-  print_endline !srcPath; 
   not (List.mem !srcPath !fileNames)
- 
 
 let markGlobals : file -> unit = fun f ->
   if not !markingDone then
-  begin
-    markingDone := true;
-    readConfig !config;
-    visitCilFile (new markVisitorClass) f
-  end
+    begin
+      markingDone := true;
+      readConfig !config;
+      visitCilFile (new markVisitorClass) f
+    end
 

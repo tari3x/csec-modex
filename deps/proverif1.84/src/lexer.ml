@@ -183,7 +183,7 @@ let __ocaml_lex_tables = {
 }
 
 let rec token lexbuf =
-  __ocaml_lex_token_rec lexbuf 0
+    __ocaml_lex_token_rec lexbuf 0
 and __ocaml_lex_token_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
@@ -313,7 +313,7 @@ and __ocaml_lex_token_rec lexbuf __ocaml_lex_state =
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_token_rec lexbuf __ocaml_lex_state
 
 and comment lexbuf =
-  __ocaml_lex_comment_rec lexbuf 29
+    __ocaml_lex_comment_rec lexbuf 29
 and __ocaml_lex_comment_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->

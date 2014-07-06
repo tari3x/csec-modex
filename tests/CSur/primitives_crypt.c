@@ -1,6 +1,6 @@
 #include <openssl/bn.h>
 #include <stdlib.h>
-#include <string.h>  
+#include <string.h>
 
 #include "needham_type.h"
 #include "primitives_crypt.h"
@@ -83,7 +83,7 @@ int printf_keys(struct nskey_s * nskey)
   printf("\npriv = ");
   BN_print_fp(stdout,nskey -> priv_exp);
   printf("\n");
-  /* 
+  /*
      printf("\n %s %s %s\n", BN_bn2hex(nskey -> pub_exp) , BN_bn2hex(nskey -> pub_mod) , BN_bn2hex(nskey -> priv_exp));
   */
   return(0);
@@ -95,12 +95,12 @@ int key_of_string (char *kpub, char *kpriv, char *kmod, struct nskey_s *nskey)
 
   nskey -> pub_exp  = BN_new();
   nskey -> pub_mod  = BN_new();
-  nskey -> priv_exp = BN_new(); 
+  nskey -> priv_exp = BN_new();
 
-  BN_hex2bn(&(nskey -> pub_exp), kpub);  
+  BN_hex2bn(&(nskey -> pub_exp), kpub);
   BN_hex2bn(&(nskey -> priv_exp), kpriv);
   BN_hex2bn(&(nskey -> pub_mod) , kmod);
-  
+
   return(0);
 
 }
@@ -139,7 +139,7 @@ int my_cypher(msg_t *msg, struct nskey_s *pub_key, BIGNUM *cipher)
 
   plain = BN_bin2bn((unsigned char *) msg, msg_len, NULL);
 
-  /* 
+  /*
      printf("\nMSG plain  = ");
      BN_print_fp(stdout,plain);
   */
@@ -193,6 +193,13 @@ int my_decypher(BIGNUM *cipher, struct nskey_s *priv_key, msg_t *plain)
   */
   msg_len = sizeof (msg_t) ;
 
+  // BUGFIX
+  if (BN_num_bytes(bn_plain) < msg_len) {
+    printf("bn_plain too short");
+    exit(1);
+  }
+  // END BUGFIX
+
   /*
   switch (((msg_t) (temp)).msg_type)
     {
@@ -212,7 +219,7 @@ int my_decypher(BIGNUM *cipher, struct nskey_s *priv_key, msg_t *plain)
   */
 
   memcpy(plain, temp, msg_len);
-  
+
   return (0);
 }
 
@@ -249,7 +256,7 @@ int print_nonce(unsigned char nonce[16])
 {
   int i;
   for (i=0;i<SIZENONCE;i++) { printf ("%d ", nonce[i]); };
-  return(0);  
+  return(0);
 }
 
 
@@ -279,11 +286,11 @@ int main()
   printf("\n");
 
   my_decypher(cipher, nskey, &de_my_message);
-  
-  
+
+
   printf("\n Le message d�chiffr�\n");
   printf_message(&de_my_message);
-  
+
   return(0);
 }
 */
