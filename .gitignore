@@ -63,11 +63,9 @@ deps/cil-1.7.3/stamp-h
 
 deps/ocamlyices/.travis-ocaml.sh
 deps/ocamlyices/.travis.yml
-deps/ocamlyices/ml.sed
-deps/ocamlyices/mli.sed
-deps/ocamlyices/test/
 
 mk/pod2html.mk
+mk/common.mk
 
 src/bintrace
 src/symtrace/cvtrace
