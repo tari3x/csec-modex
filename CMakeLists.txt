@@ -29,7 +29,8 @@ set(CMAKE_C_COMPILER ${CILLY})
 
 ######## test CIL as compiler ###########################
 
-project (csec-modex)
+# disable compiler check
+project (csec-modex NONE)
 
 # set(CMAKE_VERBOSE_MAKEFILE true)
 

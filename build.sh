@@ -10,8 +10,8 @@ set -x
     ./configure EXTRAFEATURES="fundefs funreplace crestInstrument"
   fi
 )
-
 ( cd deps/ocamlyices && ./configure --enable-custom && make )
+cmake . && make
 ( cd src/CIL && make )
 ( cd src/symtrace && make )
 ( 
@@ -20,7 +20,6 @@ set -x
     ./build 
   fi
 )
-cmake . && make
 # forgetting to cmake . in proxies results in vile errors: cilly gets passed an incorrect --root 
 # which breaks things in very confusing ways.
 ( cd proxies && cmake . && make )
