@@ -12,9 +12,9 @@ of the metering protocol, due to licensing restrictions.
 Download
 ========
 
-    git clone --recursive git://github.com/tari3x/csec-modex.git
+    git clone git://github.com/tari3x/csec-modex.git
 
-Do not use the zip file provided by github, as it breaks symbolic links in the openssl source.
+Do not use the zip file provided by github, as it breaks symbolic links.
 	
 Dependencies
 ============
@@ -42,38 +42,13 @@ How to use
 ==========
 
 The distribution relies on a unix environment and cmake for building. 
-To build all the tools and run the verification experiments install cmake and run
+To build all the bundled dependencies and tools install cmake and run
 
-    cmake .
-    make
+    ./build.sh
 
-The first run of make will likely be cluttered with output.
-When running make the second time you should see verification output of the kind:
+Now you can go into each subdirectory of the tests/ directory and run verification via
 
-    $ make
-    [  0%] Generating src/symtrace/imltrace.exe, src/symtrace/pitrace.exe
-    [ 24%] Built target CSur
-    [ 24%] Generating src/symtrace/imltrace.exe, src/symtrace/pitrace.exe
-    RESULT ev:endB() ==> ev:notA() is false.
-    RESULT ev:endB() ==> ev:beginA() | ev:notA() is true.
-    [ 48%] Built target NSL
-    [ 48%] Generating src/symtrace/imltrace.exe, src/symtrace/pitrace.exe
-    RESULT not ev:client_accept(x_31,y_32) is false.
-    RESULT ev:server_reply(x_310,y_311) ==> ev:client_begin(x_310) is true.
-    RESULT ev:client_accept(x_434,y_435) ==> ev:server_reply(x_434,y_435) is true.
-    [ 73%] Built target RPC
-    [ 73%] Generating src/symtrace/imltrace.exe, src/symtrace/pitrace.exe
-    RESULT not ev:server_recv(x_11) is false.
-    RESULT ev:server_recv(x_121) ==> ev:client_send(x_121) is true.
-    [100%] Built target simple_hash
-	
-To check that the IML and the pi calculus output correspond to the good output run 
-
-    make check
-
-This might fail, because the reference output was produced on a 64 bit machine and 
-this influences the format of the network messages. In future this shall be fixed by
-transition to an architecture-independent implementation.
+    make -f Makefile.csec
 
 Contact
 =======
