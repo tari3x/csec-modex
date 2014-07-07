@@ -1,7 +1,7 @@
 (*
-    Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
-    This file is distributed as part of csec-tools under a BSD license.
-    See LICENSE file for copyright notice.
+  Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
+  This file is distributed as part of csec-tools under a BSD license.
+  See LICENSE file for copyright notice.
 *)
 
 
@@ -20,8 +20,8 @@ let markingDone = ref false
 let configDone = ref false
 
 (**
-  The following lists should not be used by any instrumentation code.
-  They are only kept accessible for the purpose of config file analysis.
+   The following lists should not be used by any instrumentation code.
+   They are only kept accessible for the purpose of config file analysis.
 *)
 let proxyNames = ref []
 let typeNames = ref []
@@ -32,38 +32,38 @@ let fileNames = ref []
 
 let readConfig : string -> unit = fun name ->
   if not !configDone && name <> "" then
-  begin
-    configDone := true;
+    begin
+      configDone := true;
 
-	  let curList : string list ref ref = ref proxyNames in
+      let curList : string list ref ref = ref proxyNames in
 
-	  let f = open_in name in
+      let f = open_in name in
 
-	  let chooseList : string -> unit = fun s ->
-	    curList := match s with
-	    | "==== Functions" -> proxyNames
-	    | "==== Types"     -> typeNames
-	    | "==== Blacklist" -> blacklist
-	    | "==== Boring"    -> boringNames
-            | "==== Files"     -> fileNames
-	    | ""               -> !curList
-	    | _ -> fail ("readConfig: unexpected section in config file :" ^ s)
-	  in
+      let chooseList : string -> unit = fun s ->
+	curList := match s with
+	| "==== Functions" -> proxyNames
+	| "==== Types"     -> typeNames
+	| "==== Blacklist" -> blacklist
+	| "==== Boring"    -> boringNames
+        | "==== Files"     -> fileNames
+	| ""               -> !curList
+	| _ -> fail ("readConfig: unexpected section in config file :" ^ s)
+      in
 
-	  let rec read : unit -> unit = fun () ->
-	    let s = trim (input_line f) in
-	    if s = ""      then read () else
-	    if s.[0] = '/' then read () else
+      let rec read : unit -> unit = fun () ->
+	let s = trim (input_line f) in
+	if s = ""      then read () else
+	  if s.[0] = '/' then read () else
 	    if s.[0] = '=' then begin chooseList s; read () end
 	    else
-	    begin
-	      !curList := s :: !(!curList);
-	      read ()
-	    end
-	  in
+	      begin
+	        !curList := s :: !(!curList);
+	        read ()
+	      end
+      in
 
-	  try read () with End_of_file -> ()
-  end
+      try read () with End_of_file -> ()
+    end
 
 (* take a look if the API already provides something *)
 let typeName : typ -> string = function
@@ -84,7 +84,7 @@ class markVisitorClass = object
     begin
       match v.vtype with
       | TFun (ret, args, _, _) ->
-            (* print_endline ("considering function " ^ v.vname); *)
+        (* print_endline ("considering function " ^ v.vname); *)
 
         let funTypes = map stripPtr (ret :: (map snd3 (argsToList args))) in
 
@@ -132,7 +132,7 @@ class markVisitorClass = object
     DoChildren
 
   | GFun (f, loc) ->
-      (* addChild g f.svar; (* Add a self-reference. Why are we doing this? *) *)
+    (* addChild g f.svar; (* Add a self-reference. Why are we doing this? *) *)
     addDef f.svar loc;
 
     if needsProxy f.svar || mem f.svar.vname !boringNames then

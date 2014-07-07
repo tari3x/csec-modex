@@ -9,6 +9,8 @@ The distribution includes the source code of the protocols analysed in the paper
 simple mac, simple xor, RPC, RPC-enc, and NSL. Unfortunately, we are not able to distribute the source code 
 of the metering protocol, due to licensing restrictions.
 
+The ProVerif verification tool is being rewritten and is not currently functional.
+
 Download
 ========
 

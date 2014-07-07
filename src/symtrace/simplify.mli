@@ -1,3 +1,9 @@
+(*
+  Copyright (c) Mihhail Aizatulin (avatar@hot.ee).
+  This file is distributed as part of csec-tools under a BSD license.
+  See LICENSE file for copyright notice.
+*)
+
 open Iml
 open Iml.Exp
 open Iml.Sym
