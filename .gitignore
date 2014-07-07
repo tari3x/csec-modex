@@ -92,6 +92,8 @@ tests/CSur/derived
 tests/CSur/observations.txt
 tests/CSur/unnecessary
 
+tests/NSL-real
+
 tests/NSL/Makefile
 tests/NSL/client
 tests/NSL/manual/
