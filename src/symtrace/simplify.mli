@@ -5,8 +5,8 @@
 *)
 
 open Iml
-open Iml.Exp
-open Iml.Sym
+open Exp
+open Sym
 
 val simplify : 'a Exp.t -> 'a Exp.t
 

@@ -4,10 +4,10 @@
     See LICENSE file for copyright notice.
 *)
 
+open Type
+open Sym
+open Exp
 open Iml
-open Iml.Type
-open Iml.Sym
-open Iml.Exp
 
 type answer = Yes | No | Maybe
 
@@ -21,8 +21,6 @@ type pbool = bool
 (*************************************************)
 
 val add_fact : fact -> unit
-
-val reset_facts : unit -> unit
 
 val is_true : fact -> pbool
 
@@ -76,3 +74,20 @@ val warn_on_failed_conditions : bool -> unit
 
 val test : unit -> unit
 
+(*************************************************)
+(** {1 Tracing} *)
+(*************************************************)
+
+type trace_step =
+  { trace : 'a 'b. root:'a exp -> left:'b exp -> right:'b exp -> conds:fact list -> unit }
+
+val enable_tracing : trace_step -> unit
+val disable_tracing : unit -> unit
+
+(*************************************************)
+(** {1 Reset} *)
+(*************************************************)
+
+val reset_facts : unit -> unit
+
+val reset_cache : unit -> unit

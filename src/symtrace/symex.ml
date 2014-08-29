@@ -6,13 +6,13 @@
 
 open Common
 
+open Type
+open Sym
+open Exp
 open Iml
-open Iml.Type
-open Iml.Sym
-open Iml.Exp
-open Iml.Stmt
+open Stmt
 
-module E = Iml.Exp
+module E = Exp
 module S = Solver
 
 module Base_map = E.Base_map
@@ -883,9 +883,10 @@ let rec execute = function
     iml := !iml @ [Stmt.Out [e]]
 
   | Branch dir ->
+    (* CR: make sure to check explicitly that e is defined, as per thesis. *)
     let e = take_stack_bool () |> Simplify.full_simplify in
     DEBUG "branch: %s" (E.dump e);
-    if not (E.is_concrete e)
+    if not (E.is_constant e)
     then begin
       DEBUG "branch is not concrete";
       let e = if dir then e else E.negation e in

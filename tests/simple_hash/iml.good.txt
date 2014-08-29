@@ -35,7 +35,7 @@ ifaux len(var2) = 8 then
 let BIO_ctrl_result1 = var2 (* named BIO_ctrl_result1 *) in
 (* socket_connect[31, // net.c:50] *)
 ifaux ¬((BIO_ctrl_result1)_[s,8] <= 0) then 
-let msg2 = (((8)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (len(payload))^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (20)^[u,8] (* named msg2 *) in
+let msg2 = (((8)^[u,8] + (1)^[u,8]) + (len(payload))^[u,8]) + (20)^[u,8] (* named msg2 *) in
 out(c, msg2);
 let msg3 = (len(payload))^[u,8]|(1)^[u,1]|payload|hash1 (* named msg3 *) in
 out(c, msg3);
@@ -77,14 +77,14 @@ in(c, var7);
 ifaux len(var7) = 4 then 
 let BIO_free_result1 = var7 (* named BIO_free_result1 *) in
 in(c, var8);
-ifaux len(var8) = ((8)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var8) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg4 = var8 (* named msg4 *) in
 (* server[6, // server.c:28] *)
 ifaux ¬((msg4)_[u,8] < 8) then 
 (* server[6, // server.c:29] *)
 ifaux ¬((msg4)_[u,8] > (8 + 1 + 1000 + 20)) then 
 in(c, var9);
-ifaux len(var9) = (msg4 (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var9) = (msg4 - (0)^[u,8])_[u,8] then 
 let msg5 = var9 (* named msg5 *) in
 (* server[6, // server.c:47] *)
 ifaux ¬((msg5{0, 8})_[u,8] > 1000) then 

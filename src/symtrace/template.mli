@@ -4,9 +4,11 @@
   See LICENSE file for copyright notice.
 *)
 
+open Common
+
 open Iml
-open Iml.Sym
-open Iml.Exp
+open Sym
+open Exp
 open Transform
 
 type t

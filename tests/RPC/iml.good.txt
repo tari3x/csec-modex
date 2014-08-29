@@ -41,7 +41,7 @@ let key1 = keyAB (* named key1 *) in
 let hash1 = HMAC("sha1", msg1, key1) (* named hash1 *) in
 (* assume_len[155, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(hash1) = 20 in
-let msg2 = (((len(request))^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (20)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (8)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8] (* named msg2 *) in
+let msg2 = (((len(request))^[u,8] + (20)^[u,8]) + (8)^[u,8]) + (1)^[u,8] (* named msg2 *) in
 out(c, msg2);
 let msg3 = (len(request))^[u,8]|"|"|request|hash1 (* named msg3 *) in
 out(c, msg3);
@@ -113,14 +113,14 @@ new nondet35: nondet;
 new nondet36: nondet;
 new nondet37: nondet;
 in(c, var3);
-ifaux len(var3) = ((8)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var3) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg4 = var3 (* named msg4 *) in
 (* recv[190, // RPC_net.c:140] *)
 ifaux ¬((msg4)_[u,8] > 2147483647) then 
 (* recv[190, // RPC_net.c:153] *)
 ifaux 0 < (msg4)_[u,8] then 
 in(c, var4);
-ifaux len(var4) = (msg4 (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var4) = (msg4 - (0)^[u,8])_[u,8] then 
 let msg5 = var4 (* named msg5 *) in
 (* iconcat[201, // ProgrammingInterface.c:184] *)
 ifaux ¬((msg4)_[u,8] < (8 + 1)) then 
@@ -304,14 +304,14 @@ in(c, var9);
 ifaux len(var9) = 4 then 
 let BIO_free_result1 = var9 (* named BIO_free_result1 *) in
 in(c, var10);
-ifaux len(var10) = ((8)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var10) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg7 = var10 (* named msg7 *) in
 (* recv[95, // RPC_net.c:140] *)
 ifaux ¬((msg7)_[u,8] > 2147483647) then 
 (* recv[95, // RPC_net.c:153] *)
 ifaux 0 < (msg7)_[u,8] then 
 in(c, var11);
-ifaux len(var11) = (msg7 (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var11) = (msg7 - (0)^[u,8])_[u,8] then 
 let msg8 = var11 (* named msg8 *) in
 (* iconcat[106, // ProgrammingInterface.c:184] *)
 ifaux ¬((msg7)_[u,8] < (8 + 1)) then 
@@ -417,7 +417,7 @@ let key4 = keyAB (* named key4 *) in
 let hash4 = HMAC("sha1", msg10, key4) (* named hash4 *) in
 (* assume_len[374, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(hash4) = 20 in
-let msg11 = (((len(response))^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (20)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (8)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (1)^[u,8] (* named msg11 *) in
+let msg11 = (((len(response))^[u,8] + (20)^[u,8]) + (8)^[u,8]) + (1)^[u,8] (* named msg11 *) in
 out(c, msg11);
 let msg12 = (len(response))^[u,8]|"|"|response|hash4 (* named msg12 *) in
 out(c, msg12);

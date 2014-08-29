@@ -65,6 +65,8 @@ module List = struct
     | _ :: xs -> find_first ~f xs
     | [] -> None
 
+  let find_exn = find
+
   let remove : 'a -> 'a list -> 'a list = fun a -> filter_out ~f:(fun b -> a = b)
 
   let rec remove_first ~f = function
@@ -81,14 +83,21 @@ module List = struct
     if i = 0 then []
     else a :: replicate (i - 1) a
 
-  let dedup : 'a list -> 'a list = fun l ->
-    let rec dedup = fun ls ->
-      function
-        | (x::xs) when List.mem x ls -> dedup ls xs
-        | (x::xs) -> x :: dedup (x::ls) xs
-        | [] -> []
+  let mem ?(equal = (=)) x ~set =
+    let rec mem = function
+      | x' :: _ when equal x x' -> true
+      | _ :: xs -> mem xs
+      | [] -> false
     in
-    dedup [] l
+    mem set
+
+  let dedup ?equal xs =
+    let rec dedup = function
+      | (x::xs) when mem ?equal x ~set:xs -> dedup xs
+      | (x::xs) -> x :: dedup xs
+      | [] -> []
+    in
+    dedup xs
 
   let rec set_element: int -> 'a -> 'a list -> 'a list = fun i x' -> function
     | x :: xs -> if i > 0 then x :: set_element (i - 1) x' xs else x' :: xs
@@ -145,7 +154,9 @@ module List = struct
      - x is not greater than any of the xs
      - xs is topologically sorted.
 
-    Will hang if there is a cycle.
+     Will hang if there is a cycle.
+
+     Not stable.
   *)
   let rec topsort gt = function
     | [] -> []
@@ -165,7 +176,6 @@ module List = struct
           descendant of itself.  By induction sort(xs @ [x] @ xs') is topologically
           sorted. *)
        | xs, xs' -> topsort gt (xs @ [x] @ xs')
-
 
   let rec cross_product f xs ys =
     match xs with
@@ -296,6 +306,13 @@ let fail a =
 (** {1 Misc} *)
 (*************************************************)
 
+type bitstring = char list
+
+type intval = int64
+type ptr    = int64
+
+type id = int
+
 let non f x = not (f x)
 
 let comp f g x = f (g x)
@@ -353,7 +370,27 @@ module Option = struct
   let iter ~f = function
     | None -> ()
     | Some x -> f x
+
+  let is_some = function
+    | None -> false
+    | Some _ -> true
 end
+
+module Result = struct
+  module T = struct
+    type ('ok, 'error) t =
+    | Ok of 'ok
+    | Error of 'error
+  end
+
+  include T
+
+  let try_with f =
+    try Ok (f ()) with
+    | e -> Error e
+end
+
+include Result.T
 
 module Fn = struct
   let id x = x
@@ -440,10 +477,10 @@ let with_debug label f x =
 
 let msg tag a =
   let warn s =
-    if !warning_location <> "" then
-      prerr_endline (decorate_debug (tag ^ s ^ " (" ^ !warning_location ^ ")"))
-    else
-      prerr_endline (decorate_debug (tag ^ s))
+    if !warning_location <> ""
+    then prerr_endline (decorate_debug (tag ^ s ^ " (" ^ !warning_location ^ ")"))
+    else prerr_endline (decorate_debug (tag ^ s));
+    flush stderr
   in
   Printf.ksprintf warn a
 
@@ -571,6 +608,13 @@ module Custom_map (M : Custom_key): (Custom_map with type key = M.t) = struct
     values
 end
 
+module Ptr = Int64
+module Ptr_map = Custom_map (struct include Ptr let to_string = to_string end)
+module Int_map = Custom_map (struct type t = int
+                                    let compare = Pervasives.compare
+                                    let to_string = string_of_int end)
+module Str_map = Custom_map (struct include String let to_string s = s end)
+
 (*************************************************)
 (** {1 GADT} *)
 (*************************************************)
@@ -581,7 +625,7 @@ end
 
 module type Kind = sig
   type 'a t
-  val equal_kind : 'a t -> 'b t -> ('a, 'b) Type_equal.t option
+  val equal : 'a t -> 'b t -> ('a, 'b) Type_equal.t option
 end
 
 module type GADT = sig
@@ -642,27 +686,27 @@ end = struct
     match maybe_find (Key sym) t with
     | None -> None
     | Some (Value value) ->
-      match Kind.equal_kind (Value.kind value) (Key.kind sym) with
+      match Kind.equal (Value.kind value) (Key.kind sym) with
       | None -> assert false
       | Some Type_equal.Equal -> Some value
 
   let find (type a) (sym : a Key.t) t : a Value.t =
     let (Value value) =  find (Key sym) t in
-    match Kind.equal_kind (Value.kind value) (Key.kind sym) with
+    match Kind.equal (Value.kind value) (Key.kind sym) with
     | None -> assert false
     | Some Type_equal.Equal -> value
 
   let map_bindings t {f} =
     to_list t
     |> List.map ~f:(fun (Key sym, Value value) ->
-      match Kind.equal_kind (Value.kind value) (Key.kind sym) with
+      match Kind.equal (Value.kind value) (Key.kind sym) with
       | None -> assert false
       | Some Type_equal.Equal -> f sym value)
 
   let iter t {f} =
     to_list t
     |> List.iter ~f:(fun (Key sym, Value value) ->
-      match Kind.equal_kind (Value.kind value) (Key.kind sym) with
+      match Kind.equal (Value.kind value) (Key.kind sym) with
       | None -> assert false
       | Some Type_equal.Equal -> f sym value)
 
@@ -678,7 +722,7 @@ module type Any = sig
   type 'a t
   type any = Any : 'a t -> any
 
-  val equal_kind : 'a t -> 'b t -> ('a, 'b) Type_equal.t option
+  val equal : 'a t -> 'b t -> ('a, 'b) Type_equal.t option
 end
 
 module Any_list (Any : Any) = struct
@@ -692,7 +736,7 @@ module Any_list (Any : Any) = struct
       match xs with
       | [] -> Some (Any_list (x :: (List.rev acc)))
       | Any x' :: xs ->
-        match Any.equal_kind x x' with
+        match Any.equal x x' with
         | None -> None
         | Some Type_equal.Equal -> any_list x (x' :: acc) xs
     in

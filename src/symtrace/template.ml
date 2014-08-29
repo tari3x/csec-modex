@@ -6,9 +6,8 @@
 
 open Common
 open Transform
-open Iml
-open Iml.Sym
-open Iml.Exp
+open Sym
+open Exp
 
 module CV = Cryptoverif
 

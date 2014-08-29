@@ -8,16 +8,15 @@ open Common
 
 module Core_map = Map
 
-open Iml
-open Iml.Type
-open Iml.Sym
-open Iml.Sym.Op
-open Iml.Sym.Arith
-open Iml.Sym.Logical
-open Iml.Sym.Cmp
-open Iml.Exp
+open Type
+open Sym
+open Sym.Op
+open Sym.Arith
+open Sym.Logical
+open Sym.Cmp
+open Exp
 
-module E = Iml.Exp
+module E = Exp
 
 (*************************************************)
 (** {1 Types} *)
@@ -158,6 +157,29 @@ let debug_expr s e =
   end;
 
 (*************************************************)
+(** {1 Tracing} *)
+(*************************************************)
+
+type trace_step =
+  { trace : 'a 'b. root:'a exp -> left:'b exp -> right:'b exp -> conds:fact list -> unit }
+
+let dummy_trace = { trace = fun ~root:_ ~left:_ ~right:_ ~conds:_ -> () }
+
+let trace_ref = ref dummy_trace
+let tracing_mode = ref false
+
+let enable_tracing trace =
+  tracing_mode := true;
+  trace_ref := trace
+
+let disable_tracing () =
+  tracing_mode := false;
+  trace_ref := dummy_trace
+
+let trace_step ~root ~left ~right ~conds =
+  !trace_ref.trace ~root ~left ~right ~conds
+
+(*************************************************)
 (** {1 Checking facts} *)
 (*************************************************)
 
@@ -179,11 +201,6 @@ let rec rewrite_ptr : type a. a Exp.t -> a Exp.t = fun e ->
   | Ptr (pb, eo) ->
     Var ("ptr_" ^ E.to_string (Ptr (pb, List.filter ~f:not_zero eo)), Kind.Bitstring)
   | e -> E.descend {E.descend = rewrite_ptr} e
-
-let rec split_and (e : fact) =
-  match e with
-  | Sym (Logical And _, es) -> List.concat_map ~f:split_and es
-  | e -> [e]
 
 module Mode = struct
   type t = [ `Assert | `Query | `Simplify_step | `Simplify ]
@@ -219,29 +236,39 @@ let rewrite
     (e : a exp)
     : a Rewrite_result.t =
 
+  (* Root is only there for tracing purposes. *)
   let rec rewrite
-      : type a.
+      : type a b.
         mode : Mode.t
-        -> ?assume:fact list
-        -> a exp -> a Rewrite_result.t = fun ~mode ?(assume = []) e ->
+     -> ?assume:fact list
+     -> root:b exp
+     -> a exp
+     -> a Rewrite_result.t
+          = fun ~mode ?(assume = []) ~root e ->
     match Cache.maybe_find (mode, e) !rewrite_cache with
     | Some result -> result
     | None ->
       (* We can't really push assume down into rewriting because then caching
          would be unsound. *)
-      let result = do_rewrite ~mode e in
-      rewrite_cache := Cache.add (mode, e) result !rewrite_cache;
+      let result = do_rewrite ~mode ~root e in
+      if not !tracing_mode
+      then rewrite_cache := Cache.add (mode, e) result !rewrite_cache;
       let e, conds = result in
-      let assume = List.concat_map ~f:split_and assume in
+      let assume = List.concat_map ~f:E.flatten_conj assume in
       let conds = List.diff conds assume in
       e, conds
 
   and descend_rewrite
-    : type a. mode : Mode.t -> ?assume:fact list -> a exp -> a Rewrite_result.t
-    = fun ~mode ?(assume = []) e ->
+    : type a b.
+         mode : Mode.t
+      -> ?assume: fact list
+      -> root: b exp
+      -> a exp
+      -> a Rewrite_result.t
+    = fun ~mode ?(assume = []) ~root e ->
     let all_conds = ref [] in
     let rewrite : type a. a exp -> a exp = fun e ->
-      let e, conds = rewrite ~mode ~assume e in
+      let e, conds = rewrite ~mode ~assume ~root e in
       all_conds := conds @ !all_conds;
       e
     in
@@ -249,13 +276,19 @@ let rewrite
     e, !all_conds
 
   (* Application of the chaining rule (see thesis) *)
-  and rewrite_conjunction ~mode es =
+  and rewrite_conjunction
+      : type b.
+        mode : Mode.t
+     -> root: b exp
+     -> fact list
+     -> fact list * fact list
+      = fun ~mode ~root es ->
     let rec loop ~result_es ~result_conds = function
-      | [] -> List.dedup result_es, (List.dedup result_conds)
+      | [] -> List.dedup result_es, List.dedup result_conds
       | e :: es ->
-        let e', result_conds' = rewrite ~mode e in
-        let result_es' = split_and e' in
-        (* CR use sets *)
+        let e', result_conds' = rewrite ~mode ~root e in
+        let result_es' = E.flatten_conj e' in
+        (* CR: use sets *)
         let result_conds' = List.diff result_conds' result_es in
         let result_es = result_es' @ result_es in
         let result_conds = result_conds' @ result_conds in
@@ -267,12 +300,17 @@ let rewrite
      syntactic construct should be in one place. Another option would be to
      split this function into several and get rid of the mode argument. *)
   and do_rewrite
-      : type a. mode : Mode.t -> a exp -> a Rewrite_result.t = fun ~mode e ->
+      : type a b.
+        mode : Mode.t
+     -> root:b exp
+     -> a exp
+     -> a Rewrite_result.t
+     = fun ~mode ~root e ->
     let rewritten_conds = ref Fact_set.empty in
     let raw_conds = ref Fact_set.empty in
     let queued_conds = Queue.create () in
     let add_conditions ?(already_rewritten = false) conds =
-      let conds = List.concat_map conds ~f:split_and in
+      let conds = List.concat_map conds ~f:E.flatten_conj in
       let conds = Fact_set.of_list conds in
       if already_rewritten
       then rewritten_conds := Fact_set.union !rewritten_conds conds
@@ -282,19 +320,26 @@ let rewrite
         List.iter (Fact_set.to_list conds) ~f:(fun cond -> Queue.add cond queued_conds)
       end
     in
-    let e_top = e in
-    let rec collect : type a. mode : Mode.t -> a exp -> a exp = fun ~mode e ->
-      let collect_even_if_simplifying e = collect ~mode e in
+    let e_lhs = e in
+    let rec collect : type a b. mode : Mode.t -> root:b exp -> a exp -> a exp = fun ~mode ~root e ->
+      let collect_even_if_simplifying e = collect ~mode ~root e in
       let collect : type a. ?mode : Mode.t -> a exp -> a exp = fun ?(mode = mode) e ->
         match mode with
-        | `Query | `Assert | `Simplify -> collect ~mode e
+        | `Query | `Assert | `Simplify -> collect ~mode ~root e
         | `Simplify_step -> Fn.id e
       in
+      let e_top = e in
+      let step ~(right : a exp) ~conds =
+        trace_step ~root ~left:(e_top : a exp) ~right:(right : a exp) ~conds;
+        add_conditions conds;
+      in
       let make_opaque e =
-        begin match mode with
+        match mode with
         | `Simplify | `Simplify_step -> e
-        | `Assert | `Query -> Sym (Opaque, [e])
-        end
+        | `Assert | `Query ->
+          let right = Sym (Opaque, [e]) in
+          step ~right ~conds:[];
+          right
       in
       let fail_already_rewritten e =
         fail "Rewriting an expression that is already rewritten: %s" (E.to_string e)
@@ -302,7 +347,6 @@ let rewrite
       let default e =
         E.descend {E.descend = collect} e
       in
-      let e_top = e in
       let (result : a exp) =
         match e with
         (*
@@ -311,31 +355,47 @@ let rewrite
         | Sym (Truth_of_bs,
                [Sym ((Op (Op_cmp cmp, ([Bs_int t1; Bs_int t2], _))), [e1; e2])]) ->
           let sym' = Int_cmp cmp in
-          add_conditions [is_defined e1; is_defined e2];
-          collect (Sym (sym', [Val (e1, t1); Val (e2, t2)]))
+          let e' = Sym (sym', [Val (e1, t1); Val (e2, t2)]) in
+          step ~right:e' ~conds:[];
+          collect e'
 
         | Sym (Int_cmp _, [e1; e2]) as e ->
-          let defined = [is_defined e1; is_defined e2] in
+          let defined =
+            if not !tracing_mode
+            then [is_defined e1; is_defined e2]
+            else [is_defined (E.unfold e1); is_defined (E.unfold e2)]
+          in
           (* The chaining rule only matters for assert. *)
           begin match mode with
           | `Assert ->
-            let defined, defined_conds = rewrite_conjunction ~mode defined in
-            let e, e_conds = descend_rewrite ~mode ~assume:defined e in
+            (* This is [rewrite_conjunction [defined; e]] with the additional twist that
+               we descend in e instead of starting from the top.  *)
+            trace_step
+              ~root
+              ~left:e_top
+              ~right:(E.conj (defined @ [e]))
+              ~conds:[];
+            let defined, defined_conds = rewrite_conjunction ~mode ~root defined in
+            let e, e_conds = descend_rewrite ~mode ~assume:defined ~root e in
             add_conditions ~already_rewritten:true (defined_conds @ e_conds);
             E.conj (defined @ [e])
           | `Simplify | `Simplify_step ->
-            E.descend {E.descend = collect} e
+            default e
           | `Query ->
-            (* For queries rewrite into a weaker form that allows us to give better
-               warnings.  (we get a warning if a side condition does not hold.) *)
-            add_conditions defined;
-            E.descend {E.descend = collect} e
+            (* It is not really necessary to add conditions here because we check that
+               every leaf integer subexpression is not bottom. Well, almost, we would also
+               need to check that integer variables are defined. I still keep this check
+               in place, just for extra safety. For tracing, however, I skip the
+               conditions for simplicity. *)
+            if not !tracing_mode then add_conditions defined;
+            default e
           end
 
         | Val ((Sym (Op (Op_arith op, _), [e1; e2])) as e, itype) ->
           let sym' = Int_op op in
           let e'= Sym (sym', [Val (e1, itype); Val (e2, itype)]) in
-          add_conditions (is_defined e :: Range.contains itype e');
+          let conds = is_defined e :: Range.contains itype e' in
+          step ~right:e' ~conds;
           collect e'
 
         | Val ((Sym (Op (Cast_to_int, ([Bs_int itype_from], Bs_int itype_to)), [e])) as cast_e, itype_to') ->
@@ -346,14 +406,16 @@ let rewrite
             if Range.subset itype_from itype_to then []
             else Range.contains itype_to e'
           in
-          add_conditions (is_defined cast_e :: range_cond);
+          let conds = is_defined cast_e :: range_cond in
+          step ~right:e' ~conds;
           collect e'
 
         | Val (BS (e, itype) as e_bs, itype') ->
           if itype <> itype'
           then fail "incompatible Val of BS: %s" (E.to_string e_top)
           else begin
-            add_conditions [is_defined e_bs];
+            let conds = [is_defined e_bs] in
+            step ~right:e ~conds;
             collect e
           end
 
@@ -364,12 +426,15 @@ let rewrite
           (* Not failing since in normal form we try to see if "msg" is equal to, say
              ((msg{4, 8})_[u,8])^[u,3] *)
           else begin
-            add_conditions [is_defined e_bs];
+            let conds = [is_defined e_bs] in
+            step ~right:e ~conds;
             collect e
           end
 
         | Char c ->
-          E.int (Char.code c)
+          let e' = E.int (Char.code c) in
+          step ~right:e' ~conds:[];
+          e'
 
         | Len e as e_top ->
           let unexpected e =
@@ -380,34 +445,42 @@ let rewrite
             | `Simplify | `Simplify_step ->
               e_top
             | `Assert | `Query ->
-              add_conditions [is_defined e];
-              Sym (Len_y, [collect e])
+              let e' = Sym (Len_y, [e]) in
+              step ~right:e' ~conds:[is_defined e];
+              default e'
           in
           begin match e with
           | BS (_, itype) as e_bs ->
-            add_conditions [is_defined e_bs];
-            collect (E.int (Int_type.width itype))
+            let e' = E.int (Int_type.width itype) in
+            step ~right:e' ~conds:[is_defined e_bs];
+            collect e'
 
           | Sym (BS_of_truth width, _) as e_bs ->
-            add_conditions [is_defined e_bs];
-            E.int width
+            let e' = E.int width in
+            step ~right:e' ~conds:[is_defined e_bs];
+            e'
 
           | Sym (Op (_, (_, Bs_int itype)), _) as e_bin ->
-            add_conditions [is_defined e_bin];
-            collect (E.int (Int_type.width itype))
+            let e' = E.int (Int_type.width itype) in
+            step ~right:e' ~conds:[is_defined e_bin];
+            collect e'
 
           | Sym (Op _, _) ->
             assert false
 
           | Concat es ->
-            collect (E.sum (List.map ~f:(fun e -> Len e) es))
+            let e' = E.sum (List.map ~f:(fun e -> Len e) es) in
+            step ~right:e' ~conds:[];
+            collect e'
 
           | Range (_, _, l) as e ->
-            add_conditions [is_defined e];
+            step ~right:l ~conds:[is_defined e];
             collect l
 
           | String b ->
-            E.int (List.length b)
+            let e' = E.int (List.length b) in
+            step ~right:e' ~conds:[];
+            e'
 
           (* This will become unnecessary once pointers are rewritten into vanilla
              expressions, as per thesis *)
@@ -443,22 +516,34 @@ let rewrite
           let default e =
             Sym (Defined, [collect e])
           in
+          let rewrite_to_true () =
+            step ~right:true_fact ~conds:[];
+            true_fact
+          in
           begin match e with
           (* Here and below we do not list defined() conditions because those are
              implied by the comparison operators *)
           | Range (e, p, l) ->
-            E.conj [ge (Len e) (E.sum [p; l]);
-                    ge p E.zero;
-                    ge l E.zero;] |> collect
+            let right =
+              E.conj [ge (Len e) (E.sum [p; l]);
+                      ge p E.zero;
+                      ge l E.zero;]
+            in
+            step ~right ~conds:[];
+            collect right
 
           | BS (e, itype) ->
-            E.conj (Range.contains itype e) |> collect
+            let right = E.conj (Range.contains itype e) in
+            step ~right ~conds:[];
+            collect right
 
           | Val (e, itype) ->
-            eq_int [E.int (Int_type.width itype); E.len e] |> collect
+            let right = eq_int [E.int (Int_type.width itype); E.len e] in
+            step ~right ~conds:[];
+            collect right
 
           | Sym (Op (_, (ts, _)), es) ->
-            let conds =
+            let right =
               List.combine ts es
               |> List.filter_map ~f:(function
                 | Bs_int itype, e -> Some (eq_int [E.int (Int_type.width itype); E.len e])
@@ -466,32 +551,51 @@ let rewrite
                 | t, e ->
                   fail "unexpected type of op argument: %s: %s"
                     (E.to_string e) (Type.to_string t))
+              |> E.conj
             in
-            collect (E.conj conds)
+            step ~right ~conds:[];
+            collect right
 
-          | Sym (sym, es) ->
+          | Sym (sym, es) as e ->
             if Sym.never_fails sym
-            then true_fact
+            then rewrite_to_true ()
             else if not (Sym.may_fail sym)
-            then E.conj (List.map ~f:is_defined es) |> collect
+            then begin
+              let right = E.conj (List.map ~f:is_defined es) in
+              step ~right ~conds:[];
+              collect right
+            end
             else begin match mode with
             | `Simplify | `Simplify_step | `Query ->
-              E.descend {E.descend = collect} e_top
+              default e
             | `Assert ->
-              let e' = is_defined (collect (Sym (sym, es))) in
-              E.conj (e' :: List.map ~f:collect (List.map ~f:is_defined es))
+              let defined_es =
+                if not !tracing_mode
+                then List.map es ~f:is_defined
+                else List.map es ~f:(fun e -> E.unfold (is_defined e))
+              in
+              let right = E.conj (is_defined e :: defined_es) in
+              step ~right ~conds:[];
+              (* Note the difference in application order for e and es. *)
+              let e = is_defined (collect e) in
+              let es = List.map ~f:collect defined_es in
+              E.conj (e :: es)
             end
 
           | Len e ->
-            Sym (Defined, [e]) |> collect
+            let right = Sym (Defined, [e]) in
+            step ~right ~conds:[];
+            collect right
 
-          | Int _ -> true_fact
-          | Char _ -> true_fact
-          | String _ -> true_fact
-          | Concat [] -> true_fact
+          | Int _ -> rewrite_to_true ()
+          | Char _ -> rewrite_to_true ()
+          | String _ -> rewrite_to_true ()
+          | Concat [] -> rewrite_to_true ()
 
           | Concat es ->
-            E.conj (List.map ~f:is_defined es) |> collect
+            let right = E.conj (List.map ~f:is_defined es) in
+            step ~right ~conds:[];
+            collect right
 
           (* This will become unnecessary once pointers are rewritten into vanilla
              expressions, as per thesis *)
@@ -539,7 +643,8 @@ let rewrite
           | `Simplify | `Simplify_step ->
             e_top
           | `Query | `Assert ->
-            add_conditions [is_defined e];
+            let right = Sym (Val_y itype, [e]) in
+            step ~right ~conds:[is_defined e];
             Sym (Val_y itype, [collect e])
           end
 
@@ -551,7 +656,8 @@ let rewrite
           Annotation (a, collect_even_if_simplifying e)
 
         (* TODO: inline, once GADT pattern matching is sorted. *)
-        (* I suppose everything of type bitstringbot can be turned into opaque here. *)
+        (* I suppose everything of type bitstringbot can be turned into opaque here. I
+           don't turn BS into opaque, but I don't know why I couldn't. *)
         | Sym (Fun _, _) as e -> make_opaque e
         | Sym (Ztp, _) as e -> make_opaque e
         | Sym (Ztp_safe, _) as e -> make_opaque e
@@ -590,29 +696,32 @@ let rewrite
       pop_debug "collect";
       result
     in
-    let e = collect ~mode e in
+    let e = collect ~mode ~root e in
     while not (Queue.is_empty queued_conds) do
       let cond = Queue.pop queued_conds in
-      let cond = collect ~mode:`Query cond in
+      let cond = collect ~mode:`Query ~root:cond cond in
       add_conditions ~already_rewritten:true [cond]
     done;
     let conds = Fact_set.to_list !rewritten_conds in
     let conds =
       match E.kind e with
-      | Kind.Bool -> List.diff conds (split_and e)
+      | Kind.Bool -> List.diff conds (E.flatten_conj e)
       | Kind.Int -> conds
       | Kind.Bitstring -> conds
     in
     push_debug "rewrite";
     DEBUG "%s: %s |- %s ~> %s"
-      (Mode.to_string mode) (E.list_to_string conds) (E.to_string e_top) (E.to_string e);
+      (Mode.to_string mode)
+      (E.list_to_string conds)
+      (E.to_string e_lhs)
+      (E.to_string e);
     pop_debug "rewrite";
     e, conds
   in
 
   DEBUG "rewriting %s" (E.to_string e);
   push_debug "rewrite";
-  let e, conds = rewrite ~mode:(mode :> Mode.t) e in
+  let e, conds = rewrite ~mode:(mode :> Mode.t) ~root:e e in
   let conds = List.map conds ~f:rewrite_ptr in
   let e =
     match mode with
@@ -626,7 +735,7 @@ let rewrite
 
 let rewrite_facts ~mode es: fact list * fact list =
   let es, conds = List.map ~f:(rewrite ~mode) es |> List.split in
-  let es = List.dedup (List.concat_map ~f:split_and es) in
+  let es = List.dedup (List.concat_map ~f:E.flatten_conj es) in
   let conds = List.dedup (List.concat conds) in
   es, conds
 
@@ -649,7 +758,6 @@ let add_fact_raw ?(check_consistent = true) y_e =
   push_debug "add_fact_raw";
   debug_expr "asserting_y " y_e;
   Yices.assert_simple ctx y_e;
-
   if check_consistent && Yices.inconsistent ctx then
   begin
     (* dump_context ctx; *)
@@ -697,9 +805,8 @@ let translate (e_top : fact) =
       | Sym (sym, es) ->
         begin match sym, es with
           | (Logical True, [])         -> Yices.mk_true ctx
+          | (Logical (And _), [])      -> Yices.mk_true ctx
           | (Logical Not, [a])         -> Yices.mk_not ctx (tr a)
-          | (Logical (And _), [])      ->
-            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
           | (Logical (And _), es)      -> Yices.mk_and ctx (A.map tr (A.of_list es))
           | (Logical (Or _), [])       ->
             fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
@@ -831,18 +938,14 @@ let is_true e: pbool =
   result
 
 let implies facts hypotheses =
-
   DEBUG "checking implication: \n  %s\n  =>\n  %s" (E.list_to_string facts) (E.list_to_string hypotheses);
-
   push_debug "implies";
   Yices.push ctx;
   List.iter ~f:add_fact facts;
   let result = List.for_all ~f:(is_true) hypotheses in
   Yices.pop ctx;
   pop_debug "implies";
-
   DEBUG "implication result: %b" result;
-
   result
 
 (* TODO: change back to equal when it stabilizes *)

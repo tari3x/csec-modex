@@ -447,17 +447,17 @@ const zero_fixed_16_seed: fixed_16_seed.
   Typecasting 
 ***************************)
 
-fun cast_bounded_1024_id_bitstring(bounded_1024_id): bitstring [compos].
-fun cast_bounded_1077_ciphertext_bitstring(bounded_1077_ciphertext): bitstring [compos].
 fun cast_bitstring_bounded_1077_ciphertext(bitstring): bounded_1077_ciphertext [compos].
 fun cast_bounded_1045_plaintext_fixed_1024_payload(bounded_1045_plaintext): fixed_1024_payload [compos].
+fun cast_bounded_1024_id_bitstring(bounded_1024_id): bitstring [compos].
 fun cast_bounded_1045_plaintext_bitstring(bounded_1045_plaintext): bitstring [compos].
 fun cast_fixed_1024_payload_bounded_1045_plaintext(fixed_1024_payload): bounded_1045_plaintext [compos].
 fun cast_fixed_1024_payload_bitstring(fixed_1024_payload): bitstring [compos].
-forall x: bounded_1077_ciphertext;
-  cast_bitstring_bounded_1077_ciphertext(cast_bounded_1077_ciphertext_bitstring(x)) = x.
+fun cast_bounded_1077_ciphertext_bitstring(bounded_1077_ciphertext): bitstring [compos].
 forall x: fixed_1024_payload;
   cast_bounded_1045_plaintext_fixed_1024_payload(cast_fixed_1024_payload_bounded_1045_plaintext(x)) = x.
+forall x: bounded_1077_ciphertext;
+  cast_bitstring_bounded_1077_ciphertext(cast_bounded_1077_ciphertext_bitstring(x)) = x.
 
 (*************************** 
   Auxiliary Facts 
@@ -574,20 +574,20 @@ forall arg1: bounded_1077_ciphertext, arg0: bounded_1024_id;
 	Zbitstring(conc2(arg0, arg1)) = Zbitstring_prime(conc2(Zbounded_1024_id(arg0), Zbounded_1077_ciphertext(arg1))).
 forall arg1: fixed_16_key, arg0: fixed_1024_payload;
 	Zbounded_1045_plaintext(conc1(arg0, arg1)) = Zbounded_1045_plaintext_prime(conc1(Zfixed_1024_payload(arg0), Zfixed_16_key(arg1))).
-forall x: bounded_1024_id;
-	Zbitstring(cast_bounded_1024_id_bitstring(x)) = Zbitstring_prime(cast_bounded_1024_id_bitstring(Zbounded_1024_id(x))).
-forall x: bounded_1077_ciphertext;
-	Zbitstring(cast_bounded_1077_ciphertext_bitstring(x)) = Zbitstring_prime(cast_bounded_1077_ciphertext_bitstring(Zbounded_1077_ciphertext(x))).
 forall x: bitstring;
 	Zbounded_1077_ciphertext(cast_bitstring_bounded_1077_ciphertext(x)) = Zbounded_1077_ciphertext_prime(cast_bitstring_bounded_1077_ciphertext(Zbitstring(x))).
 forall x: bounded_1045_plaintext;
 	Zfixed_1024_payload(cast_bounded_1045_plaintext_fixed_1024_payload(x)) = Zfixed_1024_payload_prime(cast_bounded_1045_plaintext_fixed_1024_payload(Zbounded_1045_plaintext(x))).
+forall x: bounded_1024_id;
+	Zbitstring(cast_bounded_1024_id_bitstring(x)) = Zbitstring_prime(cast_bounded_1024_id_bitstring(Zbounded_1024_id(x))).
 forall x: bounded_1045_plaintext;
 	Zbitstring(cast_bounded_1045_plaintext_bitstring(x)) = Zbitstring_prime(cast_bounded_1045_plaintext_bitstring(Zbounded_1045_plaintext(x))).
 forall x: fixed_1024_payload;
 	Zbounded_1045_plaintext(cast_fixed_1024_payload_bounded_1045_plaintext(x)) = Zbounded_1045_plaintext_prime(cast_fixed_1024_payload_bounded_1045_plaintext(Zfixed_1024_payload(x))).
 forall x: fixed_1024_payload;
 	Zbitstring(cast_fixed_1024_payload_bitstring(x)) = Zbitstring_prime(cast_fixed_1024_payload_bitstring(Zfixed_1024_payload(x))).
+forall x: bounded_1077_ciphertext;
+	Zbitstring(cast_bounded_1077_ciphertext_bitstring(x)) = Zbitstring_prime(cast_bounded_1077_ciphertext_bitstring(Zbounded_1077_ciphertext(x))).
 forall x: fixed_1024_payload;
 	Zfixed_1024_payload(x) = zero_fixed_1024_payload().
 forall x: fixed_16_keyseed;

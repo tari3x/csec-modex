@@ -60,7 +60,7 @@ in(c, var8);
 ifaux len(var8) = 4 then 
 let BIO_free_result1 = var8 (* named BIO_free_result1 *) in
 in(c, var9);
-ifaux len(var9) = ((21)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var9) = ((21)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg2 = var9 (* named msg2 *) in
 in(c, var10);
 ifaux len(var10) = 1 then 

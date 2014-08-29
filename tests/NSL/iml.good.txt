@@ -105,17 +105,17 @@ assume Defined(fflush_ret0) in
 (* assume_len[112, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(fflush_ret0) = 4 in
 in(c, var5);
-ifaux len(var5) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var5) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg3 = var5 (* named msg3 *) in
 in(c, var6);
-ifaux len(var6) = ((8)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var6) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg4 = var6 (* named msg4 *) in
 (* main[1, // client.c:128] *)
 ifaux ¬((msg4)_[u,8] > 1000) then 
 (* recv[124, // net.c:88] *)
 ifaux 0 < (msg4)_[u,8] then 
 in(c, var7);
-ifaux len(var7) = (msg4 (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var7) = (msg4 - (0)^[u,8])_[u,8] then 
 let msg5 = var7 (* named msg5 *) in
 (* test_intype[130, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
 ifaux Defined(decrypt_len(msg5)) then 
@@ -256,17 +256,17 @@ new nondet20: nondet;
 new nondet21: nondet;
 new nondet22: nondet;
 in(c, var14);
-ifaux len(var14) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var14) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg10 = var14 (* named msg10 *) in
 in(c, var15);
-ifaux len(var15) = ((8)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var15) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg11 = var15 (* named msg11 *) in
 (* main[1, // server.c:65] *)
 ifaux ¬((msg11)_[u,8] > 1000) then 
 (* recv[54, // net.c:88] *)
 ifaux 0 < (msg11)_[u,8] then 
 in(c, var16);
-ifaux len(var16) = (msg11 (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var16) = (msg11 - (0)^[u,8])_[u,8] then 
 let msg12 = var16 (* named msg12 *) in
 (* test_intype[60, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
 ifaux Defined(decrypt_len(msg12)) then 
@@ -362,17 +362,17 @@ assume Defined(fflush_ret1) in
 (* assume_len[165, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(fflush_ret1) = 4 in
 in(c, var19);
-ifaux len(var19) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var19) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg17 = var19 (* named msg17 *) in
 in(c, var20);
-ifaux len(var20) = ((8)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var20) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg18 = var20 (* named msg18 *) in
 (* main[1, // server.c:182] *)
 ifaux ¬((msg18)_[u,8] > 1000) then 
 (* recv[177, // net.c:88] *)
 ifaux 0 < (msg18)_[u,8] then 
 in(c, var21);
-ifaux len(var21) = (msg18 (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var21) = (msg18 - (0)^[u,8])_[u,8] then 
 let msg19 = var21 (* named msg19 *) in
 (* test_intype[183, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
 ifaux Defined(decrypt_len(msg19)) then 

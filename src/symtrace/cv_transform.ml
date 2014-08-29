@@ -6,14 +6,14 @@
 
 open Common
 
+open Type
+open Sym
+open Exp
 open Iml
-open Iml.Type
-open Iml.Sym
-open Iml.Exp
 open Iml.Pat
 open Iml.Stmt
 
-module E = Iml.Exp
+module E = Exp
 module S = Solver
 
 open Transform

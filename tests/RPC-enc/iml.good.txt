@@ -112,19 +112,19 @@ new nondet6: nondet;
 assume Defined(fflush_ret2) in
 (* assume_len[159, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(fflush_ret2) = 4 in
-let msg2 = (CastToInt : [u,8] -> [u,4])((((1)^[u,8] (+ : [u,8] * [u,8] -> [u,8]) (4)^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (len(clientID))^[u,8]) (+ : [u,8] * [u,8] -> [u,8]) (len(cipher1))^[u,8]) (* named msg2 *) in
+let msg2 = CastToInt((((1)^[u,8] + (4)^[u,8]) + (len(clientID))^[u,8]) + (len(cipher1))^[u,8]) (* named msg2 *) in
 out(c, msg2);
 let msg3 = "p"|(len(clientID))^[u,4]|clientID|cipher1 (* named msg3 *) in
 out(c, msg3);
 in(c, var4);
-ifaux len(var4) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var4) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg4 = var4 (* named msg4 *) in
 (* recv_response[171, // client.c:88] *)
 ifaux ¬((msg4)_[u,4] < 1056) then 
 (* recv_response[171, // client.c:88] *)
 ifaux ¬((msg4)_[u,4] > 1056) then 
 in(c, var5);
-ifaux len(var5) = (((CastToInt : [u,4] -> [u,8])(msg4)) (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var5) = ((CastToInt(msg4)) - (0)^[u,8])_[u,8] then 
 let msg5 = var5 (* named msg5 *) in
 new nondet7: nondet;
 (* assume_intype[185, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
@@ -213,14 +213,14 @@ let net_accept_result1 = var8 (* named net_accept_result1 *) in
 ifaux ¬((net_accept_result1)_[s,4] <> 0) then 
 new nondet14: nondet;
 in(c, var9);
-ifaux len(var9) = ((4)^[u,8] (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var9) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg8 = var9 (* named msg8 *) in
 (* recv_request[67, // server.c:25] *)
 ifaux ¬((msg8)_[u,4] < (1040 + 4 + 1 + 32 + 4 + 1)) then 
 (* recv_request[67, // server.c:25] *)
 ifaux ¬((msg8)_[u,4] > (1040 + 4 + 1 + 32 + 1024 + 4 + 1)) then 
 in(c, var10);
-ifaux len(var10) = (((CastToInt : [u,4] -> [u,8])(msg8)) (- : [u,8] * [u,8] -> [u,8]) (0)^[u,8])_[u,8] then 
+ifaux len(var10) = ((CastToInt(msg8)) - (0)^[u,8])_[u,8] then 
 let msg9 = var10 (* named msg9 *) in
 (* assume_intype[81, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume True() /\ ((len(msg9) >= 1) /\ (0 >= 0) /\ (1 >= 0)) in

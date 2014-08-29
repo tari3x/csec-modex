@@ -553,10 +553,10 @@ const zero_fixed_256_seed_T: fixed_256_seed_T.
   Typecasting 
 ***************************)
 
+fun cast_bounded_40_host_bitstring(bounded_40_host): bitstring [compos].
 fun cast_bounded_1000_ciphertext_bitstring(bounded_1000_ciphertext): bitstring [compos].
 fun cast_bitstring_bounded_1000_ciphertext(bitstring): bounded_1000_ciphertext [compos].
 fun cast_bounded_200_cleartext_bitstring(bounded_200_cleartext): bitstring [compos].
-fun cast_bounded_40_host_bitstring(bounded_40_host): bitstring [compos].
 forall x: bounded_1000_ciphertext;
   cast_bitstring_bounded_1000_ciphertext(cast_bounded_1000_ciphertext_bitstring(x)) = x.
 
@@ -717,20 +717,20 @@ forall arg0: bounded_1000_ciphertext;
 	Zbitstring(conc2(arg0)) = Zbitstring_prime(conc2(Zbounded_1000_ciphertext(arg0))).
 forall arg1: bounded_40_host, arg0: fixed_20_nonce;
 	Zbounded_200_cleartext(conc1(arg0, arg1)) = Zbounded_200_cleartext_prime(conc1(Zfixed_20_nonce(arg0), Zbounded_40_host(arg1))).
+forall x: bounded_40_host;
+	Zbitstring(cast_bounded_40_host_bitstring(x)) = Zbitstring_prime(cast_bounded_40_host_bitstring(Zbounded_40_host(x))).
 forall x: bounded_1000_ciphertext;
 	Zbitstring(cast_bounded_1000_ciphertext_bitstring(x)) = Zbitstring_prime(cast_bounded_1000_ciphertext_bitstring(Zbounded_1000_ciphertext(x))).
 forall x: bitstring;
 	Zbounded_1000_ciphertext(cast_bitstring_bounded_1000_ciphertext(x)) = Zbounded_1000_ciphertext_prime(cast_bitstring_bounded_1000_ciphertext(Zbitstring(x))).
 forall x: bounded_200_cleartext;
 	Zbitstring(cast_bounded_200_cleartext_bitstring(x)) = Zbitstring_prime(cast_bounded_200_cleartext_bitstring(Zbounded_200_cleartext(x))).
-forall x: bounded_40_host;
-	Zbitstring(cast_bounded_40_host_bitstring(x)) = Zbitstring_prime(cast_bounded_40_host_bitstring(Zbounded_40_host(x))).
-forall x: fixed_100_key;
-	Zfixed_100_key(x) = zero_fixed_100_key().
 forall x: fixed_20_nonce;
 	Zfixed_20_nonce(x) = zero_fixed_20_nonce().
 forall x: fixed_256_seed_T;
 	Zfixed_256_seed_T(x) = zero_fixed_256_seed_T().
+forall x: fixed_100_key;
+	Zfixed_100_key(x) = zero_fixed_100_key().
 
 (********************
 <Query>

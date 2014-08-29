@@ -7,14 +7,13 @@
 open Str
 
 open Common
-open Iml
-open Iml.Type
-open Iml.Sym
-open Iml.Sym.Op
-open Iml.Sym.Arith
-open Iml.Exp
+open Type
+open Sym
+open Sym.Op
+open Sym.Arith
+open Exp
 
-module E = Iml.Exp
+module E = Exp
 module S = Solver
 
 (******************************************************************)
@@ -180,7 +179,7 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
       (* Should not be too eager to concretise because in the parser we may not
          be able to restore the correct general form again. *)
       (* TODO: this should not actually affect parser correctness, think more about this. *)
-      let int_value = if E.is_concrete e_o then S.eval e_o else None in
+      let int_value = if E.is_constant e_o then S.eval e_o else None in
       begin match int_value with
         | Some j -> [Index (i + j), step]
         | None -> add_pi e_o [Flat (prod [step; (E.int i)]), step]

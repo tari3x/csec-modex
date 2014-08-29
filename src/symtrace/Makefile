@@ -20,14 +20,14 @@ CV_LIB = cryptoverif/cryptoverif.cmx
 
 SRC = ${wildcard *.ml *.mli}
 
-COMMON_CMO = common.cmo iml.cmo solver.cmo simplify.cmo symex.cmo
+COMMON_CMO = common.cmo type.cmo fun_type.cmo sym.cmo exp.cmo iml.cmo solver.cmo simplify.cmo symex.cmo
 COMMON_CMX = $(COMMON_CMO:.cmo=.cmx)
 
 # doesn't work:
 #$(addprefix -I $(CIL_ROOT), /src /src/frontc $(CIL_OBJDIR))
 
 # pitrace cvtrace
-all: imltrace cvtrace run_tests
+all: imltrace cvtrace run_tests derivation
 htdoc: doc
 
 imltrace: $(COMMON_CMX) imltrace.cmx
@@ -40,6 +40,9 @@ cvtrace: $(CV_LIB) $(COMMON_CMX) transform.cmx template.cmx cv_transform.cmx cvt
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
 run_tests: $(CV_LIB) $(COMMON_CMX) transform.cmx template.cmx cv_transform.cmx run_tests.cmx 
+	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
+
+derivation: common.cmx type.cmx fun_type.cmx sym.cmx exp.cmx iml.cmx solver.cmx derivation.cmx
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
 top: $(COMMON_CMO)

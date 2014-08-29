@@ -6,15 +6,15 @@
 
 open Common
 
+open Type
+open Sym
+open Sym.Op
+open Exp
 open Iml
-open Iml.Type
-open Iml.Sym
-open Iml.Sym.Op
-open Iml.Exp
 open Iml.Pat
 open Iml.Stmt
 
-module E = Iml.Exp
+module E = Exp
 module S = Solver
 
 (*************************************************)
@@ -769,7 +769,7 @@ let apply_name_annotations p =
 (** {1 Normal Form} *)
 (*************************************************)
 
-let is_tag e = E.is_concrete e
+let is_tag e = E.is_constant e
 
 let sort_defs defs =
   let gt s s' =
