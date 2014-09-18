@@ -129,6 +129,7 @@ type ('a, 'b) sym = ('a, 'b) t
 type bfun = (bitstring, bitstring) t
 
 type any = Any : ('a, 'b) t -> any
+type any_bitstring = Any_bitstring : (bitstring, 'b) t -> any_bitstring
 
 val any : (_, _) t -> any
 
@@ -151,6 +152,10 @@ val of_string : string -> any
 val of_string_bitstring : string -> bfun
 
 val cv_declaration : ('a, 'b) t -> ('a, 'b) Fun_type.t -> string
+
+(* Used for writing CV equations where we don't want RHS to unify with LHS.. *)
+val prime :(bitstring, 'b) t -> (bitstring, 'b) t
+val unprime : (bitstring, 'b) t -> (bitstring, 'b) t option
 
 module Key : sig
   type 'a t = (bitstring, 'a) sym

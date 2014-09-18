@@ -209,6 +209,7 @@ let test_merge_patterns () =
 (** {1 Regularity Properties} *)
 (*************************************************)
 
+(* CR: make primed collection in Model traverse the iml and remove this. *)
 let zero_fun_sym t =
   make_sym ("Z" ^ Type.to_string t) ~arity:1
 let zero_fun_prime_sym t =
@@ -315,24 +316,6 @@ let zero_facts
 (** {1 Auxiliary Test Properties} *)
 (********************************************************)
 
-let prime = function
-  | Fun (s, n) -> Fun (s ^ "_prime", n)
-  | sym -> fail "auxiliary_facts: impossible auxiliary symbol: %s" (Sym.to_string sym)
-
-let add_auxiliary_primed auxiliary fun_types =
-  let auxiliary_primed =
-    Sym_defs.to_list auxiliary
-    |> List.map ~f:(fun (sym, def) -> (prime sym, def))
-    |> Sym_defs.of_list
-  in
-  let types_primed =
-    Sym_defs.to_list auxiliary
-    |> List.map ~f:(fun (sym, _) -> (prime sym, Fun_type_ctx.find sym fun_types))
-    |> Fun_type_ctx.of_list
-  in
-  Sym_defs.disjoint_union [auxiliary; auxiliary_primed],
-  Fun_type_ctx.disjoint_union [fun_types; types_primed]
-
 (*
   There are two ways to check
     (len(x) = len(y)) => (def[x/arg] = def[y/arg]).
@@ -342,7 +325,7 @@ let add_auxiliary_primed auxiliary fun_types =
     !(cast_to_int[false,4,false,8](len("p"|len54|x92|x93)) <= (i5 + cast_to_int[false,4,false,8](len55)))
 
   The other way is to use the solver directly, but then you need to show overflow safety
-  as well.  When formalising, you need to replace auxiliary facts by hardened facts that
+  as well. When formalising, you need to replace auxiliary facts by hardened facts that
   check overflow safety.
 
   The second option is conceptually simpler, but less efficient. Another problem with the
@@ -357,11 +340,9 @@ let auxiliary_facts
 
   (* facts for a single auxiliary test *)
   let facts sym def arg_types =
-
     let num_args = List.length arg_types in
-
+    let args = mk_formal_args num_args in
     let zero_of v t = Sym (zero_fun_sym t, [Var (v, Kind.Bitstring)]) in
-
     let replace_len v =
       let rec replace : type a. a exp -> a exp = function
         | Len (Var (v', Kind.Bitstring)) when v' = v ->
@@ -370,13 +351,11 @@ let auxiliary_facts
       in
       replace
     in
-
     let rec expand_lens : type a. a exp -> a exp = function
       | Len (Concat es) ->
         List.map ~f:E.len es |> E.sum |> expand_lens
       | e -> E.descend {E.descend = expand_lens} e
     in
-
     let can_erase arg =
       let x = Var (Var.fresh "x", Kind.Bitstring) in
       let y = Var (Var.fresh "y", Kind.Bitstring) in
@@ -386,81 +365,89 @@ let auxiliary_facts
       DEBUG "can_erase: comparing \n%s and \n%s" (E.to_string def_x) (E.to_string def_y);
       def_x = def_y
     in
-
     let concat_pairs arg =
       let pair c =
         match Fun_type_ctx.maybe_find c fun_types with
-          | Some (ts, t') (* when t = t' *) ->
-            let c_def = Sym_defs.find c concats in
+        | Some (ts, t') (* when t = t' *) ->
+          let c_def = Sym_defs.find c concats in
 
-            (* Rename args of c_def to avoid collision with args of def. *)
-            let c_args = List.map ~f:(fun _ -> Var.fresh "c_arg") (1 -- (Sym.arity c)) in
-            let c_def = E.subst_v (mk_formal_args (Sym.arity c)) c_args c_def in
-            (* For simplifcation. *)
-            S.add_fact (E.is_defined c_def);
+          (* Rename args of c_def to avoid collision with args of def. *)
+          let c_args = List.map ~f:(fun _ -> Var.fresh "c_arg") (1 -- (Sym.arity c)) in
+          let c_def = E.subst_v (mk_formal_args (Sym.arity c)) c_args c_def in
+          (* For simplifcation. *)
+          S.add_fact (E.is_defined c_def);
 
-            (* We expect some conditions to fail when trying to simplify something that's
-               impossible to simplify. *)
-            S.warn_on_failed_conditions false;
-            let def =
-              E.subst [arg] [c_def] def
-              (* We may be substituting an encoder inside a parser, so we need to
-                 simplify. *)
-              |> Simplify.full_simplify
-                (* Deal with stuff like
-                   {[
-                     !(cast_to_int[false,4,false,8](len("p"|len54|x92|x93)) <=
-                        (i5 + cast_to_int[false,4,false,8](len55)))
-                   ]}
-                *)
-              |> expand_lens
-                (* Replace all argument lengths by fresh variables *)
-              |> fun init -> List.fold_right ~f:replace_len ~init c_args
-            in
-            S.warn_on_failed_conditions true;
+          (* We expect some conditions to fail when trying to simplify something that's
+             impossible to simplify. *)
+          S.warn_on_failed_conditions false;
+          let def =
+            E.subst [arg] [c_def] def
+            (* We may be substituting an encoder inside a parser, so we need to
+               simplify. *)
+            |> Simplify.full_simplify
+            (* Deal with stuff like
+               {[
+                 !(cast_to_int[false,4,false,8](len("p"|len54|x92|x93)) <=
+                     (i5 + cast_to_int[false,4,false,8](len55)))
+               ]}
+            *)
+            |> expand_lens
+            (* Replace all argument lengths by fresh variables *)
+            |> fun init -> List.fold_right ~f:replace_len ~init c_args
+          in
+          S.warn_on_failed_conditions true;
 
-            let xs = List.map ~f:(fun _ -> Var.fresh "x") (1 -- (Sym.arity c)) in
-            let ys = List.map ~f:(fun _ -> Var.fresh "y") (1 -- (Sym.arity c)) in
-            let def_x = E.subst_v c_args xs def in
-            let def_y = E.subst_v c_args ys def in
-            DEBUG "concat_pairs: comparing \n%s and \n%s" (E.to_string def_x) (E.to_string def_y);
-            if def_x = def_y then
-                let zxs = List.map2 ~f:zero_of xs ts in
-                let xs = List.map ~f:E.var xs in
-                Some (Typing.cast t' Bitstring (Sym (c, xs)),
-                      Typing.cast t' Bitstring (Sym (c, zxs)))
-            else None
-          | _ -> None
+          let xs = List.map ~f:(fun _ -> Var.fresh "x") (1 -- (Sym.arity c)) in
+          let ys = List.map ~f:(fun _ -> Var.fresh "y") (1 -- (Sym.arity c)) in
+          let def_x = E.subst_v c_args xs def in
+          let def_y = E.subst_v c_args ys def in
+          DEBUG "concat_pairs: comparing \n%s and \n%s" (E.to_string def_x) (E.to_string def_y);
+          if def_x = def_y then
+            let zxs = List.map2 ~f:zero_of xs ts in
+            let xs = List.map ~f:E.var xs in
+            Some (Typing.cast t' Bitstring (Sym (c, xs)),
+                  Typing.cast t' Bitstring (Sym (prime c, zxs)))
+          else None
+        | _ -> None
       in
       List.filter_map ~f:pair (Sym_defs.keys concats)
-     in
-
-    let rec arg_pairs xs ts : (bterm * bterm) list list =
-      match xs, ts with
-        | [], [] -> [[]]
-        | x :: xs, t :: ts when can_erase x ->
-          List.map ~f:(fun args ->
-            (Var (x, Kind.Bitstring), zero_of x t) :: args) (arg_pairs xs ts)
-        | x :: xs, _ :: ts ->
-          let pairs =
-            (Var (x, Kind.Bitstring), Var (x, Kind.Bitstring)) :: concat_pairs x
-          in
-          List.cross_product (fun pair args -> pair :: args) pairs (arg_pairs xs ts)
-        | _ -> fail "arg_pairs: impossible"
     in
-
-    let mk_fact (args1, args2) =
-      Sym (Logical Logical.Eq, [Sym (sym, args1); Sym (prime sym, args2)])
-      |> CV_fact.make fun_types
+    let mk_fact sym1 sym2 arg_pairs =
+      let args1, args2 = List.split arg_pairs in
+      if args1 = args2 then []
+      else
+        [ Sym (Logical Logical.Eq, [Sym (sym1, args1); Sym (sym2, args2)])
+          |> CV_fact.make fun_types
+        ]
     in
-
-    arg_pairs (mk_formal_args num_args) arg_types
-      (* remove trivial equations *)
-    |> List.map ~f:List.split
-    |> List.filter ~f:(fun (args1, args2) -> args1 <> args2)
-    |> List.map ~f:mk_fact
+    let var x = Var (x, Kind.Bitstring) in
+    (* First phase: zero out things that can be zeroed out completely. *)
+    let x_facts =
+      List.map2 arg_types args ~f:(fun t -> function
+      | x when can_erase x -> var x, zero_of x t
+      | x -> var x, var x)
+      |> mk_fact sym (prime sym)
+    in
+    (* Apply the rewriting to the result of the previous phase if any. *)
+    let sym =
+      match x_facts with
+      | [] -> sym
+      | _ -> prime sym
+    in
+    (* Second phase: rewrite specific concats.*)
+    let mk_concat_fact x e1 e2 =
+      List.map args ~f:(function
+      | x' when x' = x -> e1, e2
+      | x -> var x, var x)
+      |> mk_fact sym sym
+    in
+    let concat_facts = List.concat_map args ~f:(fun x ->
+      if can_erase x then []
+      else List.concat_map (concat_pairs x) ~f:(fun (e1, e2) ->
+        mk_concat_fact x e1 e2))
+    in
+    x_facts @ concat_facts
   in
-
   S.reset_facts ();
   Sym_defs.to_list auxiliary
   |> List.concat_map ~f:(fun (sym, def) ->
@@ -476,7 +463,7 @@ let auxiliary_facts
 let merge_in_out p =
 
   let rec merge_in (vs: var list) p =
-  match (vs, p) with
+    match (vs, p) with
     | vs, In [v] :: p -> merge_in (v :: vs) p
     | [], s :: p -> s :: merge_in [] p
     | vs, (Out _ as s) :: p ->
@@ -519,6 +506,8 @@ module Model = struct
     auxiliary : bool Sym_defs.t;
     zero_funs : bitstring Sym_defs.t;
 
+    primed : Sym.any_bitstring list;
+
     auxiliary_facts : CV_fact.t list;
     zero_facts : CV_fact.t list;
 
@@ -527,6 +516,34 @@ module Model = struct
 
     parsing_eqs : parsing_eq list;
   }
+
+  let rec collect_primed :
+  type a. a exp -> Sym.any_bitstring list =
+    fun e ->
+      match e with
+      | Sym (Fun _ as sym, es) ->
+        begin match Sym.unprime sym with
+        | Some sym ->
+          Sym.Any_bitstring sym :: List.concat_map es ~f:collect_primed
+        | None -> List.concat_map es ~f:collect_primed
+        end
+      | e -> List.concat (Exp.map_children { f = collect_primed } e)
+
+  let add_primed t =
+    let originals =
+      List.concat_map t.auxiliary_facts ~f:(fun (CV_fact.Forall (_, fact)) ->
+        collect_primed fact)
+      |> List.dedup
+    in
+    let fun_types =
+      List.fold_left originals ~init:t.fun_types ~f:(fun fun_types (Any_bitstring sym) ->
+        let t = Fun_type_ctx.find sym t.fun_types in
+        Fun_type_ctx.add (Sym.prime sym) t fun_types)
+    in
+    let primed =
+      List.map originals ~f:(fun (Any_bitstring sym) -> Any_bitstring (Sym.prime sym))
+    in
+    { t with fun_types; primed }
 end
 
 open Model
@@ -562,10 +579,10 @@ module Aux_fact = struct
                   @ List.map2 ~f:show_arg args2 arg_types2)
     in
     sprintf "forall %s;\n  %s(%s) %s %s(%s)."
-      (String.concat ", " all_args)
-      (Sym.to_string c1) (String.concat ", " args1)
+      (String.concat ~sep:", " all_args)
+      (Sym.to_string c1) (String.concat ~sep:", " args1)
       op
-      (Sym.to_string c2) (String.concat ", " args2)
+      (Sym.to_string c2) (String.concat ~sep:", " args2)
 
   let to_string = function
     | Disjoint (s, s') -> show_relation s s' "<>"
@@ -577,7 +594,7 @@ module CV_fact = struct
 
   let to_string (Forall (args, e)) =
     let show_var (v, t) = v ^ ": " ^ Type.to_string t in
-    "forall " ^ String.concat ", " (List.map ~f:show_var args)
+    "forall " ^ String.concat ~sep:", " (List.map ~f:show_var args)
     ^ ";\n\t" ^ E.to_string e ^ "."
 end
 
@@ -596,7 +613,7 @@ let show_cv_stmt: Stmt.t -> string = fun s ->
       end;
       sprintf "%s(%s)"
         (Sym.to_string s)
-        (String.concat ", " (List.map ~f:show_exp_body es))
+        (String.concat ~sep:", " (List.map ~f:show_exp_body es))
     | Annotation (_, e) -> show_exp_body e
     | e -> "unexpected{" ^ E.dump e ^ "}"
   and show_in_var t name = name ^ ": " ^ Type.to_string t
@@ -607,7 +624,7 @@ let show_cv_stmt: Stmt.t -> string = fun s ->
       "in(c_in, " ^ show_in_var Bitstring v ^ ");";
 
     | In vs ->
-      "in(c_in, (" ^ String.concat ", " (List.map ~f:(show_in_var Bitstring) vs) ^ "));";
+      "in(c_in, (" ^ String.concat ~sep:", " (List.map ~f:(show_in_var Bitstring) vs) ^ "));";
 
     | New (v, t) ->
       "new " ^ show_in_var t v ^ ";";
@@ -616,7 +633,7 @@ let show_cv_stmt: Stmt.t -> string = fun s ->
       "out(c_out, " ^ show_exp_body e ^ ");";
 
     | Out es ->
-      "out(c_out, (" ^ String.concat ", " (List.map ~f:show_exp_body es) ^ "));";
+      "out(c_out, (" ^ String.concat ~sep:", " (List.map ~f:show_exp_body es) ^ "));";
 
     | Eq_test (e1, e2) ->
       "if " ^ show_exp_body e1 ^ " = " ^ show_exp_body e2 ^ " then "
@@ -631,7 +648,7 @@ let show_cv_stmt: Stmt.t -> string = fun s ->
       Printf.sprintf "assume %s in" (show_exp_body e)
 
     | Event (name, es) ->
-      "event " ^ name ^ "(" ^ String.concat ", " (List.map ~f:show_exp_body es) ^ ");"
+      "event " ^ name ^ "(" ^ String.concat ~sep:", " (List.map ~f:show_exp_body es) ^ ");"
 
     | Let (pat, e) ->
       "let " ^ Pat.dump pat ^ " = " ^ show_exp_body e ^ " in"
@@ -647,20 +664,34 @@ let show_cv_process p =
       | Yield -> "\n"
       | _ -> " 0 .\n"
   in
-  let result = String.concat "\n" (List.map ~f:show_cv_stmt p) ^ zero in
+  let result = String.concat ~sep:"\n" (List.map ~f:show_cv_stmt p) ^ zero in
   result
 
 let print_indent s = print_endline ("  " ^ s)
 
-(*
-  FIXME: we aren't even printing the parsing rules, are we?
-*)
 let write_cv model =
-
-  let casts = List.dedup (Typing.casts model.client @ Typing.casts model.server) in
-
+  let {
+    client; server;
+    template;
+    var_types = _;
+    fun_types;
+    parsers;
+    concats;
+    arith;
+    auxiliary;
+    zero_funs;
+    auxiliary_facts;
+    zero_facts;
+    (* funny, we never need these. *)
+    parsing_eqs = _;
+    encoder_facts;
+    arithmetic_facts;
+    primed
+  } = model
+  in
+  let casts = List.dedup (Typing.casts client @ Typing.casts server) in
   let print_fun_def is_injective sym def =
-    if Template.is_defined model.template sym
+    if Template.is_defined template sym
     then
       printf "(* %s is already defined in the template *)\n\n" (Sym.to_string sym)
     else begin
@@ -671,31 +702,27 @@ let write_cv model =
       let compos = if is_injective then " [compos]." else "." in
       match sym with
       | Fun (s, (0, _)) ->
-        let _, t = Fun_type_ctx.find sym model.fun_types in
+        let _, t = Fun_type_ctx.find sym fun_types in
         print_endline ("const " ^ s ^ ": " ^ Type.to_string t ^ ".");
         print_endline ""
       | sym ->
         print_endline ("fun "
-                       ^ Sym.cv_declaration sym (Fun_type_ctx.find sym model.fun_types)
+                       ^ Sym.cv_declaration sym (Fun_type_ctx.find sym fun_types)
                        ^ compos);
         print_endline ""
     end
   in
-
   let print_concat sym def =
-    print_fun_def (is_injective_concat model.fun_types sym def) sym def;
+    print_fun_def (is_injective_concat fun_types sym def) sym def;
   in
-
   let print_cast (t, t') =
     print_endline ("fun " ^ Sym.to_string (Cast (t, t'))
                    ^ "(" ^ Type.to_string t ^ "): " ^ Type.to_string t' ^ " [compos].")
   in
-
   let print_arithmetic sym def =
     let is_injective = is_injective_arithmetic def in
     print_fun_def is_injective sym def
   in
-
   (* TODO: most of these can now be printed by converting to CV_facts *)
   let print_cast_eq (t, t') =
     (* check that the inverse function is defined at all *)
@@ -705,7 +732,6 @@ let write_cv model =
       print_endline ("  " ^ Sym.to_string (Cast (t', t)) ^ "(" ^ Sym.to_string (Cast (t, t')) ^ "(x)) = x.")
     end
   in
-
   (*
   let print_constant name def =
     let t = Type_ctx.find name model.var_types in
@@ -713,14 +739,13 @@ let write_cv model =
     print_endline ("const " ^ name ^ ": " ^ Type.to_string t ^ ".")
   in
   *)
-
   let print_aux_fact fact = print_endline (Aux_fact.to_string fact) in
   let print_cv_fact fact = print_endline (CV_fact.to_string fact) in
 
-  let client_proc = show_cv_process model.client in
-  let server_proc = show_cv_process model.server in
+  let client_proc = show_cv_process client in
+  let server_proc = show_cv_process server in
 
-  List.iter ~f:print_endline (Template.crypto model.template);
+  List.iter ~f:print_endline (Template.crypto template);
 
   (*
   print_endline "\n(*************************** \n Constants \n***************************)\n";
@@ -728,35 +753,39 @@ let write_cv model =
   *)
 
   print_endline "\n(*************************** \n  Formatting Functions \n***************************)\n";
-  Sym_defs.iter ~f:print_concat model.concats;
-  Sym_defs.iter ~f:(print_fun_def false) model.parsers;
+  Sym_defs.iter ~f:print_concat concats;
+  Sym_defs.iter ~f:(print_fun_def false) parsers;
   print_endline "";
-  List.iter ~f:print_aux_fact model.encoder_facts;
+  List.iter ~f:print_aux_fact encoder_facts;
 
   print_endline "\n(*************************** \n  Arithmetic Functions \n***************************)\n";
-  Sym_defs.iter ~f:print_arithmetic model.arith;
-  List.iter ~f:print_aux_fact model.arithmetic_facts;
+  Sym_defs.iter ~f:print_arithmetic arith;
+  List.iter ~f:print_aux_fact arithmetic_facts;
 
   print_endline "\n(*************************** \n  Auxiliary Tests \n***************************)\n";
-  Sym_defs.iter ~f:(print_fun_def false) model.auxiliary;
+  Sym_defs.iter ~f:(print_fun_def false) auxiliary;
 
   print_endline "\n(*************************** \n  Zero Functions \n***************************)\n";
-  Sym_defs.iter ~f:(print_fun_def false) model.zero_funs;
+  Sym_defs.iter ~f:(print_fun_def false) zero_funs;
+
+  print_endline "\n(*************************** \n  Primed Functions \n***************************)\n";
+  List.iter primed ~f:(fun (Any_bitstring sym) ->
+    print_fun_def false sym (Unknown Kind.Bitstring));
 
   print_endline "\n(*************************** \n  Typecasting \n***************************)\n";
   List.iter ~f:print_cast casts;
   List.iter ~f:print_cast_eq casts;
 
   print_endline "\n(*************************** \n  Auxiliary Facts \n***************************)\n";
-  List.iter ~f:print_cv_fact model.auxiliary_facts;
+  List.iter ~f:print_cv_fact auxiliary_facts;
 
   print_endline "\n(*************************** \n  Zero Facts \n***************************)\n";
-  List.iter ~f:print_cv_fact model.zero_facts;
+  List.iter ~f:print_cv_fact zero_facts;
 
   print_endline "";
 
-  List.iter ~f:print_endline (Template.crypto2 model.template);
-  List.iter ~f:print_endline (Template.query model.template);
+  List.iter ~f:print_endline (Template.crypto2 template);
+  List.iter ~f:print_endline (Template.query template);
 
   print_endline "\n(*************************** \n  Model \n***************************)\n";
   print_endline "let client = ";
@@ -764,7 +793,7 @@ let write_cv model =
   print_endline "let server = ";
   print_endline server_proc;
 
-  List.iter ~f:print_endline (Template.envp model.template)
+  List.iter ~f:print_endline (Template.envp template)
 
 (*************************************************)
 (** {1 Main} *)
@@ -982,7 +1011,6 @@ let main () =
   push_debug "auxiliary_facts";
   let auxiliary_facts = auxiliary_facts concats auxiliary fun_types in
   pop_debug "auxiliary_facts";
-  let auxiliary, fun_types = add_auxiliary_primed auxiliary fun_types in
   let client = remove_auxiliary client in
   let server = remove_auxiliary server in
   debug_iml client server "IML after removing auxiliary ifs";
@@ -998,7 +1026,7 @@ let main () =
   let zero_funs, zero_fun_types = zero_defs zero_types in
   let fun_types = Fun_type_ctx.compatible_union [fun_types; zero_fun_types] in
 
-  write_cv {
+  let model = {
     client; server;
     template;
     var_types;
@@ -1012,7 +1040,12 @@ let main () =
     zero_facts;
     parsing_eqs;
     encoder_facts;
-    arithmetic_facts }
+    arithmetic_facts;
+    primed = []
+  }
+  in
+  let model = Model.add_primed model in
+  write_cv model
 
 let test () =
   test_merge_patterns ()

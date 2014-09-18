@@ -14,7 +14,7 @@ type any = Any : (bitstring, 'b) t -> any
 let to_string (ts, t) =
   let ts = List.map ~f:Type.to_string ts in
   let t = Type.to_string t in
-  sprintf "%s -> %s" (String.concat " * " ts) t
+  sprintf "%s -> %s" (String.concat ~sep:" * " ts) t
 
 let of_string s : any =
   if not (Str.string_match (Str.regexp "\\(.*\\) -> \\(.*\\)") s 0)

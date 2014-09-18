@@ -209,7 +209,7 @@ let assoc_keys: ('a * 'b) list -> 'a list = fun l -> let l1, _ = List.split l in
 
 module String = struct
 
-  include String
+  include StringLabels
 
   let words = Str.split (Str.regexp "[ \t]+")
 
@@ -240,6 +240,44 @@ module String = struct
       | c :: cs -> c :: unescape cs
     in
     unescape (explode s)
+
+  (* [is_suffix s ~suff] returns [true] if the string [s] ends with the suffix [suff] *)
+  let is_suffix s ~suffix =
+    let len_suff = String.length suffix in
+    let len_s = String.length s in
+    len_s >= len_suff
+    && (let rec loop i =
+          i = len_suff || (suffix.[len_suff - 1 - i] = s.[len_s - 1 - i] && loop (i + 1))
+        in
+        loop 0)
+
+  let is_prefix s ~prefix =
+    let len_pref = String.length prefix in
+    String.length s >= len_pref
+    && (let rec loop i =
+          i = len_pref || (prefix.[i] = s.[i] && loop (i + 1))
+        in
+        loop 0)
+  ;;
+
+  let wrap_sub_n t n ~name ~pos ~len ~on_error =
+    if n < 0 then
+      invalid_arg (name ^ " expecting nonnegative argument")
+    else
+      try
+        sub t ~pos ~len
+      with _ ->
+        on_error
+
+  let drop_prefix t n = wrap_sub_n ~name:"drop_prefix" t n ~pos:n ~len:(length t - n) ~on_error:""
+  let drop_suffix t n = wrap_sub_n ~name:"drop_suffix" t n ~pos:0 ~len:(length t - n) ~on_error:""
+  let prefix t n = wrap_sub_n ~name:"prefix" t n ~pos:0 ~len:n ~on_error:t
+  let suffix t n = wrap_sub_n ~name:"suffix" t n ~pos:(length t - n) ~len:n ~on_error:t
+
+  let chop_suffix s ~suffix =
+    if is_suffix s ~suffix
+    then Some (drop_suffix s (String.length suffix))
+    else None
 end
 
 (*************************************************)
@@ -297,7 +335,7 @@ Printexc.record_backtrace true;
 let fail a =
   let fail s =
     let s_extra = List.map ~f:(fun f -> f ()) !fail_funs in
-    let s_extra = String.concat "\n" s_extra in
+    let s_extra = String.concat ~sep:"\n" s_extra in
     failwith ("failure: " ^ s ^ "\n" ^ s_extra)
   in
   Printf.ksprintf fail a
@@ -371,6 +409,10 @@ module Option = struct
     | None -> ()
     | Some x -> f x
 
+  let map ~f = function
+    | None -> None
+    | Some x -> Some (f x)
+
   let is_some = function
     | None -> false
     | Some _ -> true
@@ -441,7 +483,7 @@ let decorate_debug s =
   let s =
     String.lines s
     |> List.map ~f:(fun s -> (String.make (max 0 indent) ' ') ^ s)
-    |> String.concat "\n"
+    |> String.concat ~sep:"\n"
   in
   Printf.sprintf "%s%s" mark s
 
@@ -464,7 +506,8 @@ let pop_debug label =
   | l :: labels when l = label ->
     debug_labels := labels
   | labels ->
-    fail "Debug mismatch when trying to pop %s from %s" label (String.concat ", " labels)
+    fail "Debug mismatch when trying to pop %s from %s"
+      label (String.concat ~sep:", " labels)
 
 (**
   Locally increase debug view.
@@ -507,7 +550,7 @@ let debug_bracket_tree : string -> unit = fun s ->
         | _ -> prerr_string (String.make 1 c)
   in
 
-  String.iter print s
+  String.iter ~f:print s
 
 (*************************************************)
 (** {1 Maps and Sets} *)

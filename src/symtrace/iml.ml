@@ -22,7 +22,7 @@ module Pat = struct
   let rec dump = function
     | VPat v -> v
     | FPat (f, ps) ->
-      Sym.to_string f ^ "(" ^ String.concat ", " (List.map ~f:dump ps) ^ ")"
+      Sym.to_string f ^ "(" ^ String.concat ~sep:", " (List.map ~f:dump ps) ^ ")"
     | Underscore -> "_"
 end
 
@@ -53,7 +53,7 @@ module Stmt = struct
       "in(c, " ^ v ^ ");";
 
     | In vs ->
-      "in(c, (" ^ String.concat ", " vs ^ "));";
+      "in(c, (" ^ String.concat ~sep:", " vs ^ "));";
 
     | New (v, t) ->
       "new " ^ v ^ ": " ^ Type.to_string t ^ ";"
@@ -62,7 +62,7 @@ module Stmt = struct
       "out(c, " ^ Exp.to_string e ^ ");";
 
     | Out es ->
-      "out(c, (" ^ String.concat ", " (List.map ~f:Exp.to_string es) ^ "));";
+      "out(c, (" ^ String.concat ~sep:", " (List.map ~f:Exp.to_string es) ^ "));";
 
     | Eq_test (e1, e2) ->
       "ifeq " ^ Exp.to_string e1 ^ " = " ^ Exp.to_string e2 ^ " then "
@@ -77,7 +77,7 @@ module Stmt = struct
       Printf.sprintf "assume %s in" (Exp.to_string e)
 
     | Event (name, es) ->
-      "event " ^ name ^ "(" ^ String.concat ", " (List.map ~f:Exp.to_string es) ^ ");"
+      "event " ^ name ^ "(" ^ String.concat ~sep:", " (List.map ~f:Exp.to_string es) ^ ");"
 
     | Let (pat, e) ->
       "let " ^ Pat.dump pat ^ " = " ^ Exp.to_string e ^ " in"
@@ -202,7 +202,7 @@ let rec subst vs es =
 let subst_v vs vs' e =  subst vs (List.map ~f:Exp.var vs') e
 
 let to_string p =
-  String.concat "\n" (List.map ~f:Stmt.to_string p) ^ "\n"
+  String.concat ~sep:"\n" (List.map ~f:Stmt.to_string p) ^ "\n"
 
 (*************************************************)
 (** {1 Auxiliary Statements} *)

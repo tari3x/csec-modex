@@ -4,8 +4,21 @@ open Sym
 open Type
 open Exp
 
-module E = Exp
 module S = Solver
+
+open Printf
+
+let wrap =
+  { Exp.Wrap.
+    wrap_after = 80
+  ; wrap_to = 80
+  ; sep = "\\\\ \n & \\;\\; "
+  }
+
+module E = struct
+  include Exp
+  let latex = latex ~wrap
+end
 
 module Visible = struct
 
@@ -74,7 +87,7 @@ module Visible = struct
         |> List.dedup
         |> function
           | [] -> ""
-          | conds -> Printf.sprintf "(%s)" (String.concat "," conds)
+          | conds -> Printf.sprintf "(%s)" (String.concat ~sep:"," conds)
       in
       Printf.sprintf "%s ~> %s" conds (E.to_string t.right)
 
@@ -84,9 +97,9 @@ module Visible = struct
         |> List.dedup
         |> function
           | [] -> ""
-          | conds -> Printf.sprintf "(%s)" (String.concat "," conds)
+          | conds -> Printf.sprintf "(%s)" (String.concat ~sep:"," conds)
       in
-      Printf.sprintf "%s & \\rightsquigarrow %s" conds (E.latex t.right)
+      Printf.sprintf "%s \\rightsquigarrow {} & %s" conds (E.latex t.right)
   end
 
   module Sequence = struct
@@ -106,18 +119,18 @@ module Visible = struct
       | [] -> t.root
       | r :: _ -> Rewrite.right r
 
-    let to_string t =
-      let id = Printf.sprintf "%d:" (E.id t.root) in
+    let to_string ?(label = "") t =
+      let id = Printf.sprintf "%d%s:" (E.id t.root) label in
       let root = E.to_string t.root in
       let rewrites = List.map t.rewrites ~f:Rewrite.to_string in
-      String.concat "\n" (id :: root :: rewrites)
+      String.concat ~sep:"\n" (id :: root :: rewrites)
 
     let latex t =
       let first = E.latex t.root in
       let rewrites = List.map t.rewrites ~f:Rewrite.latex in
-      Printf.sprintf "\\mathbf{%d} & \\mathrel{\\hphantom{\\rightsquigarrow}} %s"
+      Printf.sprintf "\\mathbf{%d}  \\mathrel{\\hphantom{\\rightsquigarrow}} & %s"
         (E.id t.root)
-        (String.concat "\\\\\n" (first :: rewrites))
+        (String.concat ~sep:"\\\\\n" (first :: rewrites))
 
     let cleanup { id; root; rewrites } =
       let rec cleanup ~remove = function
@@ -169,13 +182,13 @@ module Visible = struct
     let t = cleanup t in
     let roots = List.map ~f:Sequence.to_string t.roots in
     let conds = List.map ~f:Sequence.to_string t.conds in
-    String.concat "\n" (roots @ conds)
+    String.concat ~sep:"\n" (roots @ conds)
 
   let latex t =
     let t = cleanup t in
     let roots = List.map ~f:Sequence.latex t.roots in
     let conds = List.map ~f:Sequence.latex t.conds in
-    String.concat "\\\\[\\medskipamount]\n" (roots @ conds)
+    String.concat ~sep:"\\\\[\\medskipamount]\n" (roots @ conds)
 
   module Summary = struct
     type t =
@@ -192,9 +205,22 @@ module Visible = struct
           ]
           @ a_to_string (i + 1) ass
       in
-      String.concat "\n\n"
+      String.concat ~sep:"\n\n"
         (a_to_string 0 t.assume
          @ [ Printf.sprintf "prove: %s" (E.list_to_string ~newline:true t.prove) ])
+
+    let latex t =
+      let of_conj_list es =
+        E.latex (cleanup_conj (E.conj es))
+      in
+      let assume =
+        List.mapi t.assume ~f:(fun i (cond, assumption) ->
+          let cond = sprintf "\\phi_%d = {} & %s" i (of_conj_list cond) in
+          let assumption = sprintf "\\psi_%d = {} & %s" i (of_conj_list assumption) in
+          sprintf "%s\\\\\n%s" cond assumption)
+      in
+      let prove = sprintf "\\psi = {} & %s" (of_conj_list t.prove) in
+      String.concat ~sep:"\\\\[\\medskipamount]\n" (assume @ [prove])
   end
 
   let sequence_of t e =
@@ -283,7 +309,7 @@ module Rewrite = struct
     let conds =
       List.map t.conds ~f:E.to_string
       |> List.dedup
-      |> String.concat ","
+      |> String.concat ~sep:","
     in
     Printf.sprintf "[%s] |- %s ~> %s" conds (E.to_string t.left) (E.to_string t.right)
 end
@@ -333,7 +359,7 @@ module Sequence = struct
     List.mem t2.root ~set:(conds t1)
 
   let dump t =
-    String.concat "\n" (E.to_string t.root :: List.map t.rewrites ~f:Rewrite.dump)
+    String.concat ~sep:"\n" (E.to_string t.root :: List.map t.rewrites ~f:Rewrite.dump)
 end
 
 type 'a t =
@@ -354,7 +380,7 @@ let create es =
   }
 
 let dump t =
-  String.concat "\n"
+  String.concat ~sep:"\n"
     (List.map t.roots ~f:Sequence.dump
      @ List.map t.conds ~f:Sequence.dump)
 
@@ -438,7 +464,7 @@ let latex t =
   Visible.latex (to_visible t)
 
 let summary t ~assume ~prove =
-  Visible.Summary.to_string (Visible.summary (to_visible t) ~assume ~prove)
+  Visible.Summary.latex (Visible.summary (to_visible t) ~assume ~prove)
 
 let derivation ~assume ~prove =
   let assume = List.map assume ~f:E.unfold in
@@ -550,15 +576,15 @@ let main () =
 
   reset ();
   let x = Var ("x", Kind.Bitstring) in
-  let utype = Int_type.create `Unsigned 4 in
-  let stype = Int_type.create `Signed 4 in
-  let x04 = Range (x, E.int 1, E.int 4) in
+  let utype = Int_type.create `Unsigned 1 in
+  let stype = Int_type.create `Signed 1 in
+  let x_len = Range (x, E.int 1, E.int 1) in
 
   let offset =
     E.sum
       [ E.int 1
-      ; E.int 8
-      ; Val (x04, utype)
+      ; E.int 1
+      ; Val (x_len, utype)
       ]
   in
   let prove =
@@ -570,8 +596,8 @@ let main () =
 
   let cast_su x = Sym (Op (Op.Cast_to_int, ([Bs_int stype], Bs_int utype)), [x]) in
   let cast_us x = Sym (Op (Op.Cast_to_int, ([Bs_int utype], Bs_int stype)), [x]) in
-  let nine_s = BS (E.int 9, stype) in
-  let nine_u = BS (E.int 9, utype) in
+  let nine_s = BS (E.int 2, stype) in
+  let nine_u = BS (E.int 2, utype) in
   let plus itype x y =
     Sym (Op (Op.Op_arith (Arith.Plus 2), ([Bs_int itype; Bs_int itype], Bs_int itype)),
          [x; y])
@@ -591,7 +617,7 @@ let main () =
   let cond2 =
     Sym
        (Truth_of_bs,
-        [Sym (le, [x04; BS (E.int 100, utype)])]
+        [Sym (le, [x_len; BS (E.int 100, utype)])]
        )
   in
   let cond3 =
@@ -600,12 +626,12 @@ let main () =
            (x,
             Val
               (cast_su
-                 (plus stype nine_s (cast_us x04)),
+                 (plus stype nine_s (cast_us x_len)),
                utype),
             Val
               (minus utype
                  (BS (Len x, utype))
-                 (plus utype nine_u x04),
+                 (plus utype nine_u x_len),
                utype))
        ; E.string "secret"
        ]

@@ -191,15 +191,15 @@ end
     | Int ival -> Int64.to_string ival
     | String bs ->
       let rep = List.map bs ~f:Char.escaped in
-      "\"" ^ String.concat "" rep ^ "\""
+      "\"" ^ String.concat ~sep:"" rep ^ "\""
     | Char c -> sprintf "'%s'" (Char.escaped c)
     | Sym (s, es) when Sym.is_infix s && List.length es > 1 ->
       let bodies = List.map ~f:(show_iexp ~bracket:true) es in
       if bodies = [] then Sym.to_string_hum ~show_types s ^ "()"
-      else String.concat (" " ^ Sym.to_string_hum ~show_types s ^ " ") bodies
+      else String.concat ~sep:(" " ^ Sym.to_string_hum ~show_types s ^ " ") bodies
     | Sym (s, es) ->
       let bodies = List.map ~f:show_iexp es in
-      Sym.to_string_hum ~show_types s ^ "(" ^ String.concat ", " bodies ^ ")"
+      Sym.to_string_hum ~show_types s ^ "(" ^ String.concat ~sep:", " bodies ^ ")"
     | Range (e, f, l) ->
       let body = show_iexp ~bracket:true e in
       let f_body = show_len f in
@@ -208,11 +208,11 @@ end
     | Concat [] -> "<empty concat>"
     | Concat es ->
       let bodies = List.map ~f:show_iexp es in
-      String.concat "|" bodies
+      String.concat ~sep:"|" bodies
     | Ptr (b, pos) ->
       let pos_bodies = List.map ~f:(offset_to_string) pos in
         (* let (step_defs, step_body) = show_len step in *)
-      let body = "<<" ^ base_to_string b ^ "; " ^ String.concat ", " pos_bodies ^ ">>"
+      let body = "<<" ^ base_to_string b ^ "; " ^ String.concat ~sep:", " pos_bodies ^ ">>"
       in body
     | Struct (fields, attrs, len, _) ->
       let show_field name e ~sep =
@@ -220,7 +220,7 @@ end
       in
       let fields = fold2list Str_map.fold (show_field ~sep:": ") fields in
       let attrs = fold2list Str_map.fold (show_field ~sep:" ~> ") attrs in
-      sprintf "<{%s}>[%s]" (String.concat "; " (fields @ attrs)) (show_iexp len)
+      sprintf "<{%s}>[%s]" (String.concat ~sep:"; " (fields @ attrs)) (show_iexp len)
     | Array (cells, _len, _) ->
       let show_cell (i, e) =
         let cell_body = show_iexp e in
@@ -231,7 +231,7 @@ end
         | [0, e] -> show_iexp e
         | cells ->
           let cell_bodies = List.map ~f:show_cell cells in
-          "[|" ^ String.concat "; " cell_bodies ^ "|]"
+          "[|" ^ String.concat ~sep:"; " cell_bodies ^ "|]"
         (* ^ "<" ^ E.dump len ^ ">" *)
       end
 
@@ -274,7 +274,7 @@ end
   let list_to_string ?(newline = false) es =
     let sep = if newline then ";\n" else "; " in
     show_types := false;
-    "[" ^ String.concat sep (List.map ~f:(show_iexp ~bracket:false) es) ^ "]"
+    "[" ^ String.concat ~sep (List.map ~f:(show_iexp ~bracket:false) es) ^ "]"
 
   let to_string e =
     show_types := false;
@@ -282,7 +282,7 @@ end
 
   let dump_list es =
     show_types := true;
-    "[" ^ String.concat "; " (List.map ~f:(show_iexp ~bracket:false) es) ^ "]"
+    "[" ^ String.concat ~sep:"; " (List.map ~f:(show_iexp ~bracket:false) es) ^ "]"
 
   let dump e =
     show_types := true;
@@ -292,24 +292,70 @@ end
   (** {1 Latex} *)
   (*************************************************)
 
-  let rec latex_iexp_body : type a. a t -> string = fun t ->
+  module Wrap = struct
+    type t =
+      { wrap_after : int
+      ; wrap_to    : int
+      ; sep        : string
+      }
+
+    (* Measure lengths using strings, but wrap latexs *)
+    let wrap t strings latexs =
+      let rec wrap n strings latexs =
+        match strings, latexs with
+        | [], [] -> []
+        | s :: strings, l :: latexs ->
+          let slen = String.length s in
+          let n = n - slen in
+          if n > 0 then `Block l :: wrap n strings latexs
+          else `Sep :: `Block l :: wrap (t.wrap_to - slen) strings latexs
+        | _ -> assert false
+      in
+      let rec merge = function
+        | `Block s :: `Sep :: xs ->
+          (s ^ t.sep) :: merge xs
+        | `Block s :: xs ->
+          s :: merge xs
+        | `Sep :: xs ->
+          merge xs
+        | [] -> []
+      in
+      let needs_wrap =
+        List.sum (List.map strings ~f:String.length) > t.wrap_after
+      in
+      if not needs_wrap then latexs
+      else merge (wrap t.wrap_to strings latexs)
+  end
+
+  let rec latex_iexp_body : type a. ?wrap:Wrap.t -> a t -> string = fun ?wrap t ->
     let show_types = !show_types in
     match t with
     | Int ival -> Int64.to_string ival
     | String bs ->
       let rep = List.map bs ~f:Char.escaped in
-      sprintf "\\miml{\"%s\"}" (String.concat "" rep)
+      sprintf "\\miml{\"%s\"}" (String.concat ~sep:"" rep)
     | Char c -> sprintf "\\miml{'%s'}" (Char.escaped c)
-    | Sym (s, es) when Sym.is_infix s && List.length es > 1 ->
+    | Sym (s, es) when Sym.is_infix s ->
       let bodies = List.map ~f:(latex_iexp ~bracket:true) es in
       if bodies = []
       then Sym.latex ~show_types s ^ "()"
-      else String.concat (" " ^ Sym.latex ~show_types s ^ " ") bodies
+      else begin
+        let bodies =
+          match wrap with
+          | None -> bodies
+          | Some wrap ->
+            let strings = List.map ~f:(show_iexp ~bracket:true) es in
+            Wrap.wrap wrap strings bodies
+        in
+        String.concat ~sep:(" " ^ Sym.latex ~show_types s ^ " ") bodies
+      end
     | Sym (s, es) ->
-      let bodies = List.map ~f:latex_iexp es |> String.concat ", "  in
+      let bodies = List.map ~f:latex_iexp es |> String.concat ~sep:", "  in
       begin match s with
       | Val_y itype ->
         sprintf "\\valy{%s}{%s}" bodies (Int_type.latex itype)
+      | Logical Logical.True ->
+        Sym.latex s
       | s ->
         sprintf "%s(%s)" (Sym.latex ~show_types s) bodies
       end
@@ -321,7 +367,7 @@ end
     | Concat [] -> "\\emptybs"
     | Concat es ->
       let bodies = List.map ~f:latex_iexp es in
-      String.concat "\\concat" bodies
+      String.concat ~sep:"\\concat" bodies
     | Ptr _ -> assert false
     | Struct _ -> assert false
     | Array _ -> assert false
@@ -334,16 +380,17 @@ end
     (* latex_iexp_body  e  ^ ":" ^ Type.latex t *)
     | Unknown _ -> assert false
 
-  and latex_iexp : type a. ?bracket:bool ->  a t -> string = fun ?(bracket = false) t ->
+  and latex_iexp : type a. ?bracket:bool -> ?wrap:Wrap.t ->  a t -> string =
+                     fun ?(bracket = false) ?wrap t ->
     match t with
-    | Var _ -> latex_iexp_body t
+    | Var _ -> latex_iexp_body ?wrap t
     | t ->
-      if bracket && (needs_bracket t) then "(" ^ latex_iexp_body t ^ ")"
-      else latex_iexp_body t
+      if bracket && (needs_bracket t) then "(" ^ latex_iexp_body ?wrap t ^ ")"
+      else latex_iexp_body ?wrap t
 
-  let latex e =
+  let latex ?wrap e =
     show_types := false;
-    latex_iexp ~bracket:false e
+    latex_iexp ~bracket:false ?wrap e
 
   (*************************************************)
   (** {1 Traversal} *)
@@ -747,7 +794,7 @@ end
   let apply (type a) (type b) (sym : (a, b) Sym.t) (es : any list) : b t =
     let list_to_string es =
       List.map es ~f:(fun (Any e) -> to_string e)
-      |> String.concat ","
+      |> String.concat ~sep:","
     in
     if List.length es <> Sym.arity sym
     then fail "Apply: arity mismatch: %s(%s)" (Sym.to_string sym) (list_to_string es);

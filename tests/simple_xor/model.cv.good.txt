@@ -38,20 +38,11 @@ fun conc1(fixed_20): fixed_21 [compos].
 (* auxiliary1 := len(arg0) = 112 *)
 fun auxiliary1(bitstring): bool.
 
-(* auxiliary1_prime := len(arg0) = 112 *)
-fun auxiliary1_prime(bitstring): bool.
-
 (* auxiliary2 := len(arg0) = 8 *)
 fun auxiliary2(bitstring): bool.
 
-(* auxiliary2_prime := len(arg0) = 8 *)
-fun auxiliary2_prime(bitstring): bool.
-
 (* auxiliary3 := ¬((arg0)_[s,8] <= 0) *)
 fun auxiliary3(bitstring): bool.
-
-(* auxiliary3_prime := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary3_prime(bitstring): bool.
 
 
 (*************************** 
@@ -73,6 +64,15 @@ fun Zfixed_21_prime(fixed_21): fixed_21.
 const zero_fixed_20: fixed_20.
 
 const zero_fixed_21: fixed_21.
+
+
+(*************************** 
+  Primed Functions 
+***************************)
+
+fun auxiliary2_prime(bitstring): bool.
+
+fun auxiliary1_prime(bitstring): bool.
 
 
 (*************************** 

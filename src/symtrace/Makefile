@@ -57,7 +57,7 @@ doc: $(COMMON_SRC) imltrace.ml pitrace.ml cvtrace.ml
 	ocamldoc -I $(OCAMLYICES_ROOT) -I $(OCAML_LIB) -I cryptoverif -html -d $@ $^
 
 clean:
-	$(RM) cvtrace imltrace top *.cmi *.cmo *.cmx *.o
+	$(RM) cvtrace imltrace top *.cma *.cmi *.cmo *.cmx *.o
 
 # Common rules
 .SUFFIXES: .ml .mli .cmo .cmi .cmx

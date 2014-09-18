@@ -65,7 +65,7 @@ let mk_exp_name (type a) (e : a Exp.t) =
     | Var (v, _) -> "var_" ^ v
     | String _ as e ->
       let escaped =
-        E.to_string e |> String.map (function
+        E.to_string e |> String.map ~f:(function
         | '\\' -> '_'
         | c -> c)
       in

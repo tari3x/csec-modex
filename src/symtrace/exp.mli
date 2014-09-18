@@ -291,13 +291,9 @@ module Range : sig
 end
 
 
-  (*************************************************)
-  (** {1 Show} *)
-  (*************************************************)
-
-  (*
-    val clip_enabled: bool ref
-  *)
+(*************************************************)
+(** {1 Show} *)
+(*************************************************)
 
 val to_string : _ t -> string
 val dump : _ t -> string
@@ -306,4 +302,12 @@ val list_to_string : ?newline:bool -> _ t list -> string
 val base_to_string : base -> string
 val offset_to_string : offset -> string
 
-val latex : _ t -> string
+module Wrap : sig
+  type t =
+    { wrap_after : int
+    ; wrap_to    : int
+    ; sep        : string
+    }
+end
+
+val latex : ?wrap:Wrap.t -> _ t -> string

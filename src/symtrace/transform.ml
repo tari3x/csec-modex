@@ -1328,7 +1328,7 @@ let show_parsing_eq ?fun_types (((p, c), e): parsing_eq) =
     | Some fun_types ->
       let ts, _ = Fun_type_ctx.find c fun_types in
       List.map2 ~f:(fun arg t -> arg ^ ": " ^ Type.to_string t) args ts
-      |> String.concat ", "
+      |> String.concat ~sep:", "
       |> Printf.sprintf "forall %s;\n"
     | None -> ""
   in
@@ -1336,7 +1336,7 @@ let show_parsing_eq ?fun_types (((p, c), e): parsing_eq) =
     header
     (Sym.to_string p)
     (Sym.to_string c)
-    (String.concat ", " args)
+    (String.concat ~sep:", " args)
     (E.to_string e)
 
 (*************************************************)
@@ -1455,7 +1455,7 @@ let safe_parse fun_types (concats : bitstring Sym_defs.t) parsing_eqs facts f_p 
     let cs =
       List.map cs ~f:(fun (c, i) ->
         Printf.sprintf "%s at position %d" (Sym.to_string c) i)
-      |> String.concat ", "
+      |> String.concat ~sep:", "
     in
     warn "Several safe parsing candidates for %s: %s, taking first"
       (Sym.to_string f_p) cs;

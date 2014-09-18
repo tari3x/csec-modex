@@ -72,6 +72,7 @@ src/symtrace/cvtrace
 src/symtrace/imltrace
 src/symtrace/run_tests
 src/symtrace/derivation
+src/symtrace/top
 src/symtrace/doc
 
 tests/instrumentation

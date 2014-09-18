@@ -182,6 +182,9 @@ module Op = struct
 
   let is_unary = function
     | Op_arith Neg
+    | Cast_to_int
+    | Cast_to_ptr
+    | Cast_to_other
     | BNot
     | LNot -> true
     | _ -> false
@@ -251,6 +254,8 @@ type ('a, 'b) sym = ('a, 'b) t
 type bfun = (bitstring, bitstring) t
 
 type any = Any : ('a, 'b) t -> any
+type any_bitstring = Any_bitstring : (bitstring, 'b) t -> any_bitstring
+
 let any s = Any s
 
 let is_infix (type a) (type b) (t : (a, b) t) =
@@ -395,7 +400,10 @@ let latex (type a) (type b) ?(show_types = true) (t : (a, b) t) =
   | Fun (s, _) -> sprintf "\\var{%s}" s
 
 let cv_declaration f (ts, t) =
-  to_string f ^ "(" ^ String.concat ", " (List.map ~f:Type.to_string ts) ^ "): " ^ Type.to_string t
+  sprintf "%s(%s): %s"
+    (to_string f)
+    (String.concat ~sep:", " (List.map ~f:Type.to_string ts))
+    (Type.to_string t)
 
 let of_string s =
   if Str.string_match (Str.regexp "(\\(.+\\) *: \\(.+\\))") s 0
@@ -562,6 +570,15 @@ let arity  (type a) (type b) (t : (a, b) t) =
   | Fun (_, (arity, _)) -> arity
 
   | Op (_, (ts, _)) -> List.length ts
+
+let prime = function
+  | Fun (s, n) -> Fun (s ^ "_prime", n)
+  | sym -> fail "auxiliary_facts: impossible auxiliary symbol: %s" (to_string sym)
+
+let unprime = function
+  | Fun (s, meta) ->
+    Option.map (String.chop_suffix s ~suffix:"_prime") ~f:(fun s -> Fun (s, meta))
+  | _ -> None
 
 module Key = struct
   type 'a t = (bitstring, 'a) sym

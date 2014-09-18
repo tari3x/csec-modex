@@ -90,65 +90,32 @@ fun auxiliary1(bitstring): bool.
 (* auxiliary10 := ¬((arg0)_[u,8] < 8) *)
 fun auxiliary10(bitstring): bool.
 
-(* auxiliary10_prime := ¬((arg0)_[u,8] < 8) *)
-fun auxiliary10_prime(bitstring): bool.
-
 (* auxiliary11 := ¬((arg0)_[u,8] > (8 + 1 + 1000 + 20)) *)
 fun auxiliary11(bitstring): bool.
-
-(* auxiliary11_prime := ¬((arg0)_[u,8] > (8 + 1 + 1000 + 20)) *)
-fun auxiliary11_prime(bitstring): bool.
 
 (* auxiliary12 := len(arg0) = (arg1 - (0)^[u,8])_[u,8] *)
 fun auxiliary12(bitstring, bitstring): bool.
 
-(* auxiliary12_prime := len(arg0) = (arg1 - (0)^[u,8])_[u,8] *)
-fun auxiliary12_prime(bitstring, bitstring): bool.
-
 (* auxiliary13 := ¬((arg0{0, 8})_[u,8] > 1000) *)
 fun auxiliary13(bitstring): bool.
-
-(* auxiliary13_prime := ¬((arg0{0, 8})_[u,8] > 1000) *)
-fun auxiliary13_prime(bitstring): bool.
 
 (* auxiliary14 := ¬((8 + 1 + (arg0{0, 8})_[u,8] + 20) <> (arg1)_[u,8]) *)
 fun auxiliary14(bitstring, bitstring): bool.
 
-(* auxiliary14_prime := ¬((8 + 1 + (arg0{0, 8})_[u,8] + 20) <> (arg1)_[u,8]) *)
-fun auxiliary14_prime(bitstring, bitstring): bool.
-
 (* auxiliary15 := ¬((arg0{8, 1})_[u,1] <> 1) *)
 fun auxiliary15(bitstring): bool.
-
-(* auxiliary15_prime := ¬((arg0{8, 1})_[u,1] <> 1) *)
-fun auxiliary15_prime(bitstring): bool.
 
 (* auxiliary16 := ¬(len(arg0) > 1000) *)
 fun auxiliary16(bitstring): bool.
 
-(* auxiliary16_prime := ¬(len(arg0) > 1000) *)
-fun auxiliary16_prime(bitstring): bool.
-
 (* auxiliary17 := ¬(len(arg0) > 1000) *)
 fun auxiliary17(bitstring): bool.
-
-(* auxiliary17_prime := ¬(len(arg0) > 1000) *)
-fun auxiliary17_prime(bitstring): bool.
 
 (* auxiliary18 := len(arg0) = 112 *)
 fun auxiliary18(bitstring): bool.
 
-(* auxiliary18_prime := len(arg0) = 112 *)
-fun auxiliary18_prime(bitstring): bool.
-
 (* auxiliary19 := len(arg0) = 8 *)
 fun auxiliary19(bitstring): bool.
-
-(* auxiliary19_prime := len(arg0) = 8 *)
-fun auxiliary19_prime(bitstring): bool.
-
-(* auxiliary1_prime := ¬(len(arg0) > 1000) *)
-fun auxiliary1_prime(bitstring): bool.
 
 (* auxiliary2 := len(arg0) = 112 *)
 fun auxiliary2(bitstring): bool.
@@ -156,53 +123,26 @@ fun auxiliary2(bitstring): bool.
 (* auxiliary20 := ¬((arg0)_[s,8] <= 0) *)
 fun auxiliary20(bitstring): bool.
 
-(* auxiliary20_prime := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary20_prime(bitstring): bool.
-
-(* auxiliary2_prime := len(arg0) = 112 *)
-fun auxiliary2_prime(bitstring): bool.
-
 (* auxiliary3 := len(arg0) = 8 *)
 fun auxiliary3(bitstring): bool.
-
-(* auxiliary3_prime := len(arg0) = 8 *)
-fun auxiliary3_prime(bitstring): bool.
 
 (* auxiliary4 := ¬((arg0)_[s,8] <= 0) *)
 fun auxiliary4(bitstring): bool.
 
-(* auxiliary4_prime := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary4_prime(bitstring): bool.
-
 (* auxiliary5 := len(arg0) = 8 *)
 fun auxiliary5(bitstring): bool.
-
-(* auxiliary5_prime := len(arg0) = 8 *)
-fun auxiliary5_prime(bitstring): bool.
 
 (* auxiliary6 := ¬((arg0)_[s,8] <= 0) *)
 fun auxiliary6(bitstring): bool.
 
-(* auxiliary6_prime := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary6_prime(bitstring): bool.
-
 (* auxiliary7 := len(arg0) = 112 *)
 fun auxiliary7(bitstring): bool.
-
-(* auxiliary7_prime := len(arg0) = 112 *)
-fun auxiliary7_prime(bitstring): bool.
 
 (* auxiliary8 := len(arg0) = 4 *)
 fun auxiliary8(bitstring): bool.
 
-(* auxiliary8_prime := len(arg0) = 4 *)
-fun auxiliary8_prime(bitstring): bool.
-
 (* auxiliary9 := len(arg0) = ((8)^[u,8] - (0)^[u,8])_[u,8] *)
 fun auxiliary9(bitstring): bool.
-
-(* auxiliary9_prime := len(arg0) = ((8)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary9_prime(bitstring): bool.
 
 
 (*************************** 
@@ -222,6 +162,41 @@ fun Zfixed_20_hash(fixed_20_hash): fixed_20_hash.
 fun Zfixed_20_hash_prime(fixed_20_hash): fixed_20_hash.
 
 const zero_fixed_20_hash: fixed_20_hash.
+
+
+(*************************** 
+  Primed Functions 
+***************************)
+
+fun auxiliary9_prime(bitstring): bool.
+
+fun auxiliary8_prime(bitstring): bool.
+
+fun auxiliary7_prime(bitstring): bool.
+
+fun auxiliary5_prime(bitstring): bool.
+
+fun auxiliary3_prime(bitstring): bool.
+
+fun auxiliary2_prime(bitstring): bool.
+
+fun auxiliary19_prime(bitstring): bool.
+
+fun auxiliary18_prime(bitstring): bool.
+
+fun auxiliary17_prime(bitstring): bool.
+
+fun auxiliary16_prime(bitstring): bool.
+
+fun conc3_prime(bounded_1000_payload): bitstring.
+
+fun conc2_prime(bounded_1000_payload, fixed_20_hash): bitstring.
+
+fun conc1_prime(bounded_1000_payload): bitstring.
+
+fun auxiliary12_prime(bitstring, bitstring): bool.
+
+fun auxiliary1_prime(bitstring): bool.
 
 
 (*************************** 
@@ -253,24 +228,24 @@ forall arg0: bitstring;
 	auxiliary17(arg0) = auxiliary17_prime(Zbitstring(arg0)).
 forall arg0: bitstring;
 	auxiliary16(arg0) = auxiliary16_prime(Zbitstring(arg0)).
-forall x27: bounded_1000_payload;
-	auxiliary15(conc3(x27)) = auxiliary15_prime(conc3(Zbounded_1000_payload(x27))).
-forall x29: fixed_20_hash, x28: bounded_1000_payload;
-	auxiliary15(conc2(x28, x29)) = auxiliary15_prime(conc2(Zbounded_1000_payload(x28), Zfixed_20_hash(x29))).
-forall x30: bounded_1000_payload;
-	auxiliary15(conc1(x30)) = auxiliary15_prime(conc1(Zbounded_1000_payload(x30))).
-forall x32: bounded_1000_payload, arg1: bitstring;
-	auxiliary14(conc3(x32), arg1) = auxiliary14_prime(conc3(Zbounded_1000_payload(x32)), arg1).
-forall x34: fixed_20_hash, x33: bounded_1000_payload, arg1: bitstring;
-	auxiliary14(conc2(x33, x34), arg1) = auxiliary14_prime(conc2(Zbounded_1000_payload(x33), Zfixed_20_hash(x34)), arg1).
-forall x35: bounded_1000_payload, arg1: bitstring;
-	auxiliary14(conc1(x35), arg1) = auxiliary14_prime(conc1(Zbounded_1000_payload(x35)), arg1).
-forall x42: bounded_1000_payload;
-	auxiliary13(conc3(x42)) = auxiliary13_prime(conc3(Zbounded_1000_payload(x42))).
-forall x44: fixed_20_hash, x43: bounded_1000_payload;
-	auxiliary13(conc2(x43, x44)) = auxiliary13_prime(conc2(Zbounded_1000_payload(x43), Zfixed_20_hash(x44))).
-forall x45: bounded_1000_payload;
-	auxiliary13(conc1(x45)) = auxiliary13_prime(conc1(Zbounded_1000_payload(x45))).
+forall x41: bounded_1000_payload;
+	auxiliary15(conc3(x41)) = auxiliary15(conc3_prime(Zbounded_1000_payload(x41))).
+forall x43: fixed_20_hash, x42: bounded_1000_payload;
+	auxiliary15(conc2(x42, x43)) = auxiliary15(conc2_prime(Zbounded_1000_payload(x42), Zfixed_20_hash(x43))).
+forall x44: bounded_1000_payload;
+	auxiliary15(conc1(x44)) = auxiliary15(conc1_prime(Zbounded_1000_payload(x44))).
+forall x48: bounded_1000_payload, arg1: bitstring;
+	auxiliary14(conc3(x48), arg1) = auxiliary14(conc3_prime(Zbounded_1000_payload(x48)), arg1).
+forall x50: fixed_20_hash, x49: bounded_1000_payload, arg1: bitstring;
+	auxiliary14(conc2(x49, x50), arg1) = auxiliary14(conc2_prime(Zbounded_1000_payload(x49), Zfixed_20_hash(x50)), arg1).
+forall x51: bounded_1000_payload, arg1: bitstring;
+	auxiliary14(conc1(x51), arg1) = auxiliary14(conc1_prime(Zbounded_1000_payload(x51)), arg1).
+forall x59: bounded_1000_payload;
+	auxiliary13(conc3(x59)) = auxiliary13(conc3_prime(Zbounded_1000_payload(x59))).
+forall x61: fixed_20_hash, x60: bounded_1000_payload;
+	auxiliary13(conc2(x60, x61)) = auxiliary13(conc2_prime(Zbounded_1000_payload(x60), Zfixed_20_hash(x61))).
+forall x62: bounded_1000_payload;
+	auxiliary13(conc1(x62)) = auxiliary13(conc1_prime(Zbounded_1000_payload(x62))).
 forall arg1: bitstring, arg0: bitstring;
 	auxiliary12(arg0, arg1) = auxiliary12_prime(Zbitstring(arg0), arg1).
 forall arg0: bitstring;

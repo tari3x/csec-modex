@@ -156,7 +156,7 @@ module Loc = struct
   let call_stack () =
     Stack.to_list stack
     |> List.map ~f:to_string
-    |> String.concat "\n"
+    |> String.concat ~sep:"\n"
 
   let dump_stack () =
     Stack.iter (fun loc ->
@@ -371,7 +371,7 @@ let rec flatten_index_deep : pos -> pos = function
 *)
 let rec extract (pos: pos) (l : iterm option) (e : bterm) : bterm =
   DEBUG "extract, e_host: %s" (E.dump e);
-  DEBUG "extract, pos: %s" (String.concat ", " (List.map ~f:E.offset_to_string pos));
+  DEBUG "extract, pos: %s" (String.concat ~sep:", " (List.map ~f:E.offset_to_string pos));
   DEBUG "extract, len: %s" (Option.to_string E.dump l);
   match (pos, l, e) with
     | ((Field s, _) :: os', _, Struct (fields, _, _, e_old)) ->
@@ -476,7 +476,7 @@ let rec update
     (e_val : bterm) =
   DEBUG "update, e_host: %s" (E.dump e_host);
   DEBUG "update, e_val: %s"  (E.dump e_val);
-  DEBUG "update, pos: %s" (String.concat ", " (List.map ~f:E.offset_to_string pos));
+  DEBUG "update, pos: %s" (String.concat ~sep:", " (List.map ~f:E.offset_to_string pos));
   DEBUG "update, step: %s" (E.dump step);
   DEBUG "update, l_val: %s" (Option.to_string E.dump l_val);
   if not (S.is_true (E.is_defined e_val))
