@@ -19,6 +19,9 @@ $(P1) $(P2): polarssl gcm $(P1_SRC) $(P2_SRC)
 
 compile: $(P1) $(P2)
 
+polarssl:
+	cd polarssl/library; make
+
 clean:
 	$(RM) $(P1) $(P2)
 

@@ -21,10 +21,10 @@ Do not use the zip file provided by github, as it breaks symbolic links.
 Dependencies
 ============
 
-The distribution bundles and automatically builds most of the dependencies. 
-The following dependencies require some extra work:
+The distribution bundles and automatically builds most of the dependencies, 
+except for the following:
 
-- gcc and ocaml need to be installed on the system
+- gcc, ocaml, cmake, openssl, polarssl, markdown
 
 - Yices SMT solver, which we are not allowed to redistribute due to licensing restrictions. 
 
@@ -38,7 +38,7 @@ The following dependencies require some extra work:
 
 - camlidl. You can get it with opam by running "opam install camlidl".
 
-- the curses library (libncurses-devel in Cygwin) is required by CIL
+- the curses library (libncurses-devel in Cygwin), which is required by CIL
 
 How to use
 ==========

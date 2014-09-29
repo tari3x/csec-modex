@@ -540,9 +540,9 @@ let main () =
   let x2 = Var ("x_2", Kind.Bitstring) in
   let e =
     E.eq_int
-       [ Len (Range (Concat [x1; x2], Int 5L, Len x2))
-       ; Len x2
-       ]
+      [ Len (Range (Concat [x1; x2], Int 5L, Len x2))
+      ; Len x2
+      ]
   in
   let assume = [] in
   let prove = [e] in
@@ -589,9 +589,9 @@ let main () =
   in
   let prove =
     E.eq_bitstring
-       [ Range (x, offset, E.minus (Len x) offset)
-       ; E.string "secret"
-       ]
+      [ Range (x, offset, E.minus (Len x) offset)
+      ; E.string "secret"
+      ]
   in
 
   let cast_su x = Sym (Op (Op.Cast_to_int, ([Bs_int stype], Bs_int utype)), [x]) in
@@ -609,32 +609,32 @@ let main () =
   let ge = Op (Op.Op_cmp Cmp.Ge, ([Bs_int utype; Bs_int utype], Bs_int utype)) in
   let cond1 =
     Sym
-       (Truth_of_bs,
-        [Sym (ge, [BS (Len x, utype); BS (E.int 200, utype)])]
-       )
+      (Truth_of_bs,
+       [Sym (ge, [BS (Len x, utype); BS (E.int 200, utype)])]
+      )
   in
   let le = Op (Op.Op_cmp Cmp.Le, ([Bs_int utype; Bs_int utype], Bs_int utype)) in
   let cond2 =
     Sym
-       (Truth_of_bs,
-        [Sym (le, [x_len; BS (E.int 100, utype)])]
-       )
+      (Truth_of_bs,
+       [Sym (le, [x_len; BS (E.int 100, utype)])]
+      )
   in
   let cond3 =
     E.eq_bitstring
-       [Range
-           (x,
-            Val
-              (cast_su
-                 (plus stype nine_s (cast_us x_len)),
-               utype),
-            Val
-              (minus utype
-                 (BS (Len x, utype))
-                 (plus utype nine_u x_len),
-               utype))
-       ; E.string "secret"
-       ]
+      [Range
+          (x,
+           Val
+             (cast_su
+                (plus stype nine_s (cast_us x_len)),
+              utype),
+           Val
+             (minus utype
+                (BS (Len x, utype))
+                (plus utype nine_u x_len),
+              utype))
+      ; E.string "secret"
+      ]
   in
   let assume = [cond1; cond2; cond3] in
   let prove = [prove] in
