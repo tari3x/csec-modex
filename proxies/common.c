@@ -111,6 +111,13 @@ void typehint(const unsigned char * buf, size_t len, const char * type)
   store_buf(buf);
 }
 
+void hint(const unsigned char * buf, size_t len, const char * name)
+{
+  load_buf(buf, len, "");
+  Hint(name);
+  store_buf(buf);
+}
+
 void append_zero(const unsigned char * buf)
 {
   load_all(buf, "");

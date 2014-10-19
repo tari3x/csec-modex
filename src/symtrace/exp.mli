@@ -100,7 +100,6 @@ type 'a t =
 and 'a annotation =
 | Type_hint : 'a imltype -> 'a annotation
 | Name of string
-  (* | Width of width *)
 
   (** Not the same as lhost in CIL *)
 and base =
@@ -145,9 +144,9 @@ type fact = bool t
 
 type any = Any : 'a t -> any
 
-  (*************************************************)
-  (** {1 Collections} *)
-  (*************************************************)
+(*************************************************)
+(** {1 Collections} *)
+(*************************************************)
 
 module Kind : module type of Kind with type 'a t = 'a Kind.t
 
@@ -171,27 +170,27 @@ end
 
 module Map_any : module type of Common.Map_any (Kind) (Key)
 
-  (*************************************************)
-  (** {1 Traversal} *)
-  (*************************************************)
+(*************************************************)
+(** {1 Traversal} *)
+(*************************************************)
 
 type 'b map = { f : 'a. 'a t -> 'b }
 type descend = { descend : 'a. 'a t -> 'a t }
 
-  (**
-     Does not include lengths for non-range expressions.
-  *)
+(**
+   Does not include lengths for non-range expressions.
+*)
 val map_children : 'b map ->  _ t -> 'b list
 val iter_children : unit map -> _ t -> unit
 
-  (**
-     Not going into lengths for non-range expressions.
-  *)
+(**
+   Not going into lengths for non-range expressions.
+*)
 val descend : descend -> 'a t -> 'a t
 
-  (*************************************************)
-  (** {1 Typing } *)
-  (*************************************************)
+(*************************************************)
+(** {1 Typing } *)
+(*************************************************)
 
 val invariant  : _ t -> unit
 val itype      : int t -> Int_type.t option
@@ -201,9 +200,9 @@ val coerce     : 'a Kind.t -> _ t -> 'a t option
 val equal      : 'a t -> 'b t -> ('a, 'b) Type_equal.t option
 val phys_equal : 'a t -> 'b t -> ('a, 'b) Type_equal.t option
 
-  (*************************************************)
-  (** {1 IDs} *)
-  (*************************************************)
+(*************************************************)
+(** {1 IDs} *)
+(*************************************************)
 
 val id : _ t -> int
 val reset_ids : unit -> unit
@@ -211,9 +210,9 @@ val reset_ids : unit -> unit
 val serialize_state : out_channel -> unit
 val deserialize_state : in_channel -> unit
 
-  (*************************************************)
-  (** {1 Misc} *)
-  (*************************************************)
+(*************************************************)
+(** {1 Misc} *)
+(*************************************************)
 
 val var : var -> bterm
 val concat : bterm list -> bterm
@@ -233,10 +232,10 @@ val disj : fact list -> fact
 
 val flatten_conj : fact -> fact list
 
-  (* CR-someday: this is not a full abstraction since [Transformations.normal_form]
-     explicitly enumerates the caess of this function. However, changing this function
-     will cause [normal_form] to fail, so at least we will notice. Think of some
-     refactoring to make this better. *)
+(* CR-someday: this is not a full abstraction since [Transformations.normal_form]
+   explicitly enumerates the caess of this function. However, changing this function
+   will cause [normal_form] to fail, so at least we will notice. Think of some
+   refactoring to make this better. *)
 val is_cryptographic : bterm -> bool
 val is_constant : _ t -> bool
 val is_constant_integer_expression : iterm -> bool
@@ -252,10 +251,10 @@ val subst_v : var list -> var list -> 'a t -> 'a t
 
 val remove_annotations : 'a t -> 'a t
 
-  (* CR: make this part of solver rewriting? *)
-  (** The truth function from the thesis that takes C bool expressions and converts
-      them to expressions of type Bool.  In particular, all bool C operators (LNot,
-      LAnd, ...) are replaced by "proper" bool operators (Not, And, ...).  *)
+(* CR: make this part of solver rewriting? *)
+(** The truth function from the thesis that takes C bool expressions and converts
+    them to expressions of type Bool.  In particular, all bool C operators (LNot,
+    LAnd, ...) are replaced by "proper" bool operators (Not, And, ...).  *)
 val truth : bterm -> fact
 
 val len : bterm -> iterm

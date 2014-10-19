@@ -113,7 +113,7 @@ forall ;
 ***************************)
 
 (* auxiliary1 := ¬(len(arg0) > 2147483647) *)
-fun auxiliary1(bitstring): bool.
+fun auxiliary1(bounded_100_mkey): bool.
 
 (* auxiliary10 := len(arg0) = 112 *)
 fun auxiliary10(bitstring): bool.
@@ -146,7 +146,7 @@ fun auxiliary18(bitstring): bool.
 fun auxiliary19(bitstring): bool.
 
 (* auxiliary2 := ¬(len(arg0) > 2147483647) *)
-fun auxiliary2(bitstring): bool.
+fun auxiliary2(bounded_2000_request): bool.
 
 (* auxiliary20 := ((arg0)_[u,8] - (8 + 1 + (arg1{0, 8})_[u,8])) = 20 *)
 fun auxiliary20(bitstring, bitstring): bool.
@@ -179,7 +179,7 @@ fun auxiliary28(bitstring): bool.
 fun auxiliary29(bitstring): bool.
 
 (* auxiliary3 := ¬(len(arg0) > 2000) *)
-fun auxiliary3(bitstring): bool.
+fun auxiliary3(bounded_2000_request): bool.
 
 (* auxiliary30 := (1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < (arg0{0, 8})_[u,8] *)
 fun auxiliary30(bitstring): bool.
@@ -200,16 +200,16 @@ fun auxiliary34(bitstring): bool.
 fun auxiliary35(bitstring): bool.
 
 (* auxiliary36 := ¬(len(arg0) > 2000) *)
-fun auxiliary36(bitstring): bool.
+fun auxiliary36(bounded_2000_response): bool.
 
 (* auxiliary37 := ¬(len(arg0) > 2147483647) *)
-fun auxiliary37(bitstring): bool.
+fun auxiliary37(bounded_100_mkey): bool.
 
 (* auxiliary38 := ¬(len(arg0) > 2147483647) *)
-fun auxiliary38(bitstring): bool.
+fun auxiliary38(bounded_2000_request): bool.
 
 (* auxiliary39 := ¬(len(arg0) > 2000) *)
-fun auxiliary39(bitstring): bool.
+fun auxiliary39(bounded_2000_request): bool.
 
 (* auxiliary4 := ¬(Ztp(arg0{0, 6}) = Ztp("client")) *)
 fun auxiliary4(bitstring): bool.
@@ -227,52 +227,52 @@ fun auxiliary42(bitstring): bool.
 fun auxiliary43(bitstring): bool.
 
 (* auxiliary44 := 0 < len(arg0) *)
-fun auxiliary44(bitstring): bool.
+fun auxiliary44(bounded_2000_request): bool.
 
 (* auxiliary45 := 1 < len(arg0) *)
-fun auxiliary45(bitstring): bool.
+fun auxiliary45(bounded_2000_request): bool.
 
 (* auxiliary46 := (1 + 1) < len(arg0) *)
-fun auxiliary46(bitstring): bool.
+fun auxiliary46(bounded_2000_request): bool.
 
 (* auxiliary47 := (1 + 1 + 1) < len(arg0) *)
-fun auxiliary47(bitstring): bool.
+fun auxiliary47(bounded_2000_request): bool.
 
 (* auxiliary48 := (1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary48(bitstring): bool.
+fun auxiliary48(bounded_2000_request): bool.
 
 (* auxiliary49 := (1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary49(bitstring): bool.
+fun auxiliary49(bounded_2000_request): bool.
 
 (* auxiliary5 := len(arg0) = 112 *)
 fun auxiliary5(bitstring): bool.
 
 (* auxiliary50 := (1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary50(bitstring): bool.
+fun auxiliary50(bounded_2000_request): bool.
 
 (* auxiliary51 := (1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary51(bitstring): bool.
+fun auxiliary51(bounded_2000_request): bool.
 
 (* auxiliary52 := (1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary52(bitstring): bool.
+fun auxiliary52(bounded_2000_request): bool.
 
 (* auxiliary53 := (1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary53(bitstring): bool.
+fun auxiliary53(bounded_2000_request): bool.
 
 (* auxiliary54 := (1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary54(bitstring): bool.
+fun auxiliary54(bounded_2000_request): bool.
 
 (* auxiliary55 := (1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary55(bitstring): bool.
+fun auxiliary55(bounded_2000_request): bool.
 
 (* auxiliary56 := (1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary56(bitstring): bool.
+fun auxiliary56(bounded_2000_request): bool.
 
 (* auxiliary57 := (1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0) *)
-fun auxiliary57(bitstring): bool.
+fun auxiliary57(bounded_2000_request): bool.
 
 (* auxiliary58 := ¬((1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) < len(arg0)) *)
-fun auxiliary58(bitstring): bool.
+fun auxiliary58(bounded_2000_request): bool.
 
 (* auxiliary59 := len(arg0) = ((8)^[u,8] - (0)^[u,8])_[u,8] *)
 fun auxiliary59(bitstring): bool.
@@ -406,6 +406,10 @@ fun Zbitstring(bitstring): bitstring.
 
 fun Zbitstring_prime(bitstring): bitstring.
 
+fun Zbounded_100_mkey(bounded_100_mkey): bounded_100_mkey.
+
+fun Zbounded_100_mkey_prime(bounded_100_mkey): bounded_100_mkey.
+
 fun Zbounded_2000_request(bounded_2000_request): bounded_2000_request.
 
 fun Zbounded_2000_request_prime(bounded_2000_request): bounded_2000_request.
@@ -427,53 +431,53 @@ fun auxiliary6_prime(bitstring): bool.
 
 fun auxiliary59_prime(bitstring): bool.
 
-fun auxiliary58_prime(bitstring): bool.
+fun auxiliary58_prime(bounded_2000_request): bool.
 
-fun auxiliary57_prime(bitstring): bool.
+fun auxiliary57_prime(bounded_2000_request): bool.
 
-fun auxiliary56_prime(bitstring): bool.
+fun auxiliary56_prime(bounded_2000_request): bool.
 
-fun auxiliary55_prime(bitstring): bool.
+fun auxiliary55_prime(bounded_2000_request): bool.
 
-fun auxiliary54_prime(bitstring): bool.
+fun auxiliary54_prime(bounded_2000_request): bool.
 
-fun auxiliary53_prime(bitstring): bool.
+fun auxiliary53_prime(bounded_2000_request): bool.
 
-fun auxiliary52_prime(bitstring): bool.
+fun auxiliary52_prime(bounded_2000_request): bool.
 
-fun auxiliary51_prime(bitstring): bool.
+fun auxiliary51_prime(bounded_2000_request): bool.
 
-fun auxiliary50_prime(bitstring): bool.
+fun auxiliary50_prime(bounded_2000_request): bool.
 
 fun auxiliary5_prime(bitstring): bool.
 
-fun auxiliary49_prime(bitstring): bool.
+fun auxiliary49_prime(bounded_2000_request): bool.
 
-fun auxiliary48_prime(bitstring): bool.
+fun auxiliary48_prime(bounded_2000_request): bool.
 
-fun auxiliary47_prime(bitstring): bool.
+fun auxiliary47_prime(bounded_2000_request): bool.
 
-fun auxiliary46_prime(bitstring): bool.
+fun auxiliary46_prime(bounded_2000_request): bool.
 
-fun auxiliary45_prime(bitstring): bool.
+fun auxiliary45_prime(bounded_2000_request): bool.
 
-fun auxiliary44_prime(bitstring): bool.
+fun auxiliary44_prime(bounded_2000_request): bool.
 
 fun auxiliary42_prime(bitstring): bool.
 
 fun auxiliary41_prime(bitstring): bool.
 
-fun auxiliary39_prime(bitstring): bool.
+fun auxiliary39_prime(bounded_2000_request): bool.
 
-fun auxiliary38_prime(bitstring): bool.
+fun auxiliary38_prime(bounded_2000_request): bool.
 
-fun auxiliary37_prime(bitstring): bool.
+fun auxiliary37_prime(bounded_100_mkey): bool.
 
-fun auxiliary36_prime(bitstring): bool.
+fun auxiliary36_prime(bounded_2000_response): bool.
 
-fun auxiliary3_prime(bitstring): bool.
+fun auxiliary3_prime(bounded_2000_request): bool.
 
-fun auxiliary2_prime(bitstring): bool.
+fun auxiliary2_prime(bounded_2000_request): bool.
 
 fun conc6_prime(bounded_2000_response, bitstring): bitstring.
 
@@ -495,14 +499,13 @@ fun auxiliary11_prime(bitstring): bool.
 
 fun auxiliary10_prime(bitstring): bool.
 
-fun auxiliary1_prime(bitstring): bool.
+fun auxiliary1_prime(bounded_100_mkey): bool.
 
 
 (*************************** 
   Typecasting 
 ***************************)
 
-fun cast_bounded_2000_request_bitstring(bounded_2000_request): bitstring [compos].
 
 (*************************** 
   Auxiliary Facts 
@@ -900,50 +903,50 @@ forall arg0: bitstring;
 	auxiliary6(arg0) = auxiliary6_prime(Zbitstring(arg0)).
 forall arg0: bitstring;
 	auxiliary59(arg0) = auxiliary59_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary58(arg0) = auxiliary58_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary57(arg0) = auxiliary57_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary56(arg0) = auxiliary56_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary55(arg0) = auxiliary55_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary54(arg0) = auxiliary54_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary53(arg0) = auxiliary53_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary52(arg0) = auxiliary52_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary51(arg0) = auxiliary51_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary50(arg0) = auxiliary50_prime(Zbitstring(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary58(arg0) = auxiliary58_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary57(arg0) = auxiliary57_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary56(arg0) = auxiliary56_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary55(arg0) = auxiliary55_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary54(arg0) = auxiliary54_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary53(arg0) = auxiliary53_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary52(arg0) = auxiliary52_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary51(arg0) = auxiliary51_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary50(arg0) = auxiliary50_prime(Zbounded_2000_request(arg0)).
 forall arg0: bitstring;
 	auxiliary5(arg0) = auxiliary5_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary49(arg0) = auxiliary49_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary48(arg0) = auxiliary48_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary47(arg0) = auxiliary47_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary46(arg0) = auxiliary46_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary45(arg0) = auxiliary45_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary44(arg0) = auxiliary44_prime(Zbitstring(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary49(arg0) = auxiliary49_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary48(arg0) = auxiliary48_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary47(arg0) = auxiliary47_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary46(arg0) = auxiliary46_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary45(arg0) = auxiliary45_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary44(arg0) = auxiliary44_prime(Zbounded_2000_request(arg0)).
 forall arg0: bitstring;
 	auxiliary42(arg0) = auxiliary42_prime(Zbitstring(arg0)).
 forall arg0: bitstring;
 	auxiliary41(arg0) = auxiliary41_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary39(arg0) = auxiliary39_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary38(arg0) = auxiliary38_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary37(arg0) = auxiliary37_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary36(arg0) = auxiliary36_prime(Zbitstring(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary39(arg0) = auxiliary39_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary38(arg0) = auxiliary38_prime(Zbounded_2000_request(arg0)).
+forall arg0: bounded_100_mkey;
+	auxiliary37(arg0) = auxiliary37_prime(Zbounded_100_mkey(arg0)).
+forall arg0: bounded_2000_response;
+	auxiliary36(arg0) = auxiliary36_prime(Zbounded_2000_response(arg0)).
 forall x572: bitstring, x571: bounded_2000_response;
 	auxiliary35(conc6(x571, x572)) = auxiliary35(conc6_prime(Zbounded_2000_response(x571), Zbitstring(x572))).
 forall x574: bounded_2000_response, x573: bounded_2000_request;
@@ -1016,8 +1019,8 @@ forall x639: bitstring, x638: bounded_2000_request;
 	auxiliary30(conc2(x638, x639)) = auxiliary30(conc2_prime(Zbounded_2000_request(x638), Zbitstring(x639))).
 forall x640: bounded_2000_request;
 	auxiliary30(conc1(x640)) = auxiliary30(conc1_prime(Zbounded_2000_request(x640))).
-forall arg0: bitstring;
-	auxiliary3(arg0) = auxiliary3_prime(Zbitstring(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary3(arg0) = auxiliary3_prime(Zbounded_2000_request(arg0)).
 forall x646: bitstring, x645: bounded_2000_response;
 	auxiliary29(conc6(x645, x646)) = auxiliary29(conc6_prime(Zbounded_2000_response(x645), Zbitstring(x646))).
 forall x648: bounded_2000_response, x647: bounded_2000_request;
@@ -1138,8 +1141,8 @@ forall x773: bitstring, x772: bounded_2000_request, arg0: bitstring;
 	auxiliary20(arg0, conc2(x772, x773)) = auxiliary20(arg0, conc2_prime(Zbounded_2000_request(x772), Zbitstring(x773))).
 forall x774: bounded_2000_request, arg0: bitstring;
 	auxiliary20(arg0, conc1(x774)) = auxiliary20(arg0, conc1_prime(Zbounded_2000_request(x774))).
-forall arg0: bitstring;
-	auxiliary2(arg0) = auxiliary2_prime(Zbitstring(arg0)).
+forall arg0: bounded_2000_request;
+	auxiliary2(arg0) = auxiliary2_prime(Zbounded_2000_request(arg0)).
 forall x780: bitstring, x779: bounded_2000_response;
 	auxiliary19(conc6(x779, x780)) = auxiliary19(conc6_prime(Zbounded_2000_response(x779), Zbitstring(x780))).
 forall x782: bounded_2000_response, x781: bounded_2000_request;
@@ -1184,8 +1187,8 @@ forall arg0: bitstring;
 	auxiliary11(arg0) = auxiliary11_prime(Zbitstring(arg0)).
 forall arg0: bitstring;
 	auxiliary10(arg0) = auxiliary10_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary1(arg0) = auxiliary1_prime(Zbitstring(arg0)).
+forall arg0: bounded_100_mkey;
+	auxiliary1(arg0) = auxiliary1_prime(Zbounded_100_mkey(arg0)).
 
 (*************************** 
   Zero Facts 
@@ -1203,8 +1206,6 @@ forall arg1: bitstring, arg0: bounded_2000_request;
 	Zbitstring(conc2(arg0, arg1)) = Zbitstring_prime(conc2(Zbounded_2000_request(arg0), Zbitstring(arg1))).
 forall arg0: bounded_2000_request;
 	Zbitstring(conc1(arg0)) = Zbitstring_prime(conc1(Zbounded_2000_request(arg0))).
-forall x: bounded_2000_request;
-	Zbitstring(cast_bounded_2000_request_bitstring(x)) = Zbitstring_prime(cast_bounded_2000_request_bitstring(Zbounded_2000_request(x))).
 
 (********************
 <Query>
@@ -1243,35 +1244,35 @@ let hash1 = HMAC(var27, msg1, keyAB) in
 let msg2 = arithmetic4(request) in
 let msg3 = conc2(request, hash1) in
 new nondet1: nondet;
-if auxiliary44(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary44(request) then 
 new nondet2: nondet;
-if auxiliary45(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary45(request) then 
 new nondet3: nondet;
-if auxiliary46(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary46(request) then 
 new nondet4: nondet;
-if auxiliary47(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary47(request) then 
 new nondet5: nondet;
-if auxiliary48(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary48(request) then 
 new nondet6: nondet;
-if auxiliary49(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary49(request) then 
 new nondet7: nondet;
-if auxiliary50(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary50(request) then 
 new nondet8: nondet;
-if auxiliary51(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary51(request) then 
 new nondet9: nondet;
-if auxiliary52(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary52(request) then 
 new nondet10: nondet;
-if auxiliary53(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary53(request) then 
 new nondet11: nondet;
-if auxiliary54(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary54(request) then 
 new nondet12: nondet;
-if auxiliary55(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary55(request) then 
 new nondet13: nondet;
-if auxiliary56(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary56(request) then 
 new nondet14: nondet;
-if auxiliary57(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary57(request) then 
 new nondet15: nondet;
-if auxiliary58(cast_bounded_2000_request_bitstring(request)) then 
+if auxiliary58(request) then 
 new nondet16: nondet;
 new nondet17: nondet;
 new nondet18: nondet;

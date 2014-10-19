@@ -79,8 +79,8 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
 }
 
 
-int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len , DSA_SIG *sig ,
-                               DSA *dsa )
+int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len ,
+                        DSA_SIG *sig , DSA *dsa )
 {
   mute();
   int ret = dsa_do_verify(dgst, dgst_len, sig, dsa);

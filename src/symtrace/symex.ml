@@ -641,9 +641,10 @@ let to_mem b e =
   DEBUG "storing %s" (E.dump e);
   mem := Base_map.add b e !mem
 
-let add_stmt s =
-  iml := !iml @ [Stmt.Comment (Loc.current ()); s]
-
+let add_stmts s ~with_loc =
+  if with_loc
+  then iml := !iml @ [Stmt.Comment (Loc.current ())] @ s
+  else iml := !iml @ s
 (*
   None means take all that's in the buffer.
 *)
@@ -768,7 +769,10 @@ let rec execute = function
     (* Inputs are defined in IML. *)
     S.add_fact (E.is_defined v);
     S.add_fact fact;
-    iml := !iml @ [Stmt.In [vname]; Stmt.make_test fact];
+    push_debug "In";
+    DEBUG "Call stack on input:\n%s" (Loc.call_stack ());
+    pop_debug "In";
+    add_stmts [Stmt.In [vname]; Stmt.make_test fact] ~with_loc:false;
     to_stack v
 
   | New ->
@@ -785,7 +789,7 @@ let rec execute = function
           (E.dump l) (E.dump l)
     in
     let v = Var (vname, Type.kind t) in
-    iml := !iml @ [Stmt.New (vname, t)];
+    add_stmts [Stmt.New (vname, t)] ~with_loc:false;
     S.add_fact (E.is_defined v);
     begin match l with
     | None -> ()
@@ -862,7 +866,7 @@ let rec execute = function
     | Sym (Fun (f, (arity, kind)), args) ->
       let v = Var.fresh "nondet" in
       let t_nondet = Type.Named ("nondet", None) in
-      iml := !iml @ [Stmt.New (v, t_nondet)];
+      add_stmts [Stmt.New (v, t_nondet)] ~with_loc:true;
       to_stack (Sym (Fun (f, (arity + 1, kind)),
                      args @ [Var (v, Kind.Bitstring)]))
     | Ptr (Stack name, pos)  ->
@@ -876,11 +880,12 @@ let rec execute = function
 
   | Event (name, nargs) ->
     let args = take_n_stack nargs |> List.map ~f:Simplify.full_simplify in
-    iml := !iml @ [Stmt.Event (name, args)] (* [Sym (("event", Prefix), [e], Unknown, Det)] *)
+    add_stmts [Stmt.Event (name, args)] ~with_loc:false
+  (* [Sym (("event", Prefix), [e], Unknown, Det)] *)
 
   | Out ->
     let e = take_stack () |> Simplify.full_simplify in
-    iml := !iml @ [Stmt.Out [e]]
+    add_stmts [Stmt.Out [e]] ~with_loc:false
 
   | Branch dir ->
     (* CR: make sure to check explicitly that e is defined, as per thesis. *)
@@ -893,7 +898,7 @@ let rec execute = function
       if not (S.is_true e)
       then begin
         DEBUG "branch has non-constant condition, adding test statement";
-        add_stmt (Stmt.make_test e);
+        add_stmts [Stmt.make_test e] ~with_loc:true;
         S.add_fact e
       end
     end
@@ -906,7 +911,7 @@ let rec execute = function
     DEBUG "add fact: %s" (E.dump e);
     let e = Simplify.full_simplify e in
     DEBUG "add assume statement: %s" (E.dump e);
-    add_stmt (Stmt.Assume e)
+    add_stmts [Stmt.Assume e] ~with_loc:true
 
   | Hint h ->
     let e = take_stack () |> Simplify.full_simplify in
@@ -920,7 +925,7 @@ let rec execute = function
     S.add_fact (E.eq_bitstring [v; e]);
     if S.is_true (E.is_defined e)
     then S.add_fact (E.is_defined v);
-    iml := !iml @ [Let (Pat.VPat vname, Annotation(Name vname, e))];
+    add_stmts [Let (Pat.VPat vname, Annotation(Name vname, e))] ~with_loc:false;
     to_stack v;
     DEBUG "attaching hint %s to %s" h (E.dump e)
 

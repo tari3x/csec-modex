@@ -41,11 +41,17 @@ assume Defined(skA) in
 assume (len(skA) >= 0) /\ (len(skA) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* get_skey_proxy[31, // lib_proxy.c:168] *)
 ifaux ¬(len(skA) > 100) then 
+(* main[1, // client.c:53] *)
 new nondet1: nondet;
+(* main[1, // client.c:55] *)
 new nondet2: nondet;
+(* main[1, // client.c:57] *)
 new nondet3: nondet;
+(* main[1, // client.c:59] *)
 new nondet4: nondet;
+(* main[1, // client.c:61] *)
 new nondet5: nondet;
+(* main[1, // client.c:63] *)
 new nondet6: nondet;
 (* assume_intype[45, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(pkX) in
@@ -69,7 +75,9 @@ let sigkey1 = pkS (* named sigkey1 *) in
 assume 1 = 1 in
 (* lookup_xkey[40, // keys.c:20] *)
 if check_key(host1, key1, sig1, sigkey1) then 
+(* main[1, // client.c:69] *)
 new nondet7: nondet;
+(* main[1, // client.c:71] *)
 new nondet8: nondet;
 event beginA(hostA, hostX);
 new var3: fixed_20_nonce;
@@ -98,7 +106,9 @@ let len2 = encrypt_len("msg1"|(20)^[u,8]|nonce1|hostA) (* named len2 *) in
 ifaux ¬(len(cipher1) > (len2)_[u,8]) then 
 let msg2 = "encr"|(len(cipher1))^[u,8]|cipher1 (* named msg2 *) in
 out(c, msg2);
+(* main[1, // client.c:116] *)
 new nondet9: nondet;
+(* main[1, // client.c:118] *)
 new nondet10: nondet;
 (* assume_intype[111, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(fflush_ret0) in
@@ -157,7 +167,9 @@ assume ((len(msg7) >= len(msg7)) /\ (((msg7{4, 8})_[u,8] + (msg7{12, 8})_[u,8] +
 assume len(Cmp(msg7{(msg7{4, 8})_[u,8] + (msg7{12, 8})_[u,8] + (2 * 8) + 4, len(msg7) - ((msg7{4, 8})_[u,8] + (msg7{12, 8})_[u,8] + (2 * 8) + 4)}:bounded_40_host, hostX)) = 4 in
 (* main[1, // client.c:184] *)
 ifeq msg7{(msg7{4, 8})_[u,8] + (msg7{12, 8})_[u,8] + (2 * 8) + 4, len(msg7) - ((msg7{4, 8})_[u,8] + (msg7{12, 8})_[u,8] + (2 * 8) + 4)}:bounded_40_host = hostX then 
+(* main[1, // client.c:195] *)
 new nondet11: nondet;
+(* main[1, // client.c:196] *)
 new nondet12: nondet;
 (* assume_intype[172, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(fflush_ret1) in
@@ -187,15 +199,21 @@ let len4 = encrypt_len("msg3"|msg7{20 + 20, ((msg7{4, 8})_[u,8] + (msg7{12, 8})_
 ifaux ¬(len(cipher3) > (len4)_[u,8]) then 
 let msg9 = "encr"|(len(cipher3))^[u,8]|cipher3 (* named msg9 *) in
 out(c, msg9);
+(* main[1, // client.c:226] *)
 new nondet13: nondet;
+(* main[1, // client.c:227] *)
 new nondet14: nondet;
 (* assume_intype[211, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(fflush_ret2) in
 (* assume_len[212, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(fflush_ret2) = 4 in
+(* main[1, // client.c:232] *)
 new nondet15: nondet;
+(* main[1, // client.c:234] *)
 new nondet16: nondet;
+(* main[1, // client.c:235] *)
 new nondet17: nondet;
+(* main[1, // client.c:237] *)
 new nondet18: nondet;
 (* assume_intype[218, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(fflush_ret3) in
@@ -251,9 +269,13 @@ assume Defined(skB) in
 assume (len(skB) >= 0) /\ (len(skB) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* get_skey_proxy[36, // lib_proxy.c:168] *)
 ifaux ¬(len(skB) > 100) then 
+(* main[1, // server.c:50] *)
 new nondet19: nondet;
+(* main[1, // server.c:52] *)
 new nondet20: nondet;
+(* main[1, // server.c:54] *)
 new nondet21: nondet;
+(* main[1, // server.c:56] *)
 new nondet22: nondet;
 in(c, var14);
 ifaux len(var14) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
@@ -296,7 +318,9 @@ ifaux msg14{0, 4} = "msg1" then
 ifaux ¬((msg14{4, 8})_[u,8] <> 20) then 
 (* main[1, // server.c:98] *)
 ifaux ¬((len(msg14) - (8 + (msg14{4, 8})_[u,8] + 4)) > 40) then 
+(* main[1, // server.c:102] *)
 new nondet23: nondet;
+(* main[1, // server.c:104] *)
 new nondet24: nondet;
 (* assume_intype[87, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(pkX) in
@@ -320,9 +344,13 @@ let sigkey2 = pkS (* named sigkey2 *) in
 assume 1 = 1 in
 (* lookup_xkey[82, // keys.c:20] *)
 if check_key(host2, key8, sig2, sigkey2) then 
+(* main[1, // server.c:110] *)
 new nondet25: nondet;
+(* main[1, // server.c:112] *)
 new nondet26: nondet;
+(* main[1, // server.c:127] *)
 new nondet27: nondet;
+(* main[1, // server.c:128] *)
 new nondet28: nondet;
 (* assume_intype[114, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(fflush_ret0) in
@@ -355,7 +383,9 @@ let len6 = encrypt_len("msg2"|msg14{4, 8}|(20)^[u,8]|msg14{12, (msg14{4, 8})_[u,
 ifaux ¬(len(cipher5) > (len6)_[u,8]) then 
 let msg16 = "encr"|(len(cipher5))^[u,8]|cipher5 (* named msg16 *) in
 out(c, msg16);
+(* main[1, // server.c:171] *)
 new nondet29: nondet;
+(* main[1, // server.c:173] *)
 new nondet30: nondet;
 (* assume_intype[164, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(fflush_ret1) in
@@ -404,9 +434,13 @@ assume ((len(msg21) >= len(msg21)) /\ (4 >= 0) /\ ((len(msg21) - 4) >= 0)) /\ De
 assume len(Cmp(msg21{4, len(msg21) - 4}:fixed_20_nonce, nonce4)) = 4 in
 (* main[1, // server.c:207] *)
 ifeq msg21{4, len(msg21) - 4}:fixed_20_nonce = nonce4 then 
+(* main[1, // server.c:214] *)
 new nondet31: nondet;
+(* main[1, // server.c:216] *)
 new nondet32: nondet;
+(* main[1, // server.c:217] *)
 new nondet33: nondet;
+(* main[1, // server.c:219] *)
 new nondet34: nondet;
 (* assume_intype[216, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(fflush_ret2) in

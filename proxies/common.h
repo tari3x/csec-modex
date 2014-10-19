@@ -52,6 +52,7 @@ void event4(const char * s, const unsigned char * buf1, size_t len1,
                             const unsigned char * buf4, size_t len4);
 
 void typehint(const unsigned char * buf, size_t len, const char * type);
+void hint(const unsigned char * buf, size_t len, const char * name);
 
 /**
  * Adds an assumption that buf does not contain zero and appends zero to buf.

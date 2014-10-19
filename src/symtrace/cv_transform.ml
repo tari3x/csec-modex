@@ -206,35 +206,51 @@ let test_merge_patterns () =
 
 
 (*************************************************)
-(** {1 Regularity Properties} *)
+(** {1 Zero functions} *)
 (*************************************************)
 
-(* CR: make primed collection in Model traverse the iml and remove this. *)
-let zero_fun_sym t =
-  make_sym ("Z" ^ Type.to_string t) ~arity:1
-let zero_fun_prime_sym t =
-  make_sym ("Z" ^ Type.to_string t ^ "_prime") ~arity:1
-let zero_sym t =
-  make_const ("zero_" ^ Type.to_string t)
+module Zero_funs = struct
+  (* Types for which we need to generate ZT, ZT', and possibly Zero_t
 
-let zero_defs ts =
-  (* Suitable for generating sym_defs and Fun_type_ctx.t *)
-  let z_fun_info t =
-    let zt = zero_fun_sym t in
-    let zt' = zero_fun_prime_sym t in
-    let zero_t = zero_sym t in
-    [(zt,  Unknown Kind.Bitstring), (zt,  ([t], t));
-     (zt', Unknown Kind.Bitstring), (zt', ([t], t))]
-    @ if Type.has_fixed_length t
-      then [(zero_t, Unknown Kind.Bitstring), (zero_t, ([], t))]
-      else []
-  in
-  let z_defs, z_types =
-    List.concat_map ~f:z_fun_info (List.dedup ts) |> List.split
-  in
-  let z_defs = Sym_defs.of_list z_defs in
-  let z_types = Fun_type_ctx.of_list z_types in
-  z_defs, z_types
+     Bitstring zeros may be used in auxiliary_facts.
+  *)
+  let zts = ref [Type.Bitstring]
+
+  let zero_fun t =
+    zts := t :: !zts;
+    make_sym ("Z" ^ Type.to_string t) ~arity:1
+
+  (* Assume that zero_fun will be called for all of these, so no need to add to zts. *)
+  let zero_fun_prime t =
+    make_sym ("Z" ^ Type.to_string t ^ "_prime") ~arity:1
+
+  let zero_sym t =
+    zts := t :: !zts;
+    make_const ("zero_" ^ Type.to_string t)
+
+  let zero_defs () =
+    (* Suitable for generating sym_defs and Fun_type_ctx.t *)
+    let z_fun_info t =
+      let zt = zero_fun t in
+      let zt' = zero_fun_prime t in
+      let zero_t = zero_sym t in
+      [(zt,  Unknown Kind.Bitstring), (zt,  ([t], t));
+       (zt', Unknown Kind.Bitstring), (zt', ([t], t))]
+      @ if Type.has_fixed_length t
+        then [(zero_t, Unknown Kind.Bitstring), (zero_t, ([], t))]
+        else []
+    in
+    let z_defs, z_types =
+      List.concat_map ~f:z_fun_info (List.dedup !zts) |> List.split
+    in
+    let z_defs = Sym_defs.of_list z_defs in
+    let z_types = Fun_type_ctx.of_list z_types in
+    z_defs, z_types
+end
+
+(*************************************************)
+(** {1 Regularity Properties} *)
+(*************************************************)
 
 (**
   Return the zero equations, zero function definitions and types
@@ -254,26 +270,15 @@ let zero_defs ts =
 let zero_facts
     (concats : bitstring Sym_defs.t)
     (casts: (bitstring Type.t * bitstring Type.t) list)
-    (fun_types: Fun_type_ctx.t) : cvfact list * bitstring Type.t list =
+    (fun_types: Fun_type_ctx.t) : cvfact list =
 
-  (* Types for which we need to generate ZT, ZT', and possibly Zero_t *)
-  let zts : bitstring Type.t list ref = ref [] in
-
-  let zero_fun t =
-    zts := t :: !zts;
-    zero_fun_sym t
-  in
-
-  (* Assume that zero_fun will be called for all of these, so no need to add to zts. *)
-  let zero_fun_prime t = zero_fun_prime_sym t in
-
-  let zero_of e t = Sym (zero_fun t, [e]) in
+  let zero_of e t = Sym (Zero_funs.zero_fun t, [e]) in
 
   let concat_fact c =
     let ts, t = Fun_type_ctx.find c fun_types in
     let args = mk_formal_args (Sym.arity c) |> List.map ~f:E.var in
-    let zt = zero_fun t in
-    let zt' = zero_fun_prime t in
+    let zt = Zero_funs.zero_fun t in
+    let zt' = Zero_funs.zero_fun_prime t in
     E.eq_bitstring [Sym (zt, [Sym (c, args)]);
                     Sym (zt', [Sym (c, List.map2 ~f:zero_of args ts)])]
   in
@@ -281,15 +286,15 @@ let zero_facts
   let cast_fact (t1, t2) =
     let sym = Cast (t1, t2) in
     let x = Var ("x", Kind.Bitstring) in
-    let zt2 = zero_fun t2 in
-    let zt2' = zero_fun_prime t2 in
+    let zt2 = Zero_funs.zero_fun t2 in
+    let zt2' = Zero_funs.zero_fun_prime t2 in
     E.eq_bitstring [Sym (zt2,  [Sym (sym, [x])]);
                     Sym (zt2', [Sym (sym, [zero_of x t1])])]
   in
 
   let const_fact t =
-    let zt = zero_fun t in
-    let zero_t = Sym (zero_sym t, []) in
+    let zt = Zero_funs.zero_fun t in
+    let zero_t = Sym (Zero_funs.zero_sym t, []) in
     let x = Var ("x", Kind.Bitstring) in
     E.eq_bitstring [Sym (zt, [x]); zero_t]
   in
@@ -304,13 +309,13 @@ let zero_facts
     |> List.dedup
   in
   let const_facts = List.map ~f:const_fact fixed_types in
-  let _, z_types = zero_defs !zts in
+  let _, z_types = Zero_funs.zero_defs () in
   let facts =
     List.map
       (concat_facts @ cast_facts @ const_facts)
       ~f:(CV_fact.make (Fun_type_ctx.compatible_union [fun_types; z_types]))
   in
-  facts, !zts
+  facts
 
 (********************************************************)
 (** {1 Auxiliary Test Properties} *)
@@ -332,6 +337,9 @@ let zero_facts
   second option is that it is tricky to tell the solver to assume overflow safety for an
   expression. One cannot just extract the overflow safety fact, because that itself may
   not be overflow safe. For these reasons I'm using the first option now.
+
+  Another reason for checking syntactic equality is that we actually want to simplify the
+  expressions
 *)
 let auxiliary_facts
     (concats : bitstring Sym_defs.t)
@@ -339,10 +347,10 @@ let auxiliary_facts
     (fun_types : Fun_type_ctx.t) : cvfact list =
 
   (* facts for a single auxiliary test *)
-  let facts sym def arg_types =
+  let facts fun_types sym def arg_types =
     let num_args = List.length arg_types in
     let args = mk_formal_args num_args in
-    let zero_of v t = Sym (zero_fun_sym t, [Var (v, Kind.Bitstring)]) in
+    let zero_of v t = Sym (Zero_funs.zero_fun t, [Var (v, Kind.Bitstring)]) in
     let replace_len v =
       let rec replace : type a. a exp -> a exp = function
         | Len (Var (v', Kind.Bitstring)) when v' = v ->
@@ -365,10 +373,12 @@ let auxiliary_facts
       DEBUG "can_erase: comparing \n%s and \n%s" (E.to_string def_x) (E.to_string def_y);
       def_x = def_y
     in
-    let concat_pairs arg =
+    let concat_pairs arg t =
       let pair c =
         match Fun_type_ctx.maybe_find c fun_types with
-        | Some (ts, t') (* when t = t' *) ->
+          (* I don't exactly understand why restricting to the same type is enough, but it
+             feels like it should be enough, and it looks like it is. *)
+        | Some (ts, t') when t = t' ->
           let c_def = Sym_defs.find c concats in
 
           (* Rename args of c_def to avoid collision with args of def. *)
@@ -405,8 +415,7 @@ let auxiliary_facts
           if def_x = def_y then
             let zxs = List.map2 ~f:zero_of xs ts in
             let xs = List.map ~f:E.var xs in
-            Some (Typing.cast t' Bitstring (Sym (c, xs)),
-                  Typing.cast t' Bitstring (Sym (prime c, zxs)))
+            Some (Sym (c, xs), Sym (prime c, zxs))
           else None
         | _ -> None
       in
@@ -441,19 +450,25 @@ let auxiliary_facts
       | x -> var x, var x)
       |> mk_fact sym sym
     in
-    let concat_facts = List.concat_map args ~f:(fun x ->
-      if can_erase x then []
-      else List.concat_map (concat_pairs x) ~f:(fun (e1, e2) ->
-        mk_concat_fact x e1 e2))
+    let concat_facts =
+      List.map2 args arg_types ~f:(fun x t ->
+        if can_erase x then []
+        else List.concat_map (concat_pairs x t) ~f:(fun (e1, e2) ->
+          mk_concat_fact x e1 e2))
+      |> List.concat
     in
     x_facts @ concat_facts
   in
   S.reset_facts ();
+  let fun_types =
+    List.fold (Sym_defs.keys auxiliary) ~init:fun_types ~f:(fun fun_types f ->
+      Fun_type_ctx.add_primed fun_types f)
+  in
   Sym_defs.to_list auxiliary
   |> List.concat_map ~f:(fun (sym, def) ->
     DEBUG "Auxiliary facts: checking %s: %s" (Sym.to_string sym) (E.to_string def);
     let (ts, _) = Fun_type_ctx.find sym fun_types in
-    facts sym def ts)
+    facts fun_types sym def ts)
 
 
 (*************************************************)
@@ -529,6 +544,7 @@ module Model = struct
         end
       | e -> List.concat (Exp.map_children { f = collect_primed } e)
 
+  (* CR-soon: consider using Fun_type_ctx.add_primed. *)
   let add_primed t =
     let originals =
       List.concat_map t.auxiliary_facts ~f:(fun (CV_fact.Forall (_, fact)) ->
@@ -1020,10 +1036,8 @@ let main () =
   *************************)
 
   let casts = List.dedup (Typing.casts client @ Typing.casts server) in
-  let zero_facts, zero_types = zero_facts concats casts fun_types in
-  (* Bitstring zeros may be used in auxiliary_facts. *)
-  let zero_types = Type.Bitstring :: zero_types in
-  let zero_funs, zero_fun_types = zero_defs zero_types in
+  let zero_facts = zero_facts concats casts fun_types in
+  let zero_funs, zero_fun_types = Zero_funs.zero_defs () in
   let fun_types = Fun_type_ctx.compatible_union [fun_types; zero_fun_types] in
 
   let model = {

@@ -106,6 +106,7 @@ module Type_ctx : sig
   val of_list : (Var.t * bitstring Type.t) list -> t
   val to_list : t -> (Var.t * bitstring Type.t) list
   val dump : t -> unit
+  val keys : t -> var list
 end = struct
   module Map = Var.Map
   type 'a map = 'a Map.t
@@ -134,10 +135,14 @@ module Fun_type_ctx = struct
   let dump t =
     iter t {f = fun f t -> prerr_endline (Sym.cv_declaration f t) };
     prerr_endline ""
+
+  let add_primed (t : t) f : t =
+    let typ = find f t in
+    add (Sym.prime f) typ t
 end
 
 module Typing : sig
-  val infer_exp : Fun_type_ctx.t -> 'a Type.t -> 'a exp -> Type_ctx.t
+  val infer_exp : Fun_type_ctx.t -> 'a Type.t option -> 'a exp -> Type_ctx.t
   val infer : Fun_type_ctx.t -> iml -> Type_ctx.t
 
   val derive_unknown_types : Fun_type_ctx.t -> Type_ctx.t -> iml -> Fun_type_ctx.t
@@ -172,23 +177,13 @@ module Typing : sig
   val test : unit -> unit
 end = struct
 
-  let exp_type (type a) fun_types var_types (e : a exp) : a Type.t =
+  let exp_type (type a) fun_types var_types (e : a exp) : a Type.t option =
     match e with
     | Var (v, Kind.Bitstring) ->
-      begin match Type_ctx.maybe_find v var_types with
-      | Some t -> t
-      | None -> Bitstring
-      end
-    | Annotation (Type_hint t, _) -> t
-    | Sym (Fun _ as sym, _) as e ->
-      begin match Fun_type_ctx.maybe_find sym fun_types with
-      | Some  (_, t) -> t
-      | None ->
-        match E.kind e with
-        | Kind.Bool -> Type.Bool
-        | Kind.Bitstring -> Type.Bitstring
-        | Kind.Int -> Type.Int
-      end
+      Type_ctx.maybe_find v var_types
+    | Annotation (Type_hint t, _) -> Some t
+    | Sym (Fun _ as sym, _) ->
+      Option.map (Fun_type_ctx.maybe_find sym fun_types) ~f:snd
     | e -> fail "Typing.exp_type: %s" (E.to_string e)
 
   let cast t t' e =
@@ -209,33 +204,38 @@ end = struct
     | [] -> []
 
   let rec infer_exp
-      : type a. Fun_type_ctx.t -> a Type.t -> a exp -> Type_ctx.t
+      : type a. Fun_type_ctx.t -> a Type.t option -> a exp -> Type_ctx.t
       = fun fun_types t e ->
       match e with
-      | Var (v, Kind.Bitstring) -> Type_ctx.singleton v t
+      | Var (v, Kind.Bitstring) ->
+        begin match t with
+        | None -> Type_ctx.empty
+        | Some t -> Type_ctx.singleton v t
+        end
 
-      | Annotation (Type_hint t, e) -> infer_exp fun_types t e
+      | Annotation (Type_hint t, e) -> infer_exp fun_types (Some t) e
 
       | Sym (Fun _ as f, es) ->
         begin match Fun_type_ctx.maybe_find f fun_types with
         | None ->
-          Type_ctx.merge (List.map ~f:(infer_exp fun_types Bitstring) es)
+          Type_ctx.merge (List.map ~f:(infer_exp fun_types None) es)
         | Some (ts, _) ->
-          Type_ctx.merge (List.map2 ~f:(infer_exp fun_types) ts es)
+          Type_ctx.merge (List.map2 es ts ~f:(fun e t ->
+            infer_exp fun_types (Some t) e))
         end
 
       | Annotation(_, e) -> infer_exp fun_types t e
 
       | Sym (Cast (t, _), [e]) ->
-        infer_exp fun_types t e
+        infer_exp fun_types (Some t) e
 
       | Sym (Logical Logical.Eq, [e1; e2]) ->
-        Type_ctx.merge [infer_exp fun_types Type.Bool e1;
-                        infer_exp fun_types Type.Bool e2]
+        Type_ctx.merge [infer_exp fun_types (Some Type.Bool) e1;
+                        infer_exp fun_types (Some Type.Bool) e2]
 
       | Sym (Bs_eq, [e1; e2]) ->
-        Type_ctx.merge [infer_exp fun_types Type.Bitstring e1;
-                        infer_exp fun_types Type.Bitstring e2]
+        Type_ctx.merge [infer_exp fun_types None e1;
+                        infer_exp fun_types None e2]
 
       | e -> fail "infer_exp: unexpected expression %s" (E.dump e)
 
@@ -247,35 +247,35 @@ end = struct
 
     let rec infer = function
       | Let (VPat v, e) :: p ->
-        let t = exp_type fun_types e in
-        let ctx_e = infer_exp t e in
+        let ctx_e = infer_exp None e in
         let ctx_p = infer p in
-        let ctx_v = Type_ctx.singleton v t in
-        Type_ctx.merge [ctx_e; ctx_p; ctx_v]
+        let ctx = Type_ctx.merge [ctx_e; ctx_p] in
+        begin match exp_type fun_types e with
+        | None -> ctx
+        | Some t -> Type_ctx.add v t ctx
+        end
 
       | Let ((FPat _ | Underscore), _) :: _ ->
         fail "infer_types: let patterns not supported: %s" (Iml.to_string p)
 
       | New (v, t) :: p ->
-        let ctx_p = infer p in
-        let ctx_v = Type_ctx.singleton v t in
-        Type_ctx.merge [ctx_p; ctx_v]
+        let ctx = infer p in
+        Type_ctx.add v t ctx
 
       | In vs :: p ->
-        let ctx_p = infer p in
-        let ctx_v = Type_ctx.of_list (List.map ~f:(fun vs -> vs, Bitstring) vs) in
-        Type_ctx.merge [ctx_p; ctx_v]
+        let ctx = infer p in
+        List.fold_left vs ~init:ctx ~f:(fun ctx v -> Type_ctx.add v Bitstring ctx)
 
       | Aux_test _ :: p -> infer p
 
       | Fun_test e :: p ->
-        let ctx_e = infer_exp Bool e in
+        let ctx_e = infer_exp (Some Bool) e in
         let ctx_p = infer p in
         Type_ctx.merge [ctx_e; ctx_p]
 
       | Eq_test (e1, e2) :: p ->
-        let ctx1 = infer_exp Bitstring e1 in
-        let ctx2 = infer_exp Bitstring e2 in
+        let ctx1 = infer_exp None e1 in
+        let ctx2 = infer_exp None e2 in
         let ctx_p = infer p in
         Type_ctx.merge [ctx1; ctx2; ctx_p]
 
@@ -285,12 +285,12 @@ end = struct
       | Event (ev, es) :: p ->
         (* Events symbols are of type bool in CV *)
         let sym = make_bool_sym ev ~arity:(List.length es) in
-        let ctx_e = infer_exp Bool (Sym (sym, es)) in
+        let ctx_e = infer_exp (Some Bool) (Sym (sym, es)) in
         let ctx_p = infer p in
         Type_ctx.merge [ctx_e; ctx_p]
 
       | Out es :: p ->
-        let ctx_s = List.map ~f:(infer_exp Bitstring) es in
+        let ctx_s = List.map ~f:(infer_exp None) es in
         let ctx_p = infer p in
         Type_ctx.merge (ctx_p :: ctx_s)
 
@@ -300,38 +300,36 @@ end = struct
     in
     infer p
 
-  (**
-    Returns only the context for formatter functions. Merge with user functions yourself.
+  (** Returns only the context for formatter functions. Merge with user functions
+      yourself.
 
-    Assumes that the process is in the formatting-normal form, that is,
-    every formatter application has the form let [x = f(x1, ..., xn)].
-
-    We replace all argument types of auxiliary tests by bitstring. Consider
-
-      in(c_in, (msg4: bitstring, cipher2: bitstring));
-      if auxiliary11(cipher2, msg4) then
-      let msg6 = D(cast_bitstring_bounded_1077_ciphertext(cipher2), key2) in ...
-
-    We cannot require that cipher2 is bounded_1077_ciphertext when auxiliary11 is invoked,
-    because belonging to the type is what auxiliary11 checks in the first place.
+      Assumes that the process is in the formatting-normal form, that is,
+      every formatter application has the form let [x = f(x1, ..., xn)].
   *)
   let derive_unknown_types fun_types (ctx: Type_ctx.t) (p: iml) : Fun_type_ctx.t =
+    let find_type v =
+      match Type_ctx.maybe_find v ctx with
+      | Some t -> t
+      | None -> Type.Bitstring
+    in
     let rec derive derived_fun_types = function
       | [] -> derived_fun_types
-      | Let (VPat v, Sym (Fun _ as f, vs)) as s :: p when not (Fun_type_ctx.mem f fun_types) ->
+      | Let (VPat v, Sym (Fun _ as f, vs)) as s :: p
+          when not (Fun_type_ctx.mem f fun_types) ->
         let ts =
           List.map vs ~f:(function
-          | Var (v, Kind.Bitstring) -> Type_ctx.find v ctx
+          | Var (v, Kind.Bitstring) -> find_type v
           | _ -> fail "formatting-normal form expected: %s" (Stmt.to_string s))
         in
         let derived_fun_types =
-          Fun_type_ctx.add f (ts, Type_ctx.find v ctx) derived_fun_types
+          Fun_type_ctx.add f (ts, find_type v) derived_fun_types
         in
         derive derived_fun_types p
-      | Fun_test (Sym (Fun _ as f, vs)) as s :: p when not (Fun_type_ctx.mem f fun_types) ->
+      | Fun_test (Sym (Fun _ as f, vs)) as s :: p
+          when not (Fun_type_ctx.mem f fun_types) ->
         let ts =
           List.map vs ~f:(function
-          | Var (_, Kind.Bitstring) -> Bitstring
+          | Var (v, Kind.Bitstring) -> find_type v
           | _ -> fail "malformed test statement: %s" (Stmt.to_string s))
         in
         let derived_fun_types =
@@ -429,10 +427,12 @@ end = struct
         | e -> fail "check_exp: unexpected expression %s" (E.dump e)
     in
 
+    let exp_type fun_types ctx e = Option.value_exn (exp_type fun_types ctx e) in
+
     let rec check ctx facts p =
     match p with
       | Let (VPat v, e) :: p ->
-        let t = exp_type fun_types ctx e in
+        let t =  exp_type fun_types ctx e in
         let e' = check_exp ctx facts t e in
         let p' = check (Type_ctx.add v t ctx) facts p in
         Let (VPat v, e') :: p'
@@ -498,8 +498,7 @@ end = struct
 
       | [] -> []
     in
-
-    check ctx facts (erase_type_annotations p)
+    erase_type_annotations (check ctx facts p)
 
   let check_robust_safety (concats : bitstring Sym_defs.t) (fun_types : Fun_type_ctx.t) =
     let safe f def =
@@ -706,17 +705,19 @@ let apply_name_annotations p =
         rename v1' v2
   in
 
-  let rec exp_name = function
+  let exp_name = function
     | Var (v, _) -> Some v
     | Annotation (Name name, _) -> Some name
-    | Annotation (_, e) -> exp_name e
+    (* Don't rename variables inside annotations, since annotations will not be removed by
+       simplify_lets. *)
+    (* | Annotation (_, e) -> exp_name e *)
     | _ -> None
   in
 
   let rec collect_names_e : type a. a exp -> unit = function
     | Annotation (Name name, e) ->
       begin match exp_name e with
-          (* Do not rename free variables *)
+        (* Do not rename free variables *)
         | Some name' when not (List.mem name' ~set:free_vars) ->
           rename name' name
         | _ -> ()
@@ -1163,8 +1164,14 @@ module CV_fact = struct
   type t = Forall of (var * bitstring Type.t) list * fact
 
   let make fun_types (e : fact) : t =
-    let ts = Typing.infer_exp fun_types Bool e in
-    Forall (Type_ctx.to_list ts, e)
+    let vs = E.vars e in
+    let ts = Typing.infer_exp fun_types (Some Bool) e in
+    match List.diff vs (Type_ctx.keys ts) with
+    | [] -> Forall (Type_ctx.to_list ts, e)
+    | vs ->
+      let vs = String.concat vs ~sep:", " in
+      fail "CV_fact.make: could not infer types for %s in %s"
+        vs (E.to_string e)
 end
 
 (*************************************************)

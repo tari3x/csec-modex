@@ -6,12 +6,6 @@
 
 open Common
 
-(*
-  Trying to get both the full text of the exception and
-  the backtrace. Waiting for a fix for
-  http://caml.inria.fr/mantis/view.php?id=5040
-*)
-
 let setup_debug () =
   set_debug (fun labels ->
     let at_most_n_under n l =
@@ -39,6 +33,11 @@ let setup_debug () =
   )
 ;;
 
+(*
+  Trying to get both the full text of the exception and
+  the backtrace. Waiting for a fix for
+  http://caml.inria.fr/mantis/view.php?id=5040
+*)
 Printexc.register_printer (function
   | Failure s -> Some s
   | _ -> None);

@@ -85,7 +85,7 @@ forall ;
 ***************************)
 
 (* auxiliary1 := ¬(len(arg0) > 1000) *)
-fun auxiliary1(bitstring): bool.
+fun auxiliary1(bounded_1000_mkey): bool.
 
 (* auxiliary10 := ¬((arg0)_[u,8] < 8) *)
 fun auxiliary10(bitstring): bool.
@@ -106,10 +106,10 @@ fun auxiliary14(bitstring, bitstring): bool.
 fun auxiliary15(bitstring): bool.
 
 (* auxiliary16 := ¬(len(arg0) > 1000) *)
-fun auxiliary16(bitstring): bool.
+fun auxiliary16(bounded_1000_payload): bool.
 
 (* auxiliary17 := ¬(len(arg0) > 1000) *)
-fun auxiliary17(bitstring): bool.
+fun auxiliary17(bounded_1000_mkey): bool.
 
 (* auxiliary18 := len(arg0) = 112 *)
 fun auxiliary18(bitstring): bool.
@@ -153,6 +153,10 @@ fun Zbitstring(bitstring): bitstring.
 
 fun Zbitstring_prime(bitstring): bitstring.
 
+fun Zbounded_1000_mkey(bounded_1000_mkey): bounded_1000_mkey.
+
+fun Zbounded_1000_mkey_prime(bounded_1000_mkey): bounded_1000_mkey.
+
 fun Zbounded_1000_payload(bounded_1000_payload): bounded_1000_payload.
 
 fun Zbounded_1000_payload_prime(bounded_1000_payload): bounded_1000_payload.
@@ -184,9 +188,9 @@ fun auxiliary19_prime(bitstring): bool.
 
 fun auxiliary18_prime(bitstring): bool.
 
-fun auxiliary17_prime(bitstring): bool.
+fun auxiliary17_prime(bounded_1000_mkey): bool.
 
-fun auxiliary16_prime(bitstring): bool.
+fun auxiliary16_prime(bounded_1000_payload): bool.
 
 fun conc3_prime(bounded_1000_payload): bitstring.
 
@@ -196,7 +200,7 @@ fun conc1_prime(bounded_1000_payload): bitstring.
 
 fun auxiliary12_prime(bitstring, bitstring): bool.
 
-fun auxiliary1_prime(bitstring): bool.
+fun auxiliary1_prime(bounded_1000_mkey): bool.
 
 
 (*************************** 
@@ -224,10 +228,10 @@ forall arg0: bitstring;
 	auxiliary19(arg0) = auxiliary19_prime(Zbitstring(arg0)).
 forall arg0: bitstring;
 	auxiliary18(arg0) = auxiliary18_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary17(arg0) = auxiliary17_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary16(arg0) = auxiliary16_prime(Zbitstring(arg0)).
+forall arg0: bounded_1000_mkey;
+	auxiliary17(arg0) = auxiliary17_prime(Zbounded_1000_mkey(arg0)).
+forall arg0: bounded_1000_payload;
+	auxiliary16(arg0) = auxiliary16_prime(Zbounded_1000_payload(arg0)).
 forall x41: bounded_1000_payload;
 	auxiliary15(conc3(x41)) = auxiliary15(conc3_prime(Zbounded_1000_payload(x41))).
 forall x43: fixed_20_hash, x42: bounded_1000_payload;
@@ -248,8 +252,8 @@ forall x62: bounded_1000_payload;
 	auxiliary13(conc1(x62)) = auxiliary13(conc1_prime(Zbounded_1000_payload(x62))).
 forall arg1: bitstring, arg0: bitstring;
 	auxiliary12(arg0, arg1) = auxiliary12_prime(Zbitstring(arg0), arg1).
-forall arg0: bitstring;
-	auxiliary1(arg0) = auxiliary1_prime(Zbitstring(arg0)).
+forall arg0: bounded_1000_mkey;
+	auxiliary1(arg0) = auxiliary1_prime(Zbounded_1000_mkey(arg0)).
 
 (*************************** 
   Zero Facts 
@@ -313,8 +317,8 @@ let msg6 = conc3(var12) in
 let var14 = arithmetic1 in
 let hash2 = HMAC(var14, msg6, key) in
 let var16 = parse2(msg5) in
-let var16 = var16 in
-if hash2 = var16 then 
+let var17 = var16 in
+if hash2 = var17 then 
 event server_recv(var12);
 yield .
 

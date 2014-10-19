@@ -2080,9 +2080,11 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
 
   SymN("BN_mod_exp2_mont_result", 0);
   Nondet();
-  size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  size_t ret_len = sizeof(ret);
+  assume_len(&ret_len, FALSE, sizeof(ret_len));
   store_buf(&ret);
+
+  int m_len = BN_num_bytes_proxy(m);
 
   load_ctx(a1, "val", "a1");
   load_ctx(p1, "val", "p1");
@@ -2094,6 +2096,8 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
   // Relying on the fact that anything stored to memory or context is not
   // bottom.
   assume_intype("bitstring");
+  // the result will not be longer than the modulus
+  assume_len_at_most(&m_len, TRUE, sizeof(m_len));
   Hint("rr");
 
   store_ctx(rr, "val");

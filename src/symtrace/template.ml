@@ -149,10 +149,7 @@ let read_file ~cv_lib_name ~name =
     | l1 :: l2 :: ls' when l2 = "<Query>" -> split_template query (((l1 ^ "\n" ^ l2) :: ls'))
     | l1 :: l2 :: ls' when l2 = "<Model>" -> split_template model (((l1 ^ "\n" ^ l2) :: ls'))
     | _ :: l2 :: _ when l2 = "<Type hints>" ->
-      (* CR: Make sure that the types of the functions provided in the template
-         correspond to the derived types, and don't print derived types for functions
-         that are already in the template. Add an exact name annotation, and check it
-         for collisions. Use it to derive names for encoding functions. *)
+      (* Using assertions (see check_assertions) is the new way of doing this. *)
       failwith "<Type hints> are deprecated"
     | l1 :: l2 :: ls' when l2 = "<Crypto2>" -> split_template crypto2 (((l1 ^ "\n" ^ l2) :: ls'))
     | l :: ls'  -> dest := !dest @ [l]; split_template dest ls'

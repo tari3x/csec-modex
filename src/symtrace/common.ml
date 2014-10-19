@@ -67,7 +67,8 @@ module List = struct
 
   let find_exn = find
 
-  let remove : 'a -> 'a list -> 'a list = fun a -> filter_out ~f:(fun b -> a = b)
+  let remove : 'a -> 'a list -> 'a list = fun a ->
+    filter_out ~f:(fun b -> a = b)
 
   let rec remove_first ~f = function
     | x :: xs when f x -> xs
@@ -126,6 +127,7 @@ module List = struct
     | []      -> xs
     | y :: ys -> diff (remove y xs) ys
 
+  let fold = fold_left
 
   (** Multiset difference *)
   let rec multidiff : ('a -> 'a -> bool) -> 'a list -> 'a list -> 'a list
@@ -506,8 +508,8 @@ let pop_debug label =
   | l :: labels when l = label ->
     debug_labels := labels
   | labels ->
-    fail "Debug mismatch when trying to pop %s from %s"
-      label (String.concat ~sep:", " labels)
+    fail "Debug mismatch when trying to pop %s from [%s]"
+      label (String.concat ~sep:"; " labels)
 
 (**
   Locally increase debug view.

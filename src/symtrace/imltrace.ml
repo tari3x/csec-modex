@@ -19,6 +19,7 @@ let setup_debug () =
     under "dummy"
     || at_most_n_under 1 "dummy"
     || at_most_n_under 1 "execute"
+    || at_most_n_under 1 "In"
     (* || at_most_n_under 0 "deep_simplify" *)
     (* || at_most_n_under 0 "rewrite" *)
     (* || under "rewrite" *)

@@ -51,7 +51,7 @@ let findLeaf allowHandled v w g =
   try visit v; [] with Exit -> !path
 
 let print_glob glob =
-  Printf.printf "%s(%s)" glob.name (Option.value glob.locdef ~default:"unknown location")
+  Printf.printf "%s(%s)\n" glob.name (Option.value glob.locdef ~default:"unknown location")
 
 ;;
 begin
