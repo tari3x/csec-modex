@@ -349,14 +349,14 @@ let flatten_array : bterm Int_map.t -> bterm = fun cells ->
   Simplify.simplify (Concat (List.map ~f:snd clist))
 
 let flatten_index : pos -> pos = function
-  | (Index i, step) :: pos -> (Flat (Simplify.prod [step; (E.int i)]), step) :: pos
+  | (Index i, step) :: pos -> (Flat (E.prod [step; (E.int i)]), step) :: pos
   | _ -> fail "flatten_index"
 
 (**
     Flatten until the next field or attribute offset.
 *)
 let rec flatten_index_deep : pos -> pos = function
-  | (Index i, step) :: pos -> (Flat (Simplify.prod [step; (E.int i)]), step) :: flatten_index_deep pos
+  | (Index i, step) :: pos -> (Flat (E.prod [step; (E.int i)]), step) :: flatten_index_deep pos
   | (Flat e, step) :: pos -> (Flat e, step) :: flatten_index_deep pos
   | pos -> pos
 
@@ -432,7 +432,7 @@ let rec extract (pos: pos) (l : iterm option) (e : bterm) : bterm =
       else extract pos l (flatten_array cells)
 
     | ((Flat oe, _) :: os', l, e) ->
-      let e' = Simplify.full_simplify (Range (e, oe, Simplify.minus (L.get_len e) oe)) in
+      let e' = Simplify.full_simplify (Range (e, oe, E.minus (L.get_len e) oe)) in
       extract os' l e'
 
     | ([], None, e) -> e
@@ -552,7 +552,7 @@ let rec update
   | ((Flat oe, _) :: pos', l_val, e) ->
     (* FIXME: you might want to flatten_index_deep pos' in case oe > 0 *)
     let e1 = Simplify.full_simplify (Range (e, E.zero, oe)) in
-    let e2 = Simplify.full_simplify (Range (e, oe, Simplify.minus (L.get_len e) oe)) in
+    let e2 = Simplify.full_simplify (Range (e, oe, E.minus (L.get_len e) oe)) in
     Simplify.full_simplify (Concat [e1; update pos' step l_val e2 e_val])
 
   | ([], None, _) -> e_val
@@ -561,7 +561,7 @@ let rec update
     let e_len = Simplify.full_simplify (L.get_len e) in
     begin match S.greater_equal_len_answer e_len l_val with
     | S.Yes ->
-      let e' = Simplify.full_simplify (Range (e, l_val, Simplify.minus e_len l_val)) in
+      let e' = Simplify.full_simplify (Range (e, l_val, E.minus e_len l_val)) in
       Simplify.full_simplify (Concat ([e_val; e']))
     (* here we essentially replace e by undef which is sound *)
     | S.No -> e_val
@@ -938,7 +938,7 @@ let rec execute = function
 
     let flatten : offset -> offset_val = function
       | (Flat e,  _) -> Flat e
-      | (Index i, step) -> Flat (Simplify.prod [step; (E.int i)])
+      | (Index i, step) -> Flat (E.prod [step; (E.int i)])
         (* The logic here is that Field is already flat in the sense that the offset value is independet of step *)
       | (Field f, _) -> Field f
         (* fail "set_ptr_step: trying to flatten a field offset" *)
@@ -949,17 +949,17 @@ let rec execute = function
       | (ov', l') :: pos' as pos ->
         if S.greater_equal_len l l' then
 
-          if Simplify.is_zero_offset_val ov' then
+          if E.is_zero_offset_val ov' then
             bubble_up (ov, l) pos'
 
-          else if Simplify.is_zero_offset_val ov then
+          else if E.is_zero_offset_val ov then
             if S.equal_int l l' then
               pos
             else
               bubble_up (flatten (ov', l'), l) pos'
 
           else
-            if S.equal_int l l' && (Simplify.is_field_offset_val ov) && (Simplify.is_field_offset_val ov') then
+            if S.equal_int l l' && (E.is_field_offset_val ov) && (E.is_field_offset_val ov') then
               (ov, l) :: pos
             else fail "set_ptr_step: trying to merge two nonzero offsets"
 

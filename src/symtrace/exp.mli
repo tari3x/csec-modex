@@ -211,6 +211,24 @@ val serialize_state : out_channel -> unit
 val deserialize_state : in_channel -> unit
 
 (*************************************************)
+(** {1 Arithmetics} *)
+(*************************************************)
+
+val zero : iterm
+val one  : iterm
+
+val sum  : iterm list -> iterm
+val minus : iterm -> iterm -> iterm
+val prod : iterm list -> iterm
+
+(* Some minimal arithmetic simplifications. Only for esthetic reasons since
+   Yices would do its own simplifications anyway. *)
+
+(** Does not do constant folding - this way we might see more about the history
+    of the expression. *)
+val arith_simplify : iterm -> iterm
+
+(*************************************************)
 (** {1 Misc} *)
 (*************************************************)
 
@@ -220,17 +238,7 @@ val range : bterm -> iterm -> iterm -> bterm
 val int : int -> int t
 val string : string -> bterm
 
-val zero : iterm
-val one  : iterm
 val zero_byte : Int_type.Signedness.t -> bterm
-
-val sum  : iterm list -> iterm
-val minus : iterm -> iterm -> iterm
-val prod : iterm list -> iterm
-val conj : fact list -> fact
-val disj : fact list -> fact
-
-val flatten_conj : fact -> fact list
 
 (* CR-someday: this is not a full abstraction since [Transformations.normal_form]
    explicitly enumerates the caess of this function. However, changing this function
@@ -251,12 +259,6 @@ val subst_v : var list -> var list -> 'a t -> 'a t
 
 val remove_annotations : 'a t -> 'a t
 
-(* CR: make this part of solver rewriting? *)
-(** The truth function from the thesis that takes C bool expressions and converts
-    them to expressions of type Bool.  In particular, all bool C operators (LNot,
-    LAnd, ...) are replaced by "proper" bool operators (Not, And, ...).  *)
-val truth : bterm -> fact
-
 val len : bterm -> iterm
 
 val apply : ('a, 'b) Sym.t -> any list -> 'b t
@@ -264,9 +266,16 @@ val apply : ('a, 'b) Sym.t -> any list -> 'b t
   (** Make sure all subexpressions are physically distinct. Only used in Derivation. *)
 val unfold : 'a t -> 'a t
 
-  (*************************************************)
-  (** {1 Facts} *)
-  (*************************************************)
+(*---------------------------
+  To be removed
+-----------------------------*)
+
+val is_zero_offset_val : offset_val -> bool
+val is_field_offset_val : offset_val -> bool
+
+(*************************************************)
+(** {1 Facts} *)
+(*************************************************)
 
 val eq_bitstring : bterm list -> fact
 val eq_int : iterm list -> fact
@@ -277,10 +286,21 @@ val is_defined : _ exp -> fact
 
 val true_fact : fact
 
+val conj : fact list -> fact
+val disj : fact list -> fact
+
+val flatten_conj : fact -> fact list
+
 val in_type : bterm -> bitstring Type.t -> fact
 
 val negation : fact -> fact
 val implication : fact list -> fact list -> fact
+
+(* CR: make this part of solver rewriting? *)
+(** The truth function from the thesis that takes C bool expressions and converts
+    them to expressions of type Bool.  In particular, all bool C operators (LNot,
+    LAnd, ...) are replaced by "proper" bool operators (Not, And, ...).  *)
+val truth : bterm -> fact
 
 module Range : sig
   type t = Int_type.t

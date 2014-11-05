@@ -682,6 +682,92 @@ end
     | _ -> false
 
   (*************************************************)
+  (** {1 Arithmetics} *)
+  (*************************************************)
+
+  let zero = Int 0L
+  let one  = Int 1L
+
+  let sum = function
+    | [] -> zero
+    | [e] -> e
+    | es -> Sym (Sym.Int_op (Sym.Arith.Plus (List.length es)), es)
+
+  let minus a b =
+    Sym (Int_op Arith.Minus, [a; b])
+
+  let prod = function
+    | [] -> one
+    | [e] -> e
+    | es ->
+      Sym (Sym.Int_op (Sym.Arith.Mult (List.length es)), es)
+
+  let arith_simplify_eq eq want_fold (e : iterm) =
+    let open Sym.Arith in
+
+    let simplify_sums (e : iterm) =
+      match e with
+      | Sym ((Int_op (Plus _ | Minus)), es) as e ->
+
+        let elim_zero es = List.filter_out ~f:(eq zero) es in
+
+        (* The proper way is to make the SMT solver perform the operation *)
+        let mk_op (n : int64) = function
+          | (sign, Int m) -> Int64.add n (Int64.mul (Int64.of_int sign) m)
+          | _             -> fail "mk_op: not an integer"
+        in
+
+        let rec signs sign (e : iterm) =
+          match e with
+          | Sym (Int_op (Plus _), es)  -> List.concat_map ~f:(signs sign) es
+          | Sym (Int_op Minus, [a; b]) -> (signs sign a) @ (signs (-1 * sign) b)
+          | e -> [(sign, e)]
+        in
+
+        let split (e : iterm) : iterm list * iterm list =
+          let es = signs 1 e in
+          let (e_int, e_sym) =
+            if want_fold
+            then List.partition ~f:(function (_, Int _) -> true | _ -> false) es
+            else ([], es)
+          in
+          let (e_pos, e_neg) =
+            List.partition ~f:(function (sign, _) -> sign = 1) e_sym
+          in
+          let c_int = List.fold_left ~f:mk_op ~init:0L e_int in
+          ((if c_int = 0L then [] else [Int c_int])
+           @ List.map ~f:snd e_pos, List.map ~f:snd e_neg)
+        in
+
+        let (e_pos, e_neg) = split e in
+        begin
+          match (elim_zero (List.multidiff eq e_pos e_neg),
+                 elim_zero (List.multidiff eq e_neg e_pos)) with
+          | (e_pos', [])    -> sum e_pos'
+          | (e_pos', e_neg') -> Sym (Int_op Minus, [sum e_pos'; sum e_neg'])
+        end
+
+      | e -> e
+    in
+
+    (* TODO: deal with it like you deal with addition *)
+    let elim_one = function
+      | Sym (Int_op (Mult _), es) ->
+        prod (List.filter_out ~f:(eq one) es)
+      | e -> e
+    in
+
+    DEBUG "arith_simplify: %s" (dump e);
+    e (* |> simplify_sums Plus_a Minus_a  *) |> simplify_sums |> elim_one
+
+  (* Not using equal_int as equality, in order not to trigger extra warnings *)
+  let arith_simplify = arith_simplify_eq (=) false
+
+  let sum es = arith_simplify (sum es)
+  let prod es = arith_simplify (prod es)
+  let minus e1 e2 = arith_simplify (minus e1 e2)
+
+  (*************************************************)
   (** {1 Misc} *)
   (*************************************************)
 
@@ -695,33 +781,8 @@ end
 
   let string s = String (String.explode s)
 
-  let zero = Int 0L
-  let one  = Int 1L
   let zero_byte signedness =
     BS (Int 0L, (Int_type.create signedness 1))
-
-  let sum = function
-    | [] -> zero
-    | [e] -> e
-    | es -> Sym (Sym.Int_op (Sym.Arith.Plus (List.length es)), es)
-
-  let minus a b =
-    Sym (Int_op Arith.Minus, [a; b])
-
-  let prod = function
-    | [] -> one
-    | [e] -> e
-    | es -> Sym (Sym.Int_op (Sym.Arith.Mult (List.length es)), es)
-
-  let conj es = Sym (Sym.Logical (Sym.Logical.And (List.length es)), es)
-  let disj es = Sym (Sym.Logical (Sym.Logical.Or  (List.length es)), es)
-
-  let rec flatten_conj (e : fact) =
-    let open Sym.Logical in
-    match e with
-    | Sym (Logical And _, es) -> List.concat_map ~f:flatten_conj es
-    | Sym (Logical True, []) -> []
-    | e -> [e]
 
   let rec is_constant : type a. a t -> bool = function
     (* CR: think more about this. *)
@@ -766,28 +827,6 @@ end
   let rec remove_annotations : type a. a t -> a t = function
     | Annotation(_, e) -> remove_annotations e
     | e -> descend {descend = remove_annotations} e
-
-  (* TODO: Consider making this part of Solver.rewrite *)
-  let rec truth (e : bterm) : fact =
-    let exp_to_string = to_string in
-    let open Sym in
-    let open Op in
-    let open Logical in
-    match e with
-    | Sym (BS_of_truth _, [e]) -> e
-    | BS (Int i, _) ->
-      if i = 0L
-      then Sym (Logical Not, [Sym (Logical True, [])])
-      else Sym (Logical True, [])
-    | Ptr _ as p -> Sym (Truth_of_bs, [p])
-    | Sym (Op (LAnd, _), es) -> conj (List.map ~f:truth es)
-    | Sym (Op (LOr, _), es) -> disj (List.map ~f:truth es)
-    | Sym (Op (LNot, _), [e]) -> Sym (Logical Not, [truth e])
-    | Sym (Op (Op_cmp _, _), _) as e -> Sym (Truth_of_bs, [e])
-    | Sym (Cmp, [e1; e2]) -> Sym (Logical Not, [Sym (Bs_eq, [e1; e2])])
-    | Var _ as e -> Sym (Truth_of_bs, [e])
-    | Sym (Fun _, _) as e -> Sym (Truth_of_bs, [e])
-    | e -> fail "Exp.truth: unexpected: %s" (exp_to_string e)
 
   let len e = Len e
 
@@ -856,16 +895,22 @@ end
     in
     descend { descend = unfold } e
 
+  let is_zero_offset_val : offset_val -> bool = function
+    | Index 0 -> true
+    | Flat z when z = zero -> true
+    (* | Flat z when S.equal_int E.zero z -> true *)
+    | _ -> false
+
+  let is_field_offset_val : offset_val -> bool = function
+    | Field _ -> true
+    | _ -> false
+
   (*************************************************)
   (** {1 Facts} *)
   (*************************************************)
 
   let eq_bitstring es = Sym (Bs_eq, es)
   let eq_int es = Sym (Int_cmp Cmp.Eq, es)
-  let negation (e : fact) : fact =
-    match e with
-    | Sym (Logical Logical.Not, [e]) -> e
-    | e -> Sym (Logical Logical.Not, [e])
   let gt a b = Sym (Int_cmp Cmp.Gt, [a; b])
   let ge a b = Sym (Int_cmp Cmp.Ge, [a; b])
 
@@ -873,11 +918,23 @@ end
 
   let is_defined e = Sym (Defined, [e])
 
-  let conjunction es =
-    Sym (Logical (Logical.And (List.length es)), es)
+  let negation (e : fact) : fact =
+    match e with
+    | Sym (Logical Logical.Not, [e]) -> e
+    | e -> Sym (Logical Logical.Not, [e])
+
+  let conj es = Sym (Sym.Logical (Sym.Logical.And (List.length es)), es)
+  let disj es = Sym (Sym.Logical (Sym.Logical.Or  (List.length es)), es)
+
+  let rec flatten_conj (e : fact) =
+    let open Sym.Logical in
+    match e with
+    | Sym (Logical And _, es) -> List.concat_map ~f:flatten_conj es
+    | Sym (Logical True, []) -> []
+    | e -> [e]
 
   let implication es1 es2 =
-    Sym (Logical Logical.Implies, [conjunction es1; conjunction es2])
+    Sym (Logical Logical.Implies, [conj es1; conj es2])
 
   let rec in_type (e : bterm) (t : bitstring Type.t) : fact =
     let module T = Type in
@@ -894,6 +951,29 @@ end
       end
     | T.Named (_, Some t) -> in_type e t
     | T.Named (_, None) -> Sym (In_type t, [e])
+
+  (* TODO: Consider making this part of Solver.rewrite *)
+  let rec truth (e : bterm) : fact =
+    let exp_to_string = to_string in
+    let open Sym in
+    let open Op in
+    let open Logical in
+    match e with
+    | Sym (BS_of_truth _, [e]) -> e
+    | BS (Int i, _) ->
+      if i = 0L
+      then Sym (Logical Not, [Sym (Logical True, [])])
+      else Sym (Logical True, [])
+    | Ptr _ as p -> Sym (Truth_of_bs, [p])
+    | Sym (Op (LAnd, _), es) -> conj (List.map ~f:truth es)
+    | Sym (Op (LOr, _), es) -> disj (List.map ~f:truth es)
+    | Sym (Op (LNot, _), [e]) -> Sym (Logical Not, [truth e])
+    | Sym (Op (Op_cmp _, _), _) as e -> Sym (Truth_of_bs, [e])
+    | Sym (Cmp, [e1; e2]) -> Sym (Logical Not, [Sym (Bs_eq, [e1; e2])])
+    | Var _ as e -> Sym (Truth_of_bs, [e])
+    | Sym (Fun _, _) as e -> Sym (Truth_of_bs, [e])
+    | e -> fail "Exp.truth: unexpected: %s" (exp_to_string e)
+
 
   (*
     We don't represent integer ranges directly because they are too big for OCaml int64.

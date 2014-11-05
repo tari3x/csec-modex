@@ -62,16 +62,16 @@ fun conc5(bounded_2000_request, bounded_2000_response): bitstring [compos].
 (* conc6 := (len(arg0))^[u,8]|"|"|arg0|arg1 *)
 fun conc6(bounded_2000_response, bitstring): bitstring [compos].
 
-(* parse1 := arg0{9, (arg0{0, 8})_[u,8]} *)
+(* parse1 := arg0{8 + 1, (arg0{0, 8})_[u,8]} *)
 fun parse1(bitstring): bounded_2000_response.
 
-(* parse2 := arg0{9 + (arg0{0, 8})_[u,8], len(arg0) - (9 + (arg0{0, 8})_[u,8])} *)
+(* parse2 := arg0{8 + 1 + (arg0{0, 8})_[u,8], len(arg0) - (8 + 1 + (arg0{0, 8})_[u,8])} *)
 fun parse2(bitstring): bitstring.
 
-(* parse3 := arg0{9, (arg0{0, 8})_[u,8]} *)
+(* parse3 := arg0{8 + 1, (arg0{0, 8})_[u,8]} *)
 fun parse3(bitstring): bounded_2000_request.
 
-(* parse4 := arg0{9 + (arg0{0, 8})_[u,8], len(arg0) - (9 + (arg0{0, 8})_[u,8])} *)
+(* parse4 := arg0{8 + 1 + (arg0{0, 8})_[u,8], len(arg0) - (8 + 1 + (arg0{0, 8})_[u,8])} *)
 fun parse4(bitstring): bitstring.
 
 

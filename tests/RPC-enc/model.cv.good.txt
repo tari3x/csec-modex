@@ -86,16 +86,16 @@ fun conc1(fixed_1024_payload, fixed_16_key): bounded_1045_plaintext [compos].
 (* conc2 := "p"|(len(arg0))^[u,4]|arg0|arg1 *)
 fun conc2(bounded_1024_id, bounded_1077_ciphertext): bitstring [compos].
 
-(* parse1 := arg0{5, (arg0{1, 4})_[u,4]} *)
+(* parse1 := arg0{1 + 4, (arg0{1, 4})_[u,4]} *)
 fun parse1(bitstring): bounded_1024_id.
 
-(* parse2 := arg0{5 + (arg0{1, 4})_[u,4], len(arg0) - (5 + (arg0{1, 4})_[u,4])} *)
+(* parse2 := arg0{1 + 4 + (arg0{1, 4})_[u,4], len(arg0) - (1 + 4 + (arg0{1, 4})_[u,4])} *)
 fun parse2(bitstring): bounded_1077_ciphertext.
 
-(* parse3 := arg0{5, (arg0{1, 4})_[u,4]} *)
+(* parse3 := arg0{1 + 4, (arg0{1, 4})_[u,4]} *)
 fun parse3(bounded_1045_plaintext): fixed_1024_payload.
 
-(* parse4 := arg0{5 + (arg0{1, 4})_[u,4], len(arg0) - (5 + (arg0{1, 4})_[u,4])} *)
+(* parse4 := arg0{1 + 4 + (arg0{1, 4})_[u,4], len(arg0) - (1 + 4 + (arg0{1, 4})_[u,4])} *)
 fun parse4(bounded_1045_plaintext): fixed_16_key.
 
 

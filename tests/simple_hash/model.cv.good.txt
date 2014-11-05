@@ -51,10 +51,10 @@ fun conc2(bounded_1000_payload, fixed_20_hash): bitstring [compos].
 (* conc3 := (len(arg0))^[u,8]|(2)^[u,1]|arg0 *)
 fun conc3(bounded_1000_payload): bitstring [compos].
 
-(* parse1 := arg0{9, (arg0{0, 8})_[u,8]} *)
+(* parse1 := arg0{8 + 1, (arg0{0, 8})_[u,8]} *)
 fun parse1(bitstring): bounded_1000_payload.
 
-(* parse2 := arg0{9 + (arg0{0, 8})_[u,8], len(arg0) - (9 + (arg0{0, 8})_[u,8])} *)
+(* parse2 := arg0{8 + 1 + (arg0{0, 8})_[u,8], len(arg0) - (8 + 1 + (arg0{0, 8})_[u,8])} *)
 fun parse2(bitstring): fixed_20_hash.
 
 

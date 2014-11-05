@@ -4,8 +4,6 @@
     See LICENSE file for copyright notice.
 *)
 
-open Str
-
 open Common
 open Type
 open Sym
@@ -16,105 +14,24 @@ open Exp
 module E = Exp
 module S = Solver
 
-(******************************************************************)
-(** {1 Symbolic Arithmetic Expression Manipulation}               *)
-(******************************************************************)
-
-let arith_simplify_eq eq want_fold (e : iterm)  =
-
-    let simplify_sums (e : iterm) =
-      match e with
-      | Sym ((Int_op (Plus _ | Minus)), es) as e ->
-
-        let elim_zero es = List.filter_out ~f:(eq E.zero) es in
-
-        (* The proper way is to make the SMT solver perform the operation *)
-        let mk_op (n : int64) = function
-          | (sign, Int m) -> Int64.add n (Int64.mul (Int64.of_int sign) m)
-          | _             -> fail "mk_op: not an integer"
-        in
-
-        let rec signs sign (e : iterm) =
-          match e with
-          | Sym (Int_op (Plus _), es)  -> List.concat_map ~f:(signs sign) es
-          | Sym (Int_op Minus, [a; b]) -> (signs sign a) @ (signs (-1 * sign) b)
-          | e -> [(sign, e)]
-        in
-
-        let split (e : iterm) : iterm list * iterm list =
-          let es = signs 1 e in
-          let (e_int, e_sym) =
-            if want_fold
-            then List.partition ~f:(function (_, Int _) -> true | _ -> false) es
-            else ([], es)
-          in
-          let (e_pos, e_neg) = List.partition ~f:(function (sign, _) -> sign = 1) e_sym in
-          let c_int = List.fold_left ~f:mk_op ~init:0L e_int in
-          ((if c_int = 0L then [] else [Int c_int])
-           @ List.map ~f:snd e_pos, List.map ~f:snd e_neg)
-        in
-
-        let (e_pos, e_neg) = split e in
-        begin
-          match (elim_zero (List.multidiff eq e_pos e_neg), elim_zero (List.multidiff eq e_neg e_pos)) with
-            | (e_pos', [])    -> E.sum e_pos'
-            | (e_pos', e_neg') -> Sym (Int_op Minus, [E.sum e_pos'; E.sum e_neg'])
-        end
-
-      | e -> e
-  in
-
-  (* TODO: deal with it like you deal with addition *)
-  let elim_one = function
-    | Sym (Int_op (Mult _), es) ->
-      E.prod (List.filter_out ~f:(eq E.one) es)
-    | e -> e
-  in
-
-  DEBUG "arith_simplify: %s" (E.dump e);
-  e (* |> simplify_sums Plus_a Minus_a  *) |> simplify_sums |> elim_one
-
-(* Not using equal_int as equality, in order not to trigger extra warnings *)
-let arith_simplify = arith_simplify_eq (=) false
-let arith_fold     = arith_simplify_eq (=) true
-
-let op op es =
-  arith_simplify (Sym (Int_op op, es))
-
-let minus e1 e2 = op Minus [e1; e2]
-let sum es = E.sum es |> arith_simplify
-let prod es = E.prod es |> arith_simplify
-
-let is_zero_offset_val : offset_val -> bool = function
-  | Index 0 -> true
-  | Flat z when S.equal_int E.zero z -> true
-  | _ -> false
-
-let is_zero_offset : offset -> bool = function (ov, _) -> is_zero_offset_val ov
-
-let is_field_offset_val : offset_val -> bool = function
-  | Field _ -> true
-  | _ -> false
-
-(*************************************************)
-(** {1 Simplification} *)
-(*************************************************)
-
 (**
-  Simplifies an expression.
-  Currently following transformations types are performed, given suitable conditions:
-  - [Range(String) -> String]
-  - [Range(Range(X)) -> Range(X)]
-  - [Range(X) -> X]
-  - [Concat(Range(X), Range(X)) -> Range(X)]
-  - [Concat(String, String) -> String]
-  - [Range(Concat(X, Y)) -> Concat(X)]
+   OLD
 
-  Assumes that all subexpressions have already been simplified.
+   Simplifies an expression.
+   Currently following transformations types are performed, given suitable conditions:
+   - [Range(String) -> String]
+   - [Range(Range(X)) -> Range(X)]
+   - [Range(X) -> X]
+   - [Concat(Range(X), Range(X)) -> Range(X)]
+   - [Concat(String, String) -> String]
+   - [Range(Concat(X, Y)) -> Concat(X)]
 
-  Accepts ranges that do not fulfill the invariant. The behaviour then is as follows: if length is not [All],
-  the parts of the range that are outside of the expression are filled with [undef]. If length is [All] and position
-  is not within the expression, an empty expression is returned.
+   Assumes that all subexpressions have already been simplified.
+
+   Accepts ranges that do not fulfill the invariant. The behaviour then is as
+   follows: if length is not [All], the parts of the range that are outside of
+   the expression are filled with [undef]. If length is [All] and position is
+   not within the expression, an empty expression is returned.
 *)
 let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
 
@@ -154,10 +71,10 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
         match S.greater_equal_len_answer l pos with
         | S.Yes ->
             Some ([simplify (Range (e, E.zero, pos))],
-                   simplify (Range (e, pos, op Minus [l; pos])) :: es)
+                   simplify (Range (e, pos, E.minus l pos)) :: es)
         | S.Maybe -> None
         | S.No ->
-            let pos' = op Minus [pos; l] in
+            let pos' = E.minus pos l in
             match cut pos' es with
               | Some (es1, es2) -> Some (e :: es1, es2)
               | None -> None
@@ -172,144 +89,15 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
     | Some (_, right) -> Some (concat right)
     | None -> None
 
-  and add_pi e_o pos =
-    match pos with
-    | [Flat b, step] -> [(Flat (sum [b; (prod [step; e_o])]), step)]
-    | [Index i, step] ->
-      (* Should not be too eager to concretise because in the parser we may not
-         be able to restore the correct general form again. *)
-      (* TODO: this should not actually affect parser correctness, think more about this. *)
-      let int_value = if E.is_constant e_o then S.eval e_o else None in
-      begin match int_value with
-        | Some j -> [Index (i + j), step]
-        | None -> add_pi e_o [Flat (prod [step; (E.int i)]), step]
-                    (* fail "add_pi: only concrete integers can be added to index offsets" *)
-      end
-    | [(o, step)] -> [(o, step); (Flat e_o, step)] (* FIXME: actually need an index here *)
-    | o :: os -> o :: add_pi e_o os
-    | [] -> fail "add_pi: pointer has no offsets"
-
-  and skip_zeros : pos -> pos = function
-    | [os] -> [os]
-    | os :: pos' when is_zero_offset os -> skip_zeros pos'
-    | pos -> pos
-
-  and flatten_offset = function
-    | Flat e, _ -> e
-    | Index i, step -> prod [step; (E.int i)]
-    | Field f, _ -> Sym (Field_offset f, [])
-    | Attr _, _ ->
-      fail "trying to subtract pointers with attribute offsets."
-
-  and flatten_pos pos =
-    sum (List.map pos ~f:flatten_offset)
-
-  and ptr_step = function
-    | [_, step] -> step
-    | _ :: pos -> ptr_step pos
-    | [] -> fail "ptr_step"
-
-  and subtract_pp pos1 pos2 =
-    match skip_zeros pos1, skip_zeros pos2 with
-    | [Index i, step1], [Index j, step2] ->
-      (*
-	The pointer difference type is ptrdiff_t, which is implementation - dependent.
-	For now, the right thing might be to insert explicit casts during the instrumentation.
-      *)
-      if S.equal_int step1 step2 then E.int (i - j)
-      else fail "subtract_pp: pointers have different steps (1)"
-
-    | pos1, pos2 ->
-      let e1 = flatten_pos pos1 in
-      let e2 = flatten_pos pos2 in
-      if S.equal_int (ptr_step pos1) (ptr_step pos2)
-      then op Minus [e1; e2]
-      else fail "subtract_pp: pointers have different steps (2)"
-
-  and strip_int_cast = function
-    | Sym (Op (Cast_to_int, _), [e]) -> strip_int_cast (e : bterm)
-    | e -> e
   in
-
   let default = S.simplify in
 
-  (* TODO: lot of this could be merged with a rewriting step in the solver. *)
   let simplify (type a) (e_orig : a Exp.t) : a Exp.t =
     match e_orig with
-(* TODO:
-    | Sym (Logical Not,
-           [Sym (Truth_of_bs,
-                 [Sym (Op (Op_cmp Ne, itype),
-                       [e1; e2])])]) ->
-      Aux_test (Sym (Op (Op_cmp Eq, itype), [e1; e2]))
+    | Sym (Int_op _, _) as e -> E.arith_simplify e
 
-    | Sym (Op (Op_cmp  Eq, _),
-           [Sym (Fun ("cmp", _), [e1; e2]); z]) when S.equal_int z E.zero ->
-      mk_cmp e1 e2
-
-    | Sym ((Logical Not,
-            [Sym (Fun ("cmp", _), [e1; e2])])) ->
-      mk_cmp e1 e2
-*)
-
-    | Sym (Op (Cast_to_ptr, _), [e]) ->
-      begin match strip_int_cast e with
-      | Ptr (b, pos)  -> Ptr (b, pos @ [Index 0, Unknown Kind.Int])
-      | BS (Int i, _) -> Ptr (Abs i, [Index 0, Unknown Kind.Int])
-      | _ -> fail "simplify: cast to pointer of non-zero expression: %s" (E.to_string e)
-      end
-
-    | Sym (Op (Cast_to_int, ([t2], t3)), [e2]) ->
-      let contains t e =
-        match t with
-        | Bs_int itype ->
-          List.for_all ~f:S.is_true (E.Range.contains itype e)
-        | _ -> assert false
-      in
-      if t2 = t3 then simplify e2 else
-      begin match e2 with
-        | Sym (Op (Cast_to_int, ([Bs_int t1],  t2')), [e1]) ->
-          assert (t2 = t2');
-          if contains t2 (Val (e1, t1))
-          then Sym (Op (Cast_to_int, ([Bs_int t1], t3)), [e1]) |> simplify
-          else default e_orig
-        | BS (e1, t) ->
-          assert (t2 = Bs_int t);
-          if contains t2 e1
-          then begin
-            match t3 with
-            | Bs_int t3 -> BS (e1, t3) |> simplify
-            | _ -> assert false
-          end
-          else default e_orig
-        | _ -> default e_orig
-      end
-
-    | Val (e2, itype) ->
-      begin match e2 with
-        | Sym (Op (Cast_to_int, ([Bs_int t1], (Bs_int t2))), [e1]) when E.Range.subset t1 t2 ->
-          assert (itype = t2);
-          Val (e1, t1) |> simplify
-        | BS (e1, itype) when List.for_all ~f:S.is_true (E.Range.contains itype e1) -> e1
-        | _ -> default e_orig
-      end
-
-    | Sym (Op (Plus_PI,  ([_; Bs_int itype], _)), [Ptr (b, pos); e_o]) ->
-      let shift = simplify (Val (e_o, itype)) in
-      Ptr (b, add_pi shift pos)
-
-    | Sym (Op (Minus_PI, ([_; Bs_int itype], _)), [Ptr (b, pos); e_o]) ->
-      let shift = simplify (Val (e_o, itype)) in
-      Ptr (b, add_pi (op Minus [E.zero; shift]) pos)
-
-    | Sym (Op (Minus_PP, (_, Bs_int itype)),
-           [Ptr (b1, pos1); Ptr (b2, pos2)]) ->
-      if b1 <> b2 then
-        fail "simplify: trying to subtract pointers with different bases";
-      BS (subtract_pp pos1 pos2, itype)
-
-    | Sym (Int_op _, _) -> arith_simplify e_orig
-
+    (* The ztp business is based on user-defined equations Ztp_safe(e) = e, and
+       so actually relies on the solver. *)
     | Sym (Ztp, [String cs]) as e ->
       let rec up_to_zero acc = function
         | [] -> None

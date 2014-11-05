@@ -171,7 +171,7 @@ assume len(Cmp(msg5{8, 1}, "|")) = 4 in
 ifaux msg5{8, 1} = "|" then 
 (* client[74, // RPC.c:45] *)
 ifaux ¬((msg5{0, 8})_[u,8] > 2000) then 
-let msg6 = (8)^[u,8]|"|"|"Response"|(len(request))^[u,8]|"|"|request|msg5{9, (msg5{0, 8})_[u,8]} (* named msg6 *) in
+let msg6 = (8)^[u,8]|"|"|"Response"|(len(request))^[u,8]|"|"|request|msg5{8 + 1, (msg5{0, 8})_[u,8]} (* named msg6 *) in
 let key2 = keyAB (* named key2 *) in
 let hash2 = HMAC("sha1", msg6, key2) (* named hash2 *) in
 (* assume_len[324, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
@@ -179,11 +179,11 @@ assume len(hash2) = 20 in
 (* hmacsha1Verify[308, // ProgrammingInterface.c:307] *)
 ifaux ((msg4)_[u,8] - (8 + 1 + (msg5{0, 8})_[u,8])) = 20 then 
 (* assume_intype[329, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume ((len(msg5) >= len(msg5)) /\ ((9 + (msg5{0, 8})_[u,8]) >= 0) /\ ((len(msg5) - (9 + (msg5{0, 8})_[u,8])) >= 0)) /\ Defined(hash2) in
+assume ((len(msg5) >= len(msg5)) /\ ((8 + 1 + (msg5{0, 8})_[u,8]) >= 0) /\ ((len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])) >= 0)) /\ Defined(hash2) in
 (* assume_len[330, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(Cmp(msg5{9 + (msg5{0, 8})_[u,8], len(msg5) - (9 + (msg5{0, 8})_[u,8])}, hash2)) = 4 in
+assume len(Cmp(msg5{8 + 1 + (msg5{0, 8})_[u,8], len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])}, hash2)) = 4 in
 (* hmacsha1Verify[308, // ProgrammingInterface.c:308] *)
-ifeq msg5{9 + (msg5{0, 8})_[u,8], len(msg5) - (9 + (msg5{0, 8})_[u,8])} = hash2 then 
+ifeq msg5{8 + 1 + (msg5{0, 8})_[u,8], len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])} = hash2 then 
 (* client[74, // RPC.c:52] *)
 new nondet38: nondet;
 (* client[74, // RPC.c:53] *)
@@ -340,7 +340,7 @@ new nondet85: nondet;
 new nondet86: nondet;
 (* client[74, // RPC.c:58] *)
 new nondet87: nondet;
-event client_accept(request, msg5{9, (msg5{0, 8})_[u,8]});
+event client_accept(request, msg5{8 + 1, (msg5{0, 8})_[u,8]});
 
 let B = 
 (* main[0, <top of main>] *)
@@ -412,7 +412,7 @@ assume len(Cmp(msg8{8, 1}, "|")) = 4 in
 ifaux msg8{8, 1} = "|" then 
 (* server[74, // RPC.c:80] *)
 ifaux ¬((msg8{0, 8})_[u,8] > 2000) then 
-let msg9 = (7)^[u,8]|"|"|"Request"|msg8{9, (msg8{0, 8})_[u,8]} (* named msg9 *) in
+let msg9 = (7)^[u,8]|"|"|"Request"|msg8{8 + 1, (msg8{0, 8})_[u,8]} (* named msg9 *) in
 let key3 = keyAB (* named key3 *) in
 let hash3 = HMAC("sha1", msg9, key3) (* named hash3 *) in
 (* assume_len[203, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
@@ -420,11 +420,11 @@ assume len(hash3) = 20 in
 (* hmacsha1Verify[187, // ProgrammingInterface.c:307] *)
 ifaux ((msg7)_[u,8] - (8 + 1 + (msg8{0, 8})_[u,8])) = 20 then 
 (* assume_intype[208, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume ((len(msg8) >= len(msg8)) /\ ((9 + (msg8{0, 8})_[u,8]) >= 0) /\ ((len(msg8) - (9 + (msg8{0, 8})_[u,8])) >= 0)) /\ Defined(hash3) in
+assume ((len(msg8) >= len(msg8)) /\ ((8 + 1 + (msg8{0, 8})_[u,8]) >= 0) /\ ((len(msg8) - (8 + 1 + (msg8{0, 8})_[u,8])) >= 0)) /\ Defined(hash3) in
 (* assume_len[209, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(Cmp(msg8{9 + (msg8{0, 8})_[u,8], len(msg8) - (9 + (msg8{0, 8})_[u,8])}, hash3)) = 4 in
+assume len(Cmp(msg8{8 + 1 + (msg8{0, 8})_[u,8], len(msg8) - (8 + 1 + (msg8{0, 8})_[u,8])}, hash3)) = 4 in
 (* hmacsha1Verify[187, // ProgrammingInterface.c:308] *)
-ifeq msg8{9 + (msg8{0, 8})_[u,8], len(msg8) - (9 + (msg8{0, 8})_[u,8])} = hash3 then 
+ifeq msg8{8 + 1 + (msg8{0, 8})_[u,8], len(msg8) - (8 + 1 + (msg8{0, 8})_[u,8])} = hash3 then 
 (* server[74, // RPC.c:87] *)
 new nondet88: nondet;
 (* server[74, // RPC.c:88] *)
@@ -535,8 +535,8 @@ assume Defined(response) in
 assume (len(response) >= 0) /\ (len(response) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* server[74, // RPC.c:100] *)
 ifaux ¬(len(response) > 2000) then 
-event server_reply(msg8{9, (msg8{0, 8})_[u,8]}, response);
-let msg10 = (8)^[u,8]|"|"|"Response"|msg8{0, 8}|"|"|msg8{9, (msg8{0, 8})_[u,8]}|response (* named msg10 *) in
+event server_reply(msg8{8 + 1, (msg8{0, 8})_[u,8]}, response);
+let msg10 = (8)^[u,8]|"|"|"Response"|msg8{0, 8}|"|"|msg8{8 + 1, (msg8{0, 8})_[u,8]}|response (* named msg10 *) in
 let key4 = keyAB (* named key4 *) in
 let hash4 = HMAC("sha1", msg10, key4) (* named hash4 *) in
 (* assume_len[374, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)

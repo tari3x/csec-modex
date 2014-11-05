@@ -92,18 +92,18 @@ ifaux ¬((msg5{0, 8})_[u,8] > 1000) then
 ifaux ¬((8 + 1 + (msg5{0, 8})_[u,8] + 20) <> (msg4)_[u,8]) then 
 (* server[6, // server.c:52] *)
 ifaux ¬((msg5{8, 1})_[u,1] <> 1) then 
-let msg6 = msg5{0, 8}|(2)^[u,1]|msg5{9, (msg5{0, 8})_[u,8]} (* named msg6 *) in
+let msg6 = msg5{0, 8}|(2)^[u,1]|msg5{8 + 1, (msg5{0, 8})_[u,8]} (* named msg6 *) in
 let key2 = key (* named key2 *) in
 let hash2 = HMAC("sha1", msg6, key2) (* named hash2 *) in
 (* assume_len[54, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(hash2) = 20 in
 (* assume_intype[62, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(hash2) /\ ((len(msg5) >= len(msg5)) /\ ((9 + (msg5{0, 8})_[u,8]) >= 0) /\ ((len(msg5) - (9 + (msg5{0, 8})_[u,8])) >= 0)) in
+assume Defined(hash2) /\ ((len(msg5) >= len(msg5)) /\ ((8 + 1 + (msg5{0, 8})_[u,8]) >= 0) /\ ((len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])) >= 0)) in
 (* assume_len[63, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(Cmp(hash2, msg5{9 + (msg5{0, 8})_[u,8], len(msg5) - (9 + (msg5{0, 8})_[u,8])}:fixed_20_hash)) = 4 in
+assume len(Cmp(hash2, msg5{8 + 1 + (msg5{0, 8})_[u,8], len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])}:fixed_20_hash)) = 4 in
 (* server[6, // server.c:72] *)
-ifeq hash2 = msg5{9 + (msg5{0, 8})_[u,8], len(msg5) - (9 + (msg5{0, 8})_[u,8])}:fixed_20_hash then 
-event server_recv(msg5{9, (msg5{0, 8})_[u,8]});
+ifeq hash2 = msg5{8 + 1 + (msg5{0, 8})_[u,8], len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])}:fixed_20_hash then 
+event server_recv(msg5{8 + 1, (msg5{0, 8})_[u,8]});
 in(c, var10);
 ifaux len(var10) = 1 then 
 let msg7 = var10 (* named msg7 *) in

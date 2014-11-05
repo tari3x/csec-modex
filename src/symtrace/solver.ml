@@ -62,8 +62,8 @@ let warn_cache = ref E.Set.empty
 
 let mk_exp_name (type a) (e : a Exp.t) =
   let result = match e with
-    | Var (v, _) -> "var_" ^ v
-    | String _ as e ->
+    | E.Var (v, _) -> "var_" ^ v
+    | E.String _ as e ->
       let escaped =
         E.to_string e |> String.map ~f:(function
         | '\\' -> '_'
@@ -229,6 +229,62 @@ module Cache = Common.Map_any (Kind) (Rewrite_key) (Rewrite_result)
 
 (* CR make this a hash table *)
 let rewrite_cache = ref Cache.empty
+
+let rec add_pi e_o pos =
+  match pos with
+  | [Flat b, step] -> [(Flat (sum [b; (prod [step; e_o])]), step)]
+  | [Index i, step] ->
+    (* Should not be too eager to concretise because in the parser we may not
+       be able to restore the correct general form again. *)
+    (* TODO: this should not actually affect parser correctness, think more about this. *)
+    add_pi e_o [Flat (prod [step; (E.int i)]), step]
+    (*
+    let int_value = if E.is_constant e_o then S.eval e_o else None in
+    begin match int_value with
+    | Some j -> [Index (i + j), step]
+    | None ->
+    (* fail "add_pi: only concrete integers can be added to index offsets" *)
+    end
+    *)
+  | [(o, step)] -> [(o, step); (Flat e_o, step)] (* FIXME: actually need an index here *)
+  | o :: os -> o :: add_pi e_o os
+  | [] -> fail "add_pi: pointer has no offsets"
+
+let subtract_pp pos1 pos2 =
+  let flatten_offset = function
+    | Flat e, _ -> e
+    | Index i, step -> prod [step; (E.int i)]
+    | Field f, _ -> Sym (Field_offset f, [])
+    | Attr _, _ ->
+      fail "trying to subtract pointers with attribute offsets."
+  in
+  let flatten_pos pos =
+    sum (List.map pos ~f:flatten_offset)
+  in
+  let is_zero_offset : offset -> bool = function (ov, _) -> is_zero_offset_val ov in
+  let rec skip_zeros : pos -> pos = function
+    | [os] -> [os]
+    | os :: pos' when is_zero_offset os -> skip_zeros pos'
+    | pos -> pos
+  in
+  let rec ptr_step = function
+    | [_, step] -> step
+    | _ :: pos -> ptr_step pos
+    | [] -> fail "ptr_step"
+  in
+  match skip_zeros pos1, skip_zeros pos2 with
+  | [Index i, step1], [Index j, step2] ->
+      (*
+	The pointer difference type is ptrdiff_t, which is implementation - dependent.
+	For now, the right thing might be to insert explicit casts during the instrumentation.
+      *)
+    `Condition (E.eq_int [step1; step2]), `Result (E.int (i - j))
+
+  | pos1, pos2 ->
+    let e1 = flatten_pos pos1 in
+    let e2 = flatten_pos pos2 in
+    `Condition (E.eq_int [ptr_step pos1; ptr_step pos2]),
+    `Result (E.minus e1 e2)
 
 let rewrite
     (type a)
@@ -398,6 +454,36 @@ let rewrite
           step ~right:e' ~conds;
           collect e'
 
+        | Sym (Op (Cast_to_ptr, _), [e]) ->
+          (* It might be necessary for PolarSSL to collect e first. *)
+          begin match e with
+          | Ptr (b, pos)  -> Ptr (b, pos @ [Index 0, Unknown Kind.Int])
+          | BS (Int i, _) -> Ptr (Abs i, [Index 0, Unknown Kind.Int])
+          | _ -> fail "simplify: cast to pointer of non-zero expression: %s" (E.to_string e)
+          end
+
+        | Sym (Op (Cast_to_int, ([t2], t3)), [e2]) as e ->
+          let contains t e =
+            match t with
+            | Bs_int itype -> E.Range.contains itype e
+            | _ -> assert false
+          in
+          if t2 = t3 then collect e2
+          else begin match e2 with
+          | Sym (Op (Cast_to_int, ([Bs_int t1],  t2')), [e1]) ->
+            assert (t2 = t2');
+            add_conditions (contains t2 (Val (e1, t1)));
+            Sym (Op (Cast_to_int, ([Bs_int t1], t3)), [e1]) |> collect
+          | BS (e1, t) ->
+            assert (t2 = Bs_int t);
+            add_conditions (contains t2 e1);
+            begin match t3 with
+            | Bs_int t3 -> BS (e1, t3) |> collect
+            | _ -> assert false
+            end
+          | _ -> make_opaque e
+          end
+
         | Val ((Sym (Op (Cast_to_int, ([Bs_int itype_from], Bs_int itype_to)), [e])) as cast_e, itype_to') ->
           if itype_to <> itype_to' then
             fail "itype of Val not the same as itype of cast: %s" (E.to_string e_top);
@@ -435,6 +521,23 @@ let rewrite
           let e' = E.int (Char.code c) in
           step ~right:e' ~conds:[];
           e'
+
+        (* CR-soon: add tracing for pointer operations. *)
+        | Sym (Op (Plus_PI,  ([_; Bs_int itype], _)), [Ptr (b, pos); e_o]) ->
+          let shift = collect (Val (e_o, itype)) in
+          Ptr (b, add_pi shift pos)
+
+        | Sym (Op (Minus_PI, ([_; Bs_int itype], _)), [Ptr (b, pos); e_o]) ->
+          let shift = collect (Val (e_o, itype)) in
+          Ptr (b, add_pi (E.minus E.zero shift) pos)
+
+        | Sym (Op (Minus_PP, (_, Bs_int itype)),
+               [Ptr (b1, pos1); Ptr (b2, pos2)]) ->
+          if b1 <> b2
+          then fail "simplify: trying to subtract pointers with different bases";
+          let `Condition cond, `Result result = subtract_pp pos1 pos2 in
+          add_conditions [cond];
+          BS (result, itype) |> collect
 
         | Len e as e_top ->
           let unexpected e =

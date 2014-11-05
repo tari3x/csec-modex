@@ -1373,7 +1373,7 @@ let rec mk_parsers ls ps es e_c =
       let l =
         match e_i, e_c with
           | _, [] ->
-            Sym (Int_op Minus, [Len x; Simplify.sum ls])
+            Sym (Int_op Minus, [Len x; E.sum ls])
           | Var _ as v, _ ->
             (* DEBUG "looking for %s in %s" (E.dump v) (E.dump_list es); *)
             (* Need comparison in this order as es will contain lengths of lengths *)
@@ -1389,7 +1389,7 @@ let rec mk_parsers ls ps es e_c =
             | Some n -> E.int n
             | None -> fail "mk_parsers: Cannot determine width of %s" (E.to_string e_i)
       in
-      let p = Range (x, Simplify.sum ls, l) in
+      let p = Range (x, E.sum ls, l) in
       mk_parsers (ls @ [l]) (ps @ [p]) (es @ [e_i]) e_c
 
     | [] -> ps

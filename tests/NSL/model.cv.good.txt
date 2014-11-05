@@ -111,22 +111,22 @@ fun conc5(fixed_20_nonce, fixed_20_nonce, bounded_40_host): bounded_200_cleartex
 (* conc6 := "encr"|(len(arg0))^[u,8]|arg0 *)
 fun conc6(bounded_1000_ciphertext): bitstring [compos].
 
-(* parse1 := arg0{20, 20} *)
+(* parse1 := arg0{4 + (2 * 8), 20} *)
 fun parse1(bounded_200_cleartext): fixed_20_nonce.
 
-(* parse2 := arg0{(arg0{4, 8})_[u,8] + (arg0{12, 8})_[u,8] + (2 * 8) + 4, len(arg0) - ((arg0{4, 8})_[u,8] + (arg0{12, 8})_[u,8] + (2 * 8) + 4)} *)
+(* parse2 := arg0{(arg0{4, 8})_[u,8] + (arg0{4 + 8, 8})_[u,8] + (2 * 8) + 4, len(arg0) - ((arg0{4, 8})_[u,8] + (arg0{4 + 8, 8})_[u,8] + (2 * 8) + 4)} *)
 fun parse2(bounded_200_cleartext): bounded_40_host.
 
-(* parse3 := arg0{20 + 20, ((arg0{4, 8})_[u,8] + (arg0{12, 8})_[u,8] + (2 * 8) + 4) - (20 + 20)} *)
+(* parse3 := arg0{4 + (2 * 8) + 20, ((arg0{4, 8})_[u,8] + (arg0{4 + 8, 8})_[u,8]) - 20} *)
 fun parse3(bounded_200_cleartext): fixed_20_nonce.
 
 (* parse4 := arg0{8 + (arg0{4, 8})_[u,8] + 4, len(arg0) - (8 + (arg0{4, 8})_[u,8] + 4)} *)
 fun parse4(bounded_200_cleartext): bounded_40_host.
 
-(* parse5 := arg0{12 + (arg0{4, 8})_[u,8], len(arg0) - (12 + (arg0{4, 8})_[u,8])} *)
+(* parse5 := arg0{4 + 8 + (arg0{4, 8})_[u,8], len(arg0) - (4 + 8 + (arg0{4, 8})_[u,8])} *)
 fun parse5(bounded_200_cleartext): bounded_40_host.
 
-(* parse6 := arg0{12, (arg0{4, 8})_[u,8]} *)
+(* parse6 := arg0{4 + 8, (arg0{4, 8})_[u,8]} *)
 fun parse6(bounded_200_cleartext): fixed_20_nonce.
 
 (* parse7 := arg0{4, len(arg0) - 4} *)
@@ -311,7 +311,7 @@ fun auxiliary55(bounded_200_cleartext): bool.
 (* auxiliary56 := ¬((arg0{4, 8})_[u,8] <> 20) *)
 fun auxiliary56(bounded_200_cleartext): bool.
 
-(* auxiliary57 := ¬((arg0{12, 8})_[u,8] <> 20) *)
+(* auxiliary57 := ¬((arg0{4 + 8, 8})_[u,8] <> 20) *)
 fun auxiliary57(bounded_200_cleartext): bool.
 
 (* auxiliary58 := ¬((arg0)_[u,8] > 1000) *)
