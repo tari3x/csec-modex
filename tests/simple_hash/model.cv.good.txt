@@ -66,6 +66,19 @@ forall var1: bounded_1000_payload, var2: fixed_20_hash, var3: bounded_1000_paylo
   conc2(var1, var2) <> conc1(var3).
 
 (*************************** 
+  Parsing Equations 
+***************************)
+
+forall arg0: bounded_1000_payload;
+parse1(conc3(arg0)) = arg0.
+forall arg0: bounded_1000_payload, arg1: fixed_20_hash;
+parse2(conc2(arg0, arg1)) = arg1.
+forall arg0: bounded_1000_payload, arg1: fixed_20_hash;
+parse1(conc2(arg0, arg1)) = arg0.
+forall arg0: bounded_1000_payload;
+parse1(conc1(arg0)) = arg0.
+
+(*************************** 
   Arithmetic Functions 
 ***************************)
 

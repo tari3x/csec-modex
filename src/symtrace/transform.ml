@@ -452,9 +452,11 @@ end = struct
         let t1 = exp_type fun_types ctx e1 in
         let t2 = exp_type fun_types ctx e2 in
         let tt = Type.union t1 t2 in
+        let e1 = check_exp ctx facts tt e1 in
+        let e2 = check_exp ctx facts tt e2 in
         (* Not adding a non-auxiliary test to facts *)
-        let p' = check ctx facts p in
-        Eq_test(cast t1 tt e1, cast t2 tt e2) :: p'
+        let p = check ctx facts p in
+        Eq_test(e1, e2) :: p
 
       | Assume e :: p ->
         Assume e :: check ctx (facts @ [e]) p
@@ -813,6 +815,8 @@ let normal_form p =
       | [] -> []
     in
 
+    (* CR-soon this shouldn't be necessary since we can use typing to prove
+       injectivity. *)
     (*
       This is the heuristic part - we convert an expression like
       20 | 20 | x | y,
@@ -897,47 +901,50 @@ let normal_form p =
     in
 
     match p with
-      | Aux_test e :: p ->
-        S.add_fact e;
-        Aux_test e :: normalize p
-      | Assume e :: p ->
-        S.add_fact e;
-        Assume e :: normalize p
-      | Let (VPat v, e) :: p ->
-        S.add_fact (E.eq_bitstring [Var (v, Kind.Bitstring); e]);
-        let e = extract e in
-        sort_defs !defs @ (Let (VPat v, e) :: normalize p)
-      | Let _ :: _ ->
-        fail "normal_form: impossible: let patterns unexpected"
-      | In vs as s :: p ->
-        List.iter ~f:(fun v -> S.add_fact (E.is_defined (Var (v, Kind.Bitstring)))) vs;
-        s :: normalize p
-      | New (v, t) as s :: p ->
-        S.add_fact (E.in_type (Var (v, Kind.Bitstring)) t);
-        s :: normalize p
-      | (Fun_test _ | Eq_test _ | Out _ | Event _ | Yield | Comment _ ) as s :: p ->
-        let move_out_bitstring (e : bterm) =
+    (* CR: I think it's luck that you get away with not normalizing inside
+       auxiliary ifs. Verify if this statement is true and add a unit test. *)
+    | Aux_test e :: p ->
+      S.add_fact e;
+      Aux_test e :: normalize p
+    | Assume e :: p ->
+      S.add_fact e;
+      Assume e :: normalize p
+    | Let (VPat v, e) :: p ->
+      S.add_fact (E.eq_bitstring [Var (v, Kind.Bitstring); e]);
+      let e = extract e in
+      sort_defs !defs @ (Let (VPat v, e) :: normalize p)
+    | Let _ :: _ ->
+      fail "normal_form: impossible: let patterns unexpected"
+    | In vs as s :: p ->
+      List.iter ~f:(fun v ->
+        S.add_fact (E.is_defined (Var (v, Kind.Bitstring)))) vs;
+      s :: normalize p
+    | New (v, t) as s :: p ->
+      S.add_fact (E.in_type (Var (v, Kind.Bitstring)) t);
+      s :: normalize p
+    | (Fun_test _ | Eq_test _ | Out _ | Event _ | Yield | Comment _ ) as s :: p ->
+      let move_out_bitstring (e : bterm) =
+        match e with
+        | Concat _ | Range _ | Annotation _ -> mk_var (extract e)
+        | Var _ -> extract e
+        | Sym (Fun _, _) -> extract e
+        | e when not (E.is_cryptographic e) -> mk_var (extract e)
+        | e ->
+          fail "Normal form: impossible: %s" (E.to_string e)
+      in
+      let move_out (type a) (e : a exp) : a exp =
+        match E.kind e with
+        | Kind.Bitstring -> move_out_bitstring e
+        | Kind.Int -> fail "Normal form: impossible: %s" (E.to_string e)
+        | Kind.Bool ->
           match e with
-          | Concat _ | Range _ | Annotation _ -> mk_var (extract e)
-          | Var _ -> extract e
-          | Sym (Fun _, _) -> extract e
-          | e when not (E.is_cryptographic e) -> mk_var (extract e)
-          | e ->
-            fail "Normal form: impossible: %s" (E.to_string e)
-        in
-        let move_out (type a) (e : a exp) : a exp =
-          match E.kind e with
-          | Kind.Bitstring -> move_out_bitstring e
-          | Kind.Int -> fail "Normal form: impossible: %s" (E.to_string e)
-          | Kind.Bool ->
-            match e with
-            | Sym (Fun (f, t), es) ->
-              Sym (Fun (f, t), List.map ~f:extract_fun es)
-            | e -> fail "Normal form: impossible: %s" (E.to_string e)
-        in
-        let s = Stmt.descend {E.descend = move_out} s in
-        sort_defs !defs @ (s :: normalize p)
-      | [] -> []
+          | Sym (Fun (f, t), es) ->
+            Sym (Fun (f, t), List.map ~f:extract_fun es)
+          | e -> fail "Normal form: impossible: %s" (E.to_string e)
+      in
+      let s = Stmt.descend {E.descend = move_out} s in
+      sort_defs !defs @ (s :: normalize p)
+    | [] -> []
   in
   push_debug "normal_form";
   S.reset_facts ();
@@ -1339,7 +1346,7 @@ let show_parsing_eq ?fun_types (((p, c), e): parsing_eq) =
       |> Printf.sprintf "forall %s;\n"
     | None -> ""
   in
-  Printf.sprintf "%s%s(%s(%s)) = %s"
+  Printf.sprintf "%s%s(%s(%s)) = %s."
     header
     (Sym.to_string p)
     (Sym.to_string c)
@@ -1372,22 +1379,24 @@ let rec mk_parsers ls ps es e_c =
     | e_i :: e_c ->
       let l =
         match e_i, e_c with
-          | _, [] ->
-            Sym (Int_op Minus, [Len x; E.sum ls])
-          | Var _ as v, _ ->
-            (* DEBUG "looking for %s in %s" (E.dump v) (E.dump_list es); *)
-            (* Need comparison in this order as es will contain lengths of lengths *)
+        | _, [] ->
+          Sym (Int_op Minus, [Len x; E.sum ls])
+        | Var _ as v, _ ->
+          begin
+          (* DEBUG "looking for %s in %s" (E.dump v) (E.dump_list es); *)
+          (* Need comparison in this order as es will contain lengths of lengths *)
             List.combine es ps
             |> List.first_some ~f:(function
-                | (BS (Len v', itype), p) when v = v' -> Some (Val (p, itype))
-                | _ -> None)
+              | (BS (Len v', itype), p) when v = v' -> Some (Val (p, itype))
+              | _ -> None)
             |> Option.value_exn
-          | BS (_, itype), _ ->
-            E.int (Int_type.width itype)
-          | e_i, _ ->
-            match S.eval (Len e_i) with
-            | Some n -> E.int n
-            | None -> fail "mk_parsers: Cannot determine width of %s" (E.to_string e_i)
+          end
+        | BS (_, itype), _ ->
+          E.int (Int_type.width itype)
+        | e_i, _ ->
+          match S.eval (Len e_i) with
+          | Some n -> E.int n
+          | None -> fail "mk_parsers: Cannot determine width of %s" (E.to_string e_i)
       in
       let p = Range (x, E.sum ls, l) in
       mk_parsers (ls @ [l]) (ps @ [p]) (es @ [e_i]) e_c
@@ -1403,8 +1412,18 @@ let rec tag_facts ps e_c =
     | [], [] -> []
     | _ -> failwith "tag_facts: impossible"
 
+let intype_facts ts ps e_c =
+  let args =
+    List.combine ps e_c
+    |> List.filter_map ~f:(fun (p_i, e_i) ->
+      match e_i with
+      | Var _ -> Some p_i
+      | _ -> None)
+  in
+  List.map2 args ts ~f:E.in_type
 
-let inrange facts e c_def =
+let inrange fun_types facts e c c_def =
+  let (arg_types, _) = Fun_type_ctx.find c fun_types in
   let x = mk_arg 0 in
   match c_def with
   | Concat e_c when well_formed e_c ->
@@ -1415,8 +1434,9 @@ let inrange facts e c_def =
     DEBUG "inrange: parsers: %s\n" (E.list_to_string ps);
     let fields = List.map ~f:E.is_defined ps in
     let tags = tag_facts ps e_c in
+    let intype_facts = intype_facts arg_types ps e_c in
 
-    let parse_facts = List.map ~f:(E.subst [x] [e]) (fields @ tags) in
+    let parse_facts = List.map ~f:(E.subst [x] [e]) (fields @ tags @ intype_facts) in
 
     pop_debug "inrange";
 
@@ -1426,7 +1446,10 @@ let inrange facts e c_def =
 
 let check_concat_safety fun_types facts e c c_def =
   DEBUG "Checking parsing safety of %s(...) = %s" (Sym.to_string c) (E.to_string e);
-  let result = is_injective_concat fun_types c c_def && inrange facts e c_def in
+  let result =
+    is_injective_concat fun_types c c_def
+    && inrange fun_types facts e c c_def
+  in
   DEBUG "Result = %b" result;
   result
 

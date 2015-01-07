@@ -24,7 +24,7 @@ int recv_request(RPCstate * ctx)
   recv(&(ctx->conn_fd), (unsigned char*) &m1_e_len, sizeof(m1_e_len));
   if (m1_e_len < MIN_MSG1_LENGTH || m1_e_len > MAX_MSG1_LENGTH)
     fail("server: message has wrong length");
-  
+
   p = m1_e = malloc(m1_e_len);
   if (m1_e == NULL)
     fail("Allocation failure, m1_e");
@@ -58,15 +58,28 @@ int recv_request(RPCstate * ctx)
     fail("Allocation failure: ctx->other");
   memcpy(ctx->other,p,ctx->other_len);
   p += ctx->other_len;
-  
+
   if (m1_e_len < 1 + sizeof(uint32_t) + ctx->other_len)
   {
 #ifndef VERIFY
-    fprintf(stderr, "Server: Message has wrong length.\n");
+    fprintf(stderr, "Server: Message has wrong length %d.\n", m1_e_len);
 #endif
     exit(-1);
   }
   m1_e_len -= (1 + sizeof(ctx->other_len) + ctx->other_len);
+
+  // This is strictly not necessary since the condition (m1_len >
+  // MAX_PLAINTEXT_LENGTH) below is equivalent. However, this is checked too
+  // late, so that the extraction of the client part does not pass the parsing
+  // safety check. This is fine, the program would still verify, but the model
+  // is less neat.
+  if(m1_e_len > MAX_CIPHER_LENGTH)
+    {
+#ifndef VERIFY
+      fprintf(stderr, "Server: Message has wrong length %d.\n", m1_e_len);
+#endif
+      exit(-1);
+    }
 
 #ifdef VERBOSE
 #ifndef VERIFY
@@ -91,7 +104,7 @@ int recv_request(RPCstate * ctx)
     return -1;
   }
   m1_len = decrypt(ctx->k_ab, ctx->k_ab_len, p, m1_e_len, m1);
-  
+
   if(m1_len < 1 + sizeof(ctx->request_len))
   {
 #ifndef VERIFY
@@ -130,6 +143,18 @@ int recv_request(RPCstate * ctx)
   memcpy(ctx->request, m1 + 1 + sizeof(ctx->request_len), ctx->request_len);
 
   ctx->k_len = m1_len - (1 + sizeof(ctx->request_len) + ctx->request_len);
+
+  // This has been moved here from send_response since this is required to prove
+  // parsing safety for the request. It is probably possible to verify the model
+  // without, but this seems like a good change anyway.
+  if(ctx->k_len != 16)
+  {
+#ifndef VERIFY
+    fprintf(stderr, "Server: session key must be 16 bytes long.\n");
+#endif
+    exit(1);
+  }
+
   ctx->k = malloc(ctx->k_len);
   if (ctx->k == NULL)
   {
@@ -167,14 +192,6 @@ int send_response(RPCstate * ctx)
   fflush(stdout);
 #endif
 #endif
-
-  if(ctx->k_len != 16)
-  {
-#ifndef VERIFY
-    fprintf(stderr, "Server: session key must be 16 bytes long.\n");
-#endif
-    exit(1);
-  }
 
   m2_e_len = encrypt_len(ctx->k, ctx->k_len, ctx->response, ctx->response_len);
 

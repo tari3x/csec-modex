@@ -7,6 +7,12 @@ set -x
 ( 
   cd deps/cil-1.7.3/ 
   if [ ! -f Makefile.features ]; then
+    ( 
+      cd src
+      for file in ../../../src/CIL/*.ml; do
+	ln -s $file
+      done
+    )
     ./configure EXTRAFEATURES="fundefs funreplace crestInstrument"
   fi
 )

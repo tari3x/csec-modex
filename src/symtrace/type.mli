@@ -37,7 +37,7 @@ module Int_type : sig
   val to_string : t -> string
   val of_string : string -> t
 
-  val latex : t -> string
+  val latex : ?y : bool ->  t -> string
 
   val int : t
   val size_t : t

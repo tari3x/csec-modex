@@ -92,8 +92,6 @@ let match_safe_parsers
   in
   do_match facts p
 
-(* CR: This is broken, you shouldn't move pattern matches past conditionals.  Have a pass
-   that moves conditionals as far up as possible first. *)
 let merge_patterns ~fun_types p =
 
   let choose_symbol f vs f' vs' =
@@ -698,8 +696,7 @@ let write_cv model =
     zero_funs;
     auxiliary_facts;
     zero_facts;
-    (* funny, we never need these. *)
-    parsing_eqs = _;
+    parsing_eqs;
     encoder_facts;
     arithmetic_facts;
     primed
@@ -773,6 +770,9 @@ let write_cv model =
   Sym_defs.iter ~f:(print_fun_def false) parsers;
   print_endline "";
   List.iter ~f:print_aux_fact encoder_facts;
+
+    print_endline "\n(*************************** \n  Parsing Equations \n***************************)\n";
+  List.iter ~f:(fun eq -> print_endline (show_parsing_eq ~fun_types eq)) parsing_eqs;
 
   print_endline "\n(*************************** \n  Arithmetic Functions \n***************************)\n";
   Sym_defs.iter ~f:print_arithmetic arith;

@@ -353,7 +353,7 @@ end
       let bodies = List.map ~f:latex_iexp es |> String.concat ~sep:", "  in
       begin match s with
       | Val_y itype ->
-        sprintf "\\valy{%s}{%s}" bodies (Int_type.latex itype)
+        sprintf "\\val{%s}{%s}" bodies (Int_type.latex ~y:true itype)
       | Logical Logical.True ->
         Sym.latex s
       | s ->

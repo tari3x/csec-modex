@@ -91,6 +91,23 @@ forall var1: bitstring;
   parse4(var1) = parse2(var1).
 
 (*************************** 
+  Parsing Equations 
+***************************)
+
+forall arg0: bounded_2000_response, arg1: bitstring;
+parse4(conc6(arg0, arg1)) = arg1.
+forall arg0: bounded_2000_response, arg1: bitstring;
+parse2(conc6(arg0, arg1)) = arg1.
+forall arg0: bounded_2000_response, arg1: bitstring;
+parse1(conc6(arg0, arg1)) = arg0.
+forall arg0: bounded_2000_request, arg1: bitstring;
+parse4(conc2(arg0, arg1)) = arg1.
+forall arg0: bounded_2000_request, arg1: bitstring;
+parse3(conc2(arg0, arg1)) = arg0.
+forall arg0: bounded_2000_request, arg1: bitstring;
+parse2(conc2(arg0, arg1)) = arg1.
+
+(*************************** 
   Arithmetic Functions 
 ***************************)
 

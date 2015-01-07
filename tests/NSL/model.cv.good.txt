@@ -147,6 +147,25 @@ forall var1: fixed_20_nonce, var2: fixed_20_nonce, var3: bounded_40_host;
   conc3(var1) <> conc1(var2, var3).
 
 (*************************** 
+  Parsing Equations 
+***************************)
+
+forall arg0: fixed_20_nonce, arg1: fixed_20_nonce, arg2: bounded_40_host;
+parse3(conc5(arg0, arg1, arg2)) = arg1.
+forall arg0: fixed_20_nonce, arg1: fixed_20_nonce, arg2: bounded_40_host;
+parse2(conc5(arg0, arg1, arg2)) = arg2.
+forall arg0: fixed_20_nonce, arg1: fixed_20_nonce, arg2: bounded_40_host;
+parse1(conc5(arg0, arg1, arg2)) = arg0.
+forall arg0: fixed_20_nonce;
+parse7(conc3(arg0)) = arg0.
+forall arg0: fixed_20_nonce, arg1: bounded_40_host;
+parse6(conc1(arg0, arg1)) = arg0.
+forall arg0: fixed_20_nonce, arg1: bounded_40_host;
+parse5(conc1(arg0, arg1)) = arg1.
+forall arg0: fixed_20_nonce, arg1: bounded_40_host;
+parse4(conc1(arg0, arg1)) = arg1.
+
+(*************************** 
   Arithmetic Functions 
 ***************************)
 

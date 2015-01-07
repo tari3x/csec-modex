@@ -131,7 +131,7 @@ and offset_val =
 | Flat of int t
   (** Flat offsets always measured in bytes *)
 
-  (** Offset value together with offset step *)
+(** Offset value together with offset step *)
 and offset = offset_val * int t
 
 and pos = offset list

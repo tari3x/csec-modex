@@ -54,8 +54,12 @@ end
       | ["s"; w] ->  (`Signed,   int_of_string w)
       | _ -> fail "Int_type.of_string: %s" s
 
-    let latex (s, w) =
-      match s with
+    let latex ?(y = false) (s, w) =
+      if y
+      then match s with
+      | `Signed   -> sprintf "\\mkitypey{S}{%d}" w
+      | `Unsigned -> sprintf "\\mkitypey{U}{%d}" w
+      else match s with
       | `Signed   -> sprintf "\\mkitype{S}{%d}" w
       | `Unsigned -> sprintf "\\mkitype{U}{%d}" w
 

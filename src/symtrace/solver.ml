@@ -424,8 +424,8 @@ let rewrite
           (* The chaining rule only matters for assert. *)
           begin match mode with
           | `Assert ->
-            (* This is [rewrite_conjunction [defined; e]] with the additional twist that
-               we descend in e instead of starting from the top.  *)
+            (* This is [rewrite_conjunction [defined; e]] with the additional
+               twist that we descend in e instead of starting from the top.  *)
             trace_step
               ~root
               ~left:e_top
@@ -438,11 +438,12 @@ let rewrite
           | `Simplify | `Simplify_step ->
             default e
           | `Query ->
-            (* It is not really necessary to add conditions here because we check that
-               every leaf integer subexpression is not bottom. Well, almost, we would also
-               need to check that integer variables are defined. I still keep this check
-               in place, just for extra safety. For tracing, however, I skip the
-               conditions for simplicity. *)
+            (* It is not really necessary to add conditions here because we
+               check that every leaf integer subexpression is not bottom. Well,
+               almost, we would also need to check that integer variables are
+               defined. I still keep this check in place, just for extra
+               safety. For tracing, however, I skip the conditions for
+               simplicity. *)
             if not !tracing_mode then add_conditions defined;
             default e
           end
@@ -472,7 +473,9 @@ let rewrite
           else begin match e2 with
           | Sym (Op (Cast_to_int, ([Bs_int t1],  t2')), [e1]) ->
             assert (t2 = t2');
+            (* Both conditions are necessary. *)
             add_conditions (contains t2 (Val (e1, t1)));
+            add_conditions (contains t3 (Val (e1, t1)));
             Sym (Op (Cast_to_int, ([Bs_int t1], t3)), [e1]) |> collect
           | BS (e1, t) ->
             assert (t2 = Bs_int t);
@@ -522,7 +525,8 @@ let rewrite
           step ~right:e' ~conds:[];
           e'
 
-        (* CR-soon: add tracing for pointer operations. *)
+        (* CR-soon: check against thesis. *)
+        (* CR-someday: add tracing for pointer operations. *)
         | Sym (Op (Plus_PI,  ([_; Bs_int itype], _)), [Ptr (b, pos); e_o]) ->
           let shift = collect (Val (e_o, itype)) in
           Ptr (b, add_pi shift pos)
@@ -725,17 +729,17 @@ let rewrite
 
         | Sym (Defined, _) -> assert false
 
-        (* Unlike for val and len, we don't need to replace BS by a yices compatible form,
-           because it is defined with bitstringbot as domain in yices, so returning bottom
-           is not a problem.  *)
+        (* Unlike for val and len, we don't need to replace BS by a yices
+           compatible form, because it is defined with bitstringbot as domain in
+           yices, so returning bottom is not a problem.  *)
         | BS (e, itype) ->
           let e' = collect ~mode:`Simplify e in
           if e <> e'
           (* Re-collecting to deal with things like
              (len(msg{12, (msg{4, 8})_[u,8]}:fixed_20_nonce))^[u,8] *)
           then collect (BS (e', itype))
-          (* Need to appply again with our own mode to make sure all yices-compatibility
-             transformations are applied. *)
+          (* Need to appply again with our own mode to make sure all
+             yices-compatibility transformations are applied. *)
           else BS (collect ~mode e', itype)
 
         (*
@@ -759,8 +763,9 @@ let rewrite
           Annotation (a, collect_even_if_simplifying e)
 
         (* TODO: inline, once GADT pattern matching is sorted. *)
-        (* I suppose everything of type bitstringbot can be turned into opaque here. I
-           don't turn BS into opaque, but I don't know why I couldn't. *)
+        (* I suppose everything of type bitstringbot can be turned into opaque
+           here. I don't turn BS into opaque, but I don't know why I
+           couldn't. *)
         | Sym (Fun _, _) as e -> make_opaque e
         | Sym (Ztp, _) as e -> make_opaque e
         | Sym (Ztp_safe, _) as e -> make_opaque e

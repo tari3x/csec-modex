@@ -233,7 +233,7 @@ let setSrcPath (f : file) =
 (* TODO: think of eventually making some of these functions exclusive to marking code *)
 
 (** Generates a descriptive global (across the whole compilation) unique identifier for a
-    variable.  One identifer corresponds to one physical variable in the linked
+    variable. One identifer corresponds to one physical variable in the linked
     executable.
 
     We use a single global name for static functions. This makes it easier to designate

@@ -88,4 +88,4 @@ pa_log.cmo: pa_log.ml
 .depend: | $(SRC) pa_log.cmo
 	ocamldep $(OCAML_INC) $(CAMLP4_FLAGS) *.mli *.ml > .depend
 
-include .depend
+include .depend	

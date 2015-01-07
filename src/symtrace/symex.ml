@@ -754,6 +754,7 @@ let rec execute = function
     to_stack (E.BS (Char c, Int_type.int))
 
   | Load_stack_ptr name ->
+    (* CR: disambiguate across function calls. *)
     to_stack (Ptr (Stack name, [Index 0, Unknown Kind.Int]))
 
   | Fresh_heap_ptr ->
@@ -765,6 +766,9 @@ let rec execute = function
     let vname = Var.fresh "" in
     let v = Var (vname, Kind.Bitstring) in
     (* The expected type is the type of the argument of In in C *)
+    (* CR: only add the fact that v is defined, as per thesis, let proxy
+       functions do the rest. The proxy function should add an assumption, not a
+       test since failing to get enough input will not crash the program. *)
     let fact = E.eq_int [E.Len v; value ~expected_type:Int_type.size_t l] in
     (* Inputs are defined in IML. *)
     S.add_fact (E.is_defined v);
@@ -772,6 +776,8 @@ let rec execute = function
     push_debug "In";
     DEBUG "Call stack on input:\n%s" (Loc.call_stack ());
     pop_debug "In";
+    (* CR: be careful with inserting IML statements since this may bypass
+       well-definedness checks and simplifications. *)
     add_stmts [Stmt.In [vname]; Stmt.make_test fact] ~with_loc:false;
     to_stack v
 
