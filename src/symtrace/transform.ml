@@ -816,7 +816,7 @@ let normal_form p =
     in
 
     (* CR-soon this shouldn't be necessary since we can use typing to prove
-       injectivity. *)
+       injectivity. Then you can also stop collecting facts in normalization. *)
     (*
       This is the heuristic part - we convert an expression like
       20 | 20 | x | y,
@@ -899,9 +899,8 @@ let normal_form p =
 
       | _ -> assert false
     in
-
     match p with
-    (* CR: I think it's luck that you get away with not normalizing inside
+    (* CR-soon: I think it's luck that you get away with not normalizing inside
        auxiliary ifs. Verify if this statement is true and add a unit test. *)
     | Aux_test e :: p ->
       S.add_fact e;
@@ -1122,8 +1121,8 @@ module Aux_fact = struct
   | Disjoint of fun_decl * fun_decl
   | Equal of fun_decl * fun_decl
 
-  (* CR: if two aligned arguments are of different types, then generate no fact straight
-     away, to avoid warnings. *)
+  (* CR-soon: if two aligned arguments are of different types, then generate no
+     fact straight away, to avoid warnings. *)
   let fun_fact fun_types (s, e) (s', e') =
     let rec facts n ts ts' =
       match ts, ts' with
@@ -1391,6 +1390,9 @@ let rec mk_parsers ls ps es e_c =
               | _ -> None)
             |> Option.value_exn
           end
+        (* Note that we can't just use len(e_i) here since we don't assume
+           anything about x_i and so need to get completely rid of these
+           variables. *)
         | BS (_, itype), _ ->
           E.int (Int_type.width itype)
         | e_i, _ ->

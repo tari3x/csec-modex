@@ -12,7 +12,9 @@ P2_SRC = client.c net.c lib.c
 P1_CMD = localhost 4433
 P2_CMD = localhost localhost 4433 "What is the weather like?"
 
-CFLAGS = -DVERBOSE -Ipolarssl/include -Igcm -Wall
+# The model is smaller without this
+# -DVERBOSE 
+CFLAGS = -Ipolarssl/include -Igcm -Wall
 LDFLAGS = -Lpolarssl/library -Lgcm
 LDLIBS = -lminimal -lgcm -ldl 
 

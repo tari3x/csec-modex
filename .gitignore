@@ -34,6 +34,8 @@ TODO
 update-protocols
 ignore
 
+viva.txt
+
 bin/
 old
 tests/CryptokiX/*
@@ -109,11 +111,11 @@ tests/RPC/Makefile
 tests/RPC/manual/
 tests/RPC/observations.txt
 tests/RPC/pv/
-tests/simple_hash/Makefile
-tests/simple_hash/client
-tests/simple_hash/manual/
-tests/simple_hash/pv/
-tests/simple_hash/server
+tests/simple_mac/Makefile
+tests/simple_mac/client
+tests/simple_mac/manual/
+tests/simple_mac/pv/
+tests/simple_mac/server
 tests/simple_xor/Makefile
 tests/simple_xor/client
 tests/simple_xor/manual/

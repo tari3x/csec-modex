@@ -45,6 +45,12 @@ let main () =
   if debug_enabled () then prerr_endline (Iml.to_string server);
   if debug_enabled () then prerr_endline "";
 
+  (* Temporarily removing comments for counting lines in the thesis. *)
+  (*
+  let client = Iml.remove_comments client in
+  let server = Iml.remove_comments server in
+  *)
+
   print_endline "let A = ";
   print_endline (Iml.to_string client);
   print_endline "let B = ";

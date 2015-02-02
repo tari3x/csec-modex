@@ -1,5 +1,6 @@
 
-CFLAGS += -DVERBOSE 
+# Makes the models smaller
+# CFLAGS += -DVERBOSE 
 LDLIBS += -lssl -lcrypto
 
 P1 = server

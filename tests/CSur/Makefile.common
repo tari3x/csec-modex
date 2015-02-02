@@ -1,5 +1,6 @@
 
-CFLAGS += -DVERBOSE 
+# Makes the model smaller
+# CFLAGS += -DVERBOSE 
 LDLIBS += -lssl -lcrypto
 
 P1 = bob

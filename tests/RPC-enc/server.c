@@ -59,20 +59,13 @@ int recv_request(RPCstate * ctx)
   memcpy(ctx->other,p,ctx->other_len);
   p += ctx->other_len;
 
-  if (m1_e_len < 1 + sizeof(uint32_t) + ctx->other_len)
-  {
-#ifndef VERIFY
-    fprintf(stderr, "Server: Message has wrong length %d.\n", m1_e_len);
-#endif
-    exit(-1);
-  }
   m1_e_len -= (1 + sizeof(ctx->other_len) + ctx->other_len);
 
-  // This is strictly not necessary since the condition (m1_len >
-  // MAX_PLAINTEXT_LENGTH) below is equivalent. However, this is checked too
-  // late, so that the extraction of the client part does not pass the parsing
-  // safety check. This is fine, the program would still verify, but the model
-  // is less neat.
+  // This is strictly speaking not necessary since the condition (m1_len >
+  // MAX_PLAINTEXT_LENGTH) below is equivalent (however, it will not be once we
+  // get back to encrypt_len).. However, this is checked too late, so that the
+  // extraction of the client part does not pass the parsing safety check. This
+  // is fine, the program would still verify, but the model is less neat.
   if(m1_e_len > MAX_CIPHER_LENGTH)
     {
 #ifndef VERIFY

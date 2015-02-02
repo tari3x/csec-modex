@@ -540,8 +540,6 @@ let client =
 in(c_in, ());
 if auxiliary30(clientID) then 
 if auxiliary31(serverID) then 
-new nondet1: nondet;
-new nondet2: nondet;
 out(c_out, (port, serverID));
 in(c_in, net_connect_result1: bitstring);
 if auxiliary34(net_connect_result1) then 
@@ -553,14 +551,10 @@ let key1 = lookup(clientID, serverID, db) in
 new kS_seed1: fixed_16_keyseed;
 let key2 = kgen(kS_seed1) in
 event client_begin(clientID, serverID, request);
-new nondet3: nondet;
-new nondet4: nondet;
 let msg1 = conc1(request, key2) in
 new nonce1: fixed_16_seed;
 let cipher1 = E(msg1, key1, nonce1) in
 if auxiliary40(cipher1) then 
-new nondet5: nondet;
-new nondet6: nondet;
 let msg2 = arithmetic2(clientID, cipher1) in
 let msg3 = conc2(clientID, cipher1) in
 out(c_out, (msg3, msg2));
@@ -569,14 +563,11 @@ if auxiliary41(msg4) then
 if auxiliary42(msg4) then 
 if auxiliary43(msg4) then 
 if auxiliary44(cipher2, msg4) then 
-new nondet7: nondet;
 let msg6 = D(cast_bitstring_bounded_1077_ciphertext(cipher2), key2) in
 let injbot(msg7) = msg6 in
 if auxiliary45(msg7, msg4) then 
 if auxiliary46(msg7) then 
 if auxiliary47(msg7) then 
-new nondet8: nondet;
-new nondet9: nondet;
 event client_accept(clientID, serverID, request, cast_bounded_1045_plaintext_fixed_1024_payload(msg7));
 yield .
 
@@ -584,18 +575,15 @@ let server =
 in(c_in, ());
 if auxiliary2(serverID) then 
 if auxiliary3(serverID) then 
-new nondet10: nondet;
-new nondet11: nondet;
-new nondet12: nondet;
+new nondet1: nondet;
 out(c_out, (port, serverID));
 in(c_in, (net_bind_result1: bitstring, var7: bitstring, net_accept_result1: bitstring, msg8: bitstring, msg9: bitstring));
 if auxiliary4(net_bind_result1) then 
 if auxiliary5(net_bind_result1) then 
-new nondet13: nondet;
+new nondet2: nondet;
 if auxiliary6(var7) then 
 if auxiliary7(net_accept_result1) then 
 if auxiliary8(net_accept_result1) then 
-new nondet14: nondet;
 if auxiliary9(msg8) then 
 if auxiliary10(msg8) then 
 if auxiliary11(msg8) then 
@@ -603,8 +591,6 @@ if auxiliary12(msg9, msg8) then
 if auxiliary13(msg9) then 
 if auxiliary14(msg9) then 
 if auxiliary15(msg8, msg9) then 
-new nondet15: nondet;
-new nondet16: nondet;
 if auxiliary16(msg9, xClient) then 
 let conc2(client2, cipher3) = msg9 in
 if client2 = xClient then 
@@ -618,17 +604,12 @@ if auxiliary20(msg11) then
 if auxiliary21(msg11) then 
 if auxiliary22(msg11) then 
 if auxiliary23(msg11) then 
-new nondet17: nondet;
-new nondet18: nondet;
 let conc1(var19, key4) = msg11 in
 event server_reply(client2, serverID, var19, response);
-new nondet19: nondet;
-new nondet20: nondet;
 new nonce2: fixed_16_seed;
 let msg14 = E(cast_fixed_1024_payload_bounded_1045_plaintext(response), key4, nonce2) in
 if auxiliary26(msg14, response) then 
 if auxiliary27(msg14) then 
-new nondet21: nondet;
 let msg13 = arithmetic1(msg14) in
 out(c_out, (msg14, msg13)); 0 .
 

@@ -633,15 +633,7 @@ in(c_in, (var1: bitstring, BIO_ctrl_result1: bitstring));
 if auxiliary36(var1) then 
 if auxiliary37(BIO_ctrl_result1) then 
 if auxiliary38(BIO_ctrl_result1) then 
-new nondet1: nondet;
-new nondet2: nondet;
-new nondet3: nondet;
-new nondet4: nondet;
-new nondet5: nondet;
-new nondet6: nondet;
 if check_key(hostX, pkX, sigX, pkS) then 
-new nondet7: nondet;
-new nondet8: nondet;
 event beginA(hostA, hostX);
 new nonce1: fixed_20_nonce;
 let msg1 = conc1(nonce1, hostA) in
@@ -652,8 +644,6 @@ new nonce2: fixed_256_seed_T;
 let cipher1 = E(msg1, key3, nonce2) in
 if auxiliary45(cipher1, len2) then 
 let msg2 = conc2(cipher1) in
-new nondet9: nondet;
-new nondet10: nondet;
 out(c_out, msg2);
 in(c_in, (var5: bitstring, msg4: bitstring, cipher2: bitstring));
 if auxiliary46(var5) then 
@@ -675,8 +665,6 @@ let var62 = var61 in
 if var62 = nonce1 then 
 let var64 = var63 in
 if var64 = hostX then 
-new nondet11: nondet;
-new nondet12: nondet;
 let var66 = var65 in
 let msg8 = conc3(var66) in
 let len4 = encrypt_len(msg8) in
@@ -685,12 +673,6 @@ new nonce3: fixed_256_seed_T;
 let cipher3 = E(msg8, key3, nonce3) in
 if auxiliary59(cipher3, len4) then 
 let msg9 = conc4(cipher3) in
-new nondet13: nondet;
-new nondet14: nondet;
-new nondet15: nondet;
-new nondet16: nondet;
-new nondet17: nondet;
-new nondet18: nondet;
 event endA(hostA, hostX);
 out(c_out, msg9); 0 .
 
@@ -703,10 +685,6 @@ if auxiliary4(BIO_ctrl_result3) then
 if auxiliary5(BIO_ctrl_result3) then 
 if auxiliary6(var12) then 
 if auxiliary7(var13) then 
-new nondet19: nondet;
-new nondet20: nondet;
-new nondet21: nondet;
-new nondet22: nondet;
 if auxiliary11(var14) then 
 if auxiliary12(msg11) then 
 if auxiliary13(msg11) then 
@@ -721,14 +699,8 @@ if auxiliary19(msg14) then
 if auxiliary20(msg14) then 
 if auxiliary21(msg14) then 
 if auxiliary22(msg14) then 
-new nondet23: nondet;
-new nondet24: nondet;
 let conc1(var28, host2) = msg14 in
 if check_key(host2, pkX, sigX, pkS) then 
-new nondet25: nondet;
-new nondet26: nondet;
-new nondet27: nondet;
-new nondet28: nondet;
 event beginB(host2, hostB);
 new nonce4: fixed_20_nonce;
 let var29 = var28 in
@@ -740,8 +712,6 @@ new nonce5: fixed_256_seed_T;
 let cipher5 = E(msg15, key10, nonce5) in
 if auxiliary25(cipher5, len6) then 
 let msg16 = conc6(cipher5) in
-new nondet29: nondet;
-new nondet30: nondet;
 out(c_out, msg16);
 in(c_in, (var19: bitstring, msg18: bitstring, cipher6: bitstring));
 if auxiliary26(var19) then 
@@ -759,10 +729,6 @@ if auxiliary35(msg21) then
 let conc3(var48) = msg21 in
 let var49 = var48 in
 if var49 = nonce4 then 
-new nondet31: nondet;
-new nondet32: nondet;
-new nondet33: nondet;
-new nondet34: nondet;
 event endB(host2, hostB);
 yield .
 

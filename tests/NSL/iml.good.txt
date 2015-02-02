@@ -41,50 +41,34 @@ assume Defined(skA) in
 assume (len(skA) >= 0) /\ (len(skA) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* get_skey_proxy[31, // lib_proxy.c:168] *)
 ifaux ¬(len(skA) > 100) then 
-(* main[1, // client.c:53] *)
-new nondet1: nondet;
-(* main[1, // client.c:55] *)
-new nondet2: nondet;
-(* main[1, // client.c:57] *)
-new nondet3: nondet;
-(* main[1, // client.c:59] *)
-new nondet4: nondet;
-(* main[1, // client.c:61] *)
-new nondet5: nondet;
-(* main[1, // client.c:63] *)
-new nondet6: nondet;
-(* assume_intype[45, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[42, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(pkX) in
-(* assume_intype[46, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[43, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(pkX) >= 0) /\ (len(pkX) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* get_xkey_proxy[41, // lib_proxy.c:190] *)
+(* get_xkey_proxy[38, // lib_proxy.c:190] *)
 ifaux ¬(len(pkX) > 100) then 
-(* assume_intype[51, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[48, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(sigX) in
-(* assume_intype[52, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[49, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(sigX) >= 0) /\ (len(sigX) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_intype[57, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[54, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(pkS) in
-(* assume_intype[58, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[55, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(pkS) >= 0) /\ (len(pkS) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 let host1 = hostX (* named host1 *) in
 let key1 = pkX (* named key1 *) in
 let sig1 = sigX (* named sig1 *) in
 let sigkey1 = pkS (* named sigkey1 *) in
-(* assume_len[64, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[61, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume 1 = 1 in
-(* lookup_xkey[40, // keys.c:20] *)
+(* lookup_xkey[37, // keys.c:20] *)
 if check_key(host1, key1, sig1, sigkey1) then 
-(* main[1, // client.c:69] *)
-new nondet7: nondet;
-(* main[1, // client.c:71] *)
-new nondet8: nondet;
 event beginA(hostA, hostX);
 new var3: fixed_20_nonce;
 let nonce1 = var3 (* named nonce1 *) in
-(* assume_intype[84, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[80, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(encrypt_len("msg1"|(20)^[u,8]|nonce1|hostA)) in
-(* assume_len[85, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[81, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(encrypt_len("msg1"|(20)^[u,8]|nonce1|hostA)) = 8 in
 let len1 = encrypt_len("msg1"|(20)^[u,8]|nonce1|hostA) (* named len1 *) in
 (* main[1, // client.c:100] *)
@@ -95,25 +79,17 @@ let key3 = isek(key2) (* named key3 *) in
 new var4: fixed_256_seed_T;
 let nonce2 = var4 (* named nonce2 *) in
 let cipher1 = E(msg1, key3, nonce2) (* named cipher1 *) in
-(* assume_intype[97, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[93, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(cipher1) >= 0) /\ (len(cipher1) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_intype[101, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[97, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(encrypt_len("msg1"|(20)^[u,8]|nonce1|hostA)) in
-(* assume_len[102, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[98, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(encrypt_len("msg1"|(20)^[u,8]|nonce1|hostA)) = 8 in
 let len2 = encrypt_len("msg1"|(20)^[u,8]|nonce1|hostA) (* named len2 *) in
-(* encrypt_proxy[92, // lib_proxy.c:65] *)
+(* encrypt_proxy[88, // lib_proxy.c:65] *)
 ifaux ¬(len(cipher1) > (len2)_[u,8]) then 
 let msg2 = "encr"|(len(cipher1))^[u,8]|cipher1 (* named msg2 *) in
 out(c, msg2);
-(* main[1, // client.c:116] *)
-new nondet9: nondet;
-(* main[1, // client.c:118] *)
-new nondet10: nondet;
-(* assume_intype[111, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(fflush_ret0) in
-(* assume_len[112, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(fflush_ret0) = 4 in
 in(c, var5);
 ifaux len(var5) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg3 = var5 (* named msg3 *) in
@@ -122,32 +98,32 @@ ifaux len(var6) = ((8)^[u,8] - (0)^[u,8])_[u,8] then
 let msg4 = var6 (* named msg4 *) in
 (* main[1, // client.c:128] *)
 ifaux ¬((msg4)_[u,8] > 1000) then 
-(* recv[124, // net.c:88] *)
+(* recv[114, // net.c:88] *)
 ifaux 0 < (msg4)_[u,8] then 
 in(c, var7);
 ifaux len(var7) = (msg4 - (0)^[u,8])_[u,8] then 
 let msg5 = var7 (* named msg5 *) in
-(* test_intype[130, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
+(* test_intype[120, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
 ifaux Defined(decrypt_len(msg5)) then 
-(* assume_len[131, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[121, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(decrypt_len(msg5)) = 8 in
-(* decrypt_len_proxy[128, // lib_proxy.c:91] *)
+(* decrypt_len_proxy[118, // lib_proxy.c:91] *)
 ifaux ¬((decrypt_len(msg5))_[u,8] > (msg4)_[u,8]) then 
 let cipher2 = msg5 (* named cipher2 *) in
 let key4 = skA (* named key4 *) in
 let msg6 = D(cipher2, key4) (* named msg6 *) in
 let msg7 = inverse_injbot(msg6) (* named msg7 *) in
-(* assume_intype[139, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[129, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(msg7) >= 0) /\ (len(msg7) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_len[144, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[134, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(decrypt_len(msg5)) = 8 in
-(* decrypt_proxy[135, // lib_proxy.c:111] *)
+(* decrypt_proxy[125, // lib_proxy.c:111] *)
 ifaux ¬(len(msg7) > (decrypt_len(msg5))_[u,8]) then 
 (* main[1, // client.c:141] *)
 ifaux ¬((len(hostX) + 40 + (2 * 8) + 4) <> len(msg7)) then 
-(* assume_intype[149, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[139, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg7) >= 4) /\ (0 >= 0) /\ (4 >= 0)) /\ True() in
-(* assume_len[150, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[140, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg7{0, 4}, "msg2")) = 4 in
 (* main[1, // client.c:148] *)
 ifaux msg7{0, 4} = "msg2" then 
@@ -155,29 +131,21 @@ ifaux msg7{0, 4} = "msg2" then
 ifaux ¬((msg7{4, 8})_[u,8] <> 20) then 
 (* main[1, // client.c:163] *)
 ifaux ¬((msg7{4 + 8, 8})_[u,8] <> 20) then 
-(* assume_intype[157, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[147, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg7) >= (4 + (2 * 8) + 20)) /\ ((4 + (2 * 8)) >= 0) /\ (20 >= 0)) /\ Defined(nonce1) in
-(* assume_len[158, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[148, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg7{4 + (2 * 8), 20}:fixed_20_nonce, nonce1)) = 4 in
 (* main[1, // client.c:172] *)
 ifeq msg7{4 + (2 * 8), 20}:fixed_20_nonce = nonce1 then 
-(* assume_intype[165, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[155, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg7) >= len(msg7)) /\ (((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8] + (2 * 8) + 4) >= 0) /\ ((len(msg7) - ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8] + (2 * 8) + 4)) >= 0)) /\ Defined(hostX) in
-(* assume_len[166, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[156, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg7{(msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8] + (2 * 8) + 4, len(msg7) - ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8] + (2 * 8) + 4)}:bounded_40_host, hostX)) = 4 in
 (* main[1, // client.c:184] *)
 ifeq msg7{(msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8] + (2 * 8) + 4, len(msg7) - ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8] + (2 * 8) + 4)}:bounded_40_host = hostX then 
-(* main[1, // client.c:195] *)
-new nondet11: nondet;
-(* main[1, // client.c:196] *)
-new nondet12: nondet;
-(* assume_intype[172, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(fflush_ret1) in
-(* assume_len[173, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(fflush_ret1) = 4 in
-(* assume_intype[185, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[170, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(encrypt_len("msg3"|msg7{4 + (2 * 8) + 20, ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8]) - 20}:fixed_20_nonce)) in
-(* assume_len[186, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[171, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(encrypt_len("msg3"|msg7{4 + (2 * 8) + 20, ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8]) - 20}:fixed_20_nonce)) = 8 in
 let len3 = encrypt_len("msg3"|msg7{4 + (2 * 8) + 20, ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8]) - 20}:fixed_20_nonce) (* named len3 *) in
 (* main[1, // client.c:213] *)
@@ -188,37 +156,17 @@ let key6 = isek(key5) (* named key6 *) in
 new var8: fixed_256_seed_T;
 let nonce3 = var8 (* named nonce3 *) in
 let cipher3 = E(msg8, key6, nonce3) (* named cipher3 *) in
-(* assume_intype[198, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[183, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(cipher3) >= 0) /\ (len(cipher3) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_intype[202, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[187, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(encrypt_len("msg3"|msg7{4 + (2 * 8) + 20, ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8]) - 20}:fixed_20_nonce)) in
-(* assume_len[203, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[188, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(encrypt_len("msg3"|msg7{4 + (2 * 8) + 20, ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8]) - 20}:fixed_20_nonce)) = 8 in
 let len4 = encrypt_len("msg3"|msg7{4 + (2 * 8) + 20, ((msg7{4, 8})_[u,8] + (msg7{4 + 8, 8})_[u,8]) - 20}:fixed_20_nonce) (* named len4 *) in
-(* encrypt_proxy[193, // lib_proxy.c:65] *)
+(* encrypt_proxy[178, // lib_proxy.c:65] *)
 ifaux ¬(len(cipher3) > (len4)_[u,8]) then 
 let msg9 = "encr"|(len(cipher3))^[u,8]|cipher3 (* named msg9 *) in
 out(c, msg9);
-(* main[1, // client.c:226] *)
-new nondet13: nondet;
-(* main[1, // client.c:227] *)
-new nondet14: nondet;
-(* assume_intype[211, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(fflush_ret2) in
-(* assume_len[212, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(fflush_ret2) = 4 in
-(* main[1, // client.c:232] *)
-new nondet15: nondet;
-(* main[1, // client.c:234] *)
-new nondet16: nondet;
-(* main[1, // client.c:235] *)
-new nondet17: nondet;
-(* main[1, // client.c:237] *)
-new nondet18: nondet;
-(* assume_intype[218, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(fflush_ret3) in
-(* assume_len[219, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(fflush_ret3) = 4 in
 event endA(hostA, hostX);
 
 let B = 
@@ -269,14 +217,6 @@ assume Defined(skB) in
 assume (len(skB) >= 0) /\ (len(skB) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* get_skey_proxy[36, // lib_proxy.c:168] *)
 ifaux ¬(len(skB) > 100) then 
-(* main[1, // server.c:50] *)
-new nondet19: nondet;
-(* main[1, // server.c:52] *)
-new nondet20: nondet;
-(* main[1, // server.c:54] *)
-new nondet21: nondet;
-(* main[1, // server.c:56] *)
-new nondet22: nondet;
 in(c, var14);
 ifaux len(var14) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg10 = var14 (* named msg10 *) in
@@ -285,32 +225,32 @@ ifaux len(var15) = ((8)^[u,8] - (0)^[u,8])_[u,8] then
 let msg11 = var15 (* named msg11 *) in
 (* main[1, // server.c:65] *)
 ifaux ¬((msg11)_[u,8] > 1000) then 
-(* recv[54, // net.c:88] *)
+(* recv[52, // net.c:88] *)
 ifaux 0 < (msg11)_[u,8] then 
 in(c, var16);
 ifaux len(var16) = (msg11 - (0)^[u,8])_[u,8] then 
 let msg12 = var16 (* named msg12 *) in
-(* test_intype[60, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
+(* test_intype[58, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
 ifaux Defined(decrypt_len(msg12)) then 
-(* assume_len[61, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[59, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(decrypt_len(msg12)) = 8 in
-(* decrypt_len_proxy[58, // lib_proxy.c:91] *)
+(* decrypt_len_proxy[56, // lib_proxy.c:91] *)
 ifaux ¬((decrypt_len(msg12))_[u,8] > (msg11)_[u,8]) then 
 let cipher4 = msg12 (* named cipher4 *) in
 let key7 = skB (* named key7 *) in
 let msg13 = D(cipher4, key7) (* named msg13 *) in
 let msg14 = inverse_injbot(msg13) (* named msg14 *) in
-(* assume_intype[69, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[67, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(msg14) >= 0) /\ (len(msg14) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_len[74, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[72, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(decrypt_len(msg12)) = 8 in
-(* decrypt_proxy[65, // lib_proxy.c:111] *)
+(* decrypt_proxy[63, // lib_proxy.c:111] *)
 ifaux ¬(len(msg14) > (decrypt_len(msg12))_[u,8]) then 
 (* main[1, // server.c:75] *)
 ifaux ¬((8 + 20 + 4) >= len(msg14)) then 
-(* assume_intype[79, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[77, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg14) >= 4) /\ (0 >= 0) /\ (4 >= 0)) /\ True() in
-(* assume_len[80, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[78, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg14{0, 4}, "msg1")) = 4 in
 (* main[1, // server.c:81] *)
 ifaux msg14{0, 4} = "msg1" then 
@@ -318,50 +258,34 @@ ifaux msg14{0, 4} = "msg1" then
 ifaux ¬((msg14{4, 8})_[u,8] <> 20) then 
 (* main[1, // server.c:98] *)
 ifaux ¬((len(msg14) - (8 + (msg14{4, 8})_[u,8] + 4)) > 40) then 
-(* main[1, // server.c:102] *)
-new nondet23: nondet;
-(* main[1, // server.c:104] *)
-new nondet24: nondet;
-(* assume_intype[87, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[84, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(pkX) in
-(* assume_intype[88, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[85, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(pkX) >= 0) /\ (len(pkX) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* get_xkey_proxy[83, // lib_proxy.c:190] *)
+(* get_xkey_proxy[80, // lib_proxy.c:190] *)
 ifaux ¬(len(pkX) > 100) then 
-(* assume_intype[93, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[90, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(sigX) in
-(* assume_intype[94, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[91, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(sigX) >= 0) /\ (len(sigX) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_intype[99, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[96, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(pkS) in
-(* assume_intype[100, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[97, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(pkS) >= 0) /\ (len(pkS) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 let host2 = msg14{8 + (msg14{4, 8})_[u,8] + 4, len(msg14) - (8 + (msg14{4, 8})_[u,8] + 4)} (* named host2 *) in
 let key8 = pkX (* named key8 *) in
 let sig2 = sigX (* named sig2 *) in
 let sigkey2 = pkS (* named sigkey2 *) in
-(* assume_len[106, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[103, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume 1 = 1 in
-(* lookup_xkey[82, // keys.c:20] *)
+(* lookup_xkey[79, // keys.c:20] *)
 if check_key(host2, key8, sig2, sigkey2) then 
-(* main[1, // server.c:110] *)
-new nondet25: nondet;
-(* main[1, // server.c:112] *)
-new nondet26: nondet;
-(* main[1, // server.c:127] *)
-new nondet27: nondet;
-(* main[1, // server.c:128] *)
-new nondet28: nondet;
-(* assume_intype[114, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(fflush_ret0) in
-(* assume_len[115, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(fflush_ret0) = 4 in
 event beginB(msg14{4 + 8 + (msg14{4, 8})_[u,8], len(msg14) - (4 + 8 + (msg14{4, 8})_[u,8])}, hostB);
 new var17: fixed_20_nonce;
 let nonce4 = var17 (* named nonce4 *) in
-(* assume_intype[137, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[128, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(encrypt_len("msg2"|msg14{4, 8}|(20)^[u,8]|msg14{4 + 8, (msg14{4, 8})_[u,8]}:fixed_20_nonce|nonce4|hostB)) in
-(* assume_len[138, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[129, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(encrypt_len("msg2"|msg14{4, 8}|(20)^[u,8]|msg14{4 + 8, (msg14{4, 8})_[u,8]}:fixed_20_nonce|nonce4|hostB)) = 8 in
 let len5 = encrypt_len("msg2"|msg14{4, 8}|(20)^[u,8]|msg14{4 + 8, (msg14{4, 8})_[u,8]}:fixed_20_nonce|nonce4|hostB) (* named len5 *) in
 (* main[1, // server.c:160] *)
@@ -372,25 +296,17 @@ let key10 = isek(key9) (* named key10 *) in
 new var18: fixed_256_seed_T;
 let nonce5 = var18 (* named nonce5 *) in
 let cipher5 = E(msg15, key10, nonce5) (* named cipher5 *) in
-(* assume_intype[150, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[141, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(cipher5) >= 0) /\ (len(cipher5) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_intype[154, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[145, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(encrypt_len("msg2"|msg14{4, 8}|(20)^[u,8]|msg14{4 + 8, (msg14{4, 8})_[u,8]}:fixed_20_nonce|nonce4|hostB)) in
-(* assume_len[155, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[146, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(encrypt_len("msg2"|msg14{4, 8}|(20)^[u,8]|msg14{4 + 8, (msg14{4, 8})_[u,8]}:fixed_20_nonce|nonce4|hostB)) = 8 in
 let len6 = encrypt_len("msg2"|msg14{4, 8}|(20)^[u,8]|msg14{4 + 8, (msg14{4, 8})_[u,8]}:fixed_20_nonce|nonce4|hostB) (* named len6 *) in
-(* encrypt_proxy[145, // lib_proxy.c:65] *)
+(* encrypt_proxy[136, // lib_proxy.c:65] *)
 ifaux ¬(len(cipher5) > (len6)_[u,8]) then 
 let msg16 = "encr"|(len(cipher5))^[u,8]|cipher5 (* named msg16 *) in
 out(c, msg16);
-(* main[1, // server.c:171] *)
-new nondet29: nondet;
-(* main[1, // server.c:173] *)
-new nondet30: nondet;
-(* assume_intype[164, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(fflush_ret1) in
-(* assume_len[165, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(fflush_ret1) = 4 in
 in(c, var19);
 ifaux len(var19) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
 let msg17 = var19 (* named msg17 *) in
@@ -399,52 +315,40 @@ ifaux len(var20) = ((8)^[u,8] - (0)^[u,8])_[u,8] then
 let msg18 = var20 (* named msg18 *) in
 (* main[1, // server.c:182] *)
 ifaux ¬((msg18)_[u,8] > 1000) then 
-(* recv[177, // net.c:88] *)
+(* recv[162, // net.c:88] *)
 ifaux 0 < (msg18)_[u,8] then 
 in(c, var21);
 ifaux len(var21) = (msg18 - (0)^[u,8])_[u,8] then 
 let msg19 = var21 (* named msg19 *) in
-(* test_intype[183, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
+(* test_intype[168, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:17] *)
 ifaux Defined(decrypt_len(msg19)) then 
-(* assume_len[184, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[169, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(decrypt_len(msg19)) = 8 in
-(* decrypt_len_proxy[181, // lib_proxy.c:91] *)
+(* decrypt_len_proxy[166, // lib_proxy.c:91] *)
 ifaux ¬((decrypt_len(msg19))_[u,8] > (msg18)_[u,8]) then 
 let cipher6 = msg19 (* named cipher6 *) in
 let key11 = skB (* named key11 *) in
 let msg20 = D(cipher6, key11) (* named msg20 *) in
 let msg21 = inverse_injbot(msg20) (* named msg21 *) in
-(* assume_intype[192, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[177, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(msg21) >= 0) /\ (len(msg21) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
-(* assume_len[197, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[182, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(decrypt_len(msg19)) = 8 in
-(* decrypt_proxy[188, // lib_proxy.c:111] *)
+(* decrypt_proxy[173, // lib_proxy.c:111] *)
 ifaux ¬(len(msg21) > (decrypt_len(msg19))_[u,8]) then 
-(* assume_intype[202, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[187, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg21) >= 4) /\ (0 >= 0) /\ (4 >= 0)) /\ True() in
-(* assume_len[203, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[188, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg21{0, 4}, "msg3")) = 4 in
 (* main[1, // server.c:192] *)
 ifaux msg21{0, 4} = "msg3" then 
 (* main[1, // server.c:198] *)
 ifaux ¬(len(msg21) <> 24) then 
-(* assume_intype[210, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[195, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg21) >= len(msg21)) /\ (4 >= 0) /\ ((len(msg21) - 4) >= 0)) /\ Defined(nonce4) in
-(* assume_len[211, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[196, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg21{4, len(msg21) - 4}:fixed_20_nonce, nonce4)) = 4 in
 (* main[1, // server.c:207] *)
 ifeq msg21{4, len(msg21) - 4}:fixed_20_nonce = nonce4 then 
-(* main[1, // server.c:214] *)
-new nondet31: nondet;
-(* main[1, // server.c:216] *)
-new nondet32: nondet;
-(* main[1, // server.c:217] *)
-new nondet33: nondet;
-(* main[1, // server.c:219] *)
-new nondet34: nondet;
-(* assume_intype[216, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(fflush_ret2) in
-(* assume_len[217, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(fflush_ret2) = 4 in
 event endB(msg14{4 + 8 + (msg14{4, 8})_[u,8], len(msg14) - (4 + 8 + (msg14{4, 8})_[u,8])}, hostB);
 
