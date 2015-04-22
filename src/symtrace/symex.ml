@@ -364,7 +364,7 @@ let rec flatten_index_deep : pos -> pos = function
 (**
     We assume that length is correct, in particular we don't check length when doing member extraction.
 
-    If we need to apply a member offset to a concatenation, we try with the first element.
+    If we need to apply a member offset to a encoderenation, we try with the first element.
 
     None in length position means extract everything until the end of the storage unit.
     FIXME: this will be simplified.
@@ -762,23 +762,16 @@ let rec execute = function
     to_stack (fresh_heap_ptr l)
 
   | In ->
-    let l = take_stack () in
     let vname = Var.fresh "" in
     let v = Var (vname, Kind.Bitstring) in
-    (* The expected type is the type of the argument of In in C *)
-    (* CR: only add the fact that v is defined, as per thesis, let proxy
-       functions do the rest. The proxy function should add an assumption, not a
-       test since failing to get enough input will not crash the program. *)
-    let fact = E.eq_int [E.Len v; value ~expected_type:Int_type.size_t l] in
     (* Inputs are defined in IML. *)
-    S.add_fact (E.is_defined v);
-    S.add_fact fact;
+    S.assume [E.is_defined v];
     push_debug "In";
     DEBUG "Call stack on input:\n%s" (Loc.call_stack ());
     pop_debug "In";
     (* CR: be careful with inserting IML statements since this may bypass
        well-definedness checks and simplifications. *)
-    add_stmts [Stmt.In [vname]; Stmt.make_test fact] ~with_loc:false;
+    add_stmts [Stmt.In [vname]; Stmt.Assume (E.is_defined v)] ~with_loc:false;
     to_stack v
 
   | New ->
@@ -796,10 +789,10 @@ let rec execute = function
     in
     let v = Var (vname, Type.kind t) in
     add_stmts [Stmt.New (vname, t)] ~with_loc:false;
-    S.add_fact (E.is_defined v);
+    S.assume [E.is_defined v];
     begin match l with
     | None -> ()
-    | Some l -> S.add_fact (E.eq_int [E.len v; l])
+    | Some l -> S.assume [E.eq_int [E.len v; l]]
     end;
     to_stack v
 
@@ -905,7 +898,7 @@ let rec execute = function
       then begin
         DEBUG "branch has non-constant condition, adding test statement";
         add_stmts [Stmt.make_test e] ~with_loc:true;
-        S.add_fact e
+        S.assume [e]
       end
     end
 
@@ -913,7 +906,7 @@ let rec execute = function
     let e = take_stack_bool () in
     (* This is a bit stupid: we often cannot simplify an expression before assuming it,
        because parts of it may be undefined. *)
-    S.add_fact e;
+    S.assume [e];
     DEBUG "add fact: %s" (E.dump e);
     let e = Simplify.full_simplify e in
     DEBUG "add assume statement: %s" (E.dump e);
@@ -928,9 +921,9 @@ let rec execute = function
     end;
     let vname = Var.fresh h in
     let v = Var (vname, Kind.Bitstring) in
-    S.add_fact (E.eq_bitstring [v; e]);
+    S.assume [E.eq_bitstring [v; e]];
     if S.is_true (E.is_defined e)
-    then S.add_fact (E.is_defined v);
+    then S.assume [E.is_defined v];
     add_stmts [Let (Pat.VPat vname, Annotation(Name vname, e))] ~with_loc:false;
     to_stack v;
     DEBUG "attaching hint %s to %s" h (E.dump e)
@@ -1008,7 +1001,7 @@ let rec execute = function
     let Any e = take_stack_any () in
     (*
     let l = fresh_len e in
-    S.add_fact (E.ge l E.zero);
+    S.assume (E.ge l E.zero);
     let e = L.set_len e l in
     *)
     let e = Simplify.full_simplify e in
@@ -1067,8 +1060,8 @@ let rec execute = function
 
 let make_assumptions : unit -> unit = fun () ->
   (* FIXME: remove this later when all symbolic sizes are being used properly *)
-  S.add_fact (E.ge (E.int 8) ptr_len);
-  S.add_fact (E.gt ptr_len E.zero)
+  S.assume [ E.ge (E.int 8) ptr_len
+           ; E.gt ptr_len E.zero]
 
 let init_argv n =
   let load_var_ptr name =

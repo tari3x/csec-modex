@@ -1,17 +1,17 @@
 
-channel c_in, c_out.
+channel c_in, c_out. 
 
 param N.
 
-(********************
-Types
+(******************** 
+  Types
 ********************)
 
 type bounded_1000_payload [bounded].
 type fixed_20_hash [fixed].
 
-(********************
-MAC
+(******************** 
+  MAC
 ********************)
 
 type bounded_1000_mkeyseed [fixed, large].
@@ -23,20 +23,20 @@ proba Pmac.
 expand UF_CMA_mac(bounded_1000_mkeyseed, bounded_1000_mkey, bitstring, fixed_20_hash, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
 
 forall m: bitstring, k: bounded_1000_mkey, r: fixed_20_hash;
-((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
+  ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
 
 fun HMAC(bitstring, bitstring, bounded_1000_mkey): fixed_20_hash.
-
+  
 const arithmetic1: bitstring.
 
 (* ASSERT_DEFINITION
-arithmetic1/0
-"sha1"
+  arithmetic1/0
+  "sha1"
 *)
 
 forall m: bitstring, k: bounded_1000_mkey;
-HMAC(arithmetic1, m, k) = HMAC_sha1(m, k).
-
+  HMAC(arithmetic1, m, k) = HMAC_sha1(m, k).
+  
 
 (*************************** 
   Formatting Functions 
@@ -48,9 +48,6 @@ fun conc1(bounded_1000_payload): bitstring [compos].
 (* conc2 := (len(arg0))^[u,8]|(1)^[u,1]|arg0|arg1 *)
 fun conc2(bounded_1000_payload, fixed_20_hash): bitstring [compos].
 
-(* conc3 := (len(arg0))^[u,8]|(2)^[u,1]|arg0 *)
-fun conc3(bounded_1000_payload): bitstring [compos].
-
 (* parse1 := arg0{8 + 1, (arg0{0, 8})_[u,8]} *)
 fun parse1(bitstring): bounded_1000_payload.
 
@@ -59,18 +56,12 @@ fun parse2(bitstring): fixed_20_hash.
 
 
 forall var1: bounded_1000_payload, var2: bounded_1000_payload, var3: fixed_20_hash;
-  conc3(var1) <> conc2(var2, var3).
-forall var1: bounded_1000_payload;
-  conc3(var1) = conc1(var1).
-forall var1: bounded_1000_payload, var2: fixed_20_hash, var3: bounded_1000_payload;
-  conc2(var1, var2) <> conc1(var3).
+  conc1(var1) <> conc2(var2, var3).
 
 (*************************** 
   Parsing Equations 
 ***************************)
 
-forall arg0: bounded_1000_payload;
-parse1(conc3(arg0)) = arg0.
 forall arg0: bounded_1000_payload, arg1: fixed_20_hash;
 parse2(conc2(arg0, arg1)) = arg1.
 forall arg0: bounded_1000_payload, arg1: fixed_20_hash;
@@ -84,78 +75,37 @@ parse1(conc1(arg0)) = arg0.
 
 (* arithmetic1 is already defined in the template *)
 
-(* arithmetic2 := "sha1" *)
-const arithmetic2: bitstring.
+(* arithmetic2 := (((8)^[u,8] + (1)^[u,8]) + (len(arg0))^[u,8]) + (20)^[u,8] *)
+fun arithmetic2(bounded_1000_payload): bitstring.
 
-(* arithmetic3 := (((8)^[u,8] + (1)^[u,8]) + (len(arg0))^[u,8]) + (20)^[u,8] *)
-fun arithmetic3(bounded_1000_payload): bitstring.
-
-forall ;
-  arithmetic2() = arithmetic1().
 
 (*************************** 
   Auxiliary Tests 
 ***************************)
 
-(* auxiliary1 := ¬(len(arg0) > 1000) *)
-fun auxiliary1(bounded_1000_mkey): bool.
+(* cond10 := ¬((8 + 1 + (arg0{0, 8})_[u,8] + 20) <> (arg1)_[u,8]) *)
+fun cond10(bitstring, bitstring): bool.
 
-(* auxiliary10 := ¬((arg0)_[u,8] < 8) *)
-fun auxiliary10(bitstring): bool.
+(* cond11 := ¬((arg0{8, 1})_[u,1] <> 1) *)
+fun cond11(bitstring): bool.
 
-(* auxiliary11 := ¬((arg0)_[u,8] > (8 + 1 + 1000 + 20)) *)
-fun auxiliary11(bitstring): bool.
+(* cond3 := ¬((arg0)_[s,8] <= 0) *)
+fun cond3(bitstring): bool.
 
-(* auxiliary12 := len(arg0) = (arg1 - (0)^[u,8])_[u,8] *)
-fun auxiliary12(bitstring, bitstring): bool.
+(* cond5 := ¬((arg0)_[s,8] <= 0) *)
+fun cond5(bitstring): bool.
 
-(* auxiliary13 := ¬((arg0{0, 8})_[u,8] > 1000) *)
-fun auxiliary13(bitstring): bool.
+(* cond6 := ¬((arg0)_[s,8] <= 0) *)
+fun cond6(bitstring): bool.
 
-(* auxiliary14 := ¬((8 + 1 + (arg0{0, 8})_[u,8] + 20) <> (arg1)_[u,8]) *)
-fun auxiliary14(bitstring, bitstring): bool.
+(* cond7 := ¬((arg0)_[u,8] < 8) *)
+fun cond7(bitstring): bool.
 
-(* auxiliary15 := ¬((arg0{8, 1})_[u,1] <> 1) *)
-fun auxiliary15(bitstring): bool.
+(* cond8 := ¬((arg0)_[u,8] > (8 + 1 + 1000 + 20)) *)
+fun cond8(bitstring): bool.
 
-(* auxiliary16 := ¬(len(arg0) > 1000) *)
-fun auxiliary16(bounded_1000_payload): bool.
-
-(* auxiliary17 := ¬(len(arg0) > 1000) *)
-fun auxiliary17(bounded_1000_mkey): bool.
-
-(* auxiliary18 := len(arg0) = 112 *)
-fun auxiliary18(bitstring): bool.
-
-(* auxiliary19 := len(arg0) = 8 *)
-fun auxiliary19(bitstring): bool.
-
-(* auxiliary2 := len(arg0) = 112 *)
-fun auxiliary2(bitstring): bool.
-
-(* auxiliary20 := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary20(bitstring): bool.
-
-(* auxiliary3 := len(arg0) = 8 *)
-fun auxiliary3(bitstring): bool.
-
-(* auxiliary4 := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary4(bitstring): bool.
-
-(* auxiliary5 := len(arg0) = 8 *)
-fun auxiliary5(bitstring): bool.
-
-(* auxiliary6 := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary6(bitstring): bool.
-
-(* auxiliary7 := len(arg0) = 112 *)
-fun auxiliary7(bitstring): bool.
-
-(* auxiliary8 := len(arg0) = 4 *)
-fun auxiliary8(bitstring): bool.
-
-(* auxiliary9 := len(arg0) = ((8)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary9(bitstring): bool.
+(* cond9 := ¬((arg0{0, 8})_[u,8] > 1000) *)
+fun cond9(bitstring): bool.
 
 
 (*************************** 
@@ -165,10 +115,6 @@ fun auxiliary9(bitstring): bool.
 fun Zbitstring(bitstring): bitstring.
 
 fun Zbitstring_prime(bitstring): bitstring.
-
-fun Zbounded_1000_mkey(bounded_1000_mkey): bounded_1000_mkey.
-
-fun Zbounded_1000_mkey_prime(bounded_1000_mkey): bounded_1000_mkey.
 
 fun Zbounded_1000_payload(bounded_1000_payload): bounded_1000_payload.
 
@@ -185,35 +131,9 @@ const zero_fixed_20_hash: fixed_20_hash.
   Primed Functions 
 ***************************)
 
-fun auxiliary9_prime(bitstring): bool.
-
-fun auxiliary8_prime(bitstring): bool.
-
-fun auxiliary7_prime(bitstring): bool.
-
-fun auxiliary5_prime(bitstring): bool.
-
-fun auxiliary3_prime(bitstring): bool.
-
-fun auxiliary2_prime(bitstring): bool.
-
-fun auxiliary19_prime(bitstring): bool.
-
-fun auxiliary18_prime(bitstring): bool.
-
-fun auxiliary17_prime(bounded_1000_mkey): bool.
-
-fun auxiliary16_prime(bounded_1000_payload): bool.
-
-fun conc3_prime(bounded_1000_payload): bitstring.
-
 fun conc2_prime(bounded_1000_payload, fixed_20_hash): bitstring.
 
 fun conc1_prime(bounded_1000_payload): bitstring.
-
-fun auxiliary12_prime(bitstring, bitstring): bool.
-
-fun auxiliary1_prime(bounded_1000_mkey): bool.
 
 
 (*************************** 
@@ -225,55 +145,23 @@ fun auxiliary1_prime(bounded_1000_mkey): bool.
   Auxiliary Facts 
 ***************************)
 
-forall arg0: bitstring;
-	auxiliary9(arg0) = auxiliary9_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary8(arg0) = auxiliary8_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary7(arg0) = auxiliary7_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary5(arg0) = auxiliary5_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary3(arg0) = auxiliary3_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary2(arg0) = auxiliary2_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary19(arg0) = auxiliary19_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary18(arg0) = auxiliary18_prime(Zbitstring(arg0)).
-forall arg0: bounded_1000_mkey;
-	auxiliary17(arg0) = auxiliary17_prime(Zbounded_1000_mkey(arg0)).
-forall arg0: bounded_1000_payload;
-	auxiliary16(arg0) = auxiliary16_prime(Zbounded_1000_payload(arg0)).
-forall x41: bounded_1000_payload;
-	auxiliary15(conc3(x41)) = auxiliary15(conc3_prime(Zbounded_1000_payload(x41))).
-forall x43: fixed_20_hash, x42: bounded_1000_payload;
-	auxiliary15(conc2(x42, x43)) = auxiliary15(conc2_prime(Zbounded_1000_payload(x42), Zfixed_20_hash(x43))).
-forall x44: bounded_1000_payload;
-	auxiliary15(conc1(x44)) = auxiliary15(conc1_prime(Zbounded_1000_payload(x44))).
-forall x48: bounded_1000_payload, arg1: bitstring;
-	auxiliary14(conc3(x48), arg1) = auxiliary14(conc3_prime(Zbounded_1000_payload(x48)), arg1).
-forall x50: fixed_20_hash, x49: bounded_1000_payload, arg1: bitstring;
-	auxiliary14(conc2(x49, x50), arg1) = auxiliary14(conc2_prime(Zbounded_1000_payload(x49), Zfixed_20_hash(x50)), arg1).
-forall x51: bounded_1000_payload, arg1: bitstring;
-	auxiliary14(conc1(x51), arg1) = auxiliary14(conc1_prime(Zbounded_1000_payload(x51)), arg1).
-forall x59: bounded_1000_payload;
-	auxiliary13(conc3(x59)) = auxiliary13(conc3_prime(Zbounded_1000_payload(x59))).
-forall x61: fixed_20_hash, x60: bounded_1000_payload;
-	auxiliary13(conc2(x60, x61)) = auxiliary13(conc2_prime(Zbounded_1000_payload(x60), Zfixed_20_hash(x61))).
-forall x62: bounded_1000_payload;
-	auxiliary13(conc1(x62)) = auxiliary13(conc1_prime(Zbounded_1000_payload(x62))).
-forall arg1: bitstring, arg0: bitstring;
-	auxiliary12(arg0, arg1) = auxiliary12_prime(Zbitstring(arg0), arg1).
-forall arg0: bounded_1000_mkey;
-	auxiliary1(arg0) = auxiliary1_prime(Zbounded_1000_mkey(arg0)).
+forall x49: fixed_20_hash, x48: bounded_1000_payload;
+	cond9(conc2(x48, x49)) = cond9(conc2_prime(Zbounded_1000_payload(x48), Zfixed_20_hash(x49))).
+forall x50: bounded_1000_payload;
+	cond9(conc1(x50)) = cond9(conc1_prime(Zbounded_1000_payload(x50))).
+forall x79: fixed_20_hash, x78: bounded_1000_payload;
+	cond11(conc2(x78, x79)) = cond11(conc2_prime(Zbounded_1000_payload(x78), Zfixed_20_hash(x79))).
+forall x80: bounded_1000_payload;
+	cond11(conc1(x80)) = cond11(conc1_prime(Zbounded_1000_payload(x80))).
+forall x85: fixed_20_hash, x84: bounded_1000_payload, arg1: bitstring;
+	cond10(conc2(x84, x85), arg1) = cond10(conc2_prime(Zbounded_1000_payload(x84), Zfixed_20_hash(x85)), arg1).
+forall x86: bounded_1000_payload, arg1: bitstring;
+	cond10(conc1(x86), arg1) = cond10(conc1_prime(Zbounded_1000_payload(x86)), arg1).
 
 (*************************** 
   Zero Facts 
 ***************************)
 
-forall arg0: bounded_1000_payload;
-	Zbitstring(conc3(arg0)) = Zbitstring_prime(conc3(Zbounded_1000_payload(arg0))).
 forall arg1: fixed_20_hash, arg0: bounded_1000_payload;
 	Zbitstring(conc2(arg0, arg1)) = Zbitstring_prime(conc2(Zbounded_1000_payload(arg0), Zfixed_20_hash(arg1))).
 forall arg0: bounded_1000_payload;
@@ -281,15 +169,15 @@ forall arg0: bounded_1000_payload;
 forall x: fixed_20_hash;
 	Zfixed_20_hash(x) = zero_fixed_20_hash().
 
-(********************
-<Query>
+(******************** 
+  <Query>
 ********************)
-
+ 
 event client_send(bounded_1000_payload).
 event server_recv(bounded_1000_payload).
 
 query x: bounded_1000_payload, y:bounded_1000_payload;
-event server_recv(x) ==> client_send(x).
+  event server_recv(x) ==> client_send(x).
 
 
 (*************************** 
@@ -300,33 +188,24 @@ let client =
 in(c_in, (var1: bitstring, BIO_ctrl_result1: bitstring));
 event client_send(payload);
 let msg1 = conc1(payload) in
-let var20 = arithmetic2 in
+let var20 = arithmetic1 in
 let hash1 = HMAC(var20, msg1, key) in
-if auxiliary18(var1) then 
-if auxiliary19(BIO_ctrl_result1) then 
-if auxiliary20(BIO_ctrl_result1) then 
-let msg2 = arithmetic3(payload) in
+if cond3(BIO_ctrl_result1) then 
+let msg2 = arithmetic2(payload) in
 let msg3 = conc2(payload, hash1) in
 out(c_out, (msg3, msg2)); 0 .
 
 let server = 
 in(c_in, (var3: bitstring, BIO_ctrl_result2: bitstring, BIO_ctrl_result3: bitstring, var6: bitstring, var7: bitstring, msg4: bitstring, msg5: bitstring));
-if auxiliary2(var3) then 
-if auxiliary3(BIO_ctrl_result2) then 
-if auxiliary4(BIO_ctrl_result2) then 
-if auxiliary5(BIO_ctrl_result3) then 
-if auxiliary6(BIO_ctrl_result3) then 
-if auxiliary7(var6) then 
-if auxiliary8(var7) then 
-if auxiliary9(msg4) then 
-if auxiliary10(msg4) then 
-if auxiliary11(msg4) then 
-if auxiliary12(msg5, msg4) then 
-if auxiliary13(msg5) then 
-if auxiliary14(msg5, msg4) then 
-if auxiliary15(msg5) then 
+if cond5(BIO_ctrl_result2) then 
+if cond6(BIO_ctrl_result3) then 
+if cond7(msg4) then 
+if cond8(msg4) then 
+if cond9(msg5) then 
+if cond10(msg5, msg4) then 
+if cond11(msg5) then 
 let var12 = parse1(msg5) in
-let msg6 = conc3(var12) in
+let msg6 = conc1(var12) in
 let var14 = arithmetic1 in
 let hash2 = HMAC(var14, msg6, key) in
 let var16 = parse2(msg5) in
@@ -336,17 +215,17 @@ event server_recv(var12);
 yield .
 
 (************************
-<Environment>
+  <Environment>
 *************************)
 
 
 process
 ! N (
-in(c_in, (payload: bounded_1000_payload));
+  in(c_in, (payload: bounded_1000_payload));
 
-new keyseed: bounded_1000_mkeyseed;
-let key = mkgen(keyseed) in
+  new keyseed: bounded_1000_mkeyseed; 
+  let key = mkgen(keyseed) in
 
-out(c_out, ());
-(!N client | !N server)
+  out(c_out, ());
+  (!N client | !N server)
 )

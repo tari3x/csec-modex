@@ -17,7 +17,6 @@ module Pat : sig
 end
 
 module Stmt : sig
-  open Type
   open Exp
 
   type t =
@@ -25,9 +24,9 @@ module Stmt : sig
   (**
      [Test e; P = if e then P else 0]
   *)
-  | Fun_test of fact
+  | Test of fact
+  (* Special form. *)
   | Eq_test of bterm * bterm
-  | Aux_test of fact
   | Assume of fact
   | In of var list
   | Out of bterm list
@@ -54,7 +53,9 @@ module Stmt : sig
 
   val make_test : fact -> t
 
-  val fact : t -> fact list
+  val is_auxiliary_test : t -> bool
+
+  val facts : t -> fact list
 end
 
 open Exp
@@ -80,9 +81,13 @@ val to_string : t -> string
 val subst   : var list -> bterm list -> t -> t
 val subst_v : var list -> var   list -> t -> t
 
-(* TODO: looks like this might not be necessary *)
-val map_without_auxiliary : Exp.descend -> t -> t
-val remove_auxiliary : t -> t
-
 val filter_with_comments : f:(stmt -> bool) -> t -> t
 val remove_comments : t -> t
+
+val remove_annotations : t -> t
+val remove_assumptions : t -> t
+
+val parsers : t -> bitstring Sym_defs.t
+val encoders : t -> bitstring Sym_defs.t
+val arith : t -> bitstring Sym_defs.t
+val auxiliary : t -> bool Sym_defs.t

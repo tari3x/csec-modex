@@ -4,10 +4,7 @@
     See LICENSE file for copyright notice.
 *)
 
-open Type
-open Sym
 open Exp
-open Iml
 
 type answer = Yes | No | Maybe
 
@@ -20,7 +17,7 @@ type pbool = bool
 (** {1 Checking facts} *)
 (*************************************************)
 
-val add_fact : fact -> unit
+val assume : fact list -> unit
 
 val is_true : fact -> pbool
 

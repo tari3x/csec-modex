@@ -410,7 +410,7 @@ void SymN(const char * sym, int n)
   __CrestApplyN(sym, n);
 }
 
-void In(size_t len)
+void In()
 {
   if(muted) return;
 
@@ -501,6 +501,13 @@ EXTERN void Assume()
   if(muted) return;
 
   *out << "Assume " << endl;
+}
+
+void Truth()
+{
+  if(muted) return;
+
+  *out << "Truth" << endl;
 }
 
 

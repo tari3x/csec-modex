@@ -92,18 +92,18 @@ forall h: bounded_40_host, k: fixed_100_key, sig: signature, pkS: spkey;
   <Query>
 ********************)
  
-event beginA(bounded_40_host, bounded_40_host).
-event beginB(bounded_40_host, bounded_40_host).
-event endA(bounded_40_host, bounded_40_host).
-event endB(bounded_40_host, bounded_40_host).
+event client_begin(bounded_40_host, bounded_40_host).
+event server_begin(bounded_40_host, bounded_40_host).
+event client_end(bounded_40_host, bounded_40_host).
+event server_end(bounded_40_host, bounded_40_host).
 event bad(bounded_40_host).
 
 (* na: nonce, nb: nonce *)
 query x: bounded_40_host, y: bounded_40_host;
-  event endB(x, y) ==> beginA(x, y) || bad(x).
+  event server_end(x, y) ==> client_begin(x, y) || bad(x).
 
 query x: bounded_40_host, y: bounded_40_host;
-  event endA(x, y) ==> beginB(x, y) || bad(y).
+  event client_end(x, y) ==> server_begin(x, y) || bad(y).
 
 (*************************** 
   <Model>

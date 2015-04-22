@@ -1,5 +1,5 @@
 
-channel c_in, c_out.
+channel c_in, c_out. 
 
 param N.
 
@@ -12,28 +12,28 @@ const hostA: bounded_40_host.
 const hostB: bounded_40_host.
 
 (************************
-Public-key encryption
+  Public-key encryption
 *************************)
 
-(* IND-CCA2 probabilistic public-key encryption
-keyseed: type of key seeds, must be "fixed" (to be able to generate random numbers from it), typically large.
-pkey: type of public keys, must be "bounded"
-skey: type of secret keys, must be "bounded"
-cleartext: type of cleartexts, must be "bounded" or "fixed" (the encryptions of *all* cleartexts of any length
-are assumed to be indistinguishable from each other).
-ciphertext: type of ciphertexts
-seed: type of random seeds for encryption, must be "fixed"
+(* IND-CCA2 probabilistic public-key encryption 
+   keyseed: type of key seeds, must be "fixed" (to be able to generate random numbers from it), typically large.
+   pkey: type of public keys, must be "bounded"
+   skey: type of secret keys, must be "bounded"
+   cleartext: type of cleartexts, must be "bounded" or "fixed" (the encryptions of *all* cleartexts of any length
+              are assumed to be indistinguishable from each other).
+   ciphertext: type of ciphertexts
+   seed: type of random seeds for encryption, must be "fixed"
 
-dk: public-key generation function
-sk: secret-key generation function
-E: encryption function
-D: decryption function
-injbot: natural injection from cleartext to bitstringbot
-Z: a constant cleartext
+   dk: public-key generation function 
+   sk: secret-key generation function
+   E: encryption function
+   D: decryption function
+   injbot: natural injection from cleartext to bitstringbot
+   Z: a constant cleartext
 
-Penc(t, N): probability of breaking the IND-CCA2 property
-in time t for one key and N decryption queries.
-Penccoll: probability of collision between independently generated keys
+   Penc(t, N): probability of breaking the IND-CCA2 property
+   in time t for one key and N decryption queries.
+   Penccoll: probability of collision between independently generated keys
 *)
 
 type keyseed_T [fixed, large].
@@ -53,20 +53,20 @@ fun inverse_injbot(bitstringbot): bounded_200_cleartext.
 fun isek(fixed_100_key): fixed_100_key.
 
 forall x: fixed_100_key;
-isek(x) = x.
+  isek(x) = x.
 
 fun decrypt_len(bitstring): bitstring.
 fun encrypt_len(bounded_200_cleartext): bitstring.
 fun encrypt_lenZ(bounded_200_cleartext): bitstring.
-
+  
 fun Zbounded_200_cleartext(bounded_200_cleartext): bounded_200_cleartext.
 
 (* Length of an encryption does not depend on the contents of the plaintext. *)
 forall x: bounded_200_cleartext;
-encrypt_len(x) = encrypt_lenZ(Zbounded_200_cleartext(x)).
+  encrypt_len(x) = encrypt_lenZ(Zbounded_200_cleartext(x)).
 
-(***************************
-Signatures
+(*************************** 
+ Signatures
 ***************************)
 
 type spkey [bounded].
@@ -86,7 +86,7 @@ fun cert(fixed_100_key, bounded_40_host): sblocksize [compos].
 fun check_key(bounded_40_host, fixed_100_key, signature, spkey): bool.
 
 forall h: bounded_40_host, k: fixed_100_key, sig: signature, pkS: spkey;
-check_key(h, k, sig, pkS) = check(cert(k, h), pkS, sig).
+  check_key(h, k, sig, pkS) = check(cert(k, h), pkS, sig).
 
 
 (*************************** 
@@ -96,260 +96,129 @@ check_key(h, k, sig, pkS) = check(cert(k, h), pkS, sig).
 (* conc1 := "msg1"|(len(arg0))^[u,8]|arg0|arg1 *)
 fun conc1(fixed_20_nonce, bounded_40_host): bounded_200_cleartext [compos].
 
-(* conc2 := "encr"|(len(arg0))^[u,8]|arg0 *)
-fun conc2(bounded_1000_ciphertext): bitstring [compos].
+(* conc2 := "msg3"|arg0 *)
+fun conc2(fixed_20_nonce): bounded_200_cleartext [compos].
 
-(* conc3 := "msg3"|arg0 *)
-fun conc3(fixed_20_nonce): bounded_200_cleartext [compos].
-
-(* conc4 := "encr"|(len(arg0))^[u,8]|arg0 *)
-fun conc4(bounded_1000_ciphertext): bitstring [compos].
-
-(* conc5 := "msg2"|(len(arg0))^[u,8]|(len(arg1))^[u,8]|arg0|arg1|arg2 *)
-fun conc5(fixed_20_nonce, fixed_20_nonce, bounded_40_host): bounded_200_cleartext [compos].
-
-(* conc6 := "encr"|(len(arg0))^[u,8]|arg0 *)
-fun conc6(bounded_1000_ciphertext): bitstring [compos].
-
-(* parse1 := arg0{4 + (2 * 8), 20} *)
-fun parse1(bounded_200_cleartext): fixed_20_nonce.
-
-(* parse2 := arg0{(arg0{4, 8})_[u,8] + (arg0{4 + 8, 8})_[u,8] + (2 * 8) + 4, len(arg0) - ((arg0{4, 8})_[u,8] + (arg0{4 + 8, 8})_[u,8] + (2 * 8) + 4)} *)
-fun parse2(bounded_200_cleartext): bounded_40_host.
-
-(* parse3 := arg0{4 + (2 * 8) + 20, ((arg0{4, 8})_[u,8] + (arg0{4 + 8, 8})_[u,8]) - 20} *)
-fun parse3(bounded_200_cleartext): fixed_20_nonce.
-
-(* parse4 := arg0{8 + (arg0{4, 8})_[u,8] + 4, len(arg0) - (8 + (arg0{4, 8})_[u,8] + 4)} *)
-fun parse4(bounded_200_cleartext): bounded_40_host.
-
-(* parse5 := arg0{4 + 8 + (arg0{4, 8})_[u,8], len(arg0) - (4 + 8 + (arg0{4, 8})_[u,8])} *)
-fun parse5(bounded_200_cleartext): bounded_40_host.
-
-(* parse6 := arg0{4 + 8, (arg0{4, 8})_[u,8]} *)
-fun parse6(bounded_200_cleartext): fixed_20_nonce.
-
-(* parse7 := arg0{4, len(arg0) - 4} *)
-fun parse7(bounded_200_cleartext): fixed_20_nonce.
+(* conc3 := "msg2"|(len(arg0))^[u,8]|(len(arg1))^[u,8]|arg0|arg1|arg2 *)
+fun conc3(fixed_20_nonce, fixed_20_nonce, bounded_40_host): bounded_200_cleartext [compos].
 
 
-forall var1: bounded_1000_ciphertext;
-  conc6(var1) = conc4(var1).
-forall var1: bounded_1000_ciphertext;
-  conc6(var1) = conc2(var1).
-forall var1: fixed_20_nonce, var2: fixed_20_nonce, var3: bounded_40_host, var4: fixed_20_nonce;
-  conc5(var1, var2, var3) <> conc3(var4).
-forall var1: fixed_20_nonce, var2: fixed_20_nonce, var3: bounded_40_host, var4: fixed_20_nonce, var5: bounded_40_host;
-  conc5(var1, var2, var3) <> conc1(var4, var5).
-forall var1: bounded_1000_ciphertext;
-  conc4(var1) = conc2(var1).
-forall var1: fixed_20_nonce, var2: fixed_20_nonce, var3: bounded_40_host;
-  conc3(var1) <> conc1(var2, var3).
+forall var1: fixed_20_nonce, var2: fixed_20_nonce, var3: fixed_20_nonce, var4: bounded_40_host;
+  conc2(var1) <> conc3(var2, var3, var4).
+forall var1: fixed_20_nonce, var2: bounded_40_host, var3: fixed_20_nonce, var4: fixed_20_nonce, var5: bounded_40_host;
+  conc1(var1, var2) <> conc3(var3, var4, var5).
+forall var1: fixed_20_nonce, var2: bounded_40_host, var3: fixed_20_nonce;
+  conc1(var1, var2) <> conc2(var3).
 
 (*************************** 
   Parsing Equations 
 ***************************)
 
-forall arg0: fixed_20_nonce, arg1: fixed_20_nonce, arg2: bounded_40_host;
-parse3(conc5(arg0, arg1, arg2)) = arg1.
-forall arg0: fixed_20_nonce, arg1: fixed_20_nonce, arg2: bounded_40_host;
-parse2(conc5(arg0, arg1, arg2)) = arg2.
-forall arg0: fixed_20_nonce, arg1: fixed_20_nonce, arg2: bounded_40_host;
-parse1(conc5(arg0, arg1, arg2)) = arg0.
-forall arg0: fixed_20_nonce;
-parse7(conc3(arg0)) = arg0.
-forall arg0: fixed_20_nonce, arg1: bounded_40_host;
-parse6(conc1(arg0, arg1)) = arg0.
-forall arg0: fixed_20_nonce, arg1: bounded_40_host;
-parse5(conc1(arg0, arg1)) = arg1.
-forall arg0: fixed_20_nonce, arg1: bounded_40_host;
-parse4(conc1(arg0, arg1)) = arg1.
 
 (*************************** 
   Arithmetic Functions 
 ***************************)
+
+(* arithmetic1 := (len(arg0))^[u,8] *)
+fun arithmetic1(bounded_1000_ciphertext): bitstring.
 
 
 (*************************** 
   Auxiliary Tests 
 ***************************)
 
-(* auxiliary1 := len(arg0) = 112 *)
-fun auxiliary1(bitstring): bool.
+(* cond1 := ¬((arg0)_[s,8] <= 0) *)
+fun cond1(bitstring): bool.
 
-(* auxiliary10 := ¬(len(arg0) > 100) *)
-fun auxiliary10(fixed_100_key): bool.
+(* cond10 := 0 < (arg0)_[u,8] *)
+fun cond10(bitstring): bool.
 
-(* auxiliary11 := len(arg0) = ((4)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary11(bitstring): bool.
+(* cond11 := ¬((arg0)_[u,8] < 7) *)
+fun cond11(bitstring): bool.
 
-(* auxiliary12 := len(arg0) = ((8)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary12(bitstring): bool.
+(* cond12 := ¬(len(arg0) > ((arg1)_[u,8] - 7)) *)
+fun cond12(bounded_200_cleartext, bitstring): bool.
 
-(* auxiliary13 := ¬((arg0)_[u,8] > 1000) *)
-fun auxiliary13(bitstring): bool.
+(* cond13 := ¬((len(arg0) + 40 + (2 * 8) + 4) <> len(arg1)) *)
+fun cond13(bounded_40_host, bounded_200_cleartext): bool.
 
-(* auxiliary14 := 0 < (arg0)_[u,8] *)
-fun auxiliary14(bitstring): bool.
+(* cond14 := arg0{0, 4} = "msg2" *)
+fun cond14(bounded_200_cleartext): bool.
 
-(* auxiliary15 := len(arg0) = (arg1 - (0)^[u,8])_[u,8] *)
-fun auxiliary15(bitstring, bitstring): bool.
+(* cond15 := ¬((arg0{4, 8})_[u,8] <> 20) *)
+fun cond15(bounded_200_cleartext): bool.
 
-(* auxiliary16 := Defined(decrypt_len(arg0)) *)
-fun auxiliary16(bitstring): bool.
+(* cond16 := ¬((arg0{4 + 8, 8})_[u,8] <> 20) *)
+fun cond16(bounded_200_cleartext): bool.
 
-(* auxiliary17 := ¬((decrypt_len(arg0))_[u,8] > (arg1)_[u,8]) *)
-fun auxiliary17(bitstring, bitstring): bool.
+(* cond17 := ¬(len(arg0) > (7 + 4 + (arg1{4 + 8, 8})_[u,8])) *)
+fun cond17(bounded_1000_ciphertext, bounded_200_cleartext): bool.
 
-(* auxiliary18 := ¬(len(arg0) > (decrypt_len(arg1))_[u,8]) *)
-fun auxiliary18(bounded_200_cleartext, bitstring): bool.
+(* cond18 := 0 < len(arg0) *)
+fun cond18(bounded_1000_ciphertext): bool.
 
-(* auxiliary19 := ¬((8 + 20 + 4) >= len(arg0)) *)
-fun auxiliary19(bounded_200_cleartext): bool.
+(* cond19 := ¬((arg0)_[s,8] <= 0) *)
+fun cond19(bitstring): bool.
 
-(* auxiliary2 := len(arg0) = 8 *)
-fun auxiliary2(bitstring): bool.
+(* cond20 := ¬((arg0)_[s,8] <= 0) *)
+fun cond20(bitstring): bool.
 
-(* auxiliary20 := arg0{0, 4} = "msg1" *)
-fun auxiliary20(bounded_200_cleartext): bool.
+(* cond24 := ¬((arg0)_[u,8] > 1000) *)
+fun cond24(bitstring): bool.
 
-(* auxiliary21 := ¬((arg0{4, 8})_[u,8] <> 20) *)
-fun auxiliary21(bounded_200_cleartext): bool.
+(* cond25 := 0 < (arg0)_[u,8] *)
+fun cond25(bitstring): bool.
 
-(* auxiliary22 := ¬((len(arg0) - (8 + (arg0{4, 8})_[u,8] + 4)) > 40) *)
-fun auxiliary22(bounded_200_cleartext): bool.
+(* cond26 := ¬((arg0)_[u,8] < 7) *)
+fun cond26(bitstring): bool.
 
-(* auxiliary23 := ¬(len(arg0) > 100) *)
-fun auxiliary23(fixed_100_key): bool.
+(* cond27 := ¬(len(arg0) > ((arg1)_[u,8] - 7)) *)
+fun cond27(bounded_200_cleartext, bitstring): bool.
 
-(* auxiliary24 := ¬((arg0)_[u,8] > 1000) *)
-fun auxiliary24(bitstring): bool.
+(* cond28 := ¬((8 + 20 + 4) >= len(arg0)) *)
+fun cond28(bounded_200_cleartext): bool.
 
-(* auxiliary25 := ¬(len(arg0) > (arg1)_[u,8]) *)
-fun auxiliary25(bounded_1000_ciphertext, bitstring): bool.
+(* cond29 := arg0{0, 4} = "msg1" *)
+fun cond29(bounded_200_cleartext): bool.
 
-(* auxiliary26 := len(arg0) = ((4)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary26(bitstring): bool.
+(* cond30 := ¬((arg0{4, 8})_[u,8] <> 20) *)
+fun cond30(bounded_200_cleartext): bool.
 
-(* auxiliary27 := len(arg0) = ((8)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary27(bitstring): bool.
+(* cond31 := ¬((len(arg0) - (4 + 8 + (arg0{4, 8})_[u,8])) > 40) *)
+fun cond31(bounded_200_cleartext): bool.
 
-(* auxiliary28 := ¬((arg0)_[u,8] > 1000) *)
-fun auxiliary28(bitstring): bool.
+(* cond33 := ¬(len(arg0) > (7 + 40 + (2 * 8) + 4 + len(arg1))) *)
+fun cond33(bounded_1000_ciphertext, bounded_40_host): bool.
 
-(* auxiliary29 := 0 < (arg0)_[u,8] *)
-fun auxiliary29(bitstring): bool.
+(* cond34 := 0 < len(arg0) *)
+fun cond34(bounded_1000_ciphertext): bool.
 
-(* auxiliary3 := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary3(bitstring): bool.
+(* cond35 := ¬((arg0)_[u,8] > 1000) *)
+fun cond35(bitstring): bool.
 
-(* auxiliary30 := len(arg0) = (arg1 - (0)^[u,8])_[u,8] *)
-fun auxiliary30(bitstring, bitstring): bool.
+(* cond36 := 0 < (arg0)_[u,8] *)
+fun cond36(bitstring): bool.
 
-(* auxiliary31 := Defined(decrypt_len(arg0)) *)
-fun auxiliary31(bitstring): bool.
+(* cond37 := ¬((arg0)_[u,8] < 7) *)
+fun cond37(bitstring): bool.
 
-(* auxiliary32 := ¬((decrypt_len(arg0))_[u,8] > (arg1)_[u,8]) *)
-fun auxiliary32(bitstring, bitstring): bool.
+(* cond38 := ¬(len(arg0) > ((arg1)_[u,8] - 7)) *)
+fun cond38(bounded_200_cleartext, bitstring): bool.
 
-(* auxiliary33 := ¬(len(arg0) > (decrypt_len(arg1))_[u,8]) *)
-fun auxiliary33(bounded_200_cleartext, bitstring): bool.
+(* cond39 := arg0{0, 4} = "msg3" *)
+fun cond39(bounded_200_cleartext): bool.
 
-(* auxiliary34 := arg0{0, 4} = "msg3" *)
-fun auxiliary34(bounded_200_cleartext): bool.
+(* cond40 := ¬(len(arg0) <> 24) *)
+fun cond40(bounded_200_cleartext): bool.
 
-(* auxiliary35 := ¬(len(arg0) <> 24) *)
-fun auxiliary35(bounded_200_cleartext): bool.
+(* cond7 := ¬(len(arg0) > (7 + 24 + len(arg1) + 8)) *)
+fun cond7(bounded_1000_ciphertext, bounded_40_host): bool.
 
-(* auxiliary36 := len(arg0) = 112 *)
-fun auxiliary36(bitstring): bool.
+(* cond8 := 0 < len(arg0) *)
+fun cond8(bounded_1000_ciphertext): bool.
 
-(* auxiliary37 := len(arg0) = 8 *)
-fun auxiliary37(bitstring): bool.
-
-(* auxiliary38 := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary38(bitstring): bool.
-
-(* auxiliary39 := ¬(len(arg0) > 40) *)
-fun auxiliary39(bounded_40_host): bool.
-
-(* auxiliary4 := len(arg0) = 8 *)
-fun auxiliary4(bitstring): bool.
-
-(* auxiliary40 := ¬(len(arg0) > 40) *)
-fun auxiliary40(bounded_40_host): bool.
-
-(* auxiliary41 := ¬(len(arg0) > 100) *)
-fun auxiliary41(fixed_100_key): bool.
-
-(* auxiliary42 := ¬(len(arg0) > 100) *)
-fun auxiliary42(fixed_100_key): bool.
-
-(* auxiliary43 := ¬(len(arg0) > 100) *)
-fun auxiliary43(fixed_100_key): bool.
-
-(* auxiliary44 := ¬((arg0)_[u,8] > 1000) *)
-fun auxiliary44(bitstring): bool.
-
-(* auxiliary45 := ¬(len(arg0) > (arg1)_[u,8]) *)
-fun auxiliary45(bounded_1000_ciphertext, bitstring): bool.
-
-(* auxiliary46 := len(arg0) = ((4)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary46(bitstring): bool.
-
-(* auxiliary47 := len(arg0) = ((8)^[u,8] - (0)^[u,8])_[u,8] *)
-fun auxiliary47(bitstring): bool.
-
-(* auxiliary48 := ¬((arg0)_[u,8] > 1000) *)
-fun auxiliary48(bitstring): bool.
-
-(* auxiliary49 := 0 < (arg0)_[u,8] *)
-fun auxiliary49(bitstring): bool.
-
-(* auxiliary5 := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary5(bitstring): bool.
-
-(* auxiliary50 := len(arg0) = (arg1 - (0)^[u,8])_[u,8] *)
-fun auxiliary50(bitstring, bitstring): bool.
-
-(* auxiliary51 := Defined(decrypt_len(arg0)) *)
-fun auxiliary51(bitstring): bool.
-
-(* auxiliary52 := ¬((decrypt_len(arg0))_[u,8] > (arg1)_[u,8]) *)
-fun auxiliary52(bitstring, bitstring): bool.
-
-(* auxiliary53 := ¬(len(arg0) > (decrypt_len(arg1))_[u,8]) *)
-fun auxiliary53(bounded_200_cleartext, bitstring): bool.
-
-(* auxiliary54 := ¬((len(arg0) + 40 + (2 * 8) + 4) <> len(arg1)) *)
-fun auxiliary54(bounded_40_host, bounded_200_cleartext): bool.
-
-(* auxiliary55 := arg0{0, 4} = "msg2" *)
-fun auxiliary55(bounded_200_cleartext): bool.
-
-(* auxiliary56 := ¬((arg0{4, 8})_[u,8] <> 20) *)
-fun auxiliary56(bounded_200_cleartext): bool.
-
-(* auxiliary57 := ¬((arg0{4 + 8, 8})_[u,8] <> 20) *)
-fun auxiliary57(bounded_200_cleartext): bool.
-
-(* auxiliary58 := ¬((arg0)_[u,8] > 1000) *)
-fun auxiliary58(bitstring): bool.
-
-(* auxiliary59 := ¬(len(arg0) > (arg1)_[u,8]) *)
-fun auxiliary59(bounded_1000_ciphertext, bitstring): bool.
-
-(* auxiliary6 := len(arg0) = 112 *)
-fun auxiliary6(bitstring): bool.
-
-(* auxiliary7 := len(arg0) = 4 *)
-fun auxiliary7(bitstring): bool.
-
-(* auxiliary8 := ¬(len(arg0) > 40) *)
-fun auxiliary8(bounded_40_host): bool.
-
-(* auxiliary9 := ¬(len(arg0) > 100) *)
-fun auxiliary9(fixed_100_key): bool.
+(* cond9 := ¬((arg0)_[u,8] > 1000) *)
+fun cond9(bitstring): bool.
 
 
 (*************************** 
@@ -395,79 +264,35 @@ const zero_fixed_256_seed_T: fixed_256_seed_T.
   Primed Functions 
 ***************************)
 
-fun auxiliary9_prime(fixed_100_key): bool.
+fun cond8_prime(bounded_1000_ciphertext): bool.
 
-fun auxiliary8_prime(bounded_40_host): bool.
+fun cond7_prime(bounded_1000_ciphertext, bounded_40_host): bool.
 
-fun auxiliary7_prime(bitstring): bool.
+fun cond40_prime(bounded_200_cleartext): bool.
 
-fun auxiliary6_prime(bitstring): bool.
+fun cond38_prime(bounded_200_cleartext, bitstring): bool.
 
-fun auxiliary59_prime(bounded_1000_ciphertext, bitstring): bool.
+fun cond34_prime(bounded_1000_ciphertext): bool.
 
-fun auxiliary54_prime(bounded_40_host, bounded_200_cleartext): bool.
+fun cond33_prime(bounded_1000_ciphertext, bounded_40_host): bool.
 
-fun auxiliary53_prime(bounded_200_cleartext, bitstring): bool.
+fun cond28_prime(bounded_200_cleartext): bool.
 
-fun auxiliary50_prime(bitstring, bitstring): bool.
+fun cond27_prime(bounded_200_cleartext, bitstring): bool.
 
-fun auxiliary47_prime(bitstring): bool.
+fun cond18_prime(bounded_1000_ciphertext): bool.
 
-fun auxiliary46_prime(bitstring): bool.
+fun cond17_prime(bounded_1000_ciphertext, bounded_200_cleartext): bool.
 
-fun auxiliary45_prime(bounded_1000_ciphertext, bitstring): bool.
+fun conc3_prime(fixed_20_nonce, fixed_20_nonce, bounded_40_host): bounded_200_cleartext.
 
-fun auxiliary43_prime(fixed_100_key): bool.
-
-fun auxiliary42_prime(fixed_100_key): bool.
-
-fun auxiliary41_prime(fixed_100_key): bool.
-
-fun auxiliary40_prime(bounded_40_host): bool.
-
-fun auxiliary4_prime(bitstring): bool.
-
-fun auxiliary39_prime(bounded_40_host): bool.
-
-fun auxiliary37_prime(bitstring): bool.
-
-fun auxiliary36_prime(bitstring): bool.
-
-fun auxiliary35_prime(bounded_200_cleartext): bool.
-
-fun auxiliary33_prime(bounded_200_cleartext, bitstring): bool.
-
-fun auxiliary30_prime(bitstring, bitstring): bool.
-
-fun auxiliary27_prime(bitstring): bool.
-
-fun auxiliary26_prime(bitstring): bool.
-
-fun auxiliary25_prime(bounded_1000_ciphertext, bitstring): bool.
-
-fun auxiliary23_prime(fixed_100_key): bool.
-
-fun conc5_prime(fixed_20_nonce, fixed_20_nonce, bounded_40_host): bounded_200_cleartext.
-
-fun conc3_prime(fixed_20_nonce): bounded_200_cleartext.
+fun conc2_prime(fixed_20_nonce): bounded_200_cleartext.
 
 fun conc1_prime(fixed_20_nonce, bounded_40_host): bounded_200_cleartext.
 
-fun auxiliary2_prime(bitstring): bool.
+fun cond13_prime(bounded_40_host, bounded_200_cleartext): bool.
 
-fun auxiliary19_prime(bounded_200_cleartext): bool.
-
-fun auxiliary18_prime(bounded_200_cleartext, bitstring): bool.
-
-fun auxiliary15_prime(bitstring, bitstring): bool.
-
-fun auxiliary12_prime(bitstring): bool.
-
-fun auxiliary11_prime(bitstring): bool.
-
-fun auxiliary10_prime(fixed_100_key): bool.
-
-fun auxiliary1_prime(bitstring): bool.
+fun cond12_prime(bounded_200_cleartext, bitstring): bool.
 
 
 (*************************** 
@@ -480,121 +305,73 @@ fun cast_bitstring_bounded_1000_ciphertext(bitstring): bounded_1000_ciphertext [
   Auxiliary Facts 
 ***************************)
 
-forall arg0: fixed_100_key;
-	auxiliary9(arg0) = auxiliary9_prime(Zfixed_100_key(arg0)).
-forall arg0: bounded_40_host;
-	auxiliary8(arg0) = auxiliary8_prime(Zbounded_40_host(arg0)).
-forall arg0: bitstring;
-	auxiliary7(arg0) = auxiliary7_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary6(arg0) = auxiliary6_prime(Zbitstring(arg0)).
-forall arg1: bitstring, arg0: bounded_1000_ciphertext;
-	auxiliary59(arg0, arg1) = auxiliary59_prime(Zbounded_1000_ciphertext(arg0), arg1).
-forall x25: bounded_40_host, x24: fixed_20_nonce, x23: fixed_20_nonce;
-	auxiliary57(conc5(x23, x24, x25)) = auxiliary57(conc5_prime(Zfixed_20_nonce(x23), Zfixed_20_nonce(x24), Zbounded_40_host(x25))).
-forall x33: bounded_40_host, x32: fixed_20_nonce, x31: fixed_20_nonce;
-	auxiliary56(conc5(x31, x32, x33)) = auxiliary56(conc5_prime(Zfixed_20_nonce(x31), Zfixed_20_nonce(x32), Zbounded_40_host(x33))).
-forall x36: bounded_40_host, x35: fixed_20_nonce;
-	auxiliary56(conc1(x35, x36)) = auxiliary56(conc1_prime(Zfixed_20_nonce(x35), Zbounded_40_host(x36))).
-forall x41: bounded_40_host, x40: fixed_20_nonce, x39: fixed_20_nonce;
-	auxiliary55(conc5(x39, x40, x41)) = auxiliary55(conc5_prime(Zfixed_20_nonce(x39), Zfixed_20_nonce(x40), Zbounded_40_host(x41))).
-forall x42: fixed_20_nonce;
-	auxiliary55(conc3(x42)) = auxiliary55(conc3_prime(Zfixed_20_nonce(x42))).
-forall x44: bounded_40_host, x43: fixed_20_nonce;
-	auxiliary55(conc1(x43, x44)) = auxiliary55(conc1_prime(Zfixed_20_nonce(x43), Zbounded_40_host(x44))).
+forall arg0: bounded_1000_ciphertext;
+	cond8(arg0) = cond8_prime(Zbounded_1000_ciphertext(arg0)).
+forall arg1: bounded_40_host, arg0: bounded_1000_ciphertext;
+	cond7(arg0, arg1) = cond7_prime(Zbounded_1000_ciphertext(arg0), Zbounded_40_host(arg1)).
+forall arg0: bounded_200_cleartext;
+	cond40(arg0) = cond40_prime(Zbounded_200_cleartext(arg0)).
+forall x139: bounded_40_host, x138: fixed_20_nonce, x137: fixed_20_nonce;
+	cond39(conc3(x137, x138, x139)) = cond39(conc3_prime(Zfixed_20_nonce(x137), Zfixed_20_nonce(x138), Zbounded_40_host(x139))).
+forall x140: fixed_20_nonce;
+	cond39(conc2(x140)) = cond39(conc2_prime(Zfixed_20_nonce(x140))).
+forall x142: bounded_40_host, x141: fixed_20_nonce;
+	cond39(conc1(x141, x142)) = cond39(conc1_prime(Zfixed_20_nonce(x141), Zbounded_40_host(x142))).
+forall arg1: bitstring, arg0: bounded_200_cleartext;
+	cond38(arg0, arg1) = cond38_prime(Zbounded_200_cleartext(arg0), arg1).
+forall arg0: bounded_1000_ciphertext;
+	cond34(arg0) = cond34_prime(Zbounded_1000_ciphertext(arg0)).
+forall arg1: bounded_40_host, arg0: bounded_1000_ciphertext;
+	cond33(arg0, arg1) = cond33_prime(Zbounded_1000_ciphertext(arg0), Zbounded_40_host(arg1)).
+forall x163: bounded_40_host, x162: fixed_20_nonce, x161: fixed_20_nonce;
+	cond31(conc3(x161, x162, x163)) = cond31(conc3_prime(Zfixed_20_nonce(x161), Zfixed_20_nonce(x162), Zbounded_40_host(x163))).
+forall x166: bounded_40_host, x165: fixed_20_nonce;
+	cond31(conc1(x165, x166)) = cond31(conc1_prime(Zfixed_20_nonce(x165), Zbounded_40_host(x166))).
+forall x171: bounded_40_host, x170: fixed_20_nonce, x169: fixed_20_nonce;
+	cond30(conc3(x169, x170, x171)) = cond30(conc3_prime(Zfixed_20_nonce(x169), Zfixed_20_nonce(x170), Zbounded_40_host(x171))).
+forall x174: bounded_40_host, x173: fixed_20_nonce;
+	cond30(conc1(x173, x174)) = cond30(conc1_prime(Zfixed_20_nonce(x173), Zbounded_40_host(x174))).
+forall x179: bounded_40_host, x178: fixed_20_nonce, x177: fixed_20_nonce;
+	cond29(conc3(x177, x178, x179)) = cond29(conc3_prime(Zfixed_20_nonce(x177), Zfixed_20_nonce(x178), Zbounded_40_host(x179))).
+forall x180: fixed_20_nonce;
+	cond29(conc2(x180)) = cond29(conc2_prime(Zfixed_20_nonce(x180))).
+forall x182: bounded_40_host, x181: fixed_20_nonce;
+	cond29(conc1(x181, x182)) = cond29(conc1_prime(Zfixed_20_nonce(x181), Zbounded_40_host(x182))).
+forall arg0: bounded_200_cleartext;
+	cond28(arg0) = cond28_prime(Zbounded_200_cleartext(arg0)).
+forall arg1: bitstring, arg0: bounded_200_cleartext;
+	cond27(arg0, arg1) = cond27_prime(Zbounded_200_cleartext(arg0), arg1).
+forall arg0: bounded_1000_ciphertext;
+	cond18(arg0) = cond18_prime(Zbounded_1000_ciphertext(arg0)).
+forall arg1: bounded_200_cleartext, arg0: bounded_1000_ciphertext;
+	cond17(arg0, arg1) = cond17_prime(Zbounded_1000_ciphertext(arg0), arg1).
+forall x207: bounded_40_host, x206: fixed_20_nonce, x205: fixed_20_nonce, arg0: bounded_1000_ciphertext;
+	cond17_prime(arg0, conc3(x205, x206, x207)) = cond17_prime(arg0, conc3_prime(Zfixed_20_nonce(x205), Zfixed_20_nonce(x206), Zbounded_40_host(x207))).
+forall x215: bounded_40_host, x214: fixed_20_nonce, x213: fixed_20_nonce;
+	cond16(conc3(x213, x214, x215)) = cond16(conc3_prime(Zfixed_20_nonce(x213), Zfixed_20_nonce(x214), Zbounded_40_host(x215))).
+forall x223: bounded_40_host, x222: fixed_20_nonce, x221: fixed_20_nonce;
+	cond15(conc3(x221, x222, x223)) = cond15(conc3_prime(Zfixed_20_nonce(x221), Zfixed_20_nonce(x222), Zbounded_40_host(x223))).
+forall x226: bounded_40_host, x225: fixed_20_nonce;
+	cond15(conc1(x225, x226)) = cond15(conc1_prime(Zfixed_20_nonce(x225), Zbounded_40_host(x226))).
+forall x231: bounded_40_host, x230: fixed_20_nonce, x229: fixed_20_nonce;
+	cond14(conc3(x229, x230, x231)) = cond14(conc3_prime(Zfixed_20_nonce(x229), Zfixed_20_nonce(x230), Zbounded_40_host(x231))).
+forall x232: fixed_20_nonce;
+	cond14(conc2(x232)) = cond14(conc2_prime(Zfixed_20_nonce(x232))).
+forall x234: bounded_40_host, x233: fixed_20_nonce;
+	cond14(conc1(x233, x234)) = cond14(conc1_prime(Zfixed_20_nonce(x233), Zbounded_40_host(x234))).
 forall arg1: bounded_200_cleartext, arg0: bounded_40_host;
-	auxiliary54(arg0, arg1) = auxiliary54_prime(Zbounded_40_host(arg0), Zbounded_200_cleartext(arg1)).
+	cond13(arg0, arg1) = cond13_prime(Zbounded_40_host(arg0), Zbounded_200_cleartext(arg1)).
 forall arg1: bitstring, arg0: bounded_200_cleartext;
-	auxiliary53(arg0, arg1) = auxiliary53_prime(Zbounded_200_cleartext(arg0), arg1).
-forall arg1: bitstring, arg0: bitstring;
-	auxiliary50(arg0, arg1) = auxiliary50_prime(Zbitstring(arg0), arg1).
-forall arg0: bitstring;
-	auxiliary47(arg0) = auxiliary47_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary46(arg0) = auxiliary46_prime(Zbitstring(arg0)).
-forall arg1: bitstring, arg0: bounded_1000_ciphertext;
-	auxiliary45(arg0, arg1) = auxiliary45_prime(Zbounded_1000_ciphertext(arg0), arg1).
-forall arg0: fixed_100_key;
-	auxiliary43(arg0) = auxiliary43_prime(Zfixed_100_key(arg0)).
-forall arg0: fixed_100_key;
-	auxiliary42(arg0) = auxiliary42_prime(Zfixed_100_key(arg0)).
-forall arg0: fixed_100_key;
-	auxiliary41(arg0) = auxiliary41_prime(Zfixed_100_key(arg0)).
-forall arg0: bounded_40_host;
-	auxiliary40(arg0) = auxiliary40_prime(Zbounded_40_host(arg0)).
-forall arg0: bitstring;
-	auxiliary4(arg0) = auxiliary4_prime(Zbitstring(arg0)).
-forall arg0: bounded_40_host;
-	auxiliary39(arg0) = auxiliary39_prime(Zbounded_40_host(arg0)).
-forall arg0: bitstring;
-	auxiliary37(arg0) = auxiliary37_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary36(arg0) = auxiliary36_prime(Zbitstring(arg0)).
-forall arg0: bounded_200_cleartext;
-	auxiliary35(arg0) = auxiliary35_prime(Zbounded_200_cleartext(arg0)).
-forall x136: bounded_40_host, x135: fixed_20_nonce, x134: fixed_20_nonce;
-	auxiliary34(conc5(x134, x135, x136)) = auxiliary34(conc5_prime(Zfixed_20_nonce(x134), Zfixed_20_nonce(x135), Zbounded_40_host(x136))).
-forall x137: fixed_20_nonce;
-	auxiliary34(conc3(x137)) = auxiliary34(conc3_prime(Zfixed_20_nonce(x137))).
-forall x139: bounded_40_host, x138: fixed_20_nonce;
-	auxiliary34(conc1(x138, x139)) = auxiliary34(conc1_prime(Zfixed_20_nonce(x138), Zbounded_40_host(x139))).
-forall arg1: bitstring, arg0: bounded_200_cleartext;
-	auxiliary33(arg0, arg1) = auxiliary33_prime(Zbounded_200_cleartext(arg0), arg1).
-forall arg1: bitstring, arg0: bitstring;
-	auxiliary30(arg0, arg1) = auxiliary30_prime(Zbitstring(arg0), arg1).
-forall arg0: bitstring;
-	auxiliary27(arg0) = auxiliary27_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary26(arg0) = auxiliary26_prime(Zbitstring(arg0)).
-forall arg1: bitstring, arg0: bounded_1000_ciphertext;
-	auxiliary25(arg0, arg1) = auxiliary25_prime(Zbounded_1000_ciphertext(arg0), arg1).
-forall arg0: fixed_100_key;
-	auxiliary23(arg0) = auxiliary23_prime(Zfixed_100_key(arg0)).
-forall x206: bounded_40_host, x205: fixed_20_nonce, x204: fixed_20_nonce;
-	auxiliary22(conc5(x204, x205, x206)) = auxiliary22(conc5_prime(Zfixed_20_nonce(x204), Zfixed_20_nonce(x205), Zbounded_40_host(x206))).
-forall x209: bounded_40_host, x208: fixed_20_nonce;
-	auxiliary22(conc1(x208, x209)) = auxiliary22(conc1_prime(Zfixed_20_nonce(x208), Zbounded_40_host(x209))).
-forall x214: bounded_40_host, x213: fixed_20_nonce, x212: fixed_20_nonce;
-	auxiliary21(conc5(x212, x213, x214)) = auxiliary21(conc5_prime(Zfixed_20_nonce(x212), Zfixed_20_nonce(x213), Zbounded_40_host(x214))).
-forall x217: bounded_40_host, x216: fixed_20_nonce;
-	auxiliary21(conc1(x216, x217)) = auxiliary21(conc1_prime(Zfixed_20_nonce(x216), Zbounded_40_host(x217))).
-forall x222: bounded_40_host, x221: fixed_20_nonce, x220: fixed_20_nonce;
-	auxiliary20(conc5(x220, x221, x222)) = auxiliary20(conc5_prime(Zfixed_20_nonce(x220), Zfixed_20_nonce(x221), Zbounded_40_host(x222))).
-forall x223: fixed_20_nonce;
-	auxiliary20(conc3(x223)) = auxiliary20(conc3_prime(Zfixed_20_nonce(x223))).
-forall x225: bounded_40_host, x224: fixed_20_nonce;
-	auxiliary20(conc1(x224, x225)) = auxiliary20(conc1_prime(Zfixed_20_nonce(x224), Zbounded_40_host(x225))).
-forall arg0: bitstring;
-	auxiliary2(arg0) = auxiliary2_prime(Zbitstring(arg0)).
-forall arg0: bounded_200_cleartext;
-	auxiliary19(arg0) = auxiliary19_prime(Zbounded_200_cleartext(arg0)).
-forall arg1: bitstring, arg0: bounded_200_cleartext;
-	auxiliary18(arg0, arg1) = auxiliary18_prime(Zbounded_200_cleartext(arg0), arg1).
-forall arg1: bitstring, arg0: bitstring;
-	auxiliary15(arg0, arg1) = auxiliary15_prime(Zbitstring(arg0), arg1).
-forall arg0: bitstring;
-	auxiliary12(arg0) = auxiliary12_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary11(arg0) = auxiliary11_prime(Zbitstring(arg0)).
-forall arg0: fixed_100_key;
-	auxiliary10(arg0) = auxiliary10_prime(Zfixed_100_key(arg0)).
-forall arg0: bitstring;
-	auxiliary1(arg0) = auxiliary1_prime(Zbitstring(arg0)).
+	cond12(arg0, arg1) = cond12_prime(Zbounded_200_cleartext(arg0), arg1).
 
 (*************************** 
   Zero Facts 
 ***************************)
 
-forall arg0: bounded_1000_ciphertext;
-	Zbitstring(conc6(arg0)) = Zbitstring_prime(conc6(Zbounded_1000_ciphertext(arg0))).
 forall arg2: bounded_40_host, arg1: fixed_20_nonce, arg0: fixed_20_nonce;
-	Zbounded_200_cleartext(conc5(arg0, arg1, arg2)) = Zbounded_200_cleartext_prime(conc5(Zfixed_20_nonce(arg0), Zfixed_20_nonce(arg1), Zbounded_40_host(arg2))).
-forall arg0: bounded_1000_ciphertext;
-	Zbitstring(conc4(arg0)) = Zbitstring_prime(conc4(Zbounded_1000_ciphertext(arg0))).
+	Zbounded_200_cleartext(conc3(arg0, arg1, arg2)) = Zbounded_200_cleartext_prime(conc3(Zfixed_20_nonce(arg0), Zfixed_20_nonce(arg1), Zbounded_40_host(arg2))).
 forall arg0: fixed_20_nonce;
-	Zbounded_200_cleartext(conc3(arg0)) = Zbounded_200_cleartext_prime(conc3(Zfixed_20_nonce(arg0))).
-forall arg0: bounded_1000_ciphertext;
-	Zbitstring(conc2(arg0)) = Zbitstring_prime(conc2(Zbounded_1000_ciphertext(arg0))).
+	Zbounded_200_cleartext(conc2(arg0)) = Zbounded_200_cleartext_prime(conc2(Zfixed_20_nonce(arg0))).
 forall arg1: bounded_40_host, arg0: fixed_20_nonce;
 	Zbounded_200_cleartext(conc1(arg0, arg1)) = Zbounded_200_cleartext_prime(conc1(Zfixed_20_nonce(arg0), Zbounded_40_host(arg1))).
 forall x: bitstring;
@@ -606,22 +383,22 @@ forall x: fixed_256_seed_T;
 forall x: fixed_100_key;
 	Zfixed_100_key(x) = zero_fixed_100_key().
 
-(********************
-<Query>
+(******************** 
+  <Query>
 ********************)
-
-event beginA(bounded_40_host, bounded_40_host).
-event beginB(bounded_40_host, bounded_40_host).
-event endA(bounded_40_host, bounded_40_host).
-event endB(bounded_40_host, bounded_40_host).
+ 
+event client_begin(bounded_40_host, bounded_40_host).
+event server_begin(bounded_40_host, bounded_40_host).
+event client_end(bounded_40_host, bounded_40_host).
+event server_end(bounded_40_host, bounded_40_host).
 event bad(bounded_40_host).
 
 (* na: nonce, nb: nonce *)
 query x: bounded_40_host, y: bounded_40_host;
-event endB(x, y) ==> beginA(x, y) || bad(x).
+  event server_end(x, y) ==> client_begin(x, y) || bad(x).
 
 query x: bounded_40_host, y: bounded_40_host;
-event endA(x, y) ==> beginB(x, y) || bad(y).
+  event client_end(x, y) ==> server_begin(x, y) || bad(y).
 
 
 (*************************** 
@@ -630,151 +407,126 @@ event endA(x, y) ==> beginB(x, y) || bad(y).
 
 let client = 
 in(c_in, (var1: bitstring, BIO_ctrl_result1: bitstring));
-if auxiliary36(var1) then 
-if auxiliary37(BIO_ctrl_result1) then 
-if auxiliary38(BIO_ctrl_result1) then 
+if cond1(BIO_ctrl_result1) then 
 if check_key(hostX, pkX, sigX, pkS) then 
-event beginA(hostA, hostX);
+event client_begin(hostA, hostX);
 new nonce1: fixed_20_nonce;
 let msg1 = conc1(nonce1, hostA) in
-let len2 = encrypt_len(msg1) in
-if auxiliary44(len2) then 
 let key3 = isek(pkX) in
 new nonce2: fixed_256_seed_T;
-let cipher1 = E(msg1, key3, nonce2) in
-if auxiliary45(cipher1, len2) then 
-let msg2 = conc2(cipher1) in
-out(c_out, msg2);
-in(c_in, (var5: bitstring, msg4: bitstring, cipher2: bitstring));
-if auxiliary46(var5) then 
-if auxiliary47(msg4) then 
-if auxiliary48(msg4) then 
-if auxiliary49(msg4) then 
-if auxiliary50(cipher2, msg4) then 
-if auxiliary51(cipher2) then 
-if auxiliary52(cipher2, msg4) then 
-let msg6 = D(cast_bitstring_bounded_1000_ciphertext(cipher2), skA) in
-let injbot(msg7) = msg6 in
-if auxiliary53(msg7, cipher2) then 
-if auxiliary54(hostX, msg7) then 
-if auxiliary55(msg7) then 
-if auxiliary56(msg7) then 
-if auxiliary57(msg7) then 
-let conc5(var61, var65, var63) = msg7 in
-let var62 = var61 in
-if var62 = nonce1 then 
-let var64 = var63 in
-if var64 = hostX then 
-let var66 = var65 in
-let msg8 = conc3(var66) in
-let len4 = encrypt_len(msg8) in
-if auxiliary58(len4) then 
+let msg3 = E(msg1, key3, nonce2) in
+if cond7(msg3, hostA) then 
+let msg2 = arithmetic1(msg3) in
+if cond8(msg3) then 
+out(c_out, (msg3, msg2));
+in(c_in, (msg4: bitstring, cipher2: bitstring));
+if cond9(msg4) then 
+if cond10(msg4) then 
+if cond11(msg4) then 
+let injbot(msg6) = D(cast_bitstring_bounded_1000_ciphertext(cipher2), skA) in
+if cond12(msg6, msg4) then 
+if cond13(hostX, msg6) then 
+if cond14(msg6) then 
+if cond15(msg6) then 
+if cond16(msg6) then 
+let conc3(var39, var43, var41) = msg6 in
+let var40 = var39 in
+if var40 = nonce1 then 
+let var42 = var41 in
+if var42 = hostX then 
+let var44 = var43 in
+let msg7 = conc2(var44) in
 new nonce3: fixed_256_seed_T;
-let cipher3 = E(msg8, key3, nonce3) in
-if auxiliary59(cipher3, len4) then 
-let msg9 = conc4(cipher3) in
-event endA(hostA, hostX);
-out(c_out, msg9); 0 .
+let msg9 = E(msg7, key3, nonce3) in
+if cond17(msg9, msg6) then 
+let msg8 = arithmetic1(msg9) in
+if cond18(msg9) then 
+event client_end(hostA, hostX);
+out(c_out, (msg9, msg8)); 0 .
 
 let server = 
-in(c_in, (var9: bitstring, BIO_ctrl_result2: bitstring, BIO_ctrl_result3: bitstring, var12: bitstring, var13: bitstring, var14: bitstring, msg11: bitstring, cipher4: bitstring));
-if auxiliary1(var9) then 
-if auxiliary2(BIO_ctrl_result2) then 
-if auxiliary3(BIO_ctrl_result2) then 
-if auxiliary4(BIO_ctrl_result3) then 
-if auxiliary5(BIO_ctrl_result3) then 
-if auxiliary6(var12) then 
-if auxiliary7(var13) then 
-if auxiliary11(var14) then 
-if auxiliary12(msg11) then 
-if auxiliary13(msg11) then 
-if auxiliary14(msg11) then 
-if auxiliary15(cipher4, msg11) then 
-if auxiliary16(cipher4) then 
-if auxiliary17(cipher4, msg11) then 
-let msg13 = D(cast_bitstring_bounded_1000_ciphertext(cipher4), skB) in
-let injbot(msg14) = msg13 in
-if auxiliary18(msg14, cipher4) then 
-if auxiliary19(msg14) then 
-if auxiliary20(msg14) then 
-if auxiliary21(msg14) then 
-if auxiliary22(msg14) then 
-let conc1(var28, host2) = msg14 in
+in(c_in, (var8: bitstring, BIO_ctrl_result2: bitstring, BIO_ctrl_result3: bitstring, var11: bitstring, var12: bitstring, msg10: bitstring, cipher4: bitstring));
+if cond19(BIO_ctrl_result2) then 
+if cond20(BIO_ctrl_result3) then 
+if cond24(msg10) then 
+if cond25(msg10) then 
+if cond26(msg10) then 
+let injbot(msg12) = D(cast_bitstring_bounded_1000_ciphertext(cipher4), skB) in
+if cond27(msg12, msg10) then 
+if cond28(msg12) then 
+if cond29(msg12) then 
+if cond30(msg12) then 
+if cond31(msg12) then 
+let conc1(var24, host2) = msg12 in
 if check_key(host2, pkX, sigX, pkS) then 
-event beginB(host2, hostB);
+event server_begin(host2, hostB);
 new nonce4: fixed_20_nonce;
-let var29 = var28 in
-let msg15 = conc5(var29, nonce4, hostB) in
-let len6 = encrypt_len(msg15) in
-if auxiliary24(len6) then 
+let var25 = var24 in
+let msg13 = conc3(var25, nonce4, hostB) in
 let key10 = isek(pkX) in
 new nonce5: fixed_256_seed_T;
-let cipher5 = E(msg15, key10, nonce5) in
-if auxiliary25(cipher5, len6) then 
-let msg16 = conc6(cipher5) in
-out(c_out, msg16);
-in(c_in, (var19: bitstring, msg18: bitstring, cipher6: bitstring));
-if auxiliary26(var19) then 
-if auxiliary27(msg18) then 
-if auxiliary28(msg18) then 
-if auxiliary29(msg18) then 
-if auxiliary30(cipher6, msg18) then 
-if auxiliary31(cipher6) then 
-if auxiliary32(cipher6, msg18) then 
-let msg20 = D(cast_bitstring_bounded_1000_ciphertext(cipher6), skB) in
-let injbot(msg21) = msg20 in
-if auxiliary33(msg21, cipher6) then 
-if auxiliary34(msg21) then 
-if auxiliary35(msg21) then 
-let conc3(var48) = msg21 in
-let var49 = var48 in
-if var49 = nonce4 then 
-event endB(host2, hostB);
+let msg15 = E(msg13, key10, nonce5) in
+if cond33(msg15, hostB) then 
+let msg14 = arithmetic1(msg15) in
+if cond34(msg15) then 
+out(c_out, (msg15, msg14));
+in(c_in, (msg16: bitstring, cipher6: bitstring));
+if cond35(msg16) then 
+if cond36(msg16) then 
+if cond37(msg16) then 
+let injbot(msg18) = D(cast_bitstring_bounded_1000_ciphertext(cipher6), skB) in
+if cond38(msg18, msg16) then 
+if cond39(msg18) then 
+if cond40(msg18) then 
+let conc2(var31) = msg18 in
+let var32 = var31 in
+if var32 = nonce4 then 
+event server_end(host2, hostB);
 yield .
 
-(***************************
-<Environment>
+(*************************** 
+  <Environment>
 ***************************)
 
-let client' =
-in(c_in, (pkX: fixed_100_key, hostX: bounded_40_host, sigX: signature));
-out(c_out, ());
-client .
+let client' = 
+  in(c_in, (pkX: fixed_100_key, hostX: bounded_40_host, sigX: signature));
+  out(c_out, ());
+  client .
 
-let server' =
-in(c_in, (pkX: fixed_100_key, sigX: signature));
-out(c_out, ());
-server .
+let server' = 
+  in(c_in, (pkX: fixed_100_key, sigX: signature));
+  out(c_out, ());
+  server .
 
-let keyServer =
-in(c_in, (h: bounded_40_host, k: fixed_100_key));
-let rk =
-if h = hostA then pkA else
-if h = hostB then pkB else
-k in
-new r3: sseed;
-let cert = (rk, h, sign(cert(rk, h), skS, r3)) in
-if h = hostA || h = hostB then
-out(c_out, cert)
-else
-event bad(h);
-out(c_out, cert) .
+let keyServer = 
+  in(c_in, (h: bounded_40_host, k: fixed_100_key));
+  let rk = 
+    if h = hostA then pkA else
+    if h = hostB then pkB else
+    k in
+  new r3: sseed;
+  let cert = (rk, h, sign(cert(rk, h), skS, r3)) in
+  if h = hostA || h = hostB then
+    out(c_out, cert)
+  else
+    event bad(h);
+    out(c_out, cert) .
 
 process
 ! N (
-in(c_in, ());
-new A_seed: keyseed_T;
-new B_seed: keyseed_T;
-let pkA = ek(A_seed) in
-let skA = dk(A_seed) in
-let pkB = ek(B_seed) in
-let skB = dk(B_seed) in
+  in(c_in, ());
+  new A_seed: keyseed_T; 
+  new B_seed: keyseed_T;
+  let pkA = ek(A_seed) in
+  let skA = dk(A_seed) in
+  let pkB = ek(B_seed) in
+  let skB = dk(B_seed) in
 
-new rkS: skeyseed;
-let pkS = vk(rkS) in
-let skS = sk(rkS) in
-
-out(c_out, (pkA, pkB, pkS));
-((! N client') | (! N server') | (! N keyServer))
+  new rkS: skeyseed;
+  let pkS = vk(rkS) in
+  let skS = sk(rkS) in
+  
+  out(c_out, (pkA, pkB, pkS));
+  ((! N client') | (! N server') | (! N keyServer))
 )
 

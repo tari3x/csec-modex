@@ -26,13 +26,16 @@ void assume_intype(const char * type)
 
 void assume(int fact)
 {
+  mute();
   if(!fact)
-  {
-    printf("assumption violated\n");
-    exit(1);
-  }
+    {
+      printf("assumption violated\n");
+      exit(1);
+    }
+  unmute();
 
-  LoadAll(&fact);
+  LoadBuf(&fact, sizeof(fact));
+  Truth();
   Assume();
 }
 
@@ -97,7 +100,10 @@ void len(bool is_signed, size_t lenlen)
 
 void input(const char * hint, size_t len)
 {
-  In(len);
+  In();
+  // It's fine to assume here since not receiving enough input will not result
+  // in termination.
+  assume_len(&len, FALSE, sizeof(len));
   if (hint != NULL) Hint(hint);
 }
 

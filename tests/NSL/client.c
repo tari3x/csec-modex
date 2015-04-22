@@ -24,9 +24,9 @@ int main(int argc, char ** argv)
   unsigned char * pkey, * skey, * xkey;
   size_t pkey_len, skey_len, xkey_len;
 
-  unsigned char * m1, * m1_all;
+  unsigned char * m1, * m1_e;
   unsigned char * Na;
-  size_t m1_len, m1_e_len, m1_all_len;
+  size_t m1_len, m1_e_len;
 
   unsigned char * m2, * m2_e;
   unsigned char * xNb, * xNa;
@@ -73,9 +73,9 @@ int main(int argc, char ** argv)
 
 #ifdef CSEC_VERIFY
 #ifdef USE_EVENT_PARAMS
-  event2("beginA", client_name, client_name_len, server_name, server_name_len);
+  event2("client_begin", client_name, client_name_len, server_name, server_name_len);
 #else
-  event0("beginA");
+  event0("client_begin");
 #endif
 #endif
 
@@ -100,17 +100,14 @@ int main(int argc, char ** argv)
   if(m1_e_len > MAX_SIZE_CIPHER)
     fail("Client: cipher in message 1 too long");
 
-  m1_all_len = m1_e_len + sizeof(size_t) + 4;
-  m1_all = malloc(m1_all_len);
-  memcpy(m1_all, "encr", 4);
+  m1_e = malloc(m1_e_len);
   m1_e_len =
     encrypt(xkey, xkey_len, m1,
             m1_len,
-            m1_all + sizeof(m1_e_len) + 4);
-  m1_all_len = m1_e_len + sizeof(size_t) + 4;
-  * (size_t *) (m1_all + 4) = m1_e_len;
+            m1_e);
 
-  send(bio, m1_all, m1_all_len);
+  send(bio, &m1_e_len, sizeof(m1_e_len));
+  send(bio, m1_e, m1_e_len);
 
 #ifdef VERBOSE
     printf("A: m1_e sent, m1_e = ");
@@ -121,7 +118,6 @@ int main(int argc, char ** argv)
 
   /* Receive message 2 */
 
-  recv(bio, etag, 4);
   recv(bio, (unsigned char*) &m2_e_len,
        sizeof(m2_e_len));
 
@@ -213,14 +209,13 @@ int main(int argc, char ** argv)
   if(m3_e_len > MAX_SIZE_CIPHER)
     fail("Client: cipher in message 3 too long");
 
-  m3_e = malloc(m3_e_len + sizeof(size_t) + 4);
-  memcpy(m3_e, "encr", 4);
+  m3_e = malloc(m3_e_len);
   m3_e_len =
-      encrypt(xkey, xkey_len, m3,
-              m3_len, m3_e + sizeof(m3_e_len) + 4);
-  * (size_t *)(m3_e + 4) = m3_e_len;
+    encrypt(xkey, xkey_len, m3,
+            m3_len, m3_e);
 
-  send(bio, m3_e, m3_e_len + sizeof(m3_e_len) + 4);
+  send(bio, &m3_e_len, sizeof(m3_e_len));
+  send(bio, m3_e, m3_e_len);
 
 #ifdef VERBOSE
     printf("A: m3 sent");
@@ -240,9 +235,9 @@ int main(int argc, char ** argv)
 
 #ifdef CSEC_VERIFY
 #ifdef USE_EVENT_PARAMS
-  event2("endA", client_name, client_name_len, server_name, server_name_len);
+  event2("client_end", client_name, client_name_len, server_name, server_name_len);
 #else
-  event0("endA");
+  event0("client_end");
 #endif
 #endif
 

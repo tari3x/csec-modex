@@ -4,10 +4,6 @@
   See LICENSE file for copyright notice.
 *)
 
-open Iml
-open Exp
-open Sym
-
 val simplify : 'a Exp.t -> 'a Exp.t
 
 val full_simplify : 'a Exp.t -> 'a Exp.t

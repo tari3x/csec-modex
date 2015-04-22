@@ -53,6 +53,9 @@ module List = struct
         | Some y -> y :: filter_map ~f xs
         | None -> filter_map ~f xs
 
+  let filter_some xs =
+    filter_map xs ~f:(fun x -> x)
+
   let rec first_some: f:('a -> 'b option) -> 'a list -> 'b option = fun ~f -> function
     | [] -> None
     | x :: xs ->
@@ -66,6 +69,13 @@ module List = struct
     | [] -> None
 
   let find_exn = find
+
+  let rec find_map ~f = function
+    | [] -> None
+    | x :: xs ->
+      match f x with
+      | Some y -> Some y
+      | None -> find_map xs ~f
 
   let remove : 'a -> 'a list -> 'a list = fun a ->
     filter_out ~f:(fun b -> a = b)
@@ -99,6 +109,14 @@ module List = struct
       | [] -> []
     in
     dedup xs
+
+  let find_all_dups xs =
+    let rec find seen = function
+      | [] -> []
+      | x :: xs ->
+        if mem ~set:seen x then x :: find seen xs else find (x :: seen) xs
+    in
+    find [] xs
 
   let rec set_element: int -> 'a -> 'a list -> 'a list = fun i x' -> function
     | x :: xs -> if i > 0 then x :: set_element (i - 1) x' xs else x' :: xs
@@ -217,6 +235,12 @@ module String = struct
 
   let lines = Str.split (Str.regexp "\n")
 
+  let concat_some ts ~sep =
+    List.filter_some ts
+    |> function
+      | [] -> None
+      | ts -> Some (concat ~sep ts)
+
   let explode s =
     let rec exp i l =
       if i < 0 then l else exp (i - 1) (s.[i] :: l) in
@@ -243,7 +267,8 @@ module String = struct
     in
     unescape (explode s)
 
-  (* [is_suffix s ~suff] returns [true] if the string [s] ends with the suffix [suff] *)
+  (* [is_suffix s ~suff] returns [true] if the string [s] ends with the suffix
+     [suff] *)
   let is_suffix s ~suffix =
     let len_suff = String.length suffix in
     let len_s = String.length s in
@@ -395,6 +420,10 @@ module Option = struct
     | Some a -> a
     | None -> fail "value_exn"
 
+  let value ~default = function
+    | Some a -> a
+    | None -> default
+
   let to_string a_to_string = function
     | Some a -> "Some " ^ a_to_string a
     | None -> "None"
@@ -514,9 +543,9 @@ let pop_debug label =
 (**
   Locally increase debug view.
 *)
-let with_debug label f x =
+let with_debug label f =
   push_debug label;
-  let result = f x in
+  let result = f () in
   pop_debug label;
   result
 

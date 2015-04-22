@@ -31,16 +31,11 @@ extern void nonce(unsigned char * N)
 
 extern size_t encrypt_len(unsigned char * key, size_t keylen, unsigned char * in, size_t inlen)
 {
-  return 7 + sizeof(keylen) + keylen - 2 + inlen;
+  return ENCRYPTION_OVERHEAD + inlen;
 }
 
 extern size_t encrypt(unsigned char * key, size_t keylen, unsigned char * in, size_t inlen, unsigned char * out)
 {
-  if(keylen < 3)
-  {
-    fprintf(stderr, "encrypt: key too short\n");
-    exit(1);
-  }
   if(memcmp(key, "pk", 2))
   {
     fprintf(stderr, "encrypt: wrong key type\n");
@@ -48,59 +43,24 @@ extern size_t encrypt(unsigned char * key, size_t keylen, unsigned char * in, si
   }
 
   memcpy(out, "encrypt", 7);
-  * (size_t *) (out + 7) = keylen - 2;
-  memcpy(out + 7 + sizeof(keylen), key + 2, keylen - 2);
-  memcpy(out + 7 + sizeof(keylen) + keylen - 2, in, inlen);
+  memcpy(out + 7, in, inlen);
 
-  return 7 + sizeof(keylen) + keylen - 2 + inlen;
+  return encrypt_len(key, keylen, in, inlen);
 }
 
 extern size_t decrypt_len(unsigned char * key, size_t keylen, unsigned char * in, size_t inlen)
 {
-  if(keylen < 3)
-  {
-    fprintf(stderr, "decrypt: key too short\n");
-    exit(1);
-  }
-  if(memcmp(key, "sk", 2))
-  {
-    fprintf(stderr, "decrypt: wrong key type\n");
-    exit(1);
-  }
+  if(inlen < ENCRYPTION_OVERHEAD)
+    fail("decrypt_len: ciphertext too short");
 
-  if(inlen < 7 + sizeof(keylen) + 1)
-  {
-    fprintf(stderr, "decrypt: message too short\n");
-    exit(1);
-  }
-  if(memcmp(in, "encrypt", 7))
-  {
-    fprintf(stderr, "decrypt: wrong message type\n");
-    exit(1);
-  }
-
-  size_t keyname_len = * (size_t *) (in + 7);
-
-  if(keyname_len != keylen - 2)
-  {
-    fprintf(stderr, "decrypt: wrong key(1)\n");
-    exit(1);
-  }
-
-  if(memcmp(key + 2, in + 7 + sizeof(keyname_len), keyname_len))
-  {
-    fprintf(stderr, "decrypt: wrong key(2)\n");
-    exit(1);
-  }
-
-  return inlen - 7 - sizeof(keyname_len) - keyname_len;
+  return inlen - ENCRYPTION_OVERHEAD;
 }
 
 extern size_t decrypt(unsigned char * key, size_t keylen, unsigned char * in, size_t inlen, unsigned char * out)
 {
   size_t outlen = decrypt_len(key, keylen, in, inlen);
 
-  memcpy(out, in + inlen - outlen, outlen);
+  memcpy(out, in + 7, outlen);
 
   return outlen;
 }

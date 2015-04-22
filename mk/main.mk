@@ -127,31 +127,6 @@ endif
 iml.raw.out: iml.out
 
 ############################
-## ProVerif
-############################
-
-ifndef PV_OUTPUTS 
-  PV_INPUTS = $(wildcard *.pv.in)
-  PV_OUTPUTS = $(PV_INPUTS:.in=.out)
-endif
-
-pv: $(PV_OUTPUTS)
-	for f in $(PV_OUTPUTS); do\
-		$(PROVERIF) -in pi $$f | grep "RESULT\|queries";\
-	done
-
-
-pv_full: $(PV_OUTPUTS)
-	for f in $(PV_OUTPUTS); do\
-		$(PROVERIF) -in pi $$f;\
-	done
-
-
-%.pv.out: iml.raw.out %.pv.in $(PITRACE)
-	{ $(PITRACE) iml.raw.out $*.pv.in | tee $@; } > $*.pv.debug.out 2>&1
-
-
-############################
 ## CryptoVerif
 ############################
 
@@ -188,6 +163,30 @@ cv_noaux: $(CV_OUTPUTS_NOAUX)
 	
 #cvmodel.out: iml.raw.out $(CV_DEFAULT).cvl cvtemplate.in $(CVTRACE)
 #	{ $(CVTRACE) iml.raw.out $(CV_DEFAULT) cvtemplate.in | tee $@; } > cvmodel.debug.out 2>&1
+
+############################
+## ProVerif
+############################
+
+ifndef PV_OUTPUTS 
+  PV_INPUTS = $(wildcard *.pv.in)
+  PV_OUTPUTS = $(PV_INPUTS:.in=.out)
+endif
+
+pv: $(PV_OUTPUTS)
+	for f in $(PV_OUTPUTS); do\
+		$(PROVERIF) -in pi $$f | grep "RESULT\|queries";\
+	done
+
+
+pv_full: $(PV_OUTPUTS)
+	for f in $(PV_OUTPUTS); do\
+		$(PROVERIF) -in pi $$f;\
+	done
+
+
+%.pv.out: iml.raw.out %.pv.in $(PVTRACE)
+	{ $(PVTRACE) iml.raw.out $(CV_DEFAULT) $*.cv.in $*.pv.in | tee $@; } > $*.pv.debug.out 2>&1
 
 ############################
 ## Testing

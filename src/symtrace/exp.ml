@@ -46,48 +46,48 @@ module Var = struct
   module Map = Custom_map(Key)
 end
 
-  module Core_map = Map
-  open Type
-  open Sym
+module Core_map = Map
+open Type
+open Sym
 
-  type var = Var.t
+type var = Var.t
 
-  type 'a t =
-  | Int : intval -> int t
+type 'a t =
+| Int : intval -> int t
 
-  | Char : char -> int t
+| Char : char -> int t
   (** An int with given ascii value. *)
 
-  | String : char list -> bitstring t
+| String : char list -> bitstring t
 
-  | Var : Var.t * 'a Kind.t -> 'a t
+| Var : Var.t * 'a Kind.t -> 'a t
 
-  | Sym : ('a, 'b) Sym.t * 'a t list -> 'b t
+| Sym : ('a, 'b) Sym.t * 'a t list -> 'b t
   (** [Sym s es] is an application of a symbolic function [s(e1, e2, ...)].  *)
 
-  | Range : bitstring t * int t * int t -> bitstring t
+| Range : bitstring t * int t * int t -> bitstring t
   (** A substring of a given expression with given start position and length.  A
       position is a point between two characters or at the beginning or end of the
       string.  Given a string of length [l], the first position is [0], the last is
       [l].  *)
 
-  | Concat : bitstring t list -> bitstring t
+| Concat : bitstring t list -> bitstring t
 
-  | Len : bitstring t -> int t
+| Len : bitstring t -> int t
 
-  | BS : int t * Int_type.t -> bitstring t
+| BS : int t * Int_type.t -> bitstring t
 
-  | Val : bitstring t * Int_type.t -> int t
+| Val : bitstring t * Int_type.t -> int t
 
-  | Struct
-      :  (bitstring t Str_map.t) * (bitstring t Str_map.t) * int t * bitstring t
-      -> bitstring t
+| Struct
+    :  (bitstring t Str_map.t) * (bitstring t Str_map.t) * int t * bitstring t
+  -> bitstring t
   (** The first component are the real fields, the second are the crypto attributes.
       The last component is the value of underlying memory at the time the struct
       has been created.  This will get removed as soon as I transition to static
       implementation. *)
 
-  | Array : (bitstring t Int_map.t) * int t * int t -> bitstring t
+| Array : (bitstring t Int_map.t) * int t * int t -> bitstring t
   (** Contains total length and element length.
 
       A good alternative is to use native array, but it only makes sense if I know the
@@ -97,9 +97,9 @@ end
 
       At some point might have to use [Map] here, if there is need to generalize indices
       to arbitrary expressions.  *)
-    (* FIXME: find out how to use Map here *)
+  (* FIXME: find out how to use Map here *)
 
-  | Ptr : base * pos -> bitstring t
+| Ptr : base * pos -> bitstring t
   (** Invariants (being reviewed):
 
       - The offset list is never empty.
@@ -115,60 +115,68 @@ end
   *)
 
   (* FIXME: get rid of Unknown *)
-  | Unknown : 'a Kind.t -> 'a t
-  | Annotation : 'a annotation * 'a t -> 'a t
+| Unknown : 'a Kind.t -> 'a t
+| Annotation : 'a annotation * 'a t -> 'a t
 
-  and 'a annotation =
-  | Type_hint : 'a Type.t -> 'a annotation
-  | Name of string
-  (* | Width of width *)
+and 'a annotation =
+| Type_hint of 'a imltype
+| Name of string
+(* The following annotations contain the definition of the corresponding
+   symbol. *)
+| Parser : bitstring t -> bitstring annotation
+(* (def, c) is a parser that fails if the argument is not in the range of the
+   encoder c. Only used in pvtrace. *)
+| Pi_parser : (bitstring t * bfun) -> bitstring annotation
+| Encoder : bitstring t -> bitstring annotation
+| Auxiliary : bool t -> bool annotation
+| Arith : bitstring t -> bitstring annotation
 
-    (** Not the same as lhost in CIL *)
-  and base =
-  | Stack of string
-    (** (Old) Name and unique id of variable. Note that this way variables from
-        different calls of the same function will be mapped to the same base, but not
-        variables from different functions. *)
-  | Heap of id * int t
-  | Abs of intval
-    (** An absolute pointer value to deal with cases like:
-        {[
-          // signal.h:
-          typedef void ( *__sighandler_t) (int);
+  (** Not the same as lhost in CIL *)
+and base =
+| Stack of string
+  (** (Old) Name and unique id of variable. Note that this way variables from
+      different calls of the same function will be mapped to the same base, but not
+      variables from different functions. *)
+| Heap of id * int t
+| Abs of intval
+  (** An absolute pointer value to deal with cases like:
+      {[
+        // signal.h:
+  typedef void ( *__sighandler_t) (int);
           // signum.h:
           /* Fake signal functions.  */
-          #define SIG_ERR ((__sighandler_t) -1)       /* Error return.  */
-          #define SIG_DFL ((__sighandler_t) 0)        /* Default action.  */
-          #define SIG_IGN ((__sighandler_t) 1)        /* Ignore signal.  */
-        ]}
-    *)
+            #define SIG_ERR ((__sighandler_t) -1)       /* Error return.  */
+            #define SIG_DFL ((__sighandler_t) 0)        /* Default action.  */
+            #define SIG_IGN ((__sighandler_t) 1)        /* Ignore signal.  */
+      ]}
+  *)
 
-  and offset_val =
-  | Field of string
-  | Attr of string
-  | Index of int (* Not intval, cause ocaml is really clumsy with that - you can't even subtract it easily *)
-    (* For now flat offsets are true ints, unlike in the thesis *)
-  | Flat of int t
-    (** Flat offsets always measured in bytes *)
+and offset_val =
+| Field of string
+| Attr of string
+| Index of int (* Not intval, cause ocaml is really clumsy with that - you can't even subtract it easily *)
+  (* For now flat offsets are true ints, unlike in the thesis *)
+| Flat of int t
+  (** Flat offsets always measured in bytes *)
 
-    (** Offset value together with offset step *)
-  and offset = offset_val * int t
+  (** Offset value together with offset step *)
+and offset = offset_val * int t
 
-  and pos = offset list
+and pos = offset list
 
-  type 'a exp = 'a t
+type 'a exp = 'a t
 
-  type iterm = int t
-  type bterm = bitstring t
-  type fact = bool t
+type iterm = int t
+type bterm = bitstring t
+type fact = bool t
 
-  type any = Any : 'a t -> any
+type any = Any : 'a t -> any
 
-  (*************************************************)
-  (** {1 Show} *)
-  (*************************************************)
+(*************************************************)
+(** {1 Show} *)
+(*************************************************)
 
-  let show_types = ref false
+let show_types = ref false
 
   (**
     Does an expression need a bracket in context?
@@ -195,8 +203,7 @@ end
     | Char c -> sprintf "'%s'" (Char.escaped c)
     | Sym (s, es) when Sym.is_infix s && List.length es > 1 ->
       let bodies = List.map ~f:(show_iexp ~bracket:true) es in
-      if bodies = [] then Sym.to_string_hum ~show_types s ^ "()"
-      else String.concat ~sep:(" " ^ Sym.to_string_hum ~show_types s ^ " ") bodies
+      String.concat ~sep:(" " ^ Sym.to_string_hum ~show_types s ^ " ") bodies
     | Sym (s, es) ->
       let bodies = List.map ~f:show_iexp es in
       Sym.to_string_hum ~show_types s ^ "(" ^ String.concat ~sep:", " bodies ^ ")"
@@ -206,6 +213,7 @@ end
       let l_body = show_len l in
       body ^ "{" ^ f_body ^ ", " ^ l_body ^ "}"
     | Concat [] -> "<empty concat>"
+    | Concat [e] -> sprintf "<concat>(%s)" (show_iexp e)
     | Concat es ->
       let bodies = List.map ~f:show_iexp es in
       String.concat ~sep:"|" bodies
@@ -228,7 +236,7 @@ end
       in
       begin
         match fold2list Int_map.fold (fun i e -> (i, e)) cells with
-        | [0, e] -> show_iexp e
+        | [0, e] -> sprintf "<array>(%s)" (show_iexp e)
         | cells ->
           let cell_bodies = List.map ~f:show_cell cells in
           "[|" ^ String.concat ~sep:"; " cell_bodies ^ "|]"
@@ -243,9 +251,14 @@ end
 
     | Val (e, t) -> sprintf "(%s)_%s" (show_iexp e) (Int_type.to_string t)
 
-    | Annotation (Type_hint t, e) -> show_iexp_body  e  ^ ":" ^ Type.to_string t
-    (* | Annotation (Width w, e) -> sprintf "%s<%d>" (show_iexp_body e) w *)
-    | Annotation (Name name, e) -> sprintf "%s (* named %s *)" (show_iexp_body e) name
+    | Annotation (Type_hint t, e) ->
+      show_iexp_body  e  ^ ":" ^ Type.to_string t
+
+    | Annotation (Name name, e) ->
+      sprintf "%s (* named %s *)" (show_iexp_body e) name
+
+    | Annotation (_, e) ->
+      show_iexp_body e
 
     | Unknown _ -> "?"
 
@@ -367,7 +380,7 @@ end
     | Concat [] -> "\\emptybs"
     | Concat es ->
       let bodies = List.map ~f:latex_iexp es in
-      String.concat ~sep:"\\concat" bodies
+      String.concat ~sep:"\\encoder" bodies
     | Ptr _ -> assert false
     | Struct _ -> assert false
     | Array _ -> assert false
@@ -771,7 +784,7 @@ end
   (** {1 Misc} *)
   (*************************************************)
 
-  let concat es = Concat es
+  let encoder es = Concat es
 
   let range e f l = Range (e, f, l)
 
@@ -789,6 +802,8 @@ end
     | Sym (Field_offset _, []) -> false
     | Var _ -> false
     | e -> map_children {f = is_constant} e |> List.all
+
+  let is_tag = is_constant
 
   let rec is_constant_integer_expression (t : iterm) =
     match t with
@@ -954,7 +969,7 @@ end
 
   (* TODO: Consider making this part of Solver.rewrite *)
   let rec truth (e : bterm) : fact =
-    let exp_to_string = to_string in
+    let exp_to_string = dump in
     let open Sym in
     let open Op in
     let open Logical in
@@ -1010,3 +1025,109 @@ end
         [Sym (Int_cmp Cmp.Ge, [e; a]); Sym (Int_cmp Cmp.Le, [e; b])]
   end
 
+(********************************************************)
+(** {1 Function Definitions} *)
+(********************************************************)
+
+let show_fun sym def =
+  Sym.to_string sym ^ " := " ^ (to_string def)
+
+module Sym_defs = struct
+  include Sym.Map(Key)
+
+  (**
+     We represent a lambda expression with n arguments by an expression containing variables
+     (mk_arg 0) to (mk_arg (n - 1)).
+  *)
+  type 'a def = 'a exp
+
+  let to_string t =
+    to_list t
+    |> List.map ~f:(fun (sym, def) -> show_fun sym def)
+    |> String.concat ~sep:"\n"
+
+  let to_string_opt t =
+    if is_empty t then None
+    else Some (to_string t)
+
+  let print t =
+    prerr_endline "";
+    prerr_endline (to_string t);
+    prerr_endline ""
+end
+
+let mk_arg id = ("arg" ^ string_of_int id)
+
+let mk_arg_len id =
+  Len (Var (mk_arg id, Kind.Bitstring))
+
+let mk_formal_args n = List.map ~f:mk_arg (0 -- (n - 1))
+
+let is_def_annotation (type a) (ann : a annotation) =
+  match ann with
+  | Parser _ -> true
+  | Pi_parser _ -> true
+  | Encoder _ -> true
+  | Arith _ -> true
+  | Auxiliary _ -> true
+  | Type_hint _ -> false
+  | Name _ -> false
+
+let rec parsers : type a. a t -> bitstring Sym_defs.t = function
+  | Annotation (Parser def, Sym (Fun _ as f, es)) ->
+    Sym_defs.disjoint_union
+      (Sym_defs.singleton f def :: List.map es ~f:parsers)
+  | e ->
+    map_children { f = parsers } e
+    |> Sym_defs.disjoint_union
+
+let rec encoders : type a. a t -> bitstring Sym_defs.t = function
+  | Annotation (Encoder def, Sym (Fun _ as f, es)) ->
+    Sym_defs.disjoint_union
+      (Sym_defs.singleton f def :: List.map es ~f:encoders)
+  | e ->
+    map_children { f = encoders } e
+    |> Sym_defs.disjoint_union
+
+let rec arith : type a. a t -> bitstring Sym_defs.t = function
+  | Annotation (Arith def, Sym (Fun _ as f, es)) ->
+    Sym_defs.disjoint_union
+      (Sym_defs.singleton f def :: List.map es ~f:arith)
+  | e ->
+    map_children { f = encoders } e
+    |> Sym_defs.disjoint_union
+
+let rec auxiliary : type a. a t -> bool Sym_defs.t = function
+  | Annotation (Auxiliary def, Sym (Fun _ as f, es)) ->
+    Sym_defs.disjoint_union
+      (Sym_defs.singleton f def :: List.map es ~f:auxiliary)
+  | e ->
+    map_children { f = auxiliary } e
+    |> Sym_defs.disjoint_union
+
+let defs_to_string (type a) (t : a t) =
+  [ Sym_defs.to_string_opt (parsers t)
+  ; Sym_defs.to_string_opt (encoders t)
+  ; Sym_defs.to_string_opt (auxiliary t)
+  ; Sym_defs.to_string_opt (arith t)
+  ]
+  |> String.concat_some ~sep:"\n"
+
+(* CR-soon: make an exhaustive annotation list. *)
+let rec expand_defs : type a. a t -> a t = function
+  | Annotation (Parser def, Sym (_, es)) ->
+    let xs = mk_formal_args (List.length es) in
+    subst xs es def
+  | Annotation (Pi_parser (def, _), Sym (_, es)) ->
+    let xs = mk_formal_args (List.length es) in
+    subst xs es def
+  | Annotation (Encoder def, Sym (_, es)) ->
+    let xs = mk_formal_args (List.length es) in
+    subst xs es def
+  | Annotation (Arith def, Sym (_, es)) ->
+    let xs = mk_formal_args (List.length es) in
+    subst xs es def
+  | Annotation (Auxiliary def, Sym (_, es)) ->
+    let xs = mk_formal_args (List.length es) in
+    subst xs es def
+  | e -> descend { descend = expand_defs } e

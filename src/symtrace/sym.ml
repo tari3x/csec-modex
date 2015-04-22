@@ -272,7 +272,7 @@ let is_infix (type a) (type b) (t : (a, b) t) =
 
   | _ -> false
 
-let to_string_hum (type a) (type b) ?(show_types = true) (t : (a, b) t) =
+let to_string_hum (type a) (type b) ?(show_types = true) (t: (a, b) t) =
   match t with
   | Op (op, t) ->
     if show_types
@@ -507,6 +507,7 @@ let never_fails (type a) (type b) (t : (a, b) t) =
 
   | Op _ -> false
   | Ztp -> false
+
   | Fun _ -> false
 
   | Int_cmp _ -> false
@@ -580,16 +581,51 @@ let unprime = function
     Option.map (String.chop_suffix s ~suffix:"_prime") ~f:(fun s -> Fun (s, meta))
   | _ -> None
 
+(*************************************************)
+(** {1 Helpers} *)
+(*************************************************)
+
+let encoder_id = ref 0
+let parser_id = ref 0
+let arith_id = ref 0
+let auxiliary_id = ref 0
+
+let make sym ~arity =
+  Fun (sym, (arity, Kind.Bitstring))
+
+let make_bool sym ~arity =
+  Fun (sym, (arity, Kind.Bool))
+
+let make_const sym =
+  make sym ~arity:0
+
+let new_encoder ~arity =
+  make (sprintf "conc%d" (increment encoder_id)) ~arity
+
+let new_parser () =
+  make (sprintf "parse%d" (increment parser_id)) ~arity:1
+
+let new_auxiliary ~arity =
+  make_bool (sprintf "cond%d" (increment auxiliary_id)) ~arity
+
+let new_arith ~arity =
+  make (sprintf "arithmetic%d" (increment arith_id)) ~arity
+
+(*************************************************)
+(** {1 Maps} *)
+(*************************************************)
+
+let kind (type a) (type b) (sym : (a, b) sym) : b Kind.t =
+  match sym with
+  | Fun (_, (_, kind)) -> kind
+    (* Can be added if necessary. *)
+  | sym -> fail "No kind for %s" (to_string sym)
+
 module Key = struct
   type 'a t = (bitstring, 'a) sym
   module Kind = Kind
 
-  let kind (type a) (sym : a t) : a Kind.t =
-    match sym with
-    | Fun (_, (_, kind)) -> kind
-      (* Can be added if necessary. *)
-    | sym -> fail "No kind for %s" (to_string sym)
-
+  let kind = kind
   let to_string = to_string
 end
 
@@ -646,12 +682,19 @@ module Map (Value : GADT) = struct
   let values t =
     to_list t |> List.map ~f:snd
 
-    (* Looks like with this implementation empty needs to take unit. *)
+  (* Looks like with this implementation empty needs to take unit. *)
   let empty () = of_list []
 
-    (* The downside of this implementation is that we can't prove that Ops in
-       two maps are the same, so we need to rebuild the map from scratch. That's
-       where Core would be good *)
+  let is_empty (type a) t =
+    let module M = (val t : Map with type kind = a) in
+    M.Ops.is_empty M.value
+
+  let singleton key value =
+    add key value (empty ())
+
+  (* The downside of this implementation is that we can't prove that Ops in two
+     maps are the same, so we need to rebuild the map from scratch. That's where
+     Core would be good *)
   let disjoint_union (type a) ts : a t =
     match ts with
     | [] -> empty ()
@@ -667,6 +710,25 @@ module Map (Value : GADT) = struct
             then fail "Map.disjoint_union: maps are not disjoint, both contain %s"
               (to_string sym)
             else Ops.add sym value map)
+      end)
+
+  let compatible_union (type a) ts : a t =
+    match ts with
+    | [] -> empty ()
+    | t :: _ as ts ->
+      let module M = (val t : Map with type kind = a) in
+      let bindings = List.map ts ~f:to_list |> List.concat in
+      (module struct
+        type kind = a
+        module Ops = M.Ops
+        let value =
+          List.fold_left bindings ~init:Ops.empty ~f:(fun map (sym, value) ->
+            match Ops.maybe_find sym map with
+            | None -> Ops.add sym value map
+            | Some value' ->
+              if value = value' then Ops.add sym value map
+              else fail "Map.compatible_union: key %s contains incompatible values"
+                (to_string sym))
       end)
 
   let iter (type a) ~f t =

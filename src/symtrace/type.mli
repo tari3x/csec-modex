@@ -82,3 +82,7 @@ val union : 'a t -> 'a t -> 'a t
 val strip_name : 'a t -> 'a t
 
 val has_fixed_length : bitstring t -> bool
+val is_bounded : bitstring t -> bool
+val is_defined : bitstring t -> bool
+
+val equal : _ t -> _ t -> bool

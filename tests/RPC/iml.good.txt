@@ -14,71 +14,79 @@ assume Defined(keyAB) in
 (* assume_intype[47, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(keyAB) >= 0) /\ (len(keyAB) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* fromString[36, // ProgrammingInterface.c:94] *)
-ifaux ¬(len(keyAB) > 2147483647) then 
+if ¬(len(keyAB) > 2147483647) then 
 (* assume_intype[58, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(request) in
 (* assume_intype[59, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(request) >= 0) /\ (len(request) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* fromString[48, // ProgrammingInterface.c:94] *)
-ifaux ¬(len(request) > 2147483647) then 
+if ¬(len(request) > 2147483647) then 
 (* main[1, // RPC.c:144] *)
-ifaux ¬(len(request) > 2000) then 
+if ¬(len(request) > 2000) then 
 (* assume_len[72, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(Ztp(argv1{0, 6}), Ztp("client"))) = 4 in
 (* main[1, // RPC.c:153] *)
-ifaux Ztp(argv1{0, 6}) = Ztp("client") then 
+if Ztp(argv1{0, 6}) = Ztp("client") then 
 event client_begin(request);
 in(c, var1);
-ifaux len(var1) = 112 then 
+assume Defined(var1) in
+(* assume_len[83, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var1) = 112 in
 let BIO_new_connect_result1 = var1 (* named BIO_new_connect_result1 *) in
 in(c, var2);
-ifaux len(var2) = 8 then 
+assume Defined(var2) in
+(* assume_len[87, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var2) = 8 in
 let BIO_ctrl_result1 = var2 (* named BIO_ctrl_result1 *) in
 (* socket_connect[78, // RPC_net.c:53] *)
-ifaux ¬((BIO_ctrl_result1)_[s,8] <= 0) then 
+if ¬((BIO_ctrl_result1)_[s,8] <= 0) then 
 let msg1 = (7)^[u,8]|"|"|"Request"|request (* named msg1 *) in
 let key1 = keyAB (* named key1 *) in
 let hash1 = HMAC("sha1", msg1, key1) (* named hash1 *) in
-(* assume_len[155, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[157, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(hash1) = 20 in
 let msg2 = (((len(request))^[u,8] + (20)^[u,8]) + (8)^[u,8]) + (1)^[u,8] (* named msg2 *) in
 out(c, msg2);
 let msg3 = (len(request))^[u,8]|"|"|request|hash1 (* named msg3 *) in
 out(c, msg3);
 in(c, var3);
-ifaux len(var3) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
+assume Defined(var3) in
+(* assume_len[197, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var3) = 8 in
 let msg4 = var3 (* named msg4 *) in
-(* recv[190, // RPC_net.c:140] *)
-ifaux ¬((msg4)_[u,8] > 2147483647) then 
-(* recv[190, // RPC_net.c:153] *)
-ifaux 0 < (msg4)_[u,8] then 
+(* recv[192, // RPC_net.c:140] *)
+if ¬((msg4)_[u,8] > 2147483647) then 
+(* recv[192, // RPC_net.c:153] *)
+if 0 < (msg4)_[u,8] then 
 in(c, var4);
-ifaux len(var4) = (msg4 - (0)^[u,8])_[u,8] then 
+assume Defined(var4) in
+(* assume_len[203, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var4) = (msg4)_[u,8] in
 let msg5 = var4 (* named msg5 *) in
-(* iconcat[201, // ProgrammingInterface.c:184] *)
-ifaux ¬((msg4)_[u,8] < (8 + 1)) then 
-(* iconcat[201, // ProgrammingInterface.c:196] *)
-ifaux ¬((msg5{0, 8})_[u,8] > ((msg4)_[u,8] - (8 + 1))) then 
-(* assume_intype[208, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* iconcat[205, // ProgrammingInterface.c:184] *)
+if ¬((msg4)_[u,8] < (8 + 1)) then 
+(* iconcat[205, // ProgrammingInterface.c:196] *)
+if ¬((msg5{0, 8})_[u,8] > ((msg4)_[u,8] - (8 + 1))) then 
+(* assume_intype[212, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg5) >= (8 + 1)) /\ (8 >= 0) /\ (1 >= 0)) /\ True() in
-(* assume_len[209, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[213, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg5{8, 1}, "|")) = 4 in
-(* iconcat[201, // ProgrammingInterface.c:196] *)
-ifaux msg5{8, 1} = "|" then 
+(* iconcat[205, // ProgrammingInterface.c:196] *)
+if msg5{8, 1} = "|" then 
 (* client[74, // RPC.c:45] *)
-ifaux ¬((msg5{0, 8})_[u,8] > 2000) then 
+if ¬((msg5{0, 8})_[u,8] > 2000) then 
 let msg6 = (8)^[u,8]|"|"|"Response"|(len(request))^[u,8]|"|"|request|msg5{8 + 1, (msg5{0, 8})_[u,8]} (* named msg6 *) in
 let key2 = keyAB (* named key2 *) in
 let hash2 = HMAC("sha1", msg6, key2) (* named hash2 *) in
-(* assume_len[324, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[328, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(hash2) = 20 in
-(* hmacsha1Verify[308, // ProgrammingInterface.c:307] *)
-ifaux ((msg4)_[u,8] - (8 + 1 + (msg5{0, 8})_[u,8])) = 20 then 
-(* assume_intype[329, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* hmacsha1Verify[312, // ProgrammingInterface.c:307] *)
+if ((msg4)_[u,8] - (8 + 1 + (msg5{0, 8})_[u,8])) = 20 then 
+(* assume_intype[333, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg5) >= len(msg5)) /\ ((8 + 1 + (msg5{0, 8})_[u,8]) >= 0) /\ ((len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])) >= 0)) /\ Defined(hash2) in
-(* assume_len[330, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[334, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg5{8 + 1 + (msg5{0, 8})_[u,8], len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])}, hash2)) = 4 in
-(* hmacsha1Verify[308, // ProgrammingInterface.c:308] *)
+(* hmacsha1Verify[312, // ProgrammingInterface.c:308] *)
 ifeq msg5{8 + 1 + (msg5{0, 8})_[u,8], len(msg5) - (8 + 1 + (msg5{0, 8})_[u,8])} = hash2 then 
 event client_accept(request, msg5{8 + 1, (msg5{0, 8})_[u,8]});
 
@@ -98,90 +106,106 @@ assume Defined(keyAB) in
 (* assume_intype[47, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(keyAB) >= 0) /\ (len(keyAB) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* fromString[36, // ProgrammingInterface.c:94] *)
-ifaux ¬(len(keyAB) > 2147483647) then 
+if ¬(len(keyAB) > 2147483647) then 
 (* assume_intype[58, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(request) in
 (* assume_intype[59, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(request) >= 0) /\ (len(request) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* fromString[48, // ProgrammingInterface.c:94] *)
-ifaux ¬(len(request) > 2147483647) then 
+if ¬(len(request) > 2147483647) then 
 (* main[1, // RPC.c:144] *)
-ifaux ¬(len(request) > 2000) then 
+if ¬(len(request) > 2000) then 
 (* assume_len[72, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(Ztp(argv1{0, 6}), Ztp("client"))) = 4 in
 (* main[1, // RPC.c:153] *)
-ifaux ¬(Ztp(argv1{0, 6}) = Ztp("client")) then 
+if ¬(Ztp(argv1{0, 6}) = Ztp("client")) then 
 in(c, var5);
-ifaux len(var5) = 112 then 
+assume Defined(var5) in
+(* assume_len[80, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var5) = 112 in
 let BIO_new_accept_result1 = var5 (* named BIO_new_accept_result1 *) in
 in(c, var6);
-ifaux len(var6) = 8 then 
+assume Defined(var6) in
+(* assume_len[84, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var6) = 8 in
 let BIO_ctrl_result2 = var6 (* named BIO_ctrl_result2 *) in
 (* socket_listen[75, // RPC_net.c:23] *)
-ifaux ¬((BIO_ctrl_result2)_[s,8] <= 0) then 
+if ¬((BIO_ctrl_result2)_[s,8] <= 0) then 
 in(c, var7);
-ifaux len(var7) = 8 then 
+assume Defined(var7) in
+(* assume_len[88, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var7) = 8 in
 let BIO_ctrl_result3 = var7 (* named BIO_ctrl_result3 *) in
 (* socket_listen[75, // RPC_net.c:30] *)
-ifaux ¬((BIO_ctrl_result3)_[s,8] <= 0) then 
+if ¬((BIO_ctrl_result3)_[s,8] <= 0) then 
 in(c, var8);
-ifaux len(var8) = 112 then 
+assume Defined(var8) in
+(* assume_len[94, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var8) = 112 in
 let BIO_pop_result1 = var8 (* named BIO_pop_result1 *) in
 in(c, var9);
-ifaux len(var9) = 4 then 
+assume Defined(var9) in
+(* assume_len[98, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var9) = 4 in
 let BIO_free_result1 = var9 (* named BIO_free_result1 *) in
 in(c, var10);
-ifaux len(var10) = ((8)^[u,8] - (0)^[u,8])_[u,8] then 
+assume Defined(var10) in
+(* assume_len[105, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var10) = 8 in
 let msg7 = var10 (* named msg7 *) in
-(* recv[95, // RPC_net.c:140] *)
-ifaux ¬((msg7)_[u,8] > 2147483647) then 
-(* recv[95, // RPC_net.c:153] *)
-ifaux 0 < (msg7)_[u,8] then 
+(* recv[100, // RPC_net.c:140] *)
+if ¬((msg7)_[u,8] > 2147483647) then 
+(* recv[100, // RPC_net.c:153] *)
+if 0 < (msg7)_[u,8] then 
 in(c, var11);
-ifaux len(var11) = (msg7 - (0)^[u,8])_[u,8] then 
+assume Defined(var11) in
+(* assume_len[111, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var11) = (msg7)_[u,8] in
 let msg8 = var11 (* named msg8 *) in
-(* iconcat[106, // ProgrammingInterface.c:184] *)
-ifaux ¬((msg7)_[u,8] < (8 + 1)) then 
-(* iconcat[106, // ProgrammingInterface.c:196] *)
-ifaux ¬((msg8{0, 8})_[u,8] > ((msg7)_[u,8] - (8 + 1))) then 
-(* assume_intype[113, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* iconcat[113, // ProgrammingInterface.c:184] *)
+if ¬((msg7)_[u,8] < (8 + 1)) then 
+(* iconcat[113, // ProgrammingInterface.c:196] *)
+if ¬((msg8{0, 8})_[u,8] > ((msg7)_[u,8] - (8 + 1))) then 
+(* assume_intype[120, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg8) >= (8 + 1)) /\ (8 >= 0) /\ (1 >= 0)) /\ True() in
-(* assume_len[114, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[121, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg8{8, 1}, "|")) = 4 in
-(* iconcat[106, // ProgrammingInterface.c:196] *)
-ifaux msg8{8, 1} = "|" then 
+(* iconcat[113, // ProgrammingInterface.c:196] *)
+if msg8{8, 1} = "|" then 
 (* server[74, // RPC.c:80] *)
-ifaux ¬((msg8{0, 8})_[u,8] > 2000) then 
+if ¬((msg8{0, 8})_[u,8] > 2000) then 
 let msg9 = (7)^[u,8]|"|"|"Request"|msg8{8 + 1, (msg8{0, 8})_[u,8]} (* named msg9 *) in
 let key3 = keyAB (* named key3 *) in
 let hash3 = HMAC("sha1", msg9, key3) (* named hash3 *) in
-(* assume_len[203, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[210, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(hash3) = 20 in
-(* hmacsha1Verify[187, // ProgrammingInterface.c:307] *)
-ifaux ((msg7)_[u,8] - (8 + 1 + (msg8{0, 8})_[u,8])) = 20 then 
-(* assume_intype[208, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* hmacsha1Verify[194, // ProgrammingInterface.c:307] *)
+if ((msg7)_[u,8] - (8 + 1 + (msg8{0, 8})_[u,8])) = 20 then 
+(* assume_intype[215, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume ((len(msg8) >= len(msg8)) /\ ((8 + 1 + (msg8{0, 8})_[u,8]) >= 0) /\ ((len(msg8) - (8 + 1 + (msg8{0, 8})_[u,8])) >= 0)) /\ Defined(hash3) in
-(* assume_len[209, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[216, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(Cmp(msg8{8 + 1 + (msg8{0, 8})_[u,8], len(msg8) - (8 + 1 + (msg8{0, 8})_[u,8])}, hash3)) = 4 in
-(* hmacsha1Verify[187, // ProgrammingInterface.c:308] *)
+(* hmacsha1Verify[194, // ProgrammingInterface.c:308] *)
 ifeq msg8{8 + 1 + (msg8{0, 8})_[u,8], len(msg8) - (8 + 1 + (msg8{0, 8})_[u,8])} = hash3 then 
-(* assume_intype[274, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[281, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(response) in
-(* assume_intype[275, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[282, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(response) >= 0) /\ (len(response) <= ((256 * 256 * 256 * 256 * 256 * 256 * 256 * 256) - 1)) in
 (* server[74, // RPC.c:100] *)
-ifaux ¬(len(response) > 2000) then 
+if ¬(len(response) > 2000) then 
 event server_reply(msg8{8 + 1, (msg8{0, 8})_[u,8]}, response);
 let msg10 = (8)^[u,8]|"|"|"Response"|msg8{0, 8}|"|"|msg8{8 + 1, (msg8{0, 8})_[u,8]}|response (* named msg10 *) in
 let key4 = keyAB (* named key4 *) in
 let hash4 = HMAC("sha1", msg10, key4) (* named hash4 *) in
-(* assume_len[374, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[381, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
 assume len(hash4) = 20 in
 let msg11 = (((len(response))^[u,8] + (20)^[u,8]) + (8)^[u,8]) + (1)^[u,8] (* named msg11 *) in
 out(c, msg11);
 let msg12 = (len(response))^[u,8]|"|"|response|hash4 (* named msg12 *) in
 out(c, msg12);
 in(c, var12);
-ifaux len(var12) = 1 then 
+assume Defined(var12) in
+(* assume_len[419, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+assume len(var12) = 1 in
 let msg13 = var12 (* named msg13 *) in
 

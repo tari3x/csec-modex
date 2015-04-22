@@ -98,8 +98,17 @@ type 'a t =
 | Annotation : 'a annotation * 'a t -> 'a t
 
 and 'a annotation =
-| Type_hint : 'a imltype -> 'a annotation
+| Type_hint of 'a imltype
 | Name of string
+(* The following annotations contain the definition of the corresponding
+   symbol. *)
+| Parser : bitstring t -> bitstring annotation
+(* (def, c) is a parser that fails if the argument is not in the range of the
+   encoder c. Only used in pvtrace. *)
+| Pi_parser : (bitstring t * Sym.bfun) -> bitstring annotation
+| Encoder : bitstring t -> bitstring annotation
+| Auxiliary : bool t -> bool annotation
+| Arith : bitstring t -> bitstring annotation
 
   (** Not the same as lhost in CIL *)
 and base =
@@ -233,19 +242,20 @@ val arith_simplify : iterm -> iterm
 (*************************************************)
 
 val var : var -> bterm
-val concat : bterm list -> bterm
+val encoder : bterm list -> bterm
 val range : bterm -> iterm -> iterm -> bterm
 val int : int -> int t
 val string : string -> bterm
 
 val zero_byte : Int_type.Signedness.t -> bterm
 
-(* CR-someday: this is not a full abstraction since [Transformations.normal_form]
-   explicitly enumerates the caess of this function. However, changing this function
-   will cause [normal_form] to fail, so at least we will notice. Think of some
-   refactoring to make this better. *)
+(* CR-someday: this is not a full abstraction since
+   [Transformations.normal_form] explicitly enumerates the caess of this
+   function. However, changing this function will cause [normal_form] to fail,
+   so at least we will notice. Think of some refactoring to make this better. *)
 val is_cryptographic : bterm -> bool
 val is_constant : _ t -> bool
+val is_tag : bitstring t -> bool
 val is_constant_integer_expression : iterm -> bool
 val is_constant_integer_fact : fact -> bool
 val contains_sym : (_, _) Sym.t -> _ t -> bool
@@ -263,7 +273,8 @@ val len : bterm -> iterm
 
 val apply : ('a, 'b) Sym.t -> any list -> 'b t
 
-  (** Make sure all subexpressions are physically distinct. Only used in Derivation. *)
+(** Make sure all subexpressions are physically distinct. Only used in
+    Derivation. *)
 val unfold : 'a t -> 'a t
 
 (*---------------------------
@@ -309,6 +320,41 @@ module Range : sig
   val subset : t -> t -> bool
 end
 
+(********************************************************)
+(** {1 Function Definitions} *)
+(********************************************************)
+
+module Sym_defs : sig
+  include module type of Sym.Map(Key)
+
+  (** We represent a lambda expression with n arguments by an expression
+     containing variables [(mk_arg 0)] to [(mk_arg (n - 1))].  *)
+  type 'a def = 'a exp
+
+  val to_string : _ t -> string
+
+  val print : _ t -> unit
+end
+
+val mk_arg : int -> string
+
+val mk_arg_len : int -> int t
+
+(* CR-someday: it feels like this should return exp list. *)
+val mk_formal_args : int -> string list
+
+val show_fun : ('a, 'b) Sym.t -> 'b t -> string
+
+val expand_defs : 'a t -> 'a t
+
+val defs_to_string : _ t -> string option
+
+val parsers : _ t -> bitstring Sym_defs.t
+val encoders : _ t -> bitstring Sym_defs.t
+val arith : _ t -> bitstring Sym_defs.t
+val auxiliary : _ t -> bool Sym_defs.t
+
+val is_def_annotation : _ annotation -> bool
 
 (*************************************************)
 (** {1 Show} *)

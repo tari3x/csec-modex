@@ -202,7 +202,7 @@ extern long BIO_ctrl_proxy(BIO *bp , int cmd , long larg , void *parg )
   long ret = BIO_ctrl(bp, cmd, larg, parg);
   unmute();
 
-  // Let the attacker decide decide the result
+  // Let the attacker decide the result
   input("BIO_ctrl_result", sizeof(ret));
   store_buf(&ret);
 

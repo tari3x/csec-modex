@@ -8,6 +8,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+// CR: this should be 100 according to the template
+#define SIZE_KEY 3
+
+// We just add a tag saying "encrypt" in our toy crypto
+#define ENCRYPTION_OVERHEAD 7
+
 #define SIZE_NONCE 20
 #define MAX_SIZE_KEY 100
 #define MAX_SIZE_HOST 40

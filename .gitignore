@@ -71,6 +71,7 @@ mk/common.mk
 
 src/bintrace
 src/symtrace/cvtrace
+src/symtrace/pvtrace
 src/symtrace/imltrace
 src/symtrace/run_tests
 src/symtrace/derivation

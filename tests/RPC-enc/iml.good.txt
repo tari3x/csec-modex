@@ -28,99 +28,104 @@ assume serverID = serverID in
 (* append_zero[26, // /home/avatar/docs/verification/svn/csec-modex/proxies/common.c:127] *)
 assume port_ascii = port_ascii in
 (* parseargs[32, // client.c:147] *)
-ifaux ¬(len(clientID) > 1024) then 
+if ¬(len(clientID) > 1024) then 
 (* parseargs[32, // client.c:147] *)
-ifaux ¬(len(serverID) > 1024) then 
+if ¬(len(serverID) > 1024) then 
 (* parseargs[32, // client.c:153] *)
-ifaux ¬(len(clientID) = 0) then 
+if ¬(len(clientID) = 0) then 
 (* parseargs[32, // client.c:172] *)
-ifaux ¬(len(serverID) = 0) then 
+if ¬(len(serverID) = 0) then 
 (* assume_intype[54, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(port) in
-(* assume_len[55, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[55, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
 assume len(port) = 4 in
 (* assume_intype[59, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(request) in
 (* assume_intype[60, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(request) >= 0) /\ (len(request) <= ((256 * 256 * 256 * 256) - 1)) in
-(* get_request_proxy[56, // lib_proxy.c:173] *)
-ifaux ¬(len(request) > 1024) then 
-(* get_request_proxy[56, // lib_proxy.c:173] *)
-ifaux ¬(len(request) < 1024) then 
+(* get_request_proxy[56, // lib_proxy.c:171] *)
+if ¬(len(request) > 1024) then 
+(* get_request_proxy[56, // lib_proxy.c:171] *)
+if ¬(len(request) < 1024) then 
 out(c, serverID);
 out(c, port);
 in(c, var1);
-ifaux len(var1) = 4 then 
+assume Defined(var1) in
+(* assume_len[78, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var1) = 4 in
 let net_connect_result1 = var1 (* named net_connect_result1 *) in
 (* socket_connect[61, // net.c:45] *)
-ifaux ¬((net_connect_result1)_[s,4] <> 0) then 
+if ¬((net_connect_result1)_[s,4] <> 0) then 
 (* main[1, // client.c:260] *)
-ifaux ¬(Truth_of_bs(net_connect_result1)) then 
-(* assume_intype[87, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(xClient) in
+if ¬(Truth_of_bs(net_connect_result1)) then 
 (* assume_intype[88, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume Defined(xClient) in
+(* assume_intype[89, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(xClient) >= 0) /\ (len(xClient) <= ((256 * 256 * 256 * 256) - 1)) in
-(* get_shared_key_proxy[79, // lib_proxy.c:108] *)
-ifaux ¬(len(clientID) <> len(xClient)) then 
-(* assume_intype[92, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* get_shared_key_proxy[80, // lib_proxy.c:106] *)
+if ¬(len(clientID) <> len(xClient)) then 
+(* assume_intype[93, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(clientID) /\ Defined(xClient) in
-(* assume_len[93, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[94, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
 assume len(Cmp(clientID, xClient)) = 4 in
-(* get_shared_key_proxy[79, // lib_proxy.c:108] *)
+(* get_shared_key_proxy[80, // lib_proxy.c:106] *)
 ifeq clientID = xClient then 
 let client1 = clientID (* named client1 *) in
 let server1 = serverID (* named server1 *) in
-(* assume_intype[97, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[98, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(lookup(client1, server1, db)) in
 let kAB1 = lookup(client1, server1, db) (* named kAB1 *) in
-(* assume_intype[99, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[100, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(kAB1) >= 0) /\ (len(kAB1) <= ((256 * 256 * 256 * 256) - 1)) in
 new var2: fixed_16_keyseed;
 let kS_seed1 = var2 (* named kS_seed1 *) in
 let kS1 = kgen(kS_seed1) (* named kS1 *) in
-(* assume_intype[105, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[106, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(kS1) >= 0) /\ (len(kS1) <= ((256 * 256 * 256 * 256) - 1)) in
-(* mk_session_key_proxy[101, // lib_proxy.c:143] *)
-ifaux ¬(len(kS1) <> 16) then 
+(* mk_session_key_proxy[102, // lib_proxy.c:141] *)
+if ¬(len(kS1) <> 16) then 
 event client_begin(clientID, serverID, request);
 let msg1 = "p"|(len(request))^[u,4]|request|kS1 (* named msg1 *) in
 let key1 = kAB1 (* named key1 *) in
 new var3: fixed_16_seed;
 let nonce1 = var3 (* named nonce1 *) in
 let cipher1 = E(msg1, key1, nonce1) (* named cipher1 *) in
-(* assume_intype[138, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[139, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(cipher1) >= 0) /\ (len(cipher1) <= ((256 * 256 * 256 * 256) - 1)) in
-(* encrypt_proxy[133, // lib_proxy.c:47] *)
-ifaux ¬(len(cipher1) > (32 + 1 + len(kS1) + 4 + len(request))) then 
-(* send_request[112, // client.c:57] *)
-ifaux ¬(len(cipher1) = 0) then 
+(* encrypt_proxy[134, // lib_proxy.c:47] *)
+if ¬(len(cipher1) > (32 + 1 + len(kS1) + 4 + len(request))) then 
+(* send_request[113, // client.c:57] *)
+if ¬(len(cipher1) = 0) then 
 let msg2 = CastToInt((((1)^[u,8] + (4)^[u,8]) + (len(clientID))^[u,8]) + (len(cipher1))^[u,8]) (* named msg2 *) in
 out(c, msg2);
 let msg3 = "p"|(len(clientID))^[u,4]|clientID|cipher1 (* named msg3 *) in
 out(c, msg3);
 in(c, var4);
-ifaux len(var4) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
+assume Defined(var4) in
+(* assume_len[156, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var4) = 4 in
 let msg4 = var4 (* named msg4 *) in
-(* recv_response[151, // client.c:88] *)
-ifaux ¬((msg4)_[u,4] < 1056) then 
-(* recv_response[151, // client.c:88] *)
-ifaux ¬((msg4)_[u,4] > 1056) then 
+(* recv_response[152, // client.c:88] *)
+if ¬((msg4)_[u,4] < 1056) then 
+(* recv_response[152, // client.c:88] *)
+if ¬((msg4)_[u,4] > 1056) then 
 in(c, var5);
-ifaux len(var5) = (CastToInt(msg4) - (0)^[u,8])_[u,8] then 
+assume Defined(var5) in
+(* assume_len[163, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var5) = (msg4)_[u,4] in
 let msg5 = var5 (* named msg5 *) in
 let cipher2 = msg5 (* named cipher2 *) in
 let key2 = kS1 (* named key2 *) in
-let msg6 = D(cipher2, key2) (* named msg6 *) in
-let msg7 = inverse_injbot(msg6) (* named msg7 *) in
-(* assume_intype[169, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume (len(msg7) >= 0) /\ (len(msg7) <= ((256 * 256 * 256 * 256) - 1)) in
-(* decrypt_proxy[165, // lib_proxy.c:85] *)
-ifaux ¬(len(msg7) > ((msg4)_[u,4] - 32)) then 
-(* recv_response[151, // client.c:117] *)
-ifaux ¬(len(msg7) = 0) then 
-(* recv_response[151, // client.c:123] *)
-ifaux ¬(len(msg7) < 1024) then 
-event client_accept(clientID, serverID, request, msg7);
+let msg6 = inverse_injbot(D(cipher2, key2)) (* named msg6 *) in
+(* assume_intype[172, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume (len(msg6) >= 0) /\ (len(msg6) <= ((256 * 256 * 256 * 256) - 1)) in
+(* decrypt_proxy[168, // lib_proxy.c:83] *)
+if ¬(len(msg6) > ((msg4)_[u,4] - 32)) then 
+(* recv_response[152, // client.c:117] *)
+if ¬(len(msg6) = 0) then 
+(* recv_response[152, // client.c:123] *)
+if ¬(len(msg6) < 1024) then 
+event client_accept(clientID, serverID, request, msg6);
 
 let B = 
 (* main[0, <top of main>] *)
@@ -146,127 +151,136 @@ assume serverID = serverID in
 (* append_zero[16, // /home/avatar/docs/verification/svn/csec-modex/proxies/common.c:127] *)
 assume port_ascii = port_ascii in
 (* parseargs[22, // server.c:237] *)
-ifaux ¬(len(serverID) > 1024) then 
+if ¬(len(serverID) > 1024) then 
 (* parseargs[22, // server.c:243] *)
-ifaux ¬(len(serverID) >= 256) then 
+if ¬(len(serverID) >= 256) then 
 (* parseargs[22, // server.c:245] *)
-ifaux ¬(len(serverID) = 0) then 
+if ¬(len(serverID) = 0) then 
 (* assume_intype[34, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(port) in
-(* assume_len[35, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[35, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
 assume len(port) = 4 in
 (* net_bind_proxy[42, // net_proxy.c:106] *)
 new nondet1: nondet;
 (* assume_intype[43, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(socket(nondet1)) in
-(* assume_len[44, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[44, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
 assume len(socket(nondet1)) = 4 in
 out(c, serverID);
 out(c, port);
 in(c, var6);
-ifaux len(var6) = 4 then 
+assume Defined(var6) in
+(* assume_len[56, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var6) = 4 in
 let net_bind_result1 = var6 (* named net_bind_result1 *) in
 (* socket_listen[36, // net.c:21] *)
-ifaux ¬((net_bind_result1)_[s,4] <> 0) then 
-(* net_accept_proxy[57, // net_proxy.c:144] *)
+if ¬((net_bind_result1)_[s,4] <> 0) then 
+(* net_accept_proxy[58, // net_proxy.c:144] *)
 new nondet2: nondet;
-(* assume_intype[58, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[59, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(socket(nondet2)) in
-(* assume_len[59, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
+(* assume_len[60, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
 assume len(socket(nondet2)) = 4 in
 in(c, var7);
-ifaux len(var7) = 1024 then 
+assume Defined(var7) in
+(* assume_len[63, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var7) = 1024 in
 let client_ip1 = var7 (* named client_ip1 *) in
 in(c, var8);
-ifaux len(var8) = 4 then 
+assume Defined(var8) in
+(* assume_len[66, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var8) = 4 in
 let net_accept_result1 = var8 (* named net_accept_result1 *) in
 (* socket_listen[36, // net.c:26] *)
-ifaux ¬((net_accept_result1)_[s,4] <> 0) then 
+if ¬((net_accept_result1)_[s,4] <> 0) then 
 in(c, var9);
-ifaux len(var9) = ((4)^[u,8] - (0)^[u,8])_[u,8] then 
-let msg8 = var9 (* named msg8 *) in
-(* recv_request[66, // server.c:25] *)
-ifaux ¬((msg8)_[u,4] < (1040 + 4 + 1 + 32 + 4 + 1)) then 
-(* recv_request[66, // server.c:25] *)
-ifaux ¬((msg8)_[u,4] > (1040 + 4 + 1 + 32 + 1024 + 4 + 1)) then 
+assume Defined(var9) in
+(* assume_len[73, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var9) = 4 in
+let msg7 = var9 (* named msg7 *) in
+(* recv_request[69, // server.c:25] *)
+if ¬((msg7)_[u,4] < (1040 + 4 + 1 + 32 + 4 + 1)) then 
+(* recv_request[69, // server.c:25] *)
+if ¬((msg7)_[u,4] > (1040 + 4 + 1 + 32 + 1024 + 4 + 1)) then 
 in(c, var10);
-ifaux len(var10) = (CastToInt(msg8) - (0)^[u,8])_[u,8] then 
-let msg9 = var10 (* named msg9 *) in
-(* assume_intype[80, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume True() /\ ((len(msg9) >= 1) /\ (0 >= 0) /\ (1 >= 0)) in
-(* assume_len[81, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(Cmp("p", msg9{0, 1})) = 4 in
-(* recv_request[66, // server.c:34] *)
-ifaux "p" = msg9{0, 1} then 
-(* recv_request[66, // server.c:44] *)
-ifaux ¬((msg9{1, 4})_[u,4] > 1024) then 
-(* recv_request[66, // server.c:69] *)
-ifaux ¬(((msg8)_[u,4] - (1 + 4 + (msg9{1, 4})_[u,4])) > (1040 + 4 + 1 + 32)) then 
-(* assume_intype[95, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume Defined(xClient) in
-(* assume_intype[96, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume (len(xClient) >= 0) /\ (len(xClient) <= ((256 * 256 * 256 * 256) - 1)) in
-(* get_shared_key_proxy[87, // lib_proxy.c:108] *)
-ifaux ¬((msg9{1, 4})_[u,4] <> len(xClient)) then 
+assume Defined(var10) in
+(* assume_len[80, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(var10) = (msg7)_[u,4] in
+let msg8 = var10 (* named msg8 *) in
+(* assume_intype[85, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume True() /\ ((len(msg8) >= 1) /\ (0 >= 0) /\ (1 >= 0)) in
+(* assume_len[86, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(Cmp("p", msg8{0, 1})) = 4 in
+(* recv_request[69, // server.c:34] *)
+if "p" = msg8{0, 1} then 
+(* recv_request[69, // server.c:44] *)
+if ¬((msg8{1, 4})_[u,4] > 1024) then 
+(* recv_request[69, // server.c:69] *)
+if ¬(((msg7)_[u,4] - (1 + 4 + (msg8{1, 4})_[u,4])) > (1040 + 4 + 1 + 32)) then 
 (* assume_intype[100, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume ((len(msg9) >= (1 + 4 + (msg9{1, 4})_[u,4])) /\ ((1 + 4) >= 0) /\ ((msg9{1, 4})_[u,4] >= 0)) /\ Defined(xClient) in
-(* assume_len[101, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(Cmp(msg9{1 + 4, (msg9{1, 4})_[u,4]}, xClient)) = 4 in
-(* get_shared_key_proxy[87, // lib_proxy.c:108] *)
-ifeq msg9{1 + 4, (msg9{1, 4})_[u,4]} = xClient then 
-let client2 = msg9{1 + 4, (msg9{1, 4})_[u,4]} (* named client2 *) in
-let server2 = serverID (* named server2 *) in
+assume Defined(xClient) in
+(* assume_intype[101, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume (len(xClient) >= 0) /\ (len(xClient) <= ((256 * 256 * 256 * 256) - 1)) in
+(* get_shared_key_proxy[92, // lib_proxy.c:106] *)
+if ¬((msg8{1, 4})_[u,4] <> len(xClient)) then 
 (* assume_intype[105, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume ((len(msg8) >= (1 + 4 + (msg8{1, 4})_[u,4])) /\ ((1 + 4) >= 0) /\ ((msg8{1, 4})_[u,4] >= 0)) /\ Defined(xClient) in
+(* assume_len[106, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(Cmp(msg8{1 + 4, (msg8{1, 4})_[u,4]}, xClient)) = 4 in
+(* get_shared_key_proxy[92, // lib_proxy.c:106] *)
+ifeq msg8{1 + 4, (msg8{1, 4})_[u,4]} = xClient then 
+let client2 = msg8{1 + 4, (msg8{1, 4})_[u,4]} (* named client2 *) in
+let server2 = serverID (* named server2 *) in
+(* assume_intype[110, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(lookup(client2, server2, db)) in
 let kAB2 = lookup(client2, server2, db) (* named kAB2 *) in
-(* assume_intype[107, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[112, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(kAB2) >= 0) /\ (len(kAB2) <= ((256 * 256 * 256 * 256) - 1)) in
-let cipher3 = msg9{1 + 4 + (msg9{1, 4})_[u,4], len(msg9) - (1 + 4 + (msg9{1, 4})_[u,4])} (* named cipher3 *) in
+let cipher3 = msg8{1 + 4 + (msg8{1, 4})_[u,4], len(msg8) - (1 + 4 + (msg8{1, 4})_[u,4])} (* named cipher3 *) in
 let key3 = kAB2 (* named key3 *) in
-let msg10 = D(cipher3, key3) (* named msg10 *) in
-let msg11 = inverse_injbot(msg10) (* named msg11 *) in
-(* assume_intype[116, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume (len(msg11) >= 0) /\ (len(msg11) <= ((256 * 256 * 256 * 256) - 1)) in
-(* decrypt_proxy[112, // lib_proxy.c:85] *)
-ifaux ¬(len(msg11) > ((msg8)_[u,4] - (1 + 4 + (msg9{1, 4})_[u,4] + 32))) then 
-(* recv_request[66, // server.c:101] *)
-ifaux ¬(len(msg11) < (1 + 4)) then 
-(* recv_request[66, // server.c:111] *)
-ifaux ¬((msg11{1, 4})_[u,4] > 1024) then 
-(* recv_request[66, // server.c:111] *)
-ifaux ¬((msg11{1, 4})_[u,4] < 1024) then 
-(* recv_request[66, // server.c:111] *)
-ifaux ¬(len(msg11) <= (1 + 4 + (msg11{1, 4})_[u,4])) then 
-(* assume_intype[122, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
-assume True() /\ ((len(msg11) >= 1) /\ (0 >= 0) /\ (1 >= 0)) in
-(* assume_len[123, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:46] *)
-assume len(Cmp("p", msg11{0, 1})) = 4 in
-(* recv_request[66, // server.c:121] *)
-ifaux "p" = msg11{0, 1} then 
-(* recv_request[66, // server.c:143] *)
-ifaux ¬((len(msg11) - (1 + 4 + (msg11{1, 4})_[u,4])) <> 16) then 
-(* assume_intype[139, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+let msg9 = inverse_injbot(D(cipher3, key3)) (* named msg9 *) in
+(* assume_intype[121, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume (len(msg9) >= 0) /\ (len(msg9) <= ((256 * 256 * 256 * 256) - 1)) in
+(* decrypt_proxy[117, // lib_proxy.c:83] *)
+if ¬(len(msg9) > ((msg7)_[u,4] - (1 + 4 + (msg8{1, 4})_[u,4] + 32))) then 
+(* recv_request[69, // server.c:101] *)
+if ¬(len(msg9) < (1 + 4)) then 
+(* recv_request[69, // server.c:111] *)
+if ¬((msg9{1, 4})_[u,4] > 1024) then 
+(* recv_request[69, // server.c:111] *)
+if ¬((msg9{1, 4})_[u,4] < 1024) then 
+(* recv_request[69, // server.c:111] *)
+if ¬(len(msg9) <= (1 + 4 + (msg9{1, 4})_[u,4])) then 
+(* assume_intype[127, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+assume True() /\ ((len(msg9) >= 1) /\ (0 >= 0) /\ (1 >= 0)) in
+(* assume_len[128, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:49] *)
+assume len(Cmp("p", msg9{0, 1})) = 4 in
+(* recv_request[69, // server.c:121] *)
+if "p" = msg9{0, 1} then 
+(* recv_request[69, // server.c:143] *)
+if ¬((len(msg9) - (1 + 4 + (msg9{1, 4})_[u,4])) <> 16) then 
+(* assume_intype[144, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume Defined(response) in
-(* assume_intype[140, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+(* assume_intype[145, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(response) >= 0) /\ (len(response) <= ((256 * 256 * 256 * 256) - 1)) in
-(* get_response_proxy[136, // lib_proxy.c:191] *)
-ifaux ¬(len(response) > 1024) then 
-(* get_response_proxy[136, // lib_proxy.c:191] *)
-ifaux ¬(len(response) < 1024) then 
-event server_reply(msg9{1 + 4, (msg9{1, 4})_[u,4]}, serverID, msg11{1 + 4, (msg11{1, 4})_[u,4]}, response);
-let msg12 = response (* named msg12 *) in
-let key4 = msg11{1 + 4 + (msg11{1, 4})_[u,4], len(msg11) - (1 + 4 + (msg11{1, 4})_[u,4])} (* named key4 *) in
+(* get_response_proxy[141, // lib_proxy.c:189] *)
+if ¬(len(response) > 1024) then 
+(* get_response_proxy[141, // lib_proxy.c:189] *)
+if ¬(len(response) < 1024) then 
+event server_reply(msg8{1 + 4, (msg8{1, 4})_[u,4]}, serverID, msg9{1 + 4, (msg9{1, 4})_[u,4]}, response);
+let msg10 = response (* named msg10 *) in
+let key4 = msg9{1 + 4 + (msg9{1, 4})_[u,4], len(msg9) - (1 + 4 + (msg9{1, 4})_[u,4])} (* named key4 *) in
 new var11: fixed_16_seed;
 let nonce2 = var11 (* named nonce2 *) in
-let cipher4 = E(msg12, key4, nonce2) (* named cipher4 *) in
-(* assume_intype[156, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
+let cipher4 = E(msg10, key4, nonce2) (* named cipher4 *) in
+(* assume_intype[161, // /home/avatar/docs/verification/svn/csec-modex/proxies/symbolic_interface.c:24] *)
 assume (len(cipher4) >= 0) /\ (len(cipher4) <= ((256 * 256 * 256 * 256) - 1)) in
-(* encrypt_proxy[151, // lib_proxy.c:47] *)
-ifaux ¬(len(cipher4) > (32 + len(response))) then 
-(* send_response[147, // server.c:197] *)
-ifaux ¬(len(cipher4) = 0) then 
-let msg13 = (len(cipher4))^[u,4] (* named msg13 *) in
-out(c, msg13);
-let msg14 = cipher4 (* named msg14 *) in
-out(c, msg14);
+(* encrypt_proxy[156, // lib_proxy.c:47] *)
+if ¬(len(cipher4) > (32 + len(response))) then 
+(* send_response[152, // server.c:197] *)
+if ¬(len(cipher4) = 0) then 
+let msg11 = (len(cipher4))^[u,4] (* named msg11 *) in
+out(c, msg11);
+let msg12 = cipher4 (* named msg12 *) in
+out(c, msg12);
 

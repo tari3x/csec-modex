@@ -27,6 +27,7 @@ expand UF_CMA_mac(bounded_100_mkeyseed, bounded_100_mkey, bitstring, bitstring, 
 forall m: bitstring, k: bounded_100_mkey, r: bitstring;
   ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
 
+(* CR-someday: giving this a precise return type would allow to remove more checks. *) 
 fun HMAC(bitstring, bitstring, bounded_100_mkey): bitstring.
   
 const arithmetic1: bitstring.

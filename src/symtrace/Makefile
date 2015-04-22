@@ -7,11 +7,10 @@ OCAMLOPT = ocamlopt
 OCAML_INC = -I $(OCAMLYICES_ROOT) -I /usr/local/lib -I cryptoverif -I $(CIL_OBJDIR)
 CAMLP4_FLAGS = -pp "camlp4o pa_extend.cmo q_MLast.cmo pa_log.cmo -loc _loc" -I +camlp4
 PA_LOG_FLAGS = -pp "camlp4o pa_extend.cmo q_MLast.cmo -loc _loc" -I +camlp4
-OCAMLC_FLAGS = -g $(OCAML_INC) -w +a-4 $(CAMLP4_FLAGS)
+OCAMLC_FLAGS = -g $(OCAML_INC) -w +a-4-40-41-42-44-45 $(CAMLP4_FLAGS)
 # include -p for gprof or perf here if necessary
 # valgrind doesn't need special compilation (just -g)
 OCAMLOPT_FLAGS = $(OCAMLC_FLAGS) 
-# @20,@26,@27,@32,@33,@34,@35,@36,@37,@38,@39
 OCAML_LIBS = nums.cma ocamlyices.cma str.cma unix.cma cil.cma
 OCAMLOPT_LIBS = $(OCAML_LIBS:.cma=.cmxa)
 ## OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -package num ocamlyices.cmxa -package str -linkpkg 
@@ -23,23 +22,28 @@ SRC = ${wildcard *.ml *.mli}
 COMMON_CMO = common.cmo type.cmo fun_type.cmo sym.cmo exp.cmo iml.cmo solver.cmo simplify.cmo symex.cmo
 COMMON_CMX = $(COMMON_CMO:.cmo=.cmx)
 
+CVTRACE_CMO = typing.cmo cv_fact.cmo syms.cmo transform.cmo template.cmo cv_transform.cmo cv_model.cmo
+CVTRACE_CMX = $(CVTRACE_CMO:.cmo=.cmx)
+
+PVTRACE_CMO = $(CVTRACE_CMO) pv_model.cmo
+PVTRACE_CMX = $(PVTRACE_CMO:.cmo=.cmx)
+
 # doesn't work:
 #$(addprefix -I $(CIL_ROOT), /src /src/frontc $(CIL_OBJDIR))
 
-# pitrace cvtrace
-all: imltrace cvtrace run_tests derivation
+all: imltrace cvtrace pvtrace run_tests derivation
 htdoc: doc
 
 imltrace: $(COMMON_CMX) imltrace.cmx
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^ 
 
-pitrace: $(COMMON_CMX) transform.cmx pitrace.cmx
+pvtrace: $(CV_LIB) $(COMMON_CMX) $(CVTRACE_CMX) $(PVTRACE_CMX) pvtrace.cmx
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
-cvtrace: $(CV_LIB) $(COMMON_CMX) transform.cmx template.cmx cv_transform.cmx cvtrace.cmx
+cvtrace: $(CV_LIB) $(COMMON_CMX) $(CVTRACE_CMX) cvtrace.cmx
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
-run_tests: $(CV_LIB) $(COMMON_CMX) transform.cmx template.cmx cv_transform.cmx run_tests.cmx 
+run_tests: $(CV_LIB) $(COMMON_CMX) $(CVTRACE_CMX) run_tests.cmx 
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
 derivation: common.cmx type.cmx fun_type.cmx sym.cmx exp.cmx iml.cmx solver.cmx derivation.cmx
@@ -51,7 +55,7 @@ top: $(COMMON_CMO)
 $(CV_LIB):
 	cd cryptoverif && $(MAKE)
 
-doc: $(COMMON_SRC) imltrace.ml pitrace.ml cvtrace.ml
+doc: $(COMMON_SRC) imltrace.ml pvtrace.ml cvtrace.ml
 	mkdir -p $@
 	touch $@  
 	ocamldoc -I $(OCAMLYICES_ROOT) -I $(OCAML_LIB) -I cryptoverif -html -d $@ $^

@@ -5,6 +5,7 @@
 *)
 
 open Common
+open Typing
 open Transform
 open Sym
 open Exp
@@ -43,6 +44,7 @@ let model t = t.model
 let var_types t = t.var_types
 let fun_types t = t.fun_types
 
+(* CR: for some weird reason bitstringbot becomes bitstring, look at injbot. *)
 let collect_types env q =
 
   let types = ref [] in
@@ -101,14 +103,20 @@ let collect_types env q =
     let rec collect_pattern : pattern -> unit = function
       | PatVar b ->
         add_var_type b.sname b.btype
-      | PatTuple (_, pats) -> List.iter ~f:collect_pattern pats
+      | PatTuple (_, pats) ->
+        List.iter ~f:collect_pattern pats
       | PatEqual _ -> ()
     in
     match q.i_desc with
     | Nil -> ()
-    | Par (q, q') -> collect_input_process_types q; collect_input_process_types q'
-    | Repl (_, q) -> collect_input_process_types q
-    | Input (_, pat, q) -> collect_pattern pat; collect_output_process_types q
+    | Par (q, q') ->
+      collect_input_process_types q;
+      collect_input_process_types q'
+    | Repl (_, q) ->
+      collect_input_process_types q
+    | Input (_, pat, q) ->
+      collect_pattern pat;
+      collect_output_process_types q
 
   and collect_output_process_types : process -> unit = fun p ->
     match p.p_desc with
@@ -116,18 +124,23 @@ let collect_types env q =
     | Restr (b, p) ->
       add_var_type b.sname b.btype;
       collect_output_process_types p
-    | Test (_, p, p') -> collect_output_process_types p; collect_output_process_types p'
+    | Test (_, p, p') ->
+      collect_output_process_types p;
+      collect_output_process_types p'
     | Find _ -> fail "collect_types: unexpected find construct"
-    | Output (_, _, q) -> collect_input_process_types q
+    | Output (_, _, q) ->
+      collect_input_process_types q
     | Let (pat, _, p, p') ->
       collect_pattern_types pat;
-      collect_output_process_types p; collect_output_process_types p'
+      collect_output_process_types p;
+      collect_output_process_types p'
     | EventP (_, p) -> collect_output_process_types p
 
   and collect_pattern_types: pattern -> unit = function
     | PatVar b ->
       add_var_type b.sname b.btype
-    | PatTuple (_, pats) -> List.iter ~f:collect_pattern_types pats
+    | PatTuple (_, pats) ->
+      List.iter ~f:collect_pattern_types pats
     | PatEqual _ -> ()
   in
 
@@ -136,7 +149,7 @@ let collect_types env q =
   Type_ctx.of_list !types, !fun_types
 
 
-let read_file ~cv_lib_name ~name =
+let read ~cv_lib ~cv ?pv () =
 
   let crypto = ref [] in
   let crypto2 = ref [] in
@@ -145,36 +158,58 @@ let read_file ~cv_lib_name ~name =
   let model = ref [] in
 
   let rec split_template: string list ref -> string list -> unit = fun dest -> function
-    | l1 :: l2 :: ls' when l2 = "<Environment>" -> split_template envp (((l1 ^ "\n" ^ l2) :: ls'))
-    | l1 :: l2 :: ls' when l2 = "<Query>" -> split_template query (((l1 ^ "\n" ^ l2) :: ls'))
-    | l1 :: l2 :: ls' when l2 = "<Model>" -> split_template model (((l1 ^ "\n" ^ l2) :: ls'))
-    | _ :: l2 :: _ when l2 = "<Type hints>" ->
+    | l1 :: l2 :: ls' when String.trim l2 = "<Environment>" ->
+      split_template envp (((l1 ^ "\n" ^ l2) :: ls'))
+    | l1 :: l2 :: ls' when String.trim l2 = "<Query>" ->
+      split_template query (((l1 ^ "\n" ^ l2) :: ls'))
+    | l1 :: l2 :: ls' when String.trim l2 = "<Model>" ->
+      split_template model (((l1 ^ "\n" ^ l2) :: ls'))
+    | _ :: l2 :: _ when String.trim l2 = "<Type hints>" ->
       (* Using assertions (see check_assertions) is the new way of doing this. *)
       failwith "<Type hints> are deprecated"
-    | l1 :: l2 :: ls' when l2 = "<Crypto2>" -> split_template crypto2 (((l1 ^ "\n" ^ l2) :: ls'))
+    | l1 :: l2 :: ls' when String.trim l2 = "<Crypto2>" ->
+      split_template crypto2 (((l1 ^ "\n" ^ l2) :: ls'))
     | l :: ls'  -> dest := !dest @ [l]; split_template dest ls'
     | [] -> ()
   in
-
   let rec extract_assertions = function
     | "(* ASSERT_DEFINITION" :: l1 :: l2 :: "*)" :: ls ->
+      let l1 = String.trim l1 in
+      let l2 = String.trim l2 in
       let sym = Sym.of_string_bitstring l1 in
       Assertion.Def (sym, l2) :: extract_assertions ls
     | _ :: ls -> extract_assertions ls
     | [] -> []
   in
-
-  let c = open_in name in
+  let cv_lines =
+    Common.read_file (open_in cv)
+  in
   let lines =
-    Common.read_file c |> List.map ~f:String.trim
+    match pv with
+    | None -> cv_lines
+    | Some pv ->
+      Common.read_file (open_in pv)
   in
   split_template crypto lines;
-  Cryptoverif.Settings.lib_name := cv_lib_name;
-  let (_, _, _, _, _, _, q) = read_file name in
+  Cryptoverif.Settings.lib_name := cv_lib;
+  let (_, _, _, _, _, _, q) = read_file cv in
   let var_types, fun_types = collect_types !CV.Stringmap.env q in
-  let assertions = extract_assertions lines in
-  { crypto = !crypto; crypto2 = !crypto2; query = !query; envp = !envp; model = !model;
-    var_types; fun_types; assertions }
+  let assertions = extract_assertions (lines @ cv_lines) in
+  { crypto = !crypto; crypto2 = !crypto2; query = !query;
+    envp = !envp; model = !model; var_types; fun_types; assertions }
+
+let read_cv ~cv_lib ~cv =
+  read ~cv_lib ~cv ()
+
+let read_pv ~cv_lib ~cv ~pv =
+  read ~cv_lib ~cv ~pv ()
+
+let is_defined_in_pv t sym =
+  let regex =
+    Printf.sprintf "data %s" (Sym.to_string sym) |> Str.regexp_string
+  in
+  List.exists (t.crypto @ t.crypto2) ~f:(fun line ->
+    Str.string_match regex line 0)
 
 let is_defined t sym =
   if Fun_type_ctx.mem sym t.fun_types then true

@@ -1,7 +1,7 @@
 
 CSEC_ROOT = ../..
 
-all: iml cv_full
+all: iml cv pv
 
 eclipse-all: compile
 

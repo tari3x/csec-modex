@@ -37,6 +37,10 @@ let ctx : Yices.context = Yices.mk_context ()
 
 let cache : pbool Int_map.t ref = ref Int_map.empty
 
+(* Simulating the yices stack. *)
+let assumed_facts = ref [[]]
+let assumed_raw_facts = ref [[]]
+
 (* accelerated cache for eq queries *)
 module Int_pair =
 struct
@@ -154,7 +158,30 @@ let debug_expr s e =
     Yices.pp_expr e;
     prerr_endline "";
     flush stderr;
-  end;
+  end
+
+let push_ctx () =
+  Yices.push ctx;
+  assumed_facts := [] :: !assumed_facts;
+  assumed_raw_facts := [] :: !assumed_raw_facts
+
+let pop_ctx () =
+  Yices.pop ctx;
+  assumed_facts := List.tl !assumed_facts;
+  assumed_raw_facts := List.tl !assumed_raw_facts
+
+let add_to_fact_stack facts fact =
+  match !facts with
+  | [] -> assert false
+  | xs :: xss ->
+    facts := (fact :: xs) :: xss
+
+let dump_facts () =
+  let assumed_facts = List.concat !assumed_facts in
+  let assumed_raw_facts = List.concat !assumed_raw_facts in
+  Printf.eprintf "ASSUMED FACTS:\n%s\nraw facts:\n%s\n"
+    (E.list_to_string assumed_facts ~newline:true)
+    (E.list_to_string assumed_raw_facts ~newline:true)
 
 (*************************************************)
 (** {1 Tracing} *)
@@ -402,6 +429,9 @@ let rewrite
       in
       let default e =
         E.descend {E.descend = collect} e
+      in
+      let unexpected e =
+        fail "Solver: unexpected expression: %s" (E.to_string e)
       in
       let (result : a exp) =
         match e with
@@ -881,6 +911,8 @@ let reset_cache () =
 let reset_facts : unit -> unit = fun () ->
   Yices.reset ctx;
   Yices.parse_command ctx theory;
+  assumed_facts := [[]];
+  assumed_raw_facts := [[]];
   reset_cache ()
 
 let get_decl kind (`Mangled name) =
@@ -962,7 +994,7 @@ let translate (e_top : fact) =
           (E.dump e) (E.dump e_top)
 
   in
-  with_debug "Solver.translate" tr e_top
+  with_debug "Solver.translate" (fun () -> tr e_top)
 
 let is_true_raw ?warn_if_false e =
   DEBUG "checking (with auxiliary facts) %s" (E.to_string e);
@@ -970,14 +1002,14 @@ let is_true_raw ?warn_if_false e =
   let ye = translate (negation e) in
   pop_debug "is_true_raw.translate";
   debug_expr "checking (yices expression)" ye;
-  Yices.push ctx;
+  push_ctx ();
   Yices.assert_simple ctx ye;
   let result = match Yices.check ctx with
     | Yices.False -> true
     | Yices.Undef -> false
     | Yices.True  -> false
   in
-  Yices.pop ctx;
+  pop_ctx ();
   DEBUG "check result = %s" (string_of_bool result);
   begin match warn_if_false with
   | None -> ()
@@ -985,6 +1017,7 @@ let is_true_raw ?warn_if_false e =
     if !warn_on_failed_conditions_ref && not result && not (E.Set.mem e !warn_cache) then
       begin
         warn "cannot prove %s %s" (E.to_string e) err;
+        dump_facts ();
         (*
           Returns NULL model:
           push ctx;
@@ -1010,16 +1043,26 @@ let rec simplify_bool (e : fact) =
   | Sym (Logical op, es) -> Sym (Logical op, List.map ~f:simplify_bool es)
   | e -> e
 
-let add_fact (e : fact) =
-  push_debug "add_fact";
+let assume es =
+  let assume_one e =
+    let es', conds = rewrite_facts ~mode:`Assert [e] in
+    let warn_if_false =
+      Printf.sprintf "arising from assuming %s" (E.to_string e)
+    in
+    List.iter ~f:(fun cond -> is_true_raw ~warn_if_false cond |> ignore) conds;
+    add_to_fact_stack assumed_facts e;
+    let e = E.conj es'|> simplify_bool in
+    (* Sym (Logical Implies, [E.conj conds; E.conj es'] )
+      |> simplify_bool
+    in *)
+    add_to_fact_stack assumed_raw_facts e;
+    DEBUG "assuming %s" (E.to_string e);
+    add_fact_raw (translate e);
+  in
+  push_debug "assume";
   reset_cache ();
-  let es', conds = rewrite_facts ~mode:`Assert [e] in
-  let warn_if_false = Printf.sprintf "arising from assuming %s" (E.to_string e) in
-  List.iter ~f:(fun cond -> is_true_raw ~warn_if_false cond |> ignore) conds;
-  let e = Sym (Logical Implies, [E.conj conds; E.conj es'] ) |> simplify_bool in
-  DEBUG "assuming %s" (E.to_string e);
-  add_fact_raw (translate e);
-  pop_debug "add_fact"
+  List.iter es ~f:assume_one;
+  pop_debug "assume"
 
 let is_true e: pbool =
   DEBUG "checking %s" (E.to_string e);
@@ -1048,10 +1091,10 @@ let is_true e: pbool =
 let implies facts hypotheses =
   DEBUG "checking implication: \n  %s\n  =>\n  %s" (E.list_to_string facts) (E.list_to_string hypotheses);
   push_debug "implies";
-  Yices.push ctx;
-  List.iter ~f:add_fact facts;
+  push_ctx ();
+  assume facts;
   let result = List.for_all ~f:(is_true) hypotheses in
-  Yices.pop ctx;
+  pop_ctx ();
   pop_debug "implies";
   DEBUG "implication result: %b" result;
   result
@@ -1069,8 +1112,13 @@ let equal_bitstring ?(facts = []) (a : bterm) (b : bterm) =
       result
   end
 
-let not_equal_bitstring (a : bterm) (b : bterm) =
-  is_true (negation (eq_bitstring [a; b]))
+let not_equal_bitstring e1 e2 =
+  if not (is_true (E.is_defined e1)) || not (is_true (E.is_defined e2)) then false
+  else match e1, e2 with
+  | String b1, String b2 -> b1 <> b2
+  | BS (Int n1, itype1), BS (Int n2, itype2) when itype1 = itype2 ->
+    n1 <> n2
+  | _ -> false (* is_true (negation (eq_bitstring [e1; e2])) *)
 
 let greater_equal (a : iterm) (b : iterm) =
   is_true (ge a b)
@@ -1113,7 +1161,7 @@ let eval e =
       None
     end
     else begin
-      Yices.push ctx;
+      push_ctx ();
       let v = Var (Var.fresh "int_val", Kind.Int) in
       Yices.assert_simple ctx (translate (eq_int [v; e]));
       let result =
@@ -1150,7 +1198,7 @@ let eval e =
               DEBUG "value is not unique";
               None
       in
-      Yices.pop ctx;
+      pop_ctx ();
       result
     end
   in
@@ -1234,9 +1282,9 @@ let test_eval () =
   assert (eval (Int 42L) = Some 42)
 
 let with_ctx f =
-  Yices.push ctx;
+  push_ctx ();
   f ();
-  Yices.pop ctx
+  pop_ctx ()
 
 let test () =
   with_ctx test_implication;

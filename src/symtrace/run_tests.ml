@@ -24,6 +24,7 @@ let main () =
   Solver.test ();
   Simplify.test ();
   Transform.test ();
+  Typing.test ();
   Cv_transform.test ()
 
 ;;

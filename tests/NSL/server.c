@@ -59,7 +59,6 @@ int main(int argc, char ** argv)
 
   /* Receive message 1 */
 
-  recv(bio, dummy, 4);
   recv(bio, (unsigned char*) &m1_e_len, sizeof(m1_e_len));
 
   if(m1_e_len > MAX_SIZE_CIPHER)
@@ -72,7 +71,7 @@ int main(int argc, char ** argv)
   m1 = malloc(m1_len);
   m1_len = decrypt(skey, skey_len, m1_e, m1_e_len, m1);
 
-  if(sizeof(size_t) + SIZE_NONCE + 4 >= m1_len)
+  if(sizeof(size_t) + SIZE_NONCE + 4 > m1_len)
   {
     fprintf(stderr, "m1 has wrong length\n");
     exit(1);
@@ -92,8 +91,8 @@ int main(int argc, char ** argv)
     exit(1);
   }
 
-  xhost_len = m1_len - (sizeof(size_t) + m1_l + 4);
-  xhost = m1 + sizeof(size_t) + m1_l + 4;
+  xhost_len = m1_len - (4 + sizeof(size_t) + m1_l);
+  xhost = m1 + 4 + sizeof(size_t) + m1_l;
 
   if(xhost_len > MAX_SIZE_HOST)
     fail("B: host size in m1 too long");
@@ -131,9 +130,9 @@ int main(int argc, char ** argv)
 
 #ifdef CSEC_VERIFY
 #ifdef USE_EVENT_PARAMS
-  event2("beginB", xhost, xhost_len, host, host_len);
+  event2("server_begin", xhost, xhost_len, host, host_len);
 #else
-  event0("beginB");
+  event0("server_begin");
 #endif
 #endif
 
@@ -160,12 +159,11 @@ int main(int argc, char ** argv)
   if(m2_e_len > MAX_SIZE_CIPHER)
     fail("Server: cipher in message 2 too long");
 
-  m2_e = malloc(m2_e_len + sizeof(size_t) + 4);
-  memcpy(m2_e, "encr", 4);
-  m2_e_len = encrypt(xkey, xkey_len, m2, m2_len, m2_e + sizeof(m2_e_len) + 4);
-  * (size_t *) (m2_e + 4) = m2_e_len;
+  m2_e = malloc(m2_e_len);
+  m2_e_len = encrypt(xkey, xkey_len, m2, m2_len, m2_e);
 
-  send(bio, m2_e, m2_e_len + sizeof(m2_e_len) + 4);
+  send(bio, &m2_e_len, sizeof(m2_e_len));
+  send(bio, m2_e, m2_e_len);
 
 #ifdef VERBOSE
   printf("B: m2_e sent, m2_e = ");
@@ -176,7 +174,6 @@ int main(int argc, char ** argv)
 
   /* Receive message 3 */
 
-  recv(bio, dummy, 4);
   recv(bio, (unsigned char*) &m3_e_len, sizeof(m3_e_len));
 
   if(m3_e_len > MAX_SIZE_CIPHER)
@@ -222,9 +219,9 @@ int main(int argc, char ** argv)
 
 #ifdef CSEC_VERIFY
 #ifdef USE_EVENT_PARAMS
-  event2("endB", xhost, xhost_len, host, host_len);
+  event2("server_end", xhost, xhost_len, host, host_len);
 #else
-  event0("endB");
+  event0("server_end");
 #endif
 #endif
 

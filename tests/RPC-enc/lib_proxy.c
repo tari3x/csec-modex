@@ -74,8 +74,6 @@ extern uint32_t decrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
   load_buf(key, keylen, "key");
 
   SymN("D", 2);
-  Hint("msg");
-
   SymN("inverse_injbot", 1);
   Hint("msg");
   store_len(&ret, sizeof(ret), FALSE);

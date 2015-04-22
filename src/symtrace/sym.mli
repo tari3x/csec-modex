@@ -59,21 +59,19 @@ module Op : sig
   | Cast_to_other
 end
 
-open Op
-
 type name = string
 type arity = int
 type invocation_id = int
 
-  (*
-    TODO: use polymorphic variants and move solver-specific stuff into solver.
-  *)
+(* CR-soon: make Fun a placeholder for structured bitstring symbols, such as
+  Inverse.
+*)
 type ('a, 'b) t =
   (* TODO: should take Int_type.t *)
 | Op : Op.t * (bitstring, bitstring) Fun_type.t -> (bitstring, bitstring) t
 
 | Bs_eq : (bitstring, bool) t
-  (** Bitstring comparison, works on bottoms too. *)
+(** Bitstring comparison, works on bottoms too. *)
 | Cmp : (bitstring, bitstring) t
   (* TODO: what about bottoms? *)
   (** Bitstring comparison returning bitstring result.  Bs_eq(x, y) = Truth(Cmp(x, y)) *)
@@ -105,19 +103,19 @@ type ('a, 'b) t =
       structure directly. We don't try to prove safety of this. *)
 | Field_offset : string -> (_, int) t
 | Opaque : ('a, 'a) t
-  (** Used only in Solver *)
+(** Used only in Solver *)
 | Defined : ('a, bool) t
 | In_type : 'a imltype -> ('a, bool) t
-  (** Defined is the same as (In_type Bitstring) *)
+(** Defined is the same as (In_type Bitstring) *)
 
 | Truth_of_bs : (bitstring, bool) t
 | BS_of_truth : Int_type.width -> (bool, bitstring) t
 
-  (* The yices versions of len and val, see thesis. *)
+(* The yices versions of len and val, see thesis. *)
 | Len_y : (bitstring, int) t
 | Val_y : Int_type.t -> (bitstring, int) t
 
-  (* FIXME: unify with unknown? *)
+(* FIXME: unify with unknown? *)
 | Undef : invocation_id -> (_, bitstring) t
   (** With a tag to distinguish different undefs.
       FIXME: Do not create explicitly, use Expr.undef. *)
@@ -132,6 +130,8 @@ type any = Any : ('a, 'b) t -> any
 type any_bitstring = Any_bitstring : (bitstring, 'b) t -> any_bitstring
 
 val any : (_, _) t -> any
+
+val kind : ('a, 'b) t -> 'b Kind.t
 
   (**
      May return bottom even if all arguments are not bottom.
@@ -163,6 +163,28 @@ module Key : sig
                    and module Kind = Kind
 end
 
+(*************************************************)
+(** {1 Helpers} *)
+(*************************************************)
+
+val make : string -> arity:int -> (bitstring, bitstring) t
+
+val make_bool : string -> arity:int -> (bitstring, bool) t
+
+val make_const : string -> (bitstring, bitstring) t
+
+val new_encoder : arity:int -> (bitstring, bitstring) t
+
+val new_parser : unit -> (bitstring, bitstring) t
+
+val new_arith : arity:int -> (bitstring, bitstring) t
+
+val new_auxiliary : arity:int -> (bitstring, bool) t
+
+(*************************************************)
+(** {1 Maps} *)
+(*************************************************)
+
 module Map_any : module type of Common.Map_any (Kind) (Key)
 
 module Map (Value : GADT) : sig
@@ -170,12 +192,15 @@ module Map (Value : GADT) : sig
   type 'a t
 
   val empty : unit -> 'a t
+  val is_empty : _ t -> bool
+  val singleton : 'a sym -> 'a Value.t -> 'a t
   val add : 'a sym -> 'a Value.t -> 'a t -> 'a t
   val maybe_find : 'a sym -> 'a t -> 'a Value.t option
   val find : 'a sym -> 'a t -> 'a Value.t
   val mem : 'a sym -> 'a t -> bool
   val iter : f:('a sym -> 'a Value.t -> unit) -> 'a t -> unit
   val disjoint_union : 'a t list -> 'a t
+  val compatible_union : 'a t list -> 'a t
   val of_list : ('a sym * 'a Value.t) list -> 'a t
   val to_list : 'a t -> ('a sym * 'a Value.t) list
   val keys : 'a t -> 'a sym list

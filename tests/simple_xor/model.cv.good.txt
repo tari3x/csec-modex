@@ -1,17 +1,17 @@
 
-channel c_in, c_out.
+channel c_in, c_out. 
 
 param N.
 
 (************************
-Types
+  Types
 *************************)
 
 type fixed_20 [fixed, large].
 type fixed_21 [fixed, large].
 
 (************************
-XOR
+  XOR
 *************************)
 
 expand Xor(fixed_21, XOR).
@@ -40,14 +40,8 @@ fun conc1(fixed_20): fixed_21 [compos].
   Auxiliary Tests 
 ***************************)
 
-(* auxiliary1 := len(arg0) = 112 *)
-fun auxiliary1(bitstring): bool.
-
-(* auxiliary2 := len(arg0) = 8 *)
-fun auxiliary2(bitstring): bool.
-
-(* auxiliary3 := ¬((arg0)_[s,8] <= 0) *)
-fun auxiliary3(bitstring): bool.
+(* cond1 := ¬((arg0)_[s,8] <= 0) *)
+fun cond1(bitstring): bool.
 
 
 (*************************** 
@@ -75,10 +69,6 @@ const zero_fixed_21: fixed_21.
   Primed Functions 
 ***************************)
 
-fun auxiliary2_prime(bitstring): bool.
-
-fun auxiliary1_prime(bitstring): bool.
-
 
 (*************************** 
   Typecasting 
@@ -89,10 +79,6 @@ fun auxiliary1_prime(bitstring): bool.
   Auxiliary Facts 
 ***************************)
 
-forall arg0: bitstring;
-	auxiliary2(arg0) = auxiliary2_prime(Zbitstring(arg0)).
-forall arg0: bitstring;
-	auxiliary1(arg0) = auxiliary1_prime(Zbitstring(arg0)).
 
 (*************************** 
   Zero Facts 
@@ -106,7 +92,7 @@ forall x: fixed_21;
 	Zfixed_21(x) = zero_fixed_21().
 
 (************************
-<Query>
+  <Query>
 *************************)
 
 query secret nonce1.
@@ -121,9 +107,7 @@ in(c_in, (var2: bitstring, BIO_ctrl_result1: bitstring));
 new nonce1: fixed_20;
 let var11 = conc1(nonce1) in
 let msg1 = XOR(var11, pad) in
-if auxiliary1(var2) then 
-if auxiliary2(BIO_ctrl_result1) then 
-if auxiliary3(BIO_ctrl_result1) then 
+if cond1(BIO_ctrl_result1) then 
 out(c_out, msg1); 0 .
 
 let server = 
@@ -131,17 +115,17 @@ in(c_in, ());
 yield .
 
 (************************
-<Environment>
+  <Environment>
 *************************)
 
 
 process
 ! N (
-in(c_in, ());
+  in(c_in, ());
 
-(* one-time pad *)
-new pad: fixed_21;
+  (* one-time pad *)
+  new pad: fixed_21;
 
-out(c_out, ());
-(client | server)
+  out(c_out, ());
+  (client | server)
 )

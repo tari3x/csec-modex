@@ -37,26 +37,26 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
 
   let undef l =
     let e = Sym (Undef (Var.fresh_id "undef"), []) in
-    S.add_fact (E.eq_int [Len e; l]);
+    S.assume [E.eq_int [Len e; l]];
     e
   in
 
-  let mk_concat = function
+  let mk_encoder = function
     | [e] -> e
     | es -> Concat es
   in
 
   (* don't think this can be optimised much *)
-  let rec concat = function
-      (* Concat nesting might give useful hints about message formats, but for now we flatten all concats *)
-    | Concat es' :: es -> concat (es' @ es)
+  let rec encoder = function
+      (* Concat nesting might give useful hints about message formats, but for now we flatten all encoders *)
+    | Concat es' :: es -> encoder (es' @ es)
     | Range (e1, pos1, len1) :: Range (e2, pos2, len2) :: es
         when S.equal_int pos2 (sum [pos1; len1]) && e1 = e2 ->
-      concat (simplify (Range (e1, pos1, sum [len1; len2])) :: es)
-    (* FIXME: return string concatenation when you also do corresponding arithmetic simplifications for lengths *)
-    (* | String s1 :: String s2 :: es -> concat (String (s1 ^ s2) :: es) *)
-    | e :: es when S.equal_int (Len e) E.zero -> concat es
-    | e :: es -> e :: concat es
+      encoder (simplify (Range (e1, pos1, sum [len1; len2])) :: es)
+    (* FIXME: return string encoderenation when you also do corresponding arithmetic simplifications for lengths *)
+    (* | String s1 :: String s2 :: es -> encoder (String (s1 ^ s2) :: es) *)
+    | e :: es when S.equal_int (Len e) E.zero -> encoder es
+    | e :: es -> e :: encoder es
     | [] -> []
 
   (* don't think this can be optmised much *)
@@ -81,12 +81,12 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
 
   and cut_left pos es =
     match cut pos es with
-    | Some (left, _) -> Some (concat left)
+    | Some (left, _) -> Some (encoder left)
     | None -> None
 
   and cut_right pos es =
     match cut pos es with
-    | Some (_, right) -> Some (concat right)
+    | Some (_, right) -> Some (encoder right)
     | None -> None
 
   in
@@ -156,8 +156,8 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
               match cut_left len es1 with
               | Some es2 ->
                 (* debug ("cut_left result:" ^ E.dump (Concat es2)); *)
-                mk_concat es2
-              | None -> Range (mk_concat es1, E.zero, new_len)
+                mk_encoder es2
+              | None -> Range (mk_encoder es1, E.zero, new_len)
           end
         (* | Range (_, _, len') when len' <> All && len = All ->
            fail "simplify: e{pos1, l}{pos2, All} with l <> All and pos2 <> 0 is considered suspicious" *)
@@ -171,7 +171,7 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
       (* | _ -> e_orig *)
       end
 
-    | Concat es -> mk_concat (concat es)
+    | Concat es -> mk_encoder (encoder es)
 
     | e -> default e
   in
@@ -200,7 +200,7 @@ let rec full_simplify e =
 
 
 let full_simplify e =
-  with_debug "full_simplify" full_simplify e
+  with_debug "full_simplify" (fun () -> full_simplify e)
 
 (*************************************************)
 (** {1 Testing.} *)
@@ -212,7 +212,7 @@ let test_result ~expect actual =
 
 let test_nothing_to_simplify () =
   let e = Sym (Defined, [Sym (Ztp, [Var ("v", Kind.Bitstring)])]) in
-  S.add_fact e;
+  S.assume [e];
   test_result (simplify e) ~expect:e;
   test_result (full_simplify e) ~expect:e
 

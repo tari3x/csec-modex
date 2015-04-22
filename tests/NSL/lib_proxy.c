@@ -20,30 +20,6 @@ extern void nonce_proxy(unsigned char * N)
   store_buf(N);
 }
 
-extern size_t encrypt_len_proxy(unsigned char * key, size_t keylen, unsigned char * in, size_t inlen)
-{
-  mute();
-  size_t ret = encrypt_len(key, keylen, in, inlen);
-  unmute();
-
-  // No hint here because encrypt_len will be opaque for the solver,
-  // so we should keep its contents in.
-  load_buf(in, inlen, "");
-  SymN("encrypt_len", 1);
-  assume_intype("bitstring");
-  size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
-  // Give a hint to make sure the function application is exposed to CV,
-  // so that we can communicate length-regularity properties.
-  Hint("len");
-
-  store_buf(&ret);
-
-  if(ret < 0) exit(1);
-
-  return ret;
-}
-
 extern size_t encrypt_proxy(unsigned char * key, size_t keylen, unsigned char * in, size_t inlen, unsigned char * out)
 {
   mute();
@@ -62,33 +38,8 @@ extern size_t encrypt_proxy(unsigned char * key, size_t keylen, unsigned char * 
   store_len(&ret, sizeof(ret), FALSE);
   store_buf(out);
 
-  if(ret > encrypt_len_proxy(key, keylen, in, inlen))
-    fail("encrypt_proxy: bad length");
-
-  return ret;
-}
-
-extern size_t decrypt_len_proxy(unsigned char * key, size_t keylen, unsigned char * in, size_t inlen)
-{
-  mute();
-  size_t ret = decrypt_len(key, keylen, in, inlen);
-  unmute();
-
-  // No hint, to avoid term duplication.
-  load_buf(in, inlen, "");
-  //  symL("decrypt_len", "", sizeof(ret), TRUE);
-  SymN("decrypt_len", 1);
-
-  test_intype("bitstring");
-
-  size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
-  Done();
-
-  store_buf(&ret);
-
-  // Assume that the length of the decryption is at most the length of the ciphertext.
-  if(ret < 0 || ret > inlen) exit(1);
+  assume(ret <= encrypt_len(key, keylen, in, inlen));
+  assume(ret >= inlen);
 
   return ret;
 }
@@ -102,14 +53,14 @@ extern size_t decrypt_proxy(unsigned char * key, size_t keylen, unsigned char * 
   load_buf(in, inlen, "cipher");
   load_buf(key, keylen, "key");
   SymN("D", 2);
-  Hint("msg");
   SymN("inverse_injbot", 1);
   Hint("msg");
   store_len(&ret, sizeof(ret), FALSE);
   store_buf(out);
 
-  if(ret > decrypt_len_proxy(key, keylen, in, inlen))
-    fail("decrypt_proxy: bad length");
+  // There is actually no point assuming this since this is checked in
+  // decrypt_len
+  assume(ret <= decrypt_len(key, keylen, in, inlen));
 
   return ret;
 }

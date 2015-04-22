@@ -34,9 +34,8 @@ module Stmt = struct
   (**
      [Test e; P = if e then P else 0]
   *)
-  | Fun_test of fact
+  | Test of fact
   | Eq_test of bterm * bterm
-  | Aux_test of fact
   | Assume of fact
   | In of var list
   | Out of bterm list
@@ -47,49 +46,9 @@ module Stmt = struct
 
   type stmt = t
 
-  let to_string t =
-    match t with
-    | In [v] ->
-      "in(c, " ^ v ^ ");";
-
-    | In vs ->
-      "in(c, (" ^ String.concat ~sep:", " vs ^ "));";
-
-    | New (v, t) ->
-      "new " ^ v ^ ": " ^ Type.to_string t ^ ";"
-
-    | Out [e] ->
-      "out(c, " ^ Exp.to_string e ^ ");";
-
-    | Out es ->
-      "out(c, (" ^ String.concat ~sep:", " (List.map ~f:Exp.to_string es) ^ "));";
-
-    | Eq_test (e1, e2) ->
-      "ifeq " ^ Exp.to_string e1 ^ " = " ^ Exp.to_string e2 ^ " then "
-
-    | Fun_test e ->
-      "if " ^ Exp.to_string e ^ " then "
-
-    | Aux_test e ->
-      "ifaux " ^ Exp.to_string e ^ " then "
-
-    | Assume e ->
-      Printf.sprintf "assume %s in" (Exp.to_string e)
-
-    | Event (name, es) ->
-      "event " ^ name ^ "(" ^ String.concat ~sep:", " (List.map ~f:Exp.to_string es) ^ ");"
-
-    | Let (pat, e) ->
-      "let " ^ Pat.dump pat ^ " = " ^ Exp.to_string e ^ " in"
-
-    | Yield -> "yield ."
-
-    | Comment s -> sprintf "(* %s *)" s
-
   let map_children { Exp.f } = function
     | Let (_, e) -> [f e]
-    | Aux_test e -> [f e]
-    | Fun_test e -> [f e]
+    | Test e -> [f e]
     | Eq_test (e1, e2) -> [f e1; f e2]
     | Assume e -> [f e]
     | In _ -> []
@@ -108,8 +67,7 @@ module Stmt = struct
 
   let descend {Exp.descend = f} = function
     | Let (pat, e) -> Let(pat, f e)
-    | Aux_test e -> Aux_test (f e)
-    | Fun_test e -> Fun_test (f e)
+    | Test e -> Test (f e)
     | Eq_test (e1, e2) -> Eq_test (f e1, f e2)
     | Assume e -> Assume (f e)
     | In vs -> In vs
@@ -119,6 +77,49 @@ module Stmt = struct
     | Yield -> Yield
     | Comment s -> Comment s
 
+  let to_string t =
+    match t with
+    | In [v] ->
+      "in(c, " ^ v ^ ");";
+
+    | In vs ->
+      "in(c, (" ^ String.concat ~sep:", " vs ^ "));";
+
+    | New (v, t) ->
+      "new " ^ v ^ ": " ^ Type.to_string t ^ ";"
+
+    | Out [e] ->
+      "out(c, " ^ Exp.to_string e ^ ");";
+
+    | Out es ->
+      "out(c, (" ^ String.concat ~sep:", " (List.map ~f:Exp.to_string es) ^ "));";
+
+    | Test e ->
+      "if " ^ Exp.to_string e ^ " then "
+
+    | Eq_test (e1, e2) ->
+      "ifeq " ^ Exp.to_string e1 ^ " = " ^ Exp.to_string e2 ^ " then "
+
+    | Assume e ->
+      Printf.sprintf "assume %s in" (Exp.to_string e)
+
+    | Event (name, es) ->
+      "event " ^ name ^ "(" ^ String.concat ~sep:", " (List.map ~f:Exp.to_string es) ^ ");"
+
+    | Let (pat, e) ->
+      "let " ^ Pat.dump pat ^ " = " ^ Exp.to_string e ^ " in"
+
+    | Yield -> "yield ."
+
+    | Comment s -> sprintf "(* %s *)" s
+
+  let to_string t =
+    let defs = map_children { f = Exp.defs_to_string } t in
+    match String.concat_some defs ~sep:"\n  " with
+    | None -> to_string t
+    | Some defs ->
+      sprintf "  (* %s *)\n%s" defs (to_string t)
+
   let subst vs es t =
     descend {Exp.descend = (fun e -> Exp.subst vs es e)} t
 
@@ -127,22 +128,38 @@ module Stmt = struct
   let remove_annotations t =
     descend {Exp.descend = Exp.remove_annotations} t
 
+  let is_auxiliary_test = function
+    | Test (Sym (Sym.Fun _, _)) -> false
+    | Test _ -> true
+    | _ -> false
+
   let make_test (e : fact) =
     let open Sym in
     match e with
     | Sym (Bs_eq, [e1; e2]) as e ->
       if (Exp.is_cryptographic e1 && Exp.is_cryptographic e2)
       then Eq_test (e1, e2)
-      else Aux_test e
-    | Sym (Fun _, _) as e -> Fun_test e
-    | e -> Aux_test e
+      else Test e
+    | e -> Test e
 
-  let fact = function
-    | Fun_test fact | Aux_test fact | Assume fact -> [fact]
+  let facts = function
+    | Test fact | Assume fact -> [Exp.expand_defs fact]
     | Eq_test (e1, e2) -> [Exp.eq_bitstring [e1; e2]]
     | In vs -> List.map vs ~f:(fun v -> Exp.is_defined (Var (v, Kind.Bitstring)))
     | New (v, t) -> [Exp.in_type (Var (v, Kind.Bitstring)) t]
     | _ -> []
+
+  let parsers t =
+    map_children { f = Exp.parsers } t |> Sym_defs.disjoint_union
+
+  let encoders t =
+    map_children { f = Exp.encoders } t |> Sym_defs.disjoint_union
+
+  let arith t =
+    map_children { f = Exp.arith } t |> Sym_defs.disjoint_union
+
+  let auxiliary t =
+    map_children { f = Exp.auxiliary } t |> Sym_defs.disjoint_union
 end
 
 open Stmt
@@ -204,21 +221,24 @@ let subst_v vs vs' e =  subst vs (List.map ~f:Exp.var vs') e
 let to_string p =
   String.concat ~sep:"\n" (List.map ~f:Stmt.to_string p) ^ "\n"
 
-(*************************************************)
-(** {1 Auxiliary Statements} *)
-(*************************************************)
+let remove_annotations p =
+  List.map p ~f:Stmt.remove_annotations
 
-let rec map_without_auxiliary descend = function
-  | (Aux_test _ | Assume _) as s :: p -> s :: map_without_auxiliary descend p
-  | s :: p ->
-      (* enforce evaluation order *)
-    let s' = Stmt.descend descend s in
-    s' :: map_without_auxiliary descend p
-  | [] -> []
+let parsers t =
+  List.map t ~f:Stmt.parsers |> Sym_defs.compatible_union
 
-let rec remove_auxiliary = function
-  | (Aux_test _ | Assume _) :: p -> remove_auxiliary p
-  | s :: p -> s :: remove_auxiliary p
+let encoders t =
+  List.map t ~f:Stmt.encoders |> Sym_defs.compatible_union
+
+let arith t =
+  List.map t ~f:Stmt.arith |> Sym_defs.compatible_union
+
+let auxiliary t =
+  List.map t ~f:Stmt.auxiliary |> Sym_defs.compatible_union
+
+let rec remove_assumptions = function
+  | Assume _ :: p -> remove_assumptions p
+  | s :: p -> s :: remove_assumptions p
   | [] -> []
 
 (*************************************************)
