@@ -10,7 +10,7 @@ set -x
     ( 
       cd src
       for file in ../../../src/CIL/*.ml; do
-	ln -s $file
+	ln -sf $file
       done
     )
     ./configure EXTRAFEATURES="fundefs funreplace crestInstrument"
