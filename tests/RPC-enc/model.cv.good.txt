@@ -21,7 +21,7 @@ type fixed_16_keyseed [fixed, large].
 type fixed_16_key [bounded].
 type fixed_16_seed [fixed, large].
 
-(* 1049 = 1024 for payload + 16 for key + 4 for payload length + 1 for tag *)
+(* 1045 = 1024 for payload + 16 for key + 4 for payload length + 1 for tag *)
 type bounded_1045_plaintext [bounded].
 (*
   Encryption adds 32 bytes to the message.
@@ -108,95 +108,152 @@ fun arithmetic2(bounded_1077_ciphertext): bitstring.
   Auxiliary Tests 
 ***************************)
 
-(* cond12 := ¬(len(arg0) = 0) *)
-fun cond12(bounded_1077_ciphertext): bool.
+(* cond1 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1) <> 0 *)
+fun cond1(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
 
-(* cond13 := ¬((arg0)_[u,4] < 1056) *)
-fun cond13(bitstring): bool.
+(* cond10 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg6), len(arg6) + 1) <> 0 *)
+fun cond10(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id): bool.
 
-(* cond14 := ¬((arg0)_[u,4] > 1056) *)
-fun cond14(bitstring): bool.
+(* cond11 := ¬((arg0)_[s,4] <> 0) *)
+fun cond11(bitstring): bool.
 
-(* cond15 := ¬(len(arg0) > ((arg1)_[u,4] - 32)) *)
-fun cond15(bounded_1045_plaintext, bitstring): bool.
+(* cond12 := ¬(Truth_of_bs(arg0)) *)
+fun cond12(bitstring): bool.
 
-(* cond16 := ¬(len(arg0) = 0) *)
-fun cond16(bounded_1045_plaintext): bool.
+(* cond13 := ¬(len(arg0) <> len(arg1)) *)
+fun cond13(bounded_1024_id, bounded_1024_id): bool.
 
-(* cond17 := ¬(len(arg0) < 1024) *)
-fun cond17(bounded_1045_plaintext): bool.
+(* cond14 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg6), len(arg6) + 1, len(arg7)) <> 0 *)
+fun cond14(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id): bool.
 
-(* cond19 := ¬(len(arg0) >= 256) *)
-fun cond19(bounded_1024_id): bool.
+(* cond16 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg6), len(arg6) + 1, len(arg7), 1 + len(arg8) + 4 + len(arg9)) = 0) *)
+fun cond16(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload): bool.
 
-(* cond20 := ¬(len(arg0) = 0) *)
-fun cond20(bounded_1024_id): bool.
+(* cond17 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg7), len(arg5), len(arg5) + 1, len(arg6), 1 + len(arg8) + 4 + len(arg9), 1 + 4 + len(arg7) + 32 + 1 + len(arg8) + 4 + len(arg9)) = 0) *)
+fun cond17(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload): bool.
 
-(* cond21 := ¬((arg0)_[s,4] <> 0) *)
+(* cond19 := ¬(len(arg0) = 0) *)
+fun cond19(bounded_1077_ciphertext): bool.
+
+(* cond20 := ¬((arg0)_[u,4] < 1056) *)
+fun cond20(bitstring): bool.
+
+(* cond21 := ¬((arg0)_[u,4] > 1056) *)
 fun cond21(bitstring): bool.
 
-(* cond22 := ¬((arg0)_[s,4] <> 0) *)
-fun cond22(bitstring): bool.
+(* cond22 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg7), len(arg5), len(arg5) + 1, len(arg6), 1 + len(arg8) + 4 + len(arg9), 1 + 4 + len(arg7) + 32 + 1 + len(arg8) + 4 + len(arg9), (arg10)_[u,4]) = 0) *)
+fun cond22(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload, bitstring): bool.
 
-(* cond23 := ¬((arg0)_[u,4] < (1040 + 4 + 1 + 32 + 4 + 1)) *)
-fun cond23(bitstring): bool.
+(* cond23 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg7), len(arg5), len(arg5) + 1, len(arg6), 1 + len(arg8) + 4 + len(arg9), 1 + 4 + len(arg7) + 32 + 1 + len(arg8) + 4 + len(arg9), (arg10)_[u,4], (arg10)_[u,4] - 32) = 0) *)
+fun cond23(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload, bitstring): bool.
 
-(* cond24 := ¬((arg0)_[u,4] > (1040 + 4 + 1 + 32 + 1024 + 4 + 1)) *)
-fun cond24(bitstring): bool.
+(* cond24 := ¬(len(arg0) > ((arg1)_[u,4] - 32)) *)
+fun cond24(bounded_1045_plaintext, bitstring): bool.
 
-(* cond25 := "p" = arg0{0, 1} *)
-fun cond25(bitstring): bool.
+(* cond25 := ¬(len(arg0) = 0) *)
+fun cond25(bounded_1045_plaintext): bool.
 
-(* cond26 := ¬((arg0{1, 4})_[u,4] > 1024) *)
-fun cond26(bitstring): bool.
+(* cond26 := ¬(len(arg0) < 1024) *)
+fun cond26(bounded_1045_plaintext): bool.
 
-(* cond27 := ¬(((arg0)_[u,4] - (1 + 4 + (arg1{1, 4})_[u,4])) > (1040 + 4 + 1 + 32)) *)
-fun cond27(bitstring, bitstring): bool.
+(* cond27 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1) <> 0 *)
+fun cond27(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
 
-(* cond28 := ¬((arg0{1, 4})_[u,4] <> len(arg1)) *)
-fun cond28(bitstring, bounded_1024_id): bool.
+(* cond29 := ¬(len(arg0) >= 256) *)
+fun cond29(bounded_1024_id): bool.
 
-(* cond29 := ¬(len(arg0) > ((arg1)_[u,4] - (1 + 4 + (arg2{1, 4})_[u,4] + 32))) *)
-fun cond29(bounded_1045_plaintext, bitstring, bitstring): bool.
+(* cond30 := ¬(len(arg0) = 0) *)
+fun cond30(bounded_1024_id): bool.
 
-(* cond3 := ¬(len(arg0) = 0) *)
-fun cond3(bounded_1024_id): bool.
+(* cond31 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5)) = 0) *)
+fun cond31(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id): bool.
 
-(* cond30 := ¬(len(arg0) < (1 + 4)) *)
-fun cond30(bounded_1045_plaintext): bool.
+(* cond32 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1) = 0) *)
+fun cond32(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id): bool.
 
-(* cond31 := ¬((arg0{1, 4})_[u,4] > 1024) *)
-fun cond31(bounded_1045_plaintext): bool.
+(* cond33 := ¬((arg0)_[s,4] <> 0) *)
+fun cond33(bitstring): bool.
 
-(* cond32 := ¬((arg0{1, 4})_[u,4] < 1024) *)
-fun cond32(bounded_1045_plaintext): bool.
+(* cond34 := ¬((arg0)_[s,4] <> 0) *)
+fun cond34(bitstring): bool.
 
-(* cond33 := ¬(len(arg0) <= (1 + 4 + (arg0{1, 4})_[u,4])) *)
-fun cond33(bounded_1045_plaintext): bool.
+(* cond35 := ¬((arg0)_[u,4] < (1040 + 4 + 1 + 32 + 4 + 1)) *)
+fun cond35(bitstring): bool.
 
-(* cond34 := "p" = arg0{0, 1} *)
-fun cond34(bounded_1045_plaintext): bool.
+(* cond36 := ¬((arg0)_[u,4] > (1040 + 4 + 1 + 32 + 1024 + 4 + 1)) *)
+fun cond36(bitstring): bool.
 
-(* cond35 := ¬((len(arg0) - (1 + 4 + (arg0{1, 4})_[u,4])) <> 16) *)
-fun cond35(bounded_1045_plaintext): bool.
+(* cond37 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1, (arg6)_[u,4]) = 0) *)
+fun cond37(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bitstring): bool.
 
-(* cond38 := ¬(len(arg0) > (32 + len(arg1))) *)
-fun cond38(bounded_1077_ciphertext, fixed_1024_payload): bool.
+(* cond38 := "p" = arg0{0, 1} *)
+fun cond38(bitstring): bool.
 
-(* cond39 := ¬(len(arg0) = 0) *)
-fun cond39(bounded_1077_ciphertext): bool.
+(* cond39 := ¬((arg0{1, 4})_[u,4] > 1024) *)
+fun cond39(bitstring): bool.
 
 (* cond4 := ¬(len(arg0) = 0) *)
 fun cond4(bounded_1024_id): bool.
 
-(* cond7 := ¬((arg0)_[s,4] <> 0) *)
-fun cond7(bitstring): bool.
+(* cond40 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1, (arg6)_[u,4], (arg7{1, 4})_[u,4]) = 0) *)
+fun cond40(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bitstring, bitstring): bool.
 
-(* cond8 := ¬(Truth_of_bs(arg0)) *)
-fun cond8(bitstring): bool.
+(* cond41 := ¬(((arg0)_[u,4] - (1 + 4 + (arg1{1, 4})_[u,4])) > (1040 + 4 + 1 + 32)) *)
+fun cond41(bitstring, bitstring): bool.
 
-(* cond9 := ¬(len(arg0) <> len(arg1)) *)
-fun cond9(bounded_1024_id, bounded_1024_id): bool.
+(* cond42 := ¬((arg0{1, 4})_[u,4] <> len(arg1)) *)
+fun cond42(bitstring, bounded_1024_id): bool.
+
+(* cond43 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1, (arg6)_[u,4], (arg7{1, 4})_[u,4], len(arg8)) <> 0 *)
+fun cond43(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bitstring, bitstring, bounded_1024_id): bool.
+
+(* cond44 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1, (arg7)_[u,4], (arg8{1, 4})_[u,4], len(arg6), (arg7)_[u,4] - (1 + 4 + (arg8{1, 4})_[u,4] + 32)) = 0) *)
+fun cond44(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring): bool.
+
+(* cond45 := ¬(len(arg0) > ((arg1)_[u,4] - (1 + 4 + (arg2{1, 4})_[u,4] + 32))) *)
+fun cond45(bounded_1045_plaintext, bitstring, bitstring): bool.
+
+(* cond46 := ¬(len(arg0) < (1 + 4)) *)
+fun cond46(bounded_1045_plaintext): bool.
+
+(* cond47 := ¬((arg0{1, 4})_[u,4] > 1024) *)
+fun cond47(bounded_1045_plaintext): bool.
+
+(* cond48 := ¬((arg0{1, 4})_[u,4] < 1024) *)
+fun cond48(bounded_1045_plaintext): bool.
+
+(* cond49 := ¬(len(arg0) <= (1 + 4 + (arg0{1, 4})_[u,4])) *)
+fun cond49(bounded_1045_plaintext): bool.
+
+(* cond5 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5)) = 0) *)
+fun cond5(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id): bool.
+
+(* cond50 := "p" = arg0{0, 1} *)
+fun cond50(bounded_1045_plaintext): bool.
+
+(* cond51 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1, (arg7)_[u,4], (arg8{1, 4})_[u,4], len(arg6), (arg7)_[u,4] - (1 + 4 + (arg8{1, 4})_[u,4] + 32), (arg9{1, 4})_[u,4]) = 0) *)
+fun cond51(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring, bounded_1045_plaintext): bool.
+
+(* cond52 := ¬((len(arg0) - (1 + 4 + (arg0{1, 4})_[u,4])) <> 16) *)
+fun cond52(bounded_1045_plaintext): bool.
+
+(* cond53 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1, (arg7)_[u,4], (arg8{1, 4})_[u,4], len(arg6), (arg7)_[u,4] - (1 + 4 + (arg8{1, 4})_[u,4] + 32), (arg9{1, 4})_[u,4], len(arg9) - (1 + 4 + (arg9{1, 4})_[u,4])) = 0) *)
+fun cond53(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring, bounded_1045_plaintext): bool.
+
+(* cond56 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg5) + 1, (arg7)_[u,4], (arg8{1, 4})_[u,4], len(arg6), (arg7)_[u,4] - (1 + 4 + (arg8{1, 4})_[u,4] + 32), (arg9{1, 4})_[u,4], len(arg9) - (1 + 4 + (arg9{1, 4})_[u,4]), 32 + len(arg10)) = 0) *)
+fun cond56(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring, bounded_1045_plaintext, fixed_1024_payload): bool.
+
+(* cond57 := ¬(len(arg0) > (32 + len(arg1))) *)
+fun cond57(bounded_1077_ciphertext, fixed_1024_payload): bool.
+
+(* cond58 := ¬(len(arg0) = 0) *)
+fun cond58(bounded_1077_ciphertext): bool.
+
+(* cond6 := ¬(len(arg0) = 0) *)
+fun cond6(bounded_1024_id): bool.
+
+(* cond7 := ¬(Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, len(arg5), len(arg6)) = 0) *)
+fun cond7(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id): bool.
 
 
 (*************************** 
@@ -248,37 +305,75 @@ const zero_fixed_16_seed: fixed_16_seed.
   Primed Functions 
 ***************************)
 
-fun cond9_prime(bounded_1024_id, bounded_1024_id): bool.
+fun cond7_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id): bool.
 
-fun cond4_prime(bounded_1024_id): bool.
+fun cond6_prime(bounded_1024_id): bool.
 
-fun cond39_prime(bounded_1077_ciphertext): bool.
+fun cond58_prime(bounded_1077_ciphertext): bool.
 
-fun cond38_prime(bounded_1077_ciphertext, fixed_1024_payload): bool.
+fun cond57_prime(bounded_1077_ciphertext, fixed_1024_payload): bool.
+
+fun cond56_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring, bounded_1045_plaintext, fixed_1024_payload): bool.
+
+fun cond53_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring, bounded_1045_plaintext): bool.
+
+fun cond51_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring, bounded_1045_plaintext): bool.
+
+fun cond5_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id): bool.
 
 fun conc1_prime(fixed_1024_payload, fixed_16_key): bounded_1045_plaintext.
 
-fun cond30_prime(bounded_1045_plaintext): bool.
+fun cond46_prime(bounded_1045_plaintext): bool.
 
-fun cond3_prime(bounded_1024_id): bool.
+fun cond45_prime(bounded_1045_plaintext, bitstring, bitstring): bool.
 
-fun cond29_prime(bounded_1045_plaintext, bitstring, bitstring): bool.
+fun cond44_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bitstring, bitstring): bool.
 
-fun cond28_prime(bitstring, bounded_1024_id): bool.
+fun cond43_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bitstring, bitstring, bounded_1024_id): bool.
+
+fun cond42_prime(bitstring, bounded_1024_id): bool.
+
+fun cond40_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bitstring, bitstring): bool.
+
+fun cond4_prime(bounded_1024_id): bool.
 
 fun conc2_prime(bounded_1024_id, bounded_1077_ciphertext): bitstring.
 
-fun cond20_prime(bounded_1024_id): bool.
+fun cond37_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bitstring): bool.
 
-fun cond19_prime(bounded_1024_id): bool.
+fun cond32_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id): bool.
 
-fun cond17_prime(bounded_1045_plaintext): bool.
+fun cond31_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id): bool.
 
-fun cond16_prime(bounded_1045_plaintext): bool.
+fun cond30_prime(bounded_1024_id): bool.
 
-fun cond15_prime(bounded_1045_plaintext, bitstring): bool.
+fun cond29_prime(bounded_1024_id): bool.
 
-fun cond12_prime(bounded_1077_ciphertext): bool.
+fun cond27_prime(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
+fun cond26_prime(bounded_1045_plaintext): bool.
+
+fun cond25_prime(bounded_1045_plaintext): bool.
+
+fun cond24_prime(bounded_1045_plaintext, bitstring): bool.
+
+fun cond23_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload, bitstring): bool.
+
+fun cond22_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload, bitstring): bool.
+
+fun cond19_prime(bounded_1077_ciphertext): bool.
+
+fun cond17_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload): bool.
+
+fun cond16_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id, fixed_16_key, fixed_1024_payload): bool.
+
+fun cond14_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id, bounded_1024_id): bool.
+
+fun cond13_prime(bounded_1024_id, bounded_1024_id): bool.
+
+fun cond10_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1024_id, bounded_1024_id): bool.
+
+fun cond1_prime(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
 
 
 (*************************** 
@@ -295,54 +390,110 @@ forall x: fixed_1024_payload;
   Auxiliary Facts 
 ***************************)
 
-forall arg1: bounded_1024_id, arg0: bounded_1024_id;
-	cond9(arg0, arg1) = cond9_prime(Zbounded_1024_id(arg0), Zbounded_1024_id(arg1)).
+forall arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond7(arg0, arg1, arg2, arg3, arg4, arg5, arg6) = cond7_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6)).
+forall arg0: bounded_1024_id;
+	cond6(arg0) = cond6_prime(Zbounded_1024_id(arg0)).
+forall arg0: bounded_1077_ciphertext;
+	cond58(arg0) = cond58_prime(Zbounded_1077_ciphertext(arg0)).
+forall arg1: fixed_1024_payload, arg0: bounded_1077_ciphertext;
+	cond57(arg0, arg1) = cond57_prime(Zbounded_1077_ciphertext(arg0), Zfixed_1024_payload(arg1)).
+forall arg9: bounded_1045_plaintext, arg8: bitstring, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg10: fixed_1024_payload, arg1: bitstring, arg0: bitstring;
+	cond56(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) = cond56_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), arg7, arg8, arg9, Zfixed_1024_payload(arg10)).
+forall x510: bounded_1077_ciphertext, x509: bounded_1024_id, arg9: bounded_1045_plaintext, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg10: fixed_1024_payload, arg1: bitstring, arg0: bitstring;
+	cond56_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2(x509, x510), arg9, arg10) = cond56_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2_prime(Zbounded_1024_id(x509), Zbounded_1077_ciphertext(x510)), arg9, arg10).
+forall x513: fixed_16_key, x512: fixed_1024_payload, arg8: bitstring, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg10: fixed_1024_payload, arg1: bitstring, arg0: bitstring;
+	cond56_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, conc1(x512, x513), arg10) = cond56_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, conc1_prime(Zfixed_1024_payload(x512), Zfixed_16_key(x513)), arg10).
+forall arg9: bounded_1045_plaintext, arg8: bitstring, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond53(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) = cond53_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), arg7, arg8, arg9).
+forall x537: bounded_1077_ciphertext, x536: bounded_1024_id, arg9: bounded_1045_plaintext, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond53_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2(x536, x537), arg9) = cond53_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2_prime(Zbounded_1024_id(x536), Zbounded_1077_ciphertext(x537)), arg9).
+forall x540: fixed_16_key, x539: fixed_1024_payload, arg8: bitstring, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond53_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, conc1(x539, x540)) = cond53_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, conc1_prime(Zfixed_1024_payload(x539), Zfixed_16_key(x540))).
+forall x544: fixed_16_key, x543: fixed_1024_payload;
+	cond52(conc1(x543, x544)) = cond52(conc1_prime(Zfixed_1024_payload(x543), Zfixed_16_key(x544))).
+forall arg9: bounded_1045_plaintext, arg8: bitstring, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond51(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) = cond51_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), arg7, arg8, arg9).
+forall x567: bounded_1077_ciphertext, x566: bounded_1024_id, arg9: bounded_1045_plaintext, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond51_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2(x566, x567), arg9) = cond51_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2_prime(Zbounded_1024_id(x566), Zbounded_1077_ciphertext(x567)), arg9).
+forall x570: fixed_16_key, x569: fixed_1024_payload, arg8: bitstring, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond51_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, conc1(x569, x570)) = cond51_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, conc1_prime(Zfixed_1024_payload(x569), Zfixed_16_key(x570))).
+forall x574: fixed_16_key, x573: fixed_1024_payload;
+	cond50(conc1(x573, x574)) = cond50(conc1_prime(Zfixed_1024_payload(x573), Zfixed_16_key(x574))).
+forall arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond5(arg0, arg1, arg2, arg3, arg4, arg5) = cond5_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5)).
+forall x590: fixed_16_key, x589: fixed_1024_payload;
+	cond49(conc1(x589, x590)) = cond49(conc1_prime(Zfixed_1024_payload(x589), Zfixed_16_key(x590))).
+forall x594: fixed_16_key, x593: fixed_1024_payload;
+	cond48(conc1(x593, x594)) = cond48(conc1_prime(Zfixed_1024_payload(x593), Zfixed_16_key(x594))).
+forall x598: fixed_16_key, x597: fixed_1024_payload;
+	cond47(conc1(x597, x598)) = cond47(conc1_prime(Zfixed_1024_payload(x597), Zfixed_16_key(x598))).
+forall arg0: bounded_1045_plaintext;
+	cond46(arg0) = cond46_prime(Zbounded_1045_plaintext(arg0)).
+forall arg2: bitstring, arg1: bitstring, arg0: bounded_1045_plaintext;
+	cond45(arg0, arg1, arg2) = cond45_prime(Zbounded_1045_plaintext(arg0), arg1, arg2).
+forall x610: bounded_1077_ciphertext, x609: bounded_1024_id, arg1: bitstring, arg0: bounded_1045_plaintext;
+	cond45_prime(arg0, arg1, conc2(x609, x610)) = cond45_prime(arg0, arg1, conc2_prime(Zbounded_1024_id(x609), Zbounded_1077_ciphertext(x610))).
+forall arg8: bitstring, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond44(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) = cond44_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), arg7, arg8).
+forall x632: bounded_1077_ciphertext, x631: bounded_1024_id, arg7: bitstring, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond44_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2(x631, x632)) = cond44_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, conc2_prime(Zbounded_1024_id(x631), Zbounded_1077_ciphertext(x632))).
+forall arg8: bounded_1024_id, arg7: bitstring, arg6: bitstring, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond43(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) = cond43_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), arg6, arg7, Zbounded_1024_id(arg8)).
+forall x653: bounded_1077_ciphertext, x652: bounded_1024_id, arg8: bounded_1024_id, arg6: bitstring, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond43_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, conc2(x652, x653), arg8) = cond43_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, conc2_prime(Zbounded_1024_id(x652), Zbounded_1077_ciphertext(x653)), arg8).
+forall arg1: bounded_1024_id, arg0: bitstring;
+	cond42(arg0, arg1) = cond42_prime(arg0, Zbounded_1024_id(arg1)).
+forall x659: bounded_1077_ciphertext, x658: bounded_1024_id, arg1: bounded_1024_id;
+	cond42_prime(conc2(x658, x659), arg1) = cond42_prime(conc2_prime(Zbounded_1024_id(x658), Zbounded_1077_ciphertext(x659)), arg1).
+forall x668: bounded_1077_ciphertext, x667: bounded_1024_id, arg0: bitstring;
+	cond41(arg0, conc2(x667, x668)) = cond41(arg0, conc2_prime(Zbounded_1024_id(x667), Zbounded_1077_ciphertext(x668))).
+forall arg7: bitstring, arg6: bitstring, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond40(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7) = cond40_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), arg6, arg7).
+forall x688: bounded_1077_ciphertext, x687: bounded_1024_id, arg6: bitstring, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond40_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, conc2(x687, x688)) = cond40_prime(arg0, arg1, arg2, arg3, arg4, arg5, arg6, conc2_prime(Zbounded_1024_id(x687), Zbounded_1077_ciphertext(x688))).
 forall arg0: bounded_1024_id;
 	cond4(arg0) = cond4_prime(Zbounded_1024_id(arg0)).
-forall arg0: bounded_1077_ciphertext;
-	cond39(arg0) = cond39_prime(Zbounded_1077_ciphertext(arg0)).
-forall arg1: fixed_1024_payload, arg0: bounded_1077_ciphertext;
-	cond38(arg0, arg1) = cond38_prime(Zbounded_1077_ciphertext(arg0), Zfixed_1024_payload(arg1)).
-forall x140: fixed_16_key, x139: fixed_1024_payload;
-	cond35(conc1(x139, x140)) = cond35(conc1_prime(Zfixed_1024_payload(x139), Zfixed_16_key(x140))).
-forall x144: fixed_16_key, x143: fixed_1024_payload;
-	cond34(conc1(x143, x144)) = cond34(conc1_prime(Zfixed_1024_payload(x143), Zfixed_16_key(x144))).
-forall x148: fixed_16_key, x147: fixed_1024_payload;
-	cond33(conc1(x147, x148)) = cond33(conc1_prime(Zfixed_1024_payload(x147), Zfixed_16_key(x148))).
-forall x152: fixed_16_key, x151: fixed_1024_payload;
-	cond32(conc1(x151, x152)) = cond32(conc1_prime(Zfixed_1024_payload(x151), Zfixed_16_key(x152))).
-forall x156: fixed_16_key, x155: fixed_1024_payload;
-	cond31(conc1(x155, x156)) = cond31(conc1_prime(Zfixed_1024_payload(x155), Zfixed_16_key(x156))).
-forall arg0: bounded_1045_plaintext;
-	cond30(arg0) = cond30_prime(Zbounded_1045_plaintext(arg0)).
+forall x694: bounded_1077_ciphertext, x693: bounded_1024_id;
+	cond39(conc2(x693, x694)) = cond39(conc2_prime(Zbounded_1024_id(x693), Zbounded_1077_ciphertext(x694))).
+forall x698: bounded_1077_ciphertext, x697: bounded_1024_id;
+	cond38(conc2(x697, x698)) = cond38(conc2_prime(Zbounded_1024_id(x697), Zbounded_1077_ciphertext(x698))).
+forall arg6: bitstring, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond37(arg0, arg1, arg2, arg3, arg4, arg5, arg6) = cond37_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), arg6).
+forall arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond32(arg0, arg1, arg2, arg3, arg4, arg5) = cond32_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5)).
+forall arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond31(arg0, arg1, arg2, arg3, arg4, arg5) = cond31_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5)).
 forall arg0: bounded_1024_id;
-	cond3(arg0) = cond3_prime(Zbounded_1024_id(arg0)).
-forall arg2: bitstring, arg1: bitstring, arg0: bounded_1045_plaintext;
-	cond29(arg0, arg1, arg2) = cond29_prime(Zbounded_1045_plaintext(arg0), arg1, arg2).
-forall x170: bounded_1077_ciphertext, x169: bounded_1024_id, arg1: bitstring, arg0: bounded_1045_plaintext;
-	cond29_prime(arg0, arg1, conc2(x169, x170)) = cond29_prime(arg0, arg1, conc2_prime(Zbounded_1024_id(x169), Zbounded_1077_ciphertext(x170))).
-forall arg1: bounded_1024_id, arg0: bitstring;
-	cond28(arg0, arg1) = cond28_prime(arg0, Zbounded_1024_id(arg1)).
-forall x175: bounded_1077_ciphertext, x174: bounded_1024_id, arg1: bounded_1024_id;
-	cond28_prime(conc2(x174, x175), arg1) = cond28_prime(conc2_prime(Zbounded_1024_id(x174), Zbounded_1077_ciphertext(x175)), arg1).
-forall x184: bounded_1077_ciphertext, x183: bounded_1024_id, arg0: bitstring;
-	cond27(arg0, conc2(x183, x184)) = cond27(arg0, conc2_prime(Zbounded_1024_id(x183), Zbounded_1077_ciphertext(x184))).
-forall x188: bounded_1077_ciphertext, x187: bounded_1024_id;
-	cond26(conc2(x187, x188)) = cond26(conc2_prime(Zbounded_1024_id(x187), Zbounded_1077_ciphertext(x188))).
-forall x192: bounded_1077_ciphertext, x191: bounded_1024_id;
-	cond25(conc2(x191, x192)) = cond25(conc2_prime(Zbounded_1024_id(x191), Zbounded_1077_ciphertext(x192))).
+	cond30(arg0) = cond30_prime(Zbounded_1024_id(arg0)).
 forall arg0: bounded_1024_id;
-	cond20(arg0) = cond20_prime(Zbounded_1024_id(arg0)).
-forall arg0: bounded_1024_id;
-	cond19(arg0) = cond19_prime(Zbounded_1024_id(arg0)).
+	cond29(arg0) = cond29_prime(Zbounded_1024_id(arg0)).
+forall arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond27(arg0, arg1, arg2, arg3, arg4) = cond27_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4)).
 forall arg0: bounded_1045_plaintext;
-	cond17(arg0) = cond17_prime(Zbounded_1045_plaintext(arg0)).
+	cond26(arg0) = cond26_prime(Zbounded_1045_plaintext(arg0)).
 forall arg0: bounded_1045_plaintext;
-	cond16(arg0) = cond16_prime(Zbounded_1045_plaintext(arg0)).
+	cond25(arg0) = cond25_prime(Zbounded_1045_plaintext(arg0)).
 forall arg1: bitstring, arg0: bounded_1045_plaintext;
-	cond15(arg0, arg1) = cond15_prime(Zbounded_1045_plaintext(arg0), arg1).
+	cond24(arg0, arg1) = cond24_prime(Zbounded_1045_plaintext(arg0), arg1).
+forall arg9: fixed_1024_payload, arg8: fixed_16_key, arg7: bounded_1024_id, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg10: bitstring, arg1: bitstring, arg0: bitstring;
+	cond23(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) = cond23_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), Zbounded_1024_id(arg7), Zfixed_16_key(arg8), Zfixed_1024_payload(arg9), arg10).
+forall arg9: fixed_1024_payload, arg8: fixed_16_key, arg7: bounded_1024_id, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg10: bitstring, arg1: bitstring, arg0: bitstring;
+	cond22(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) = cond22_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), Zbounded_1024_id(arg7), Zfixed_16_key(arg8), Zfixed_1024_payload(arg9), arg10).
 forall arg0: bounded_1077_ciphertext;
-	cond12(arg0) = cond12_prime(Zbounded_1077_ciphertext(arg0)).
+	cond19(arg0) = cond19_prime(Zbounded_1077_ciphertext(arg0)).
+forall arg9: fixed_1024_payload, arg8: fixed_16_key, arg7: bounded_1024_id, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond17(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) = cond17_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), Zbounded_1024_id(arg7), Zfixed_16_key(arg8), Zfixed_1024_payload(arg9)).
+forall arg9: fixed_1024_payload, arg8: fixed_16_key, arg7: bounded_1024_id, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond16(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) = cond16_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), Zbounded_1024_id(arg7), Zfixed_16_key(arg8), Zfixed_1024_payload(arg9)).
+forall arg7: bounded_1024_id, arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond14(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7) = cond14_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6), Zbounded_1024_id(arg7)).
+forall arg1: bounded_1024_id, arg0: bounded_1024_id;
+	cond13(arg0, arg1) = cond13_prime(Zbounded_1024_id(arg0), Zbounded_1024_id(arg1)).
+forall arg6: bounded_1024_id, arg5: bounded_1024_id, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond10(arg0, arg1, arg2, arg3, arg4, arg5, arg6) = cond10_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1024_id(arg5), Zbounded_1024_id(arg6)).
+forall arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond1(arg0, arg1, arg2, arg3, arg4) = cond1_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4)).
 
 (*************************** 
   Zero Facts 
@@ -399,68 +550,87 @@ query hClient: bounded_1024_id, resp: fixed_1024_payload;
 
 let client = 
 in(c_in, ());
-if cond3(clientID) then 
-if cond4(serverID) then 
+if cond1(argv0, argv1, argv2, argv3, argv4) then 
+if cond4(clientID) then 
+if cond5(argv0, argv1, argv2, argv3, argv4, clientID) then 
+if cond6(serverID) then 
+if cond7(argv0, argv1, argv2, argv3, argv4, clientID, serverID) then 
+if cond10(argv0, argv1, argv2, argv3, argv4, clientID, serverID) then 
 out(c_out, (port, serverID));
 in(c_in, net_connect_result1: bitstring);
-if cond7(net_connect_result1) then 
-if cond8(net_connect_result1) then 
-if cond9(clientID, xClient) then 
+if cond11(net_connect_result1) then 
+if cond12(net_connect_result1) then 
+if cond13(clientID, xClient) then 
+if cond14(argv0, argv1, argv2, argv3, argv4, clientID, serverID, xClient) then 
 if clientID = xClient then 
 let key1 = lookup(clientID, serverID, db) in
 new kS_seed1: fixed_16_keyseed;
 let key2 = kgen(kS_seed1) in
 event client_begin(clientID, serverID, request);
+if cond16(argv0, argv1, argv2, argv3, argv4, clientID, serverID, xClient, key2, request) then 
+if cond17(argv0, argv1, argv2, argv3, argv4, serverID, xClient, clientID, key2, request) then 
 let msg1 = conc1(request, key2) in
 new nonce1: fixed_16_seed;
 let cipher1 = E(msg1, key1, nonce1) in
-if cond12(cipher1) then 
+if cond19(cipher1) then 
 let msg2 = arithmetic1(clientID, cipher1) in
 let msg3 = conc2(clientID, cipher1) in
 out(c_out, (msg3, msg2));
 in(c_in, (msg4: bitstring, cipher2: bitstring));
-if cond13(msg4) then 
-if cond14(msg4) then 
+if cond20(msg4) then 
+if cond21(msg4) then 
+if cond22(argv0, argv1, argv2, argv3, argv4, serverID, xClient, clientID, key2, request, msg4) then 
+if cond23(argv0, argv1, argv2, argv3, argv4, serverID, xClient, clientID, key2, request, msg4) then 
 let injbot(msg6) = D(cast_bitstring_bounded_1077_ciphertext(cipher2), key2) in
-if cond15(msg6, msg4) then 
-if cond16(msg6) then 
-if cond17(msg6) then 
+if cond24(msg6, msg4) then 
+if cond25(msg6) then 
+if cond26(msg6) then 
 event client_accept(clientID, serverID, request, cast_bounded_1045_plaintext_fixed_1024_payload(msg6));
 yield .
 
 let server = 
 in(c_in, ());
-if cond19(serverID) then 
-if cond20(serverID) then 
+if cond27(argv0, argv1, argv2, argv3, argv4) then 
+if cond29(serverID) then 
+if cond30(serverID) then 
+if cond31(argv0, argv1, argv2, argv3, argv4, serverID) then 
+if cond32(argv0, argv1, argv2, argv3, argv4, serverID) then 
 new nondet1: nondet;
 out(c_out, (port, serverID));
 in(c_in, (net_bind_result1: bitstring, var7: bitstring, net_accept_result1: bitstring, msg7: bitstring, msg8: bitstring));
-if cond21(net_bind_result1) then 
+if cond33(net_bind_result1) then 
 new nondet2: nondet;
-if cond22(net_accept_result1) then 
-if cond23(msg7) then 
-if cond24(msg7) then 
-if cond25(msg8) then 
-if cond26(msg8) then 
-if cond27(msg7, msg8) then 
-if cond28(msg8, xClient) then 
+if cond34(net_accept_result1) then 
+if cond35(msg7) then 
+if cond36(msg7) then 
+if cond37(argv0, argv1, argv2, argv3, argv4, serverID, msg7) then 
+if cond38(msg8) then 
+if cond39(msg8) then 
+if cond40(argv0, argv1, argv2, argv3, argv4, serverID, msg7, msg8) then 
+if cond41(msg7, msg8) then 
+if cond42(msg8, xClient) then 
+if cond43(argv0, argv1, argv2, argv3, argv4, serverID, msg7, msg8, xClient) then 
 let conc2(client2, cipher3) = msg8 in
 if client2 = xClient then 
 let key3 = lookup(client2, serverID, db) in
+if cond44(argv0, argv1, argv2, argv3, argv4, serverID, xClient, msg7, msg8) then 
 let injbot(msg9) = D(cipher3, key3) in
-if cond29(msg9, msg7, msg8) then 
-if cond30(msg9) then 
-if cond31(msg9) then 
-if cond32(msg9) then 
-if cond33(msg9) then 
-if cond34(msg9) then 
-if cond35(msg9) then 
+if cond45(msg9, msg7, msg8) then 
+if cond46(msg9) then 
+if cond47(msg9) then 
+if cond48(msg9) then 
+if cond49(msg9) then 
+if cond50(msg9) then 
+if cond51(argv0, argv1, argv2, argv3, argv4, serverID, xClient, msg7, msg8, msg9) then 
+if cond52(msg9) then 
+if cond53(argv0, argv1, argv2, argv3, argv4, serverID, xClient, msg7, msg8, msg9) then 
 let conc1(var18, key4) = msg9 in
 event server_reply(client2, serverID, var18, response);
+if cond56(argv0, argv1, argv2, argv3, argv4, serverID, xClient, msg7, msg8, msg9, response) then 
 new nonce2: fixed_16_seed;
 let msg12 = E(cast_fixed_1024_payload_bounded_1045_plaintext(response), key4, nonce2) in
-if cond38(msg12, response) then 
-if cond39(msg12) then 
+if cond57(msg12, response) then 
+if cond58(msg12) then 
 let msg11 = arithmetic2(msg12) in
 out(c_out, (msg12, msg11)); 0 .
 
@@ -469,6 +639,13 @@ out(c_out, (msg12, msg11)); 0 .
 *********************************)
 
 let client' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+
   in(c_in, xClient: bounded_1024_id);
   
   (*
@@ -478,6 +655,7 @@ let client' =
   new request: fixed_1024_payload;
   
   out(c_out, ());
+  
   client .
 
 (* The sentinel used in formulating weak secrecy of the response *)
@@ -488,6 +666,13 @@ let sentinel =
   yield .
 
 let server' = 
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+
   in(c_in, xClient: bounded_1024_id);
 
   new response: fixed_1024_payload;

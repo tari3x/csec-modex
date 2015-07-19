@@ -6,6 +6,8 @@ open Typing
 module E = Exp
 module S = Solver
 
+module Stats = Stats_local
+
 module Parsing_eq = struct
   type t =
     { p : bfun (* parser is a keyword in camlp4? *)
@@ -15,7 +17,7 @@ module Parsing_eq = struct
 
   let to_string ?fun_types {p; c; i} =
     let arity = Sym.arity c in
-    let args = mk_formal_args arity in
+    let args = mk_formal_args arity |> List.map ~f:Var.to_string in
     let header =
       match fun_types with
       | None -> ""
@@ -30,7 +32,7 @@ module Parsing_eq = struct
       (Sym.to_string p)
       (Sym.to_string c)
       (String.concat ~sep:", " args)
-      (E.mk_arg i)
+      (E.mk_arg i |> Var.to_string)
 
   let find_match ts ~p ~c =
     List.find_map ts ~f:(fun {p = p'; c = c'; i} ->
@@ -171,6 +173,9 @@ let create iml =
   ; zero_funs
   }
 
+let create iml =
+  Stats.call "create" (fun () -> create iml)
+
 let encoders t = t.encoders
 let parsers t = t.parsers
 let arith t = t.arith
@@ -222,10 +227,15 @@ let def t sym =
 let arithmetic_facts t fun_types =
   Aux_fact.fun_facts fun_types (Sym_defs.to_list (arith t))
 
+let arithmetic_facts t fun_types =
+  Stats.call "arithmetic_facts" (fun () -> arithmetic_facts t fun_types)
+
 let encoder_facts t fun_types =
   Aux_fact.fun_facts fun_types (Sym_defs.to_list (encoders t)
                                 @ Sym_defs.to_list (parsers t))
 
+let encoder_facts t fun_types =
+  Stats.call "encoder_facts" (fun () -> encoder_facts t fun_types)
 
 (*************************************************)
 (** {1 Parsing Rules} *)
@@ -305,6 +315,9 @@ let parsing_eqs t fun_types =
   Sym_defs.iter ~f:compute_rules_for_encoder (encoders t);
   Sym_defs.iter ~f:check_parser_is_matched (parsers t);
   !parsing_eqs
+
+let parsing_eqs t fun_types =
+  Stats.call "parsing_eqs" (fun () -> parsing_eqs t fun_types)
 
 (********************************************************)
 (** {1 Auxiliary Test Properties} *)
@@ -460,6 +473,9 @@ let auxiliary_facts t fun_types =
     let (ts, _) = Fun_type_ctx.find sym fun_types in
     facts fun_types sym def ts)
 
+let auxiliary_facts t fun_types =
+  Stats.call "Syms.auxiliary_facts" (fun () -> auxiliary_facts t fun_types)
+
 (*************************************************)
 (** {1 Injectivity} *)
 (*************************************************)
@@ -523,7 +539,7 @@ let zero_facts t fun_types =
 
   let cast_fact (t1, t2) =
     let sym = Cast (t1, t2) in
-    let x = Var ("x", Kind.Bitstring) in
+    let x = E.var_s "x" in
     let zt2 = Zero_funs.zero_fun zero_funs t2 in
     let zt2' = Zero_funs.zero_fun_prime t2 in
     E.eq_bitstring [Sym (zt2,  [Sym (sym, [x])]);
@@ -533,7 +549,7 @@ let zero_facts t fun_types =
   let const_fact t =
     let zt = Zero_funs.zero_fun zero_funs t in
     let zero_t = Sym (Zero_funs.zero_sym zero_funs t, []) in
-    let x = Var ("x", Kind.Bitstring) in
+    let x = E.var_s "x" in
     E.eq_bitstring [Sym (zt, [x]); zero_t]
   in
 
@@ -555,6 +571,9 @@ let zero_facts t fun_types =
   in
   facts
 
+let zero_facts t fun_types =
+  Stats.call "zero_facts" (fun () -> zero_facts t fun_types)
+
 let zero_funs t fun_types =
   ignore (zero_facts t fun_types);
   Zero_funs.zero_defs t.zero_funs |> fst
@@ -571,11 +590,6 @@ let zero_types t fun_types =
   prerr_title "Parsing Equations (again)";
   List.iter parsing_eqs ~f:(fun eq ->
     prerr_endline (show_parsing_eq ~fun_types eq));
-
-  push_debug "auxiliary_facts";
-  let auxiliary_facts = auxiliary_facts encoders auxiliary fun_types in
-  pop_debug "auxiliary_facts";
-
 
 *)
 

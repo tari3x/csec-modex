@@ -75,10 +75,15 @@ module Int_type = struct
     | _ -> assert false
 
   let size_t =
-      (* TODO: check that this is the right type *)
+    (* TODO: check that this is the right type *)
     match !Cil.typeOfSizeOf with
     | Cil.TInt (ikind, _) -> (`Unsigned, Cil.bytesSizeOfInt ikind)
     | _ -> assert false
+
+  let ptr =
+    let bit_size = Cil.bitsSizeOf Cil.voidPtrType in
+    if bit_size mod 8 <> 0 then assert false;
+    (`Unsigned, bit_size / 8)
 
   let signedness (s, _) = s
   let width (_, w) = w
@@ -174,6 +179,8 @@ let subtype (type a) (t : a t) (t' : a t) =
   | Bounded i, Bounded i' -> i <= i'
   | Fixed i, Bounded i'   -> i <= i'
   | Fixed i, Fixed i'     -> i = i'
+  | Bs_int itype, Ptr     -> itype = Int_type.ptr
+  | Ptr, Bs_int itype     -> itype = Int_type.ptr
   | t, t' -> t = t'
 
 let intersection t t' =

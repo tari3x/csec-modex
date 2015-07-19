@@ -9,8 +9,25 @@
 #include <limits.h>
 
 #ifdef CSEC_VERIFY
-  #include <proxies/common.h>
+#include <proxies/common.h>
 #endif
+
+const static unsigned char request[] = "ThisIsARequest";
+const static unsigned char key[] = "ThisIsASharedKey";
+
+unsigned char * get_request(size_t * len)
+{
+  *len = strlen(request);
+  return request;
+}
+
+unsigned char * get_shared_key(size_t * len)
+{
+  *len = strlen(key);
+  return key;
+}
+
+
 
 typedef struct dbytes_s
 {
@@ -55,7 +72,7 @@ bytes_c *cpy(bytes_c *b)
 	return ret;
 }
 
-string_c *fromString(char *addr, unsigned long len, unsigned char * csec_var_name)
+string_c *fromString(char *addr, unsigned long len)
 {
 	dstr_c *res;
 
@@ -81,11 +98,6 @@ string_c *fromString(char *addr, unsigned long len, unsigned char * csec_var_nam
 
 	memcpy(res->address, addr, len);
 	res->length = len;
-
-#ifdef CSEC_VERIFY
-        if(csec_var_name != NULL)
-          readenv(res->address, &(res->length), csec_var_name);
-#endif
 
         // BUGFIX
 

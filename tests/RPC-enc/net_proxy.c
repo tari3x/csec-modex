@@ -106,7 +106,7 @@ int net_bind_proxy( int *fd, const char *bind_ip, int port )
   Nondet();
   assume_intype("bitstring");
   size_t len = sizeof(*fd);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(fd);
 
   load_buf(bind_ip, strlen_proxy(bind_ip), "");
@@ -144,7 +144,7 @@ int net_accept_proxy( int bind_fd, int *client_fd, void *client_ip )
   Nondet();
   assume_intype("bitstring");
   size_t len = sizeof(*client_fd);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(client_fd);
 
   // Let the attacker decide what this function returns.

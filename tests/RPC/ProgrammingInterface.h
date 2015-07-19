@@ -1,4 +1,6 @@
 
+#include <stddef.h>
+
 #define MAX_REQUEST_LEN 2000
 #define MAX_RESPONSE_LEN 2000
 
@@ -15,8 +17,11 @@ typedef bytes_c key_c;
 typedef bytes_c usage_c;
 typedef bytes_c string_c;
 
+extern unsigned char * get_shared_key(size_t * len);
+extern unsigned char * get_request(size_t * len);
+
 // Strings, Unicode and Base64
-string_c *fromString(char *addr, unsigned long len, unsigned char * csec_var_name);
+string_c *fromString(char *addr, unsigned long len);
 
 dstr_c *str(string_c *str);
 

@@ -5,7 +5,6 @@
 *)
 
 open Common
-open Exp
 
 module Pat : sig
   type t =
@@ -14,6 +13,8 @@ module Pat : sig
   | Underscore
 
   val dump : t -> string
+
+  val vpat : string -> t
 end
 
 module Stmt : sig

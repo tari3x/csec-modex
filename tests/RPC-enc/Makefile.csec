@@ -14,7 +14,7 @@ BUILD_DEPS = $(P1_SRC) $(P2_SRC)
 BUILD_CMD = $(MAKE) -f Makefile.run compile CC="$(CC)" CFLAGS="$(CFLAGS)" LDLIBS="$(LDLIBS)"
 
 include $(CSEC_ROOT)/mk/main.mk
-
+	
 csec-verify-log: csec-verify.log
 csec-verify.log:
 	$(MAKE) -f Makefile.csec > $@ 2>&1

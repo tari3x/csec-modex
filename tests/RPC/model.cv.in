@@ -16,19 +16,19 @@ type bounded_2000_response.
   MAC
 ********************)
 
-type bounded_100_mkeyseed [fixed, large].
-type bounded_100_mkey [bounded].
+type fixed_100_mkeyseed [fixed, large].
+type fixed_100_mkey [bounded].
 type macinput.
 (* type macres. *)
 proba Pmac.
 
-expand UF_CMA_mac(bounded_100_mkeyseed, bounded_100_mkey, bitstring, bitstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
+expand UF_CMA_mac(fixed_100_mkeyseed, fixed_100_mkey, bitstring, bitstring, mkgen, HMAC_sha1, HMAC_sha1_check, Pmac).
 
-forall m: bitstring, k: bounded_100_mkey, r: bitstring;
+forall m: bitstring, k: fixed_100_mkey, r: bitstring;
   ((HMAC_sha1(m, k)) = r) = HMAC_sha1_check(m, k, r).
 
 (* CR-someday: giving this a precise return type would allow to remove more checks. *) 
-fun HMAC(bitstring, bitstring, bounded_100_mkey): bitstring.
+fun HMAC(bitstring, bitstring, fixed_100_mkey): bitstring.
   
 const arithmetic1: bitstring.
 
@@ -37,7 +37,7 @@ const arithmetic1: bitstring.
   "sha1"
 *)
 
-forall m: bitstring, k: bounded_100_mkey;
+forall m: bitstring, k: fixed_100_mkey;
   HMAC(arithmetic1, m, k) = HMAC_sha1(m, k).
 
 (******************** 
@@ -71,19 +71,27 @@ let client = 0 .
 ********************)
 
 let server' =
-  in(c_in, argv1: bitstring);
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
   out(c_out, ());
   server .
 
 let client' =
-  in(c_in, argv1: bitstring);
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
   out(c_out, ());
   client .
 
 process
 ! N (
   in(c_in, (request: bounded_2000_request, response: bounded_2000_response));
-  new keyseed: bounded_100_mkeyseed; 
+  new keyseed: fixed_100_mkeyseed; 
   let keyAB = mkgen(keyseed) in
   out(c_out, ());
   ((! N client') | (! N server'))

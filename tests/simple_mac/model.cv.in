@@ -58,6 +58,23 @@ let server = 0 .
   <Environment>
 *************************)
 
+let server' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  server .
+
+let client' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  client .
 
 process
 ! N (
@@ -67,5 +84,5 @@ process
   let key = mkgen(keyseed) in
 
   out(c_out, ());
-  (!N client | !N server)
+  (!N client'| !N server')
 )

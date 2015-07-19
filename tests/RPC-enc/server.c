@@ -297,12 +297,12 @@ int parseargs(int argc, char ** argv, RPCstate * ctx)
 
 int main(int argc, char ** argv)
 {
-
 #ifdef CSEC_VERIFY
-  readenv(argv[1], NULL, "serverID");
-  readenv(argv[2], NULL, "port_ascii");
-  append_zero(argv[1]);
-  append_zero(argv[2]);
+  assume_string("serverID");
+  assume_string("port_ascii");
+
+  readenvL(argv[1], strlen(argv[1]), "serverID");
+  readenvL(argv[2], strlen(argv[2]), "port_ascii");
 #endif
 
   RPCstate seState;

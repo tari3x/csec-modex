@@ -41,6 +41,7 @@ module Int_type : sig
 
   val int : t
   val size_t : t
+  val ptr : t
 end
 
   (* Not using CV typet, because it contains options that we don't care about, and so is

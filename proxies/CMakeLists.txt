@@ -6,10 +6,10 @@ if(NOT CILLY)
   message(FATAL_ERROR "Please run cmake in the top directory first.")
 endif()
 
-# Needs to come before project, otherwise we get an infinite loop
-set(CMAKE_C_COMPILER ${CILLY})
-
 project (proxies)
+
+# Looks like in some version of cmake this needs to come before project and in some after.
+set(CMAKE_C_COMPILER ${CILLY})
 
 # NB: Use the configuration file to decide which files actually get crestified
 set(CFLAGS "-fPIC -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label")

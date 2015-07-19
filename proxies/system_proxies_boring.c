@@ -16,7 +16,7 @@ int fflush_proxy(FILE *stream)
   fresh_var("fflush_ret");
   assume_intype("bitstring");
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   return ret;

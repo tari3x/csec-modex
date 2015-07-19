@@ -67,7 +67,7 @@ int EVP_Cipher_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned cha
   // FIXME: output the IV as well!
   SymN("EVP_Cipher", 3);
   Hint("enc");
-  assume_len(&inl, FALSE, sizeof(inl));
+  assume_len(&inl, false, sizeof(inl));
   Nondet();
 
   int ret = EVP_Cipher(ctx, out, in, inl);
@@ -266,7 +266,7 @@ int EVP_VerifyFinal_proxy(EVP_MD_CTX *ctx , unsigned char const   *sigbuf ,
 
   SymN("EVP_VerifyFinal", 2);
   Hint("sig");
-  assume_len(&siglen, FALSE, sizeof(siglen));
+  assume_len(&siglen, false, sizeof(siglen));
 
   store_buf(sigbuf);
 
@@ -289,7 +289,7 @@ int EVP_SignFinal_proxy(EVP_MD_CTX *ctx , unsigned char *md , unsigned int *s ,
   // FIXME: relying on concrete value of s?
   SymN("EVP_SignFinal", 2);
   Hint("sig");
-  assume_len(s, FALSE, sizeof(*s));
+  assume_len(s, false, sizeof(*s));
   Nondet();
 
   store_buf(md);
@@ -308,7 +308,7 @@ int EVP_DigestFinal_ex_proxy(EVP_MD_CTX *ctx , unsigned char *md ,
   // FIXME: relying on concrete value of s?
   SymN("EVP_DigestFinal_ex", 2);
   Hint(2);
-  assume_len(s, FALSE, sizeof(*s));
+  assume_len(s, false, sizeof(*s));
   Nondet();
 
   store_buf(md);
@@ -362,7 +362,7 @@ EVP_MD const *EVP_MD_CTX_md_proxy(EVP_MD_CTX const   *ctx )
     load_ctx(ctx, "key", "key");
     SymN("EVP_DigestSign", 3);
     Hint("sig");
-    assume_len(siglen, FALSE, sizeof(*siglen));
+    assume_len(siglen, false, sizeof(*siglen));
     Nondet();
     store_buf(sigret);
 
@@ -393,7 +393,7 @@ extern int i2d_X509_proxy(X509 *a , unsigned char **out )
 
     SymN("i2d_X509", 1);
     Hint("DER");
-    assume_len(&ret, TRUE, sizeof(ret));
+    assume_len(&ret, true, sizeof(ret));
 
     if(notnull)
       store_buf(*out - ret);
@@ -714,7 +714,7 @@ extern HMAC_RET_TYPE HMAC_Final_proxy(HMAC_CTX *ctx , unsigned char *md , unsign
 
   SymN("HMAC", 3);
   Hint("hash");
-  assume_len(len, FALSE, sizeof(*len));
+  assume_len(len, false, sizeof(*len));
 
   store_buf(md);
 
@@ -746,15 +746,15 @@ extern unsigned char *HMAC_proxy(EVP_MD const   *evp_md , void const   *key ,
   unsigned char * ret = HMAC(evp_md, key, key_len, d, n, md, md_len);
   unmute();
 
+  if(md_len != NULL)
+    *md_len = concrete_val(*md_len);
+
   if(md != NULL)
     ret = md;
   else {
-    fresh_ptr(sizeof(*ret));
+    fresh_ptr(*md_len);
     store_buf(&ret);
   }
-
-  if(md_len != NULL)
-    *md_len = concrete_val(*md_len);
 
   load_ctx(evp_md, "type", "");
   load_buf(d, n, "msg");
@@ -762,7 +762,7 @@ extern unsigned char *HMAC_proxy(EVP_MD const   *evp_md , void const   *key ,
 
   SymN("HMAC", 3);
   Hint("hash");
-  assume_len(md_len, FALSE, sizeof(*md_len));
+  assume_len(md_len, false, sizeof(*md_len));
 
   store_buf(ret);
 
@@ -785,7 +785,7 @@ int SHA256_Init_proxy(SHA256_CTX *c)
   SymN("SHA256_Init", 0);
   Nondet();
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   clear_attr(c, "msg");
@@ -802,7 +802,7 @@ int SHA256_Update_proxy(SHA256_CTX *c, const void *data, size_t len)
   SymN("SHA256_Update", 0);
   Nondet();
   size_t ret_len = sizeof(ret);
-  assume_len(&ret_len, FALSE, sizeof(ret_len));
+  assume_len(&ret_len, false, sizeof(ret_len));
   store_buf(&ret);
 
   add_to_attr(c, "msg", data, len);
@@ -819,7 +819,7 @@ int SHA256_Final_proxy(unsigned char *md, SHA256_CTX *c)
   SymN("SHA256_Final", 0);
   Nondet();
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   varsym("SHA256_key");
@@ -828,7 +828,7 @@ int SHA256_Final_proxy(unsigned char *md, SHA256_CTX *c)
   SymN("SHA_hash", 2);
   Hint("hash");
   size_t len = 32;
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
 
   store_buf(md);
 
@@ -854,12 +854,12 @@ extern int EVP_EncryptUpdate_proxy(EVP_CIPHER_CTX *ctx, unsigned char *out, int 
   load_ctx(ctx, "enc_in", "partial_plain");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, TRUE, sizeof(pos), "pos");
+  load_int(pos, true, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
 
   SymN("encPart", 5);
   Hint("partial_enc");
-  assume_len(outl, TRUE, sizeof(*outl));
+  assume_len(outl, true, sizeof(*outl));
   Nondet();
 
   store_buf(out);
@@ -892,12 +892,12 @@ extern int EVP_EncryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , int
   load_ctx(ctx, "enc_in", "partial_plain");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, TRUE, sizeof(pos), "pos");
+  load_int(pos, true, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
 
   SymN("encFin", 5);
   Hint("partial_enc");
-  assume_len(outl, TRUE, sizeof(*outl));
+  assume_len(outl, true, sizeof(*outl));
   Nondet();
 
   store_buf(out);
@@ -927,12 +927,12 @@ extern int EVP_DecryptUpdate_proxy(EVP_CIPHER_CTX *ctx , unsigned char *out , in
   load_ctx(ctx, "dec_in", "partial_enc");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, TRUE, sizeof(pos), "pos");
+  load_int(pos, true, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
 
   SymN("decPart", 5);
   Hint("partial_dec");
-  assume_len(outl, TRUE, sizeof(*outl));
+  assume_len(outl, true, sizeof(*outl));
   Nondet();
 
   store_buf(out);
@@ -952,12 +952,12 @@ extern int EVP_DecryptFinal_proxy(EVP_CIPHER_CTX *ctx , unsigned char *outm , in
   load_ctx(ctx, "dec_in", "partial_enc");
   load_ctx(ctx, "key", "key");
   load_ctx(ctx, "iv", "iv");
-  load_int(pos, TRUE, sizeof(pos), "pos");
+  load_int(pos, true, sizeof(pos), "pos");
   load_ctx(ctx, "type", "type");
 
   SymN("decFin", 5);
   Hint("partial_dec");
-  assume_len(outl, TRUE, sizeof(*outl));
+  assume_len(outl, true, sizeof(*outl));
   Nondet();
 
   store_buf(outm);
@@ -1297,7 +1297,7 @@ extern int RAND_pseudo_bytes_proxy(unsigned char *buf , int num )
 
   SymN("RAND_pseudo_bytes", 0);
   Hint("nonce");
-  assume_len(&num, TRUE, sizeof(num));
+  assume_len(&num, true, sizeof(num));
   Nondet();
 
   store_buf(buf);
@@ -1472,7 +1472,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
 
       SymN("EVP_PKEY_decrypt", 2);
       Hint("dec");
-      assume_len(outlen, FALSE, sizeof(*outlen));
+      assume_len(outlen, false, sizeof(*outlen));
 
       store_buf(out);
     }
@@ -1534,7 +1534,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
 
       SymN("EVP_PKEY_verify", 2);
       Hint("sig");
-      assume_len(&siglen, FALSE, sizeof(siglen));
+      assume_len(&siglen, false, sizeof(siglen));
 
       store_buf(sig);
     }
@@ -1564,7 +1564,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
       SymN("lenvar", 0);
       Hint("enc_len");
       size_t len = sizeof(*outlen);
-      assume_len(&len, FALSE, sizeof(len));
+      assume_len(&len, false, sizeof(len));
 
       store_buf((unsigned char *) outlen);
 
@@ -1574,7 +1574,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
       SymN("EVP_PKEY_encrypt", 2);
       Hint("penc");
       Nondet();
-      assume_len(outlen, FALSE, sizeof(*outlen));
+      assume_len(outlen, false, sizeof(*outlen));
 
       store_buf(out);
     }
@@ -1600,7 +1600,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
       SymN("lenvar", 0);
       Hint("sig_len");
       size_t len = sizeof(*siglen);
-      assume_len(&len, FALSE, sizeof(len));
+      assume_len(&len, false, sizeof(len));
       Nondet();
 
       store_buf((unsigned char *) siglen);
@@ -1609,7 +1609,7 @@ int tls1_generate_master_secret_proxy(SSL *s, unsigned char *out, unsigned char 
       load_ctx(ctx, "key", "pkey");
 
       SymN("EVP_PKEY_sign", 2);
-      assume_len(siglen, FALSE, sizeof(*siglen));
+      assume_len(siglen, false, sizeof(*siglen));
       Nondet();
 
       store_buf(sig);
@@ -1656,7 +1656,7 @@ int BN_rand_range_proxy(BIGNUM *rnd , BIGNUM const   *range )
   SymN("BN_rand_range_result", 0);
   Nondet();
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   load_ctx(range, "val", "range");
@@ -1711,7 +1711,7 @@ int BN_add_proxy(BIGNUM *r , BIGNUM const   *a , BIGNUM const   *b )
   SymN("BN_add_result", 0);
   Nondet();
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   load_ctx(a, "val", "a");
@@ -1739,7 +1739,7 @@ int BN_div_proxy(BIGNUM *dv , BIGNUM *rem , BIGNUM const   *m ,
   SymN("BN_div_result", 0);
   Nondet();
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   if(dv != NULL){
@@ -1852,7 +1852,7 @@ int BN_num_bits_proxy(BIGNUM const   *a )
 
   SymN("BN_num_bits", 1);
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
 
   store_buf((void*) &ret);
 
@@ -1879,7 +1879,7 @@ int BN_num_bytes_proxy(const BIGNUM *a)
 
   load_ctx(a, "val", NULL);
 
-  len(TRUE, sizeof(ret));
+  len(true, sizeof(ret));
   assume_intype("bitstring");
 
   store_buf((void*) &ret);
@@ -1927,7 +1927,7 @@ extern int BN_bn2bin_proxy(BIGNUM const   *a , unsigned char *to )
   unmute();
 
   load_ctx(a, "val", NULL);
-  len(TRUE, sizeof(ret));
+  len(true, sizeof(ret));
   assume_intype("bitstring");
   store_buf((void *)&ret);
 
@@ -1993,7 +1993,7 @@ extern int BN_hex2bn_proxy(BIGNUM **a , char const   *str )
 
   load_ctx(&dummy, "val", "");
 
-  len(TRUE, sizeof(ret));
+  len(true, sizeof(ret));
   assume_intype("bitstring");
   store_buf((void *) &ret);
 
@@ -2056,7 +2056,7 @@ int BN_set_word_proxy(BIGNUM *a, unsigned long w)
   SymN("BN_set_word_result", 0);
   Nondet();
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   load_buf((unsigned char *)&w, sizeof(w), "wordval");
@@ -2081,7 +2081,7 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
   SymN("BN_mod_exp2_mont_result", 0);
   Nondet();
   size_t ret_len = sizeof(ret);
-  assume_len(&ret_len, FALSE, sizeof(ret_len));
+  assume_len(&ret_len, false, sizeof(ret_len));
   store_buf(&ret);
 
   int m_len = BN_num_bytes_proxy(m);
@@ -2097,7 +2097,7 @@ int BN_mod_exp2_mont_proxy(BIGNUM *rr , BIGNUM const   *a1 ,
   // bottom.
   assume_intype("bitstring");
   // the result will not be longer than the modulus
-  assume_len_at_most(&m_len, TRUE, sizeof(m_len));
+  assume_len_at_most(&m_len, true, sizeof(m_len));
   Hint("rr");
 
   store_ctx(rr, "val");
@@ -2184,7 +2184,7 @@ int DSA_generate_key_proxy(DSA *a)
 {
 /*
   size_t keylen;
-  symL("dsa_keylen", "keylen", sizeof(size_t), TRUE);
+  symL("dsa_keylen", "keylen", sizeof(size_t), true);
   store_buf(&keylen, sizeof(keylen));
 */
 
@@ -2259,7 +2259,7 @@ int i2d_DSA_PUBKEY_proxy(DSA *a , unsigned char **pp )
   load_ctx(a, "pkey", "dsa_pkey");
   SymN("i2d_DSA_PUBKEY", 1);
   Hint("DER");
-  store_len(&ret, sizeof(ret), TRUE);
+  store_len(&ret, sizeof(ret), true);
   // DER remains on stack ...
 
   void *p;
@@ -2344,7 +2344,7 @@ unsigned long lh_strhash_proxy(char const   *c )
   SymN("lh_strhash", 1);
   Hint("strhash");
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
 
   store_buf((void *) &ret);
 
@@ -2477,7 +2477,7 @@ extern RSA *RSAPrivateKey_dup_proxy(RSA *rsa )
 
     SymN("RSA_verify", 2);
     Hint("sig");
-    assume_len(&siglen, FALSE, sizeof(siglen));
+    assume_len(&siglen, false, sizeof(siglen));
 
     store_buf(sigbuf);
   }
@@ -2503,7 +2503,7 @@ extern int RSA_public_encrypt_proxy(int flen , unsigned char const   *from , uns
 
   SymN("RSA_public_encrypt", 2);
   Hint("enc");
-  assume_len(&ret, TRUE, sizeof(ret));
+  assume_len(&ret, true, sizeof(ret));
   Nondet();
 
   store_buf(to);
@@ -2531,7 +2531,7 @@ extern int RSA_private_decrypt_proxy(int flen , unsigned char const   *from , un
   // FIXME: relying on concrete value?
   SymN("RSA_private_decrypt", 2);
   Hint("dec");
-  assume_len(&ret, TRUE, sizeof(ret));
+  assume_len(&ret, true, sizeof(ret));
 
   store_buf(to);
 
@@ -2558,7 +2558,7 @@ extern int RSA_sign_proxy(int type , unsigned char const   *m , unsigned int m_l
 
   SymN("RSA_sign", 2);
   Hint("sig");
-  assume_len(siglen, FALSE, sizeof(*siglen));
+  assume_len(siglen, false, sizeof(*siglen));
   Nondet();
 
   store_buf(sigret);

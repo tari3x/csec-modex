@@ -7,48 +7,11 @@
 open Common
 open Printf
 
-module Var = struct
-  type t = string
-  type var = t
-
-  let used_names = ref []
-
-  let unfresh names =
-    used_names := !used_names @ names
-
-  let reset_fresh () =
-    used_names := []
-
-  let rec unused stem i =
-    let name = stem ^ (string_of_int i) in
-    if List.mem name ~set:!used_names then
-      unused stem (i + 1)
-    else
-    begin
-      used_names := name :: !used_names;
-      i, name
-    end
-
-  let fresh name =
-    let name = if name = "" then "var" else name in
-    unused name 1 |> snd
-
-  let fresh_id name =
-    let name = if name = "" then "var" else name in
-    unused name 1 |> fst
-
-  module Key = struct
-    type t = string
-    let compare = Pervasives.compare
-    let to_string t = t
-  end
-
-  module Map = Custom_map(Key)
-end
-
 module Core_map = Map
 open Type
 open Sym
+
+module Stats = Stats_local
 
 type var = Var.t
 
@@ -120,7 +83,7 @@ type 'a t =
 
 and 'a annotation =
 | Type_hint of 'a imltype
-| Name of string
+| Name of var
 (* The following annotations contain the definition of the corresponding
    symbol. *)
 | Parser : bitstring t -> bitstring annotation
@@ -134,10 +97,11 @@ and 'a annotation =
   (** Not the same as lhost in CIL *)
 and base =
 | Stack of string
-  (** (Old) Name and unique id of variable. Note that this way variables from
-      different calls of the same function will be mapped to the same base, but not
-      variables from different functions. *)
-| Heap of id * int t
+(** (Old) Name and unique id of variable. Note that this way variables from
+    different calls of the same function will be mapped to the same base, but not
+    variables from different functions. *)
+| Heap of (id * int t list * int t)
+(* CR: what about the size of intval pointers? *)
 | Abs of intval
   (** An absolute pointer value to deal with cases like:
       {[
@@ -189,9 +153,9 @@ let show_types = ref false
     | _ -> false
 
   let base_to_string : base -> string = function
-    | Stack name    -> "stack " ^ name (* ^ "[" ^ string_of_int id ^ "]" *)
-    | Heap (id, _)  -> "heap " ^ string_of_int id
-    | Abs i         -> "abs " ^ Int64.to_string i
+    | Stack name       -> "stack " ^ name (* ^ "[" ^ string_of_int id ^ "]" *)
+    | Heap (id, _, _)  -> "heap " ^ string_of_int id
+    | Abs i            -> "abs " ^ Int64.to_string i
 
   let rec show_iexp_body : type a. a t -> string = fun t ->
     let show_types = !show_types in
@@ -243,7 +207,7 @@ let show_types = ref false
         (* ^ "<" ^ E.dump len ^ ">" *)
       end
 
-    | Var (v, _) -> v
+    | Var (v, _) -> Var.to_string v
 
     | Len e -> "len(" ^ show_iexp_body e ^ ")"
 
@@ -255,7 +219,7 @@ let show_types = ref false
       show_iexp_body  e  ^ ":" ^ Type.to_string t
 
     | Annotation (Name name, e) ->
-      sprintf "%s (* named %s *)" (show_iexp_body e) name
+      sprintf "%s (* named %s *)" (show_iexp_body e) (Var.to_string name)
 
     | Annotation (_, e) ->
       show_iexp_body e
@@ -279,7 +243,7 @@ let show_types = ref false
 
   and show_iexp : type a. ?bracket:bool ->  a t -> string = fun ?(bracket = false) t ->
     match t with
-    | Var (s, _) -> s
+    | Var (s, _) -> Var.to_string s
     | t ->
       if bracket && (needs_bracket t) then "(" ^ show_iexp_body t ^ ")"
       else show_iexp_body t
@@ -384,7 +348,7 @@ let show_types = ref false
     | Ptr _ -> assert false
     | Struct _ -> assert false
     | Array _ -> assert false
-    | Var (v, _) -> sprintf "\\var{%s}" v
+    | Var (v, _) -> sprintf "\\var{%s}" (Var.to_string v)
     | Len e -> "\\len(" ^ latex_iexp_body e ^ ")"
     | BS (e, itype)  -> sprintf "\\bs{%s}{%s}"  (latex_iexp e) (Int_type.latex itype)
     | Val (e, itype) -> sprintf "\\val{%s}{%s}" (latex_iexp e) (Int_type.latex itype)
@@ -522,8 +486,9 @@ let show_types = ref false
         List.iter2 ts es ~f:(fun t e ->
           Option.iter (type_of e) ~f:(fun e_t ->
             if not (Type.subtype e_t t)
-            then fail "Wrong type %s of %s in %s"
-              (Type.to_string t) (to_string e) (to_string e_top)));
+            then fail "Wrong type of %s in %s, has %s, expected %s"
+             (to_string e) (to_string e_top)
+             (Type.to_string e_t)  (Type.to_string t)));
         List.iter ~f:invariant es
       | e -> iter_children {f = invariant} e
     in
@@ -565,6 +530,7 @@ let show_types = ref false
       | Len_y -> K.Int
       | Val_y _ -> K.Int
       | Field_offset _ -> K.Int
+      | Malloc _ -> K.Int
 
       | Defined -> K.Bool
       | In_type _ -> K.Bool
@@ -694,6 +660,7 @@ let show_types = ref false
     | Annotation (_, e) -> is_cryptographic e
     | _ -> false
 
+
   (*************************************************)
   (** {1 Arithmetics} *)
   (*************************************************)
@@ -781,6 +748,31 @@ let show_types = ref false
   let minus e1 e2 = arith_simplify (minus e1 e2)
 
   (*************************************************)
+  (** {1 Pointers} *)
+  (*************************************************)
+
+  let ptr_size = function
+    | Stack _ -> None
+    | Heap (_, _, l) -> Some l
+    | Abs _ -> None
+
+  let malloc_expr es =
+    Sym (Malloc (List.length es), es)
+
+  let is_zero_offset_val : offset_val -> bool = function
+    | Index 0 -> true
+    | Flat z when z = zero -> true
+    (* | Flat z when S.equal_int E.zero z -> true *)
+    | _ -> false
+
+  let is_zero_pos =
+    List.for_all ~f:(fun (offset, _) -> is_zero_offset_val offset)
+
+  let is_field_offset_val : offset_val -> bool = function
+    | Field _ -> true
+    | _ -> false
+
+  (*************************************************)
   (** {1 Misc} *)
   (*************************************************)
 
@@ -788,19 +780,22 @@ let show_types = ref false
 
   let range e f l = Range (e, f, l)
 
+  let var_s v = Var (Var.of_string v, Kind.Bitstring)
+
   let var v = Var (v, Kind.Bitstring)
 
   let int i = Int (Int64.of_int i)
 
   let string s = String (String.explode s)
 
-  let zero_byte signedness =
-    BS (Int 0L, (Int_type.create signedness 1))
+  let zero_byte =
+    BS (Int 0L, (Int_type.create `Signed 1))
 
   let rec is_constant : type a. a t -> bool = function
     (* CR: think more about this. *)
     | Sym (Field_offset _, []) -> false
     | Var _ -> false
+    | Ptr (Heap _, _) -> false
     | e -> map_children {f = is_constant} e |> List.all
 
   let is_tag = is_constant
@@ -837,7 +832,13 @@ let show_types = ref false
     in
     subst
 
+  let subst vs es =
+    Stats.call "E.subst" (fun () -> subst vs es)
+
   let subst_v vs vs' e = subst vs (List.map ~f:var vs') e
+
+  let subst_v vs vs' =
+    Stats.call "E.subst_v" (fun () -> subst_v vs vs')
 
   let rec remove_annotations : type a. a t -> a t = function
     | Annotation(_, e) -> remove_annotations e
@@ -909,16 +910,6 @@ let show_types = ref false
       | e -> e
     in
     descend { descend = unfold } e
-
-  let is_zero_offset_val : offset_val -> bool = function
-    | Index 0 -> true
-    | Flat z when z = zero -> true
-    (* | Flat z when S.equal_int E.zero z -> true *)
-    | _ -> false
-
-  let is_field_offset_val : offset_val -> bool = function
-    | Field _ -> true
-    | _ -> false
 
   (*************************************************)
   (** {1 Facts} *)
@@ -1056,10 +1047,10 @@ module Sym_defs = struct
     prerr_endline ""
 end
 
-let mk_arg id = ("arg" ^ string_of_int id)
+let mk_arg id = Var.of_string ("arg" ^ string_of_int id)
 
 let mk_arg_len id =
-  Len (Var (mk_arg id, Kind.Bitstring))
+  Len (var (mk_arg id))
 
 let mk_formal_args n = List.map ~f:mk_arg (0 -- (n - 1))
 

@@ -18,6 +18,8 @@ open Exp
 
 module E = Exp
 
+module Stats = Stats_local
+
 (*************************************************)
 (** {1 Types} *)
 (*************************************************)
@@ -66,7 +68,7 @@ let warn_cache = ref E.Set.empty
 
 let mk_exp_name (type a) (e : a Exp.t) =
   let result = match e with
-    | E.Var (v, _) -> "var_" ^ v
+    | E.Var (v, _) -> "var_" ^ Var.to_string v ~dont_mask:true
     | E.String _ as e ->
       let escaped =
         E.to_string e |> String.map ~f:(function
@@ -226,7 +228,11 @@ let rec rewrite_ptr : type a. a Exp.t -> a Exp.t = fun e ->
   in
   match e with
   | Ptr (pb, eo) ->
-    Var ("ptr_" ^ E.to_string (Ptr (pb, List.filter ~f:not_zero eo)), Kind.Bitstring)
+    Var (Var.of_string
+           ("ptr_" ^
+               E.to_string (Ptr (pb, List.filter ~f:not_zero eo))),
+            Kind.Bitstring)
+
   | e -> E.descend {E.descend = rewrite_ptr} e
 
 module Mode = struct
@@ -501,6 +507,8 @@ let rewrite
           in
           if t2 = t3 then collect e2
           else begin match e2 with
+          (* CR: check that new type is wide enough *)
+          | Ptr _ -> collect e2
           | Sym (Op (Cast_to_int, ([Bs_int t1],  t2')), [e1]) ->
             assert (t2 = t2');
             (* Both conditions are necessary. *)
@@ -537,6 +545,13 @@ let rewrite
             step ~right:e ~conds;
             collect e
           end
+
+        | Val (Ptr (Heap (_, es, _), pos), _) when E.is_zero_pos pos ->
+          let e = E.malloc_expr es in
+          collect e
+
+        | Val (Ptr (Stack "nullPtr", pos), _) when E.is_zero_pos pos ->
+          E.int 0
 
         | BS (Val (e, itype), itype') as e_bs ->
           if itype <> itype'
@@ -817,6 +832,7 @@ let rewrite
         | Sym (Logical _, _) as e -> default e
         | Sym (Ptr_len, _) as e -> default e
         | Sym (Cast _, _) as e -> default e
+        | Sym (Malloc _, _) as e -> default e
         | Sym (Replicate, _) as e -> default e
         | Sym (In_type _, _) as e -> default e
         | Sym (BS_of_truth _, _) as e -> default e
@@ -931,67 +947,71 @@ let translate (e_top : fact) =
   let rec tr : type a. a Exp.t -> Yices.expr = fun e ->
     DEBUG "translating %s" (E.dump e);
     match e with
-      | Int i                  -> Yices.mk_num ctx (Int64.to_int i)
-      | String _               -> mk_var e
-      (* All variables are Bitstringbot except for in eval *)
-      | Var _                  -> mk_var e
-      | Range (e, pos, len)    -> Yices.mk_app ctx (range ()) [| tr e; tr pos; tr len |]
-      | Sym (Opaque, [_]) as e -> mk_var e
-      | Annotation(_, e)       -> tr e
-      | BS (e, itype)          ->
-        let sg = Int_type.signedness itype in
-        let width = Int_type.width itype in
-        Yices.mk_app ctx (bs sg) [| Yices.mk_num ctx width; tr e |]
-      | Sym (sym, es) ->
-        begin match sym, es with
-          | (Logical True, [])         -> Yices.mk_true ctx
-          | (Logical (And _), [])      -> Yices.mk_true ctx
-          | (Logical Not, [a])         -> Yices.mk_not ctx (tr a)
-          | (Logical (And _), es)      -> Yices.mk_and ctx (A.map tr (A.of_list es))
-          | (Logical (Or _), [])       ->
-            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | (Logical (Or _), es)       -> Yices.mk_or  ctx (A.map tr (A.of_list es))
-          | (Logical Implies, [a; b])  -> Yices.mk_ite ctx (tr a) (tr b) (Yices.mk_true ctx)
-          | (Int_cmp Eq, [a; b])       -> Yices.mk_eq ctx (tr a) (tr b)
-          | (Int_cmp Ne, [a; b])       -> Yices.mk_diseq ctx (tr a) (tr b)
-          | (Int_cmp Gt, [a; b])       -> Yices.mk_gt ctx (tr a) (tr b)
-          | (Int_cmp Ge, [a; b])       -> Yices.mk_ge ctx (tr a) (tr b)
-          | (Int_cmp Lt, [a; b])       -> Yices.mk_lt ctx (tr a) (tr b)
-          | (Int_cmp Le, [a; b])       -> Yices.mk_le ctx (tr a) (tr b)
+    | Int i                  -> Yices.mk_num ctx (Int64.to_int i)
+    | String _               -> mk_var e
+    (* All variables are Bitstringbot except for in eval *)
+    | Var _                  -> mk_var e
+    | Range (e, pos, len)    -> Yices.mk_app ctx (range ()) [| tr e; tr pos; tr len |]
+    | Sym (Opaque, [_]) as e -> mk_var e
+    | Annotation(_, e)       -> tr e
+    | BS (e, itype)          ->
+      let sg = Int_type.signedness itype in
+      let width = Int_type.width itype in
+      Yices.mk_app ctx (bs sg) [| Yices.mk_num ctx width; tr e |]
+    | Sym (sym, es) ->
+      begin match sym, es with
+      | (Logical True, [])         -> Yices.mk_true ctx
+      | (Logical (And _), [])      -> Yices.mk_true ctx
+      | (Logical Not, [a])         -> Yices.mk_not ctx (tr a)
+      | (Logical (And _), es)      -> Yices.mk_and ctx (A.map tr (A.of_list es))
+      | (Logical (Or _), [])       ->
+        fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+      | (Logical (Or _), es)       -> Yices.mk_or  ctx (A.map tr (A.of_list es))
+      | (Logical Implies, [a; b])  -> Yices.mk_ite ctx (tr a) (tr b) (Yices.mk_true ctx)
+      | (Int_cmp Eq, [a; b])       -> Yices.mk_eq ctx (tr a) (tr b)
+      | (Int_cmp Ne, [a; b])       -> Yices.mk_diseq ctx (tr a) (tr b)
+      | (Int_cmp Gt, [a; b])       -> Yices.mk_gt ctx (tr a) (tr b)
+      | (Int_cmp Ge, [a; b])       -> Yices.mk_ge ctx (tr a) (tr b)
+      | (Int_cmp Lt, [a; b])       -> Yices.mk_lt ctx (tr a) (tr b)
+      | (Int_cmp Le, [a; b])       -> Yices.mk_le ctx (tr a) (tr b)
 
-          | (Bs_eq, [a; b])   -> Yices.mk_eq ctx (tr a) (tr b)
-          | (In_type _, _)    -> mk_var e
-          | (Defined, [e])    -> Yices.mk_app ctx (defined ()) [| mk_var e |]
+      | (Bs_eq, [a; b])   -> Yices.mk_eq ctx (tr a) (tr b)
+      | (In_type _, _)    -> mk_var e
+        (* CR-someday: are we potentially confusing the solver by allowing
+           simplifications inside Malloc? *)
+      | (Malloc _, _)     -> mk_var e
+      | (Defined, [e])    -> Yices.mk_app ctx (defined ()) [| mk_var e |]
 
-          (* C interpretation of truth *)
-          | (Truth_of_bs, [e]) -> Yices.mk_app ctx (truth ()) [| mk_var e |]
-          (* IML interpretation of truth *)
-          | (Opaque, _)        -> Yices.mk_app ctx (truth ()) [| mk_var e |]
+      (* C interpretation of truth *)
+      | (Truth_of_bs, [e]) -> Yices.mk_app ctx (truth ()) [| mk_var e |]
+      (* IML interpretation of truth *)
+      (* CR: what? *)
+      | (Opaque, _)        -> Yices.mk_app ctx (truth ()) [| mk_var e |]
 
-          | Int_op Neg, [a]        -> Yices.mk_sub ctx [| Yices.mk_num ctx 0; tr a |]
-          | Int_op Minus, [e1; e2] -> Yices.mk_sub ctx [| tr e1; tr e2 |]
-          | Int_op Minus, _        ->
-            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | Int_op (Plus _), []    ->
-            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | Int_op (Plus _), es    -> Yices.mk_sum ctx (A.map tr (A.of_list es))
-          | Int_op (Mult _), []    ->
-            fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
-          | Int_op (Mult _), es    -> Yices.mk_mul ctx (A.map tr (A.of_list es))
-          | Ptr_len, []           -> mk_var e
+      | Int_op Neg, [a]        -> Yices.mk_sub ctx [| Yices.mk_num ctx 0; tr a |]
+      | Int_op Minus, [e1; e2] -> Yices.mk_sub ctx [| tr e1; tr e2 |]
+      | Int_op Minus, _        ->
+        fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+      | Int_op (Plus _), []    ->
+        fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+      | Int_op (Plus _), es    -> Yices.mk_sum ctx (A.map tr (A.of_list es))
+      | Int_op (Mult _), []    ->
+        fail "wrong number of arguments: %s in fact %s" (E.dump e) (E.dump e_top)
+      | Int_op (Mult _), es    -> Yices.mk_mul ctx (A.map tr (A.of_list es))
+      | Ptr_len, []            -> mk_var e
 
-          | Len_y, [e]            -> Yices.mk_app ctx (len ())   [| tr e |]
-           (* Not sure this is necessary, perhaps could just make it opaque. *)
-          | Val_y itype, [e]      -> Yices.mk_app ctx (value (Int_type.signedness itype))  [| tr e |]
+      | Len_y, [e]            -> Yices.mk_app ctx (len ())   [| tr e |]
+      (* Not sure this is necessary, perhaps could just make it opaque. *)
+      | Val_y itype, [e]      -> Yices.mk_app ctx (value (Int_type.signedness itype))  [| tr e |]
 
-          | _ ->
-            fail "Solver.translate: unexpected expression %s in fact %s"
-              (E.dump e) (E.dump e_top)
-        end
-
-      | e ->
+      | _ ->
         fail "Solver.translate: unexpected expression %s in fact %s"
           (E.dump e) (E.dump e_top)
+      end
+
+    | e ->
+      fail "Solver.translate: unexpected expression %s in fact %s"
+        (E.dump e) (E.dump e_top)
 
   in
   with_debug "Solver.translate" (fun () -> tr e_top)
@@ -1031,6 +1051,9 @@ let is_true_raw ?warn_if_false e =
   end;
   result
 
+let is_true_raw ?warn_if_false e =
+  Stats.call "is_true_raw" (fun () -> is_true_raw ?warn_if_false e)
+
 let rec simplify_bool (e : fact) =
   let is_true = function
     | Sym (Logical And _, []) -> true
@@ -1059,10 +1082,11 @@ let assume es =
     DEBUG "assuming %s" (E.to_string e);
     add_fact_raw (translate e);
   in
-  push_debug "assume";
   reset_cache ();
-  List.iter es ~f:assume_one;
-  pop_debug "assume"
+  List.iter es ~f:assume_one
+
+let assume es =
+  Stats.call "assume" (fun () -> assume es)
 
 let is_true e: pbool =
   DEBUG "checking %s" (E.to_string e);
@@ -1098,6 +1122,9 @@ let implies facts hypotheses =
   pop_debug "implies";
   DEBUG "implication result: %b" result;
   result
+
+let implies facts hypotheses =
+  Stats.call "implies" (fun () -> implies facts hypotheses)
 
 (* TODO: change back to equal when it stabilizes *)
 let equal_bitstring ?(facts = []) (a : bterm) (b : bterm) =
@@ -1234,7 +1261,7 @@ let simplify e =
 (*************************************************)
 
 let test_implication () =
-  let nonce = Var ("nonce", Kind.Bitstring) in
+  let nonce = Var (Var.of_string "nonce", Kind.Bitstring) in
   let bs e = BS (e, Int_type.create `Unsigned 4) in
   assert
     (implies
@@ -1248,7 +1275,9 @@ let test_implication () =
 let test_bs_cancellation1 () =
   let itype = Int_type.create `Unsigned 4 in
   let eight = BS (Int 8L, itype) in
-  let e = BS (Annotation (Name "eight", Val (eight, itype)), itype) in
+  let e = BS (Annotation (Name (Var.of_string "eight"),
+                          Val (eight, itype)), itype)
+  in
   assert (is_true (eq_bitstring [e; eight]))
 
 (*
@@ -1259,8 +1288,8 @@ let test_bs_cancellation1 () =
 let test_bs_cancellation2 () =
   let t = Named ("nonce", Some (Fixed 20)) in
   let itype = Int_type.create `Unsigned 8 in
-  let l1 = Range (var "msg", Int 4L, Int 8L) in
-  let e1 = Range (var "msg", Int 12L, Val (l1, itype)) in
+  let l1 = Range (var_s "msg", Int 4L, Int 8L) in
+  let e1 = Range (var_s "msg", Int 12L, Val (l1, itype)) in
   let e2 = Annotation (Type_hint t, e1) in
   let e3 = BS (Len e2, itype) in
   assert (implies
@@ -1269,12 +1298,12 @@ let test_bs_cancellation2 () =
 
 let test_annot_equality () =
   let l =
-    Val (Range (Var ("msg", Kind.Bitstring), Int 4L, Int 8L),
+    Val (Range ((Exp.var_s "msg"), Int 4L, Int 8L),
          Int_type.create `Unsigned 8)
   in
   let e =
     Annotation (Type_hint (Named ("nonce", Some (Fixed 20))),
-                Range (Var ("msg", Kind.Bitstring), Int 12L, l))
+                Range ((Exp.var_s "msg"), Int 12L, l))
   in
   assert (implies [is_defined e] [eq_int [Len e; l]])
 

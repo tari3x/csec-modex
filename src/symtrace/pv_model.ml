@@ -231,12 +231,12 @@ module Parsing_eq = struct
 
   let to_string {p; c; i} =
     let arity = Sym.arity c in
-    let args = mk_formal_args arity in
+    let args = mk_formal_args arity |> List.map ~f:Var.to_string in
     Printf.sprintf "%s(%s(%s)) = %s"
       (Sym.to_string p)
       (Sym.to_string c)
       (String.concat ~sep:", " args)
-      (E.mk_arg i)
+      (E.mk_arg i |> Var.to_string)
 end
 
 let printf a = fprintf Common.out_channel a
@@ -244,7 +244,7 @@ let printf a = fprintf Common.out_channel a
 let show_pv_stmt s =
   let open Piml in
   let rec show_exp_body : type a. a exp -> string = function
-    | Var (v, _) -> v
+    | Var (v, _) -> Var.to_string v
     | Sym (Fun (s, _), []) -> s
     | Sym (s, es) ->
       begin match s with
@@ -260,13 +260,14 @@ let show_pv_stmt s =
   in
   match s with
     | In [v] ->
-      sprintf "in(c_in, %s);" v;
+      sprintf "in(c_in, %s);" (Var.to_string v);
 
     | In vs ->
-      sprintf "in(c_in, (%s));" (String.concat vs ~sep:", ")
+      let vs = List.map vs ~f:Var.to_string |> String.concat ~sep:", " in
+      sprintf "in(c_in, (%s));" vs
 
     | New (v, _) ->
-      sprintf "new %s;" v;
+      sprintf "new %s;" (Var.to_string v);
 
     | Out [e] ->
       "out(c_out, " ^ show_exp_body e ^ ");";

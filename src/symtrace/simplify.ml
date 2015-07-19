@@ -14,6 +14,9 @@ open Exp
 module E = Exp
 module S = Solver
 
+module Stats = Stats_local
+
+
 (**
    OLD
 
@@ -113,7 +116,7 @@ let rec simplify : type a.  a Exp.t -> a Exp.t = fun e ->
 
     | Sym (Ztp, [Concat es]) ->
       let rec apply_ztp acc = function
-        | e :: _ when S.equal_bitstring e (E.zero_byte `Signed) ->
+        | e :: _ when S.equal_bitstring e E.zero_byte ->
           Sym (Ztp_safe, acc) |> simplify
         | e :: es -> apply_ztp (acc @ [e]) es
         | [] -> default e_orig
@@ -198,9 +201,8 @@ let rec full_simplify e =
   DEBUG "full_simplify result: %s" (E.dump result);
   result
 
-
 let full_simplify e =
-  with_debug "full_simplify" (fun () -> full_simplify e)
+  Stats.call "full_simplify" (fun () -> full_simplify e)
 
 (*************************************************)
 (** {1 Testing.} *)
@@ -211,7 +213,7 @@ let test_result ~expect actual =
   then fail "Expected: \n%s\ngot \n%s\n" (E.to_string expect) (E.to_string actual)
 
 let test_nothing_to_simplify () =
-  let e = Sym (Defined, [Sym (Ztp, [Var ("v", Kind.Bitstring)])]) in
+  let e = Sym (Defined, [Sym (Ztp, [Exp.var_s "v"])]) in
   S.assume [e];
   test_result (simplify e) ~expect:e;
   test_result (full_simplify e) ~expect:e

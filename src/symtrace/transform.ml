@@ -403,7 +403,7 @@ let normal_form p =
   simplify_lets p
 
 let test_normal_form_encoder () =
-  let var v = Var (v, Kind.Bitstring) in
+  let var = E.var_s in
   let itype = Int_type.create `Unsigned 8 in
   let l1 = Range (var "msg", Int 4L, Int 8L) in
   let e1 = Range (var "msg", Int 12L, Val (l1, itype)) in
@@ -411,15 +411,15 @@ let test_normal_form_encoder () =
   let e = Concat [E.string "msg"; l1; BS (Int 20L, itype);
                   Annotation (Type_hint t, e1); var "nonce"; var "host"]
   in
-  let p = [ New ("nonce", t)
+  let p = [ New (Var.of_string "nonce", t)
           ; Assume (E.is_defined e)
           ; Out [e] ]
   in
-  let p' = [ New ("nonce", t)
+  let p' = [ New (Var.of_string "nonce", t)
            ; Assume (E.is_defined e)
-           ; Let (VPat "var3", e1)
-           ; Let (VPat "var4", Annotation (Type_hint t, var "var3"))
-           ; Let (VPat "var5", Concat [ E.string "msg"
+           ; Let (vpat "var3", e1)
+           ; Let (vpat "var4", Annotation (Type_hint t, var "var3"))
+           ; Let (vpat "var5", Concat [ E.string "msg"
                                       ; BS (Len (var "var4"), itype)
                                       ; BS (Len (var "nonce"), itype)
                                       ; var "var4"; var "nonce"; var "host"])
@@ -430,12 +430,12 @@ let test_normal_form_encoder () =
 
 let test_normal_form_fun () =
   let f = Sym.make "f" ~arity:1 in
-  let var v = Var (v, Kind.Bitstring) in
+  let var = E.var_s in
   let e_c = Concat [var "msg1"; var "msg2"] in
   let e = Sym (f, [e_c]) in
   let p = [ Assume (E.is_defined e); Out [e] ] in
   let p' = [ Assume (E.is_defined e)
-           ; Let (VPat "var1", e_c)
+           ; Let (vpat "var1", e_c)
            ; Out [Sym (f, [var "var1"])] ]
   in
   test_result ~expect:p' (normal_form p) Iml.to_string;

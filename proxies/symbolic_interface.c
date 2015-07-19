@@ -6,6 +6,8 @@
 
 #include "crest.h"
 
+#include <stdbool.h>
+
 // Things implemented in crestify.cpp:
 // mute, unmute
 
@@ -103,7 +105,7 @@ void input(const char * hint, size_t len)
   In();
   // It's fine to assume here since not receiving enough input will not result
   // in termination.
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   if (hint != NULL) Hint(hint);
 }
 
@@ -185,7 +187,7 @@ void var(const char * name, const unsigned char * buf, const unsigned char * len
   if(len != NULL){
     Dup();
     Len();
-    BS(FALSE, lenlen);
+    BS(false, lenlen);
     Done();
     // Hint("len");
 
@@ -206,7 +208,7 @@ void varWithBufInit(const char * name, const unsigned char ** buf, const unsigne
   Dup();
   // stack -> name, name
   Len();
-  BS(FALSE, lenlen);
+  BS(false, lenlen);
   Done();
   // Hint("len");
 
@@ -336,7 +338,7 @@ long int concrete_val(long int n)
 {
   long int ret = n;
   __CrestLoadInt(n);
-  BS(TRUE, sizeof(ret));
+  BS(true, sizeof(ret));
   store_buf(&ret);
   return ret;
 }
@@ -350,8 +352,17 @@ long int concrete_val(long int n)
 
 void fresh_ptr(size_t size)
 {
-  NewHeapPtr(size);
+  Malloc(size);
 }
+
+void fresh_ptrE(unsigned char * len, size_t lenlen)
+{
+  load_buf(len, lenlen, NULL);
+  Val(false, lenlen);
+  MallocE();
+}
+
+
 
 void stack_ptr(const char * name)
 {

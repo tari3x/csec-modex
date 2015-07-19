@@ -8,6 +8,8 @@ open Common
 open Printf
 open Type
 
+module Stats = Stats_local
+
 module Cmp = struct
   type t = Lt | Gt | Le | Ge | Eq | Ne
 end
@@ -210,6 +212,8 @@ type ('a, 'b) t =
 
 | Ptr_len : (_, int) t
 
+| Malloc : int -> (int, int) t
+
 | Cast : bitstring Type.t * bitstring Type.t -> (bitstring, bitstring) t
 
 | Ztp : (bitstring, bitstring) t
@@ -314,6 +318,8 @@ let to_string_hum (type a) (type b) ?(show_types = true) (t: (a, b) t) =
   | Bs_eq -> "="
   | Ptr_len -> "ptrLen"
 
+  | Malloc _ -> "Malloc"
+
   | Cast (t, t') -> "cast_" ^ Type.to_string t ^ "_" ^ Type.to_string t'
 
   | Ztp -> "Ztp"
@@ -343,7 +349,13 @@ let to_string_hum (type a) (type b) ?(show_types = true) (t: (a, b) t) =
       *)
     sprintf "%s" s
 
-let to_string t = to_string_hum t
+let to_string t =
+  to_string_hum t
+
+(*
+let to_string t =
+  String.mask_digits (to_string_hum t)
+*)
 
 let latex (type a) (type b) ?(show_types = true) (t : (a, b) t) =
   match t with
@@ -382,6 +394,7 @@ let latex (type a) (type b) ?(show_types = true) (t : (a, b) t) =
     end
   | Bs_eq -> "="
   | Ptr_len -> assert false
+  | Malloc _ -> assert false
   | Cast (t, t') ->
     sprintf "\\tcast_{%s \\to %s}" (Type.latex t) (Type.latex t')
   | Ztp -> assert false
@@ -472,6 +485,8 @@ let may_fail (type a) (type b) (t : (a, b) t) =
   | Bs_eq -> false
   | Ptr_len -> false
 
+  | Malloc _ -> false
+
   | Cast _ -> false
 
   | Ztp_safe -> false
@@ -515,6 +530,8 @@ let never_fails (type a) (type b) (t : (a, b) t) =
 
   | Ptr_len -> false
 
+  | Malloc _ -> false
+
   | Cast _ -> false
 
   | Ztp_safe -> false
@@ -549,6 +566,8 @@ let arity  (type a) (type b) (t : (a, b) t) =
 
   | Undef _ -> 0
   | Ptr_len -> 0
+
+  | Malloc n -> n
 
   | Truth_of_bs -> 1
   | Ztp -> 1
@@ -659,6 +678,9 @@ module Map (Value : GADT) = struct
   let find (type a) sym t =
     let module M = (val t : Map with type kind = a) in
     M.Ops.find sym M.value
+
+  let find sym t =
+    Stats.call "Sym.Map.find" (fun () -> find sym t)
 
   let of_list (type a) xs : a t =
     (module struct

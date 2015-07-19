@@ -536,8 +536,8 @@ let main () =
     The small substring example
   *)
   reset ();
-  let x1 = Var ("x_1", Kind.Bitstring) in
-  let x2 = Var ("x_2", Kind.Bitstring) in
+  let x1 = E.var_s "x_1" in
+  let x2 = E.var_s "x_2" in
   let e =
     E.eq_int
       [ Len (Range (Concat [x1; x2], Int 5L, Len x2))
@@ -556,7 +556,7 @@ let main () =
     The chaining rule example.
   *)
   reset ();
-  let x = Var ("x", Kind.Bitstring) in
+  let x = E.var_s "x" in
   let utype = Int_type.create `Unsigned 8 in
   let e =
     Sym (Int_cmp Cmp.Ge, [Val (x, utype); E.int 200])
@@ -575,7 +575,7 @@ let main () =
   *)
 
   reset ();
-  let x = Var ("x", Kind.Bitstring) in
+  let x = E.var_s "x" in
   let utype = Int_type.create `Unsigned 1 in
   let stype = Int_type.create `Signed 1 in
   let x_len = Range (x, E.int 1, E.int 1) in

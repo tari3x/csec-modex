@@ -45,7 +45,7 @@ void client(dstr_c *a, dstr_c *b, key_c *k, dstr_c *s)
         if(t->length > MAX_RESPONSE_LEN)
         {
           fprintf(stderr, "Response too long.\n");
-          return 1;
+          exit(1);
         }
 	hmacsha1Verify(k, response(s, t), &mac2);
 #ifdef VERBOSE
@@ -80,7 +80,7 @@ void server(dstr_c *a, dstr_c *b, key_c *k)
         if(s->length > MAX_REQUEST_LEN)
         {
           fprintf(stderr, "Request too long.\n");
-          return 1;
+          exit(1);
         }
 	hmacsha1Verify(k, request(s), &mac);
 #ifdef VERBOSE
@@ -96,12 +96,6 @@ void server(dstr_c *a, dstr_c *b, key_c *k)
 	t = service(s);
 
 #ifdef CSEC_VERIFY
-	readenv(t->address, &(t->length), "response");
-        if(t->length > MAX_RESPONSE_LEN)
-	{
-          fprintf(stderr, "Response too long.\n");
-          return 1;
-	}
 	event2("server_reply", s->address, s->length, t->address, t->length);
 #endif
 
@@ -123,48 +117,55 @@ void server(dstr_c *a, dstr_c *b, key_c *k)
 
 int main(int argc, char *argv[])
 {
-	key_c *k;
-	dstr_c *alice, *bob, *s;
+  unsigned char * key_buf;
+  size_t key_len;
+  unsigned char * request_buf;
+  size_t request_len;
+  key_c *k;
+  dstr_c *alice, *bob, *s;
 
-	if (argc < 2)
-	{
-		fprintf(stderr, "Wrong command-line arguments.\n");
-		return 1;
-	}
+  if (argc < 2)
+    {
+      fprintf(stderr, "Wrong command-line arguments.\n");
+      return 1;
+    }
 
-	SSL_load_error_strings();
+  SSL_load_error_strings();
 
-	alice = str(fromString("Alice", 5, NULL));
-	bob = str(fromString("Bob", 3, NULL));
+  alice = str(fromString("Alice", 5));
+  bob = str(fromString("Bob", 3));
 
-	k = fromString("ThisIsASharedKey", 16, "keyAB");
+  key_buf = get_shared_key(&key_len);
+  k = fromString(key_buf, key_len);
 
-	s = str(fromString("ThisIsAPayload", 14, "request"));
-        // BUGFIX
-        if(s->length > MAX_REQUEST_LEN)
-	{
-          fprintf(stderr, "Request too long.\n");
-          return 1;
-	}
+  request_buf = get_request(&request_len);
+  s = str(fromString(request_buf, request_len));
 
-	// FIXME: do it properly
-	int isClient = 0;
+  // BUGFIX
+  if(s->length > MAX_REQUEST_LEN)
+    {
+      fprintf(stderr, "Request too long.\n");
+      return 1;
+    }
 
-	isClient = !strncmp(argv[1], "client", 6);
+  // FIXME: do it properly
+  int isClient = 0;
 
-	if (isClient)
-	{
-		client(alice, bob, k, s);
-	}
-	else // if (!strncmp(argv[1], "server", 6))
-	{
-		server(alice ,bob, k);
-	}
-	/* else
-	{
-		fprintf(stderr, "Wrong command-line arguments.\n");
-		return 1;
-	} */
+  isClient = !strncmp(argv[1], "client", 6);
 
-	return 0;
+  if (isClient)
+    {
+      client(alice, bob, k, s);
+    }
+  else // if (!strncmp(argv[1], "server", 6))
+    {
+      server(alice ,bob, k);
+    }
+  /* else
+     {
+     fprintf(stderr, "Wrong command-line arguments.\n");
+     return 1;
+     } */
+
+  return 0;
 }

@@ -11,20 +11,6 @@
 open Common
 open Type
 
-module Var : sig
-  type t = string
-  type var = t
-
-  val fresh : string -> t
-
-  val unfresh : string list -> unit
-  val reset_fresh : unit -> unit
-
-  val fresh_id : string -> int
-
-  module Map : Custom_map with type key = t
-end
-
 type var = Var.t
 
 type 'a t =
@@ -74,7 +60,6 @@ type 'a t =
 
       At some point might have to use [Map] here, if there is need to generalize indices
       to arbitrary expressions.  *)
-  (* FIXME: find out how to use Map here *)
 
 | Ptr : base * pos -> bitstring t
   (** Invariants (being reviewed):
@@ -99,7 +84,7 @@ type 'a t =
 
 and 'a annotation =
 | Type_hint of 'a imltype
-| Name of string
+| Name of var
 (* The following annotations contain the definition of the corresponding
    symbol. *)
 | Parser : bitstring t -> bitstring annotation
@@ -110,13 +95,16 @@ and 'a annotation =
 | Auxiliary : bool t -> bool annotation
 | Arith : bitstring t -> bitstring annotation
 
-  (** Not the same as lhost in CIL *)
+(** Not the same as lhost in CIL *)
 and base =
+(* CR-someday: track sizes of stack pointers *)
 | Stack of string
-  (** (Old) Name and unique id of variable. Note that this way variables from
-      different calls of the same function will be mapped to the same base, but not
-      variables from different functions. *)
-| Heap of id * int t
+(** (Old) Name and unique id of variable. Note that this way variables from
+    different calls of the same function will be mapped to the same base, but not
+    variables from different functions. *)
+| Heap of (id * int t list * int t)
+(** Contains lengths of previous mallocs and the size of the allocated area. *)
+(* CR-someday: make sure these are not dereferenced. *)
 | Abs of intval
   (** An absolute pointer value to deal with cases like:
       {[
@@ -238,16 +226,32 @@ val prod : iterm list -> iterm
 val arith_simplify : iterm -> iterm
 
 (*************************************************)
+(** {1 Pointers} *)
+(*************************************************)
+
+val ptr_size : base -> int t option
+val malloc_expr : int t list -> int t
+
+(*---------------------------
+  To be removed
+-----------------------------*)
+
+val is_zero_offset_val : offset_val -> bool
+val is_zero_pos : pos -> bool
+val is_field_offset_val : offset_val -> bool
+
+(*************************************************)
 (** {1 Misc} *)
 (*************************************************)
 
+val var_s : string -> bterm
 val var : var -> bterm
 val encoder : bterm list -> bterm
 val range : bterm -> iterm -> iterm -> bterm
 val int : int -> int t
 val string : string -> bterm
 
-val zero_byte : Int_type.Signedness.t -> bterm
+val zero_byte : bterm
 
 (* CR-someday: this is not a full abstraction since
    [Transformations.normal_form] explicitly enumerates the caess of this
@@ -276,13 +280,6 @@ val apply : ('a, 'b) Sym.t -> any list -> 'b t
 (** Make sure all subexpressions are physically distinct. Only used in
     Derivation. *)
 val unfold : 'a t -> 'a t
-
-(*---------------------------
-  To be removed
------------------------------*)
-
-val is_zero_offset_val : offset_val -> bool
-val is_field_offset_val : offset_val -> bool
 
 (*************************************************)
 (** {1 Facts} *)
@@ -336,12 +333,12 @@ module Sym_defs : sig
   val print : _ t -> unit
 end
 
-val mk_arg : int -> string
+val mk_arg : int -> var
 
 val mk_arg_len : int -> int t
 
 (* CR-someday: it feels like this should return exp list. *)
-val mk_formal_args : int -> string list
+val mk_formal_args : int -> var list
 
 val show_fun : ('a, 'b) Sym.t -> 'b t -> string
 

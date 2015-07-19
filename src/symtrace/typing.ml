@@ -25,7 +25,9 @@ module Type_ctx = struct
 
   let dump t =
     iter (fun v t ->
-      prerr_endline (Printf.sprintf "%s: %s" v (Type.to_string t))) t;
+      prerr_endline (Printf.sprintf "%s: %s"
+                       (Var.to_string v)
+                       (Type.to_string t))) t;
     prerr_endline ""
 
   let merge ts =
@@ -296,7 +298,9 @@ let check
           if not (S.implies
                     (facts @ typefacts ctx)
                     [E.in_type (Var (v, Type.kind t')) t'])
-          then fail  "cannot prove type: %s: %s" v (Type.to_string t');
+          then fail  "cannot prove type: %s: %s"
+            (Var.to_string v)
+            (Type.to_string t');
           cast t t' e
 
         | Sym (Fun _ as f, es) ->
@@ -450,14 +454,14 @@ let test_cond_checking () =
   let aux = Fun ("auxiliary", (1, Kind.Bool)) in
   let f = Fun ("auxiliary", (1, Kind.Bitstring)) in
   let cast = Cast (t1, t2) in
-  let v = Var ("v", Kind.Bitstring) in
+  let v = E.var_s "v" in
   let all_types =
     Fun_type_ctx.empty
     |> Fun_type_ctx.add aux ([t2], Type.Bool)
     |> Fun_type_ctx.add f   ([t2], t1)
   in
   let var_types = Type_ctx.of_list
-    [ "v", Type.Bitstring ]
+    [ Var.of_string "v", Type.Bitstring ]
   in
   let p = [Test (Sym (aux, [Sym (f, [v])]))] in
   let p' = check ~all_types ~trusted_types:all_types var_types [] p in

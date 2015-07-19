@@ -6,6 +6,8 @@
 
 open Common
 
+(* CR: turn undefined functions into compile errors. *)
+
 open Type
 open Sym
 open Exp
@@ -33,7 +35,7 @@ type cvm =
   | Load_c_string of char list
   | Load_char of char
   | Load_stack_ptr of string (** name of variable; step init to 0 (invalid value) *)
-  | Fresh_heap_ptr (** stack: buffer length; step init to 0 *)
+  | Malloc (** stack: buffer length; step init to 0 *)
   | Load_buf (** stack: ptr, len *)
   | Load_mem (** stack: ptr; use ptr step as len. *)
   | Load_all (** stack: ptr; load the whole buffer *)
@@ -183,6 +185,8 @@ let called_functions: string list ref = ref []
 let cur_stack_ptr_id : int ref = ref 0
 let cur_heap_ptr_id : int ref = ref 0
 
+let previous_malloc_lens = ref []
+
 (** The number of instructions executed so far *)
 let done_instr : int ref = ref 0
 
@@ -191,6 +195,7 @@ let reset_state : unit -> unit = fun () ->
   mem := Base_map.empty;
   Stack.clear stack;
   iml := [];
+  previous_malloc_lens := [];
   Loc.reset ();
   S.reset_facts ()
 
@@ -201,7 +206,10 @@ let reset_state : unit -> unit = fun () ->
 let ptr_len = Sym (Ptr_len, [])
 
 let fresh_heap_ptr l =
-  Ptr (Heap (increment cur_heap_ptr_id, l), [Flat E.zero, Int 1L])
+  if not (E.is_constant l)
+  then previous_malloc_lens := !previous_malloc_lens @ [l];
+  Ptr (Heap (increment cur_heap_ptr_id, !previous_malloc_lens, l),
+       [Flat E.zero, Int 1L])
 
 (* TODO: move as much as possible into invariant *)
 let check_well_formed (type a) (e : a exp) =
@@ -694,13 +702,20 @@ let store : cvm -> unit = fun flag ->
       | Store_all -> None
       | _ -> fail "store: impossible"
     in
+    (* CR: step? *)
     let step =
       match b with
-      | Heap (_, len) -> len
+      | Heap (_, _, len) -> len
       | _ -> snd (List.hd pos)
     in
     (* update performs simplification already *)
-    to_mem b (update pos step l_val e_host e);
+    let e = (update pos step l_val e_host e) in
+    Option.iter (E.ptr_size b) ~f:(fun ptr_size ->
+      if not (S.greater_equal ptr_size (Len e))
+      then fail ("Writing outside allocated area: "
+                 ^^ "cannot prove that %s is smaller than %s")
+        (E.to_string (Len e)) (E.to_string ptr_size));
+    to_mem b e;
     mark_enabled := false
 
   | _ -> fail "store: pointer expected"
@@ -754,10 +769,11 @@ let rec execute = function
     to_stack (E.BS (Char c, Int_type.int))
 
   | Load_stack_ptr name ->
-    (* CR: disambiguate across function calls. *)
+    (* CR: disambiguate across function calls. How do we deal with static
+       variables and static functions? *)
     to_stack (Ptr (Stack name, [Index 0, Unknown Kind.Int]))
 
-  | Fresh_heap_ptr ->
+  | Malloc ->
     let l = take_stack_int () in
     to_stack (fresh_heap_ptr l)
 
@@ -797,7 +813,7 @@ let rec execute = function
     to_stack v
 
   | Env v ->
-    to_stack (Var (v, Kind.Bitstring))
+    to_stack (Exp.var_s v)
 
   | Field_offset s ->
     begin match take_stack () with
@@ -904,8 +920,11 @@ let rec execute = function
 
   | Assume ->
     let e = take_stack_bool () in
-    (* This is a bit stupid: we often cannot simplify an expression before assuming it,
-       because parts of it may be undefined. *)
+    (* This is a bit stupid: we often cannot simplify an expression before
+       assuming it, because parts of it may be undefined. *)
+    (* CR-someday: this is also stupid because you simplify, say,
+       [x = ztp)safe(x)] to [x = x].
+    *)
     S.assume [e];
     DEBUG "add fact: %s" (E.dump e);
     let e = Simplify.full_simplify e in
@@ -1058,26 +1077,28 @@ let rec execute = function
 (** {1 Init} *)
 (*************************************************)
 
-let make_assumptions : unit -> unit = fun () ->
+let make_assumptions () =
   (* FIXME: remove this later when all symbolic sizes are being used properly *)
-  S.assume [ E.ge (E.int 8) ptr_len
-           ; E.gt ptr_len E.zero]
+  let w = Int_type.width Int_type.ptr in
+  S.assume [ E.eq_int [E.int w; ptr_len] ]
 
 let init_argv n =
   let load_var_ptr name =
     let v = Var (name, Kind.Bitstring) in
-    let fact = E.is_defined (Sym (Ztp, [v])) in
-    to_stack fact;
+    let e = Concat [v; E.zero_byte] in
+    to_stack (E.eq_bitstring [v; Sym (Ztp_safe, [v])]);
     execute Assume;
-    to_stack v;
-    let p = fresh_heap_ptr (E.Len v) in
+    to_stack (E.is_defined (BS (Len e, Int_type.size_t)));
+    execute Assume;
+    to_stack e;
+    let p = fresh_heap_ptr (Len e) in
     to_stack p;
-    execute Store_all;
+    execute Store_buf;
     to_stack p
   in
-  load_var_ptr "argv0";
+  load_var_ptr (Var.of_string "argv0");
   for i = 1 to n - 1 do
-    load_var_ptr (Printf.sprintf "argv%d" i);
+    load_var_ptr (Var.of_string (Printf.sprintf "argv%d" i));
     execute Append;
   done;
   let argv = Ptr (Stack "argv", [Index 0, Sym (Ptr_len, [])]) in
@@ -1121,7 +1142,7 @@ let execute_file (file : in_channel) : iml =
           | "LoadCStr"       -> Load_c_string (String.unescape (input_line file))
           | "LoadChar"       -> Load_char (List.nth toks 1).[0]
           | "LoadStackPtr"   -> Load_stack_ptr (List.nth toks 1) (* (int_of_string (List.nth toks 2)) *)
-          | "FreshHeapPtr"   -> Fresh_heap_ptr
+          | "Malloc"         -> Malloc
           | "In"             -> In
           | "New"            -> New
           | "Env"            -> Env (List.nth toks 1)
@@ -1191,6 +1212,7 @@ let raw_out : out_channel -> iml -> iml -> unit = fun c client server ->
   output_value c client;
   output_value c server;
   E.serialize_state c;
+  Var.serialize_state c;
   output_value c !cur_stack_ptr_id;
   output_value c !cur_heap_ptr_id
 
@@ -1198,10 +1220,9 @@ let raw_in (c : in_channel) : iml * iml =
   let (client : iml) = input_value c in
   let (server : iml) = input_value c in
   E.deserialize_state c;
+  Var.deserialize_state c;
   cur_stack_ptr_id := input_value c;
   cur_heap_ptr_id := input_value c;
-  Var.unfresh (Iml.vars (client : iml));
-  Var.unfresh (Iml.vars (server : iml));
   (client, server)
 
 (* 980 lines *)

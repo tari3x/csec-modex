@@ -305,6 +305,20 @@ module String = struct
     if is_suffix s ~suffix
     then Some (drop_suffix s (String.length suffix))
     else None
+
+  let mask_digits s =
+    let s =
+      explode s
+      |> List.filter_out ~f:(fun c ->
+        List.mem c ~set:['0'; '1'; '2'; '3'; '4'; '5'; '6'; '7'; '8'; '9'])
+      |> implode
+    in
+    s ^ "_XYZ"
+
+  let fail_if_masked s =
+    if is_suffix s ~suffix:"XYZ"
+    then assert false
+    else s
 end
 
 (*************************************************)
@@ -344,6 +358,7 @@ let rec read_file : in_channel -> string list = fun file ->
   with End_of_file -> []
 
 let prerr_title s =
+  let s = Printf.sprintf "%s (%f)" s (Sys.time ()) in
   prerr_endline ("\n" ^ s);
   prerr_endline (String.make (String.length s) '=');
   prerr_endline ""
@@ -423,6 +438,10 @@ module Option = struct
   let value ~default = function
     | Some a -> a
     | None -> default
+
+  let try_with_default f ~default =
+    try_with f
+    |> value ~default
 
   let to_string a_to_string = function
     | Some a -> "Some " ^ a_to_string a
@@ -820,3 +839,21 @@ module Any_list (Any : Any) = struct
 end
 *)
 
+(*************************************************)
+(** {1 Hashtables} *)
+(*************************************************)
+
+module Hashtbl = struct
+  include Hashtbl
+
+  let find_or_add t key ~default =
+    try Hashtbl.find t key with
+    | Not_found -> begin
+      let data = default () in
+      Hashtbl.replace t key data;
+      data
+    end
+
+  let iter t ~f =
+    iter f t
+end

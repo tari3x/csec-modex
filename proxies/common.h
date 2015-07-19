@@ -26,16 +26,20 @@
 
 EXTERN void proxy_fail(const char * fmt, ...);
 
+extern void get_envE(unsigned char ** buf,
+                     const unsigned char * len,
+                     size_t lenlen,
+                     const char * name);
+
+extern void get_env(unsigned char ** buf, size_t * len, const char * name);
+
 void readenv(const unsigned char * buf, const size_t * len, const char * s);
 /**
  * A version that does not assume a particular length size.
  * lenlen should be an appropriate value even if len is NULL.
  */
 void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * s);
-/**
- * A fixed-length version. In terms of paper CVM this corresponds to reading from
- * the environment and then checking that the length is indeed of the requested size.
- */
+
 void readenvL(const unsigned char * buf, size_t len, const char * s);
 // shouldn't use this at all?
 void make_sym(const unsigned char * buf, size_t len, const char * s);
@@ -54,14 +58,12 @@ void event4(const char * s, const unsigned char * buf1, size_t len1,
 void typehint(const unsigned char * buf, size_t len, const char * type);
 void hint(const unsigned char * buf, size_t len, const char * name);
 
+void append_zero(const unsigned char * buf);
+
 /**
  * Adds an assumption that buf does not contain zero and appends zero to buf.
  */
-void append_zero(const unsigned char * buf);
-
-#define FALSE 0
-#define TRUE  1
-
+void assume_string(const unsigned char * name);
 
 #endif /* PROXY_COMMON */
 

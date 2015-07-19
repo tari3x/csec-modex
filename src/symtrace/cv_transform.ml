@@ -169,8 +169,8 @@ let test_merge_patterns () =
   let f2 = Fun ("f2", (2, Kind.Bitstring)) in
   let e = String ['x'] in
   let p =
-    [ Let (FPat (f1, [VPat "v1"; Underscore]), e)
-    ; Let (FPat (f2, [Underscore; VPat "v2"]), e) ]
+    [ Let (FPat (f1, [vpat "v1"; Underscore]), e)
+    ; Let (FPat (f2, [Underscore; vpat "v2"]), e) ]
   in
   let t1 = Type.Named ("t1", None) in
   let t2 = Type.Named ("t2", None) in
@@ -179,7 +179,7 @@ let test_merge_patterns () =
     Fun_type_ctx.of_list [ f1, ([t1; t1], Type.Bitstring)
                          ; f2, ([t1; t2], Type.Bitstring)]
   in
-  let p' = [ Let (FPat (f2, [VPat "v1"; VPat "v2"]), e) ] in
+  let p' = [ Let (FPat (f2, [vpat "v1"; vpat "v2"]), e) ] in
   test_result ~expect:p' (merge_patterns ~fun_types p) Iml.to_string;
 
   let fun_types =

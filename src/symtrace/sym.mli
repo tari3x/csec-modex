@@ -82,6 +82,8 @@ type ('a, 'b) t =
 
 | Ptr_len : (_, int) t
 
+| Malloc : int -> (int, int) t
+
 | Cast : bitstring imltype * bitstring imltype -> (bitstring, bitstring) t
 
 | Ztp : (bitstring, bitstring) t

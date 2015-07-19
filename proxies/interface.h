@@ -5,10 +5,6 @@
 
 /**
  * This file defines the interface that the proxy functions are supposed to use.
- * This interface will be implemented differently depending on the kind of analysis
- * that we are performing. For instance, in the binary tracing case, the interface functions
- * will simply print the concrete values of memory buffers, and in the symbolic case
- * they will also add information about the memory location of the buffers.
  */
 
 #ifndef PROXY_INTERFACE
@@ -30,6 +26,7 @@
 EXTERN void mute();
 EXTERN void unmute();
 
+
 /**
  * Add a right hand side from a memory buffer/context attribute/integer value.
  *
@@ -41,21 +38,6 @@ EXTERN void load_all(const unsigned char * buf, const char * hint);
 EXTERN void load_ctx(const void * ctx, const char * attr, const char * hint);
 EXTERN void load_int(long n, bool is_signed, size_t width, const char * hint);
 EXTERN void load_str(const char * str);
-
-/**
- * TODO: once length treatment in symex is simplified and there is no need for setlength, change the interface:
- * sym("f");
- * duplicate();
- * assume_intype("bitstring");
- * duplicate();
- * len(&len, sizeof(len)); // with implicit assumption about length of length
- * assume(len == xlen); // or assume(len == 8);
- *
- * alternatively:
- * assume_intype("fixed_4");
- *
- */
-
 
 /**
  * Consumes the stack top.
@@ -184,6 +166,7 @@ EXTERN long int concrete_val(long int n);
  * Put a fresh heap pointer value on the stack.
  */
 EXTERN void fresh_ptr(size_t size);
+EXTERN void fresh_ptrE(unsigned char * len, size_t lenlen);
 
 /**
  * Put a stack pointer (with step 1) on the stack.

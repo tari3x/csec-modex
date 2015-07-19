@@ -45,20 +45,18 @@ void client(unsigned char * payload, ulong payload_len, unsigned char * key, ulo
 
 int main(int argc, char ** argv)
 {
-  char * msg = "Hello world";
-  ulong msg_len = 12;
-  char * key = "Secret key";
-  ulong key_len = 11;
+  char * msg;
+  ulong msg_len;
+  char * key;
+  ulong key_len;
+
+  msg = get_payload(&msg_len);
+  key = get_key(&key_len);
 
 #ifdef CSEC_VERIFY
-  readenv(msg, &msg_len, "payload");
-  readenv(key, &key_len, "key");
-//  make_sym(&msg_len, sizeof(msg_len), "user_len");
-//  make_sym(msg, msg_len, "payload");
-//  make_sym(&key_len, sizeof(key_len), "user_len");
-//  make_sym(key, key_len, "key");
   event1("client_send", msg, msg_len);
 #endif
+
 
   client((unsigned char*) msg, msg_len, (unsigned char *) key, key_len);
 

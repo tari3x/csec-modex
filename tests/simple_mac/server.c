@@ -92,14 +92,10 @@ void server(unsigned char * key, ulong key_len)
 
 int main(int argc, char ** argv)
 {
-  char * key = "Secret key";
-  ulong key_len = 11;
+  char * key;
+  ulong key_len;
 
-#ifdef CSEC_VERIFY
-  readenv(key, &key_len, "key");
-  //make_sym(&key_len, sizeof(key_len), "user_len");
-  //make_sym(key, key_len, "key");
-#endif
+  key = get_key(&key_len);
 
   server( (unsigned char*) key, key_len);
 

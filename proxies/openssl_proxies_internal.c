@@ -56,7 +56,7 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
   // CR: what are conditions for successful signing?
   // Try test_intype instead, also below.
   assume_intype("bitstring");
-  assume_len_at_most(&max_sig_len , FALSE, sizeof(max_sig_len));
+  assume_len_at_most(&max_sig_len , false, sizeof(max_sig_len));
   Hint("dsa_sig");
   store_ctx(ret, "sig");
 
@@ -64,14 +64,14 @@ DSA_SIG *dsa_do_sign_proxy(unsigned char const   *dgst , int dlen , DSA *dsa )
   load_ctx(ret, "sig", NULL);
   SymN("DSA_r", 1);
   assume_intype("bitstring");
-  assume_len_at_most(&max_half_sig_len , FALSE, sizeof(max_half_sig_len));
+  assume_len_at_most(&max_half_sig_len , false, sizeof(max_half_sig_len));
   Hint("dsa_sig_r");
   store_ctx(ret->r, "val");
 
   load_ctx(ret, "sig", NULL);
   SymN("DSA_s", 1);
   assume_intype("bitstring");
-  assume_len_at_most(&max_half_sig_len , FALSE, sizeof(max_half_sig_len));
+  assume_len_at_most(&max_half_sig_len , false, sizeof(max_half_sig_len));
   Hint("dsa_sig_s");
   store_ctx(ret->s, "val");
 
@@ -103,7 +103,7 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len ,
   assume_intype("bitstring");
   Hint("sig_verification");
   size_t ret_len = sizeof(ret);
-  assume_len(&ret_len, FALSE, sizeof(ret_len));
+  assume_len(&ret_len, false, sizeof(ret_len));
   store_buf((unsigned char *) &ret);
 
   return ret;
@@ -177,7 +177,7 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len ,
       load_buf((unsigned char*) seed5, seed5_len, "seed");
     if(sec != NULL)
       load_buf((unsigned char*) sec, slen, "secret");
-    symL("tls1_PRF", "prf_result", olen, FALSE);
+    symL("tls1_PRF", "prf_result", olen, false);
     store_buf(out1);
   }
 
@@ -201,7 +201,7 @@ int dsa_do_verify_proxy(unsigned char const   *dgst , int dgst_len ,
     load_buf((unsigned char*) seed4, seed4_len, "seed4");
     load_buf((unsigned char*) seed5, seed5_len, "seed5");
     if(sec != NULL) load_buf((unsigned char*) sec, sec_len, "secret");
-    symL("tls1_P_hash", "P_hash_result", olen, FALSE);
+    symL("tls1_P_hash", "P_hash_result", olen, false);
     store_buf(out);
   }
 #endif

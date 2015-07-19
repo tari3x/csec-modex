@@ -227,16 +227,15 @@ int main(int argc, char ** argv)
 {
 
 #ifdef CSEC_VERIFY
+  assume_string("clientID");
+  assume_string("serverID");
+  assume_string("port_ascii");
+
   // Assumption that the corresponding argv fields indeed contains the correct ids:
-  readenv(argv[1], NULL, "clientID");
-  readenv(argv[2], NULL, "serverID");
-  readenv(argv[3], NULL, "port_ascii");
-
-  append_zero(argv[1]);
-  append_zero(argv[2]);
-  append_zero(argv[3]);
+  readenvL(argv[1], strlen(argv[1]), "clientID");
+  readenvL(argv[2], strlen(argv[2]), "serverID");
+  readenvL(argv[3], strlen(argv[3]), "port_ascii");
 #endif
-
 
   RPCstate clState;
 

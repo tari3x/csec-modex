@@ -15,12 +15,10 @@ let setup_debug () =
       | None -> false
       | Some i -> i <= n
     in
-    let under l =  List.mem l ~set:labels in
-    under "dummy"
-    || at_most_n_under 1 "dummy"
-    || at_most_n_under 1 "execute"
-    || at_most_n_under 1 "In"
-    (* || at_most_n_under 0 "deep_simplify" *)
+    at_most_n_under 1 "execute"
+    || at_most_n_under (-1) "In"
+    || at_most_n_under (-1) "is_true"
+    || at_most_n_under (-1) "deep_simplify"
     (* || at_most_n_under 0 "rewrite" *)
     (* || under "rewrite" *)
     || false)
@@ -45,11 +43,10 @@ let main () =
   if debug_enabled () then prerr_endline (Iml.to_string server);
   if debug_enabled () then prerr_endline "";
 
-  (* Temporarily removing comments for counting lines in the thesis. *)
-  (*
+  (* With comments the blessed tests are unstable across machines because of
+     full paths to source files. *)
   let client = Iml.remove_comments client in
   let server = Iml.remove_comments server in
-  *)
 
   print_endline "let A = ";
   print_endline (Iml.to_string client);

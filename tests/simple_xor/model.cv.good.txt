@@ -40,8 +40,11 @@ fun conc1(fixed_20): fixed_21 [compos].
   Auxiliary Tests 
 ***************************)
 
-(* cond1 := ¬((arg0)_[s,8] <= 0) *)
-fun cond1(bitstring): bool.
+(* cond1 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1) <> 0 *)
+fun cond1(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
+(* cond2 := ¬((arg0)_[s,8] <= 0) *)
+fun cond2(bitstring): bool.
 
 
 (*************************** 
@@ -69,6 +72,8 @@ const zero_fixed_21: fixed_21.
   Primed Functions 
 ***************************)
 
+fun cond1_prime(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
 
 (*************************** 
   Typecasting 
@@ -79,6 +84,8 @@ const zero_fixed_21: fixed_21.
   Auxiliary Facts 
 ***************************)
 
+forall arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond1(arg0, arg1, arg2, arg3, arg4) = cond1_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4)).
 
 (*************************** 
   Zero Facts 
@@ -105,9 +112,10 @@ query secret nonce1.
 let client = 
 in(c_in, (var2: bitstring, BIO_ctrl_result1: bitstring));
 new nonce1: fixed_20;
+if cond1(argv0, argv1, argv2, argv3, argv4) then 
 let var11 = conc1(nonce1) in
 let msg1 = XOR(var11, pad) in
-if cond1(BIO_ctrl_result1) then 
+if cond2(BIO_ctrl_result1) then 
 out(c_out, msg1); 0 .
 
 let server = 
@@ -118,6 +126,23 @@ yield .
   <Environment>
 *************************)
 
+let server' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  server .
+
+let client' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  client .
 
 process
 ! N (
@@ -127,5 +152,5 @@ process
   new pad: fixed_21;
 
   out(c_out, ());
-  (client | server)
+  (client' | server')
 )

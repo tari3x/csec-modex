@@ -9,8 +9,37 @@
 #include "crest.h"
 
 #include <stdio.h>
+#include <stdbool.h>
 
 // void var(const char * name, const unsigned char * buf, const unsigned char * len, size_t lenlen)
+
+void get_envE(unsigned char ** buf,
+              const unsigned char * len,
+              size_t lenlen,
+              const char * name)
+{
+  Env(name);
+  assume_intype("bitstring");
+
+  Dup();
+  Len();
+  BS(false, lenlen);
+  Done();
+  // Assume that variable length fits in its bitstring representation.
+  assume_intype("bitstring");
+  StoreBuf(len);
+
+  fresh_ptrE(len, lenlen);
+  StoreBuf(buf);
+
+  StoreBuf(*buf);
+}
+
+void get_env(unsigned char ** buf, size_t * len, const char * name)
+{
+  size_t lenlen = sizeof(*len);
+  get_envE(buf, len, lenlen, name);
+}
 
 void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenlen, const char * name)
 {
@@ -24,7 +53,7 @@ void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenle
 
   Dup();
   Len();
-  BS(FALSE, lenlen);
+  BS(false, lenlen);
   Done();
   // Assume that variable length fits in its bitstring representation.
   assume_intype("bitstring");
@@ -34,9 +63,7 @@ void readenvE(const unsigned char * buf, const unsigned char * len, size_t lenle
   else
     Clear(1);
 
-  // len will most probably be incomparable with the length of the buffer contents,
-  // so we use StoreAll.
-  StoreAll(buf);
+  StoreBuf(buf);
 }
 
 void readenv(const unsigned char * buf, const size_t * len, const char * name)
@@ -49,16 +76,15 @@ void readenvL(const unsigned char * buf, size_t len, const char * name)
 {
   Env(name);
   assume_intype("bitstring");
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
 
-  // See readenv for why we use StoreAll
-  StoreAll(buf);
+  StoreBuf(buf);
 }
 
 void make_sym(const unsigned char * buf, size_t len, const char * s)
 {
   SymN(s, 0);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   Hint(s);
   Nondet();
   store_buf(buf);
@@ -121,14 +147,17 @@ void hint(const unsigned char * buf, size_t len, const char * name)
 void append_zero(const unsigned char * buf)
 {
   load_all(buf, "");
-  SymN("ztpSafe", 1);
-  load_all(buf, "");
-  SymN("=", 2);
-  Assume();
-
-  load_all(buf, "");
-  load_int(0, TRUE, sizeof(char), "");
+  load_int(0, true, sizeof(char), "");
   // load_str("00");
   Append();
   store_all(buf);
+}
+
+void assume_string(const unsigned char * name)
+{
+  Env(name);
+  SymN("ztpSafe", 1);
+  Env(name);
+  SymN("=", 2);
+  Assume();
 }

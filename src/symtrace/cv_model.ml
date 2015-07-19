@@ -109,7 +109,7 @@ module Cv_fact = struct
   include Cv_fact
 
   let to_string (Forall (args, e)) =
-    let show_var (v, t) = v ^ ": " ^ Type.to_string t in
+    let show_var (v, t) = Var.to_string v ^ ": " ^ Type.to_string t in
     "forall " ^ String.concat ~sep:", " (List.map ~f:show_var args)
     ^ ";\n\t" ^ E.to_string e ^ "."
 end
@@ -119,7 +119,7 @@ let printf a = fprintf Common.out_channel a
 let show_cv_stmt: Stmt.t -> string = fun s ->
 
   let rec show_exp_body : type a. a exp -> string = function
-    | Var (v, _) -> v
+    | Var (v, _) -> Var.to_string v
     | Sym (Fun (s, _), []) -> s
     | Sym (s, es) ->
       begin match s with
@@ -132,8 +132,8 @@ let show_cv_stmt: Stmt.t -> string = fun s ->
         (String.concat ~sep:", " (List.map ~f:show_exp_body es))
     | Annotation (_, e) -> show_exp_body e
     | e -> "unexpected{" ^ E.dump e ^ "}"
-  and show_in_var t name = name ^ ": " ^ Type.to_string t
-  in
+
+  and show_in_var t name = Var.to_string name ^ ": " ^ Type.to_string t in
 
   match s with
     | In [v] ->
@@ -465,10 +465,14 @@ let make ~client ~server ?(for_pv = false) template =
   let client = remove_redundant_tests var_types client in
   pop_debug "remove_redundant_auxiliary";
 
+  debug_iml client server "IML after removing redundant auxiliary tests";
+
   (* Recompute syms since some parsers and auxiliary tests might be gone now. *)
   let syms = Syms.compatible_union
     [ Syms.create client; Syms.create server ]
   in
+
+  prerr_title "Done recomputing syms";
 
   (************************
      Zero facts
@@ -476,6 +480,9 @@ let make ~client ~server ?(for_pv = false) template =
 
   let zero_fun_types = Syms.zero_types syms fun_types in
   let fun_types = Fun_type_ctx.compatible_union [fun_types; zero_fun_types] in
+
+  prerr_title "Done computing zero types";
+
 
   let model = {
     client; server;
@@ -486,5 +493,7 @@ let make ~client ~server ?(for_pv = false) template =
     syms
   }
   in
-  add_primed model
 
+  let model = add_primed model in
+  prerr_title "Done adding primed functions";
+  model

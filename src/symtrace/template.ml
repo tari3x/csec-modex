@@ -50,13 +50,13 @@ let collect_types env q =
   let types = ref [] in
   let fun_types = ref Fun_type_ctx.empty in
 
-  let add_var_type (v : string) (t : typet) =
+  let add_var_type (v : Var.t) (t : typet) =
     match Option.try_with (fun () ->
       Type.of_string_bitstring t.tname)
     with
     | None ->
       info ("add_var_type: ignoring variabe %s"
-            ^^ " because it has a non-bitstring type.") v
+            ^^ " because it has a non-bitstring type.") (Var.to_string v)
     | Some t ->
       types := (v, t) :: !types
   in
@@ -84,7 +84,7 @@ let collect_types env q =
            should be easy to treat constants as functions though if that ever becomes
            necessary.  *)
         begin match f.f_type with
-        | ([], t) -> add_var_type f.f_name t
+        | ([], t) -> add_var_type (Var.of_string f.f_name) t
         | t       -> add_fun_type f.f_name t
         end
       | EEvent f ->
@@ -93,7 +93,7 @@ let collect_types env q =
         let (atypes, rtype) = f.f_type in
         add_fun_type f.f_name (List.tl atypes, rtype)
       | EVar b ->
-        add_var_type b.sname b.btype
+        add_var_type (Var.of_string b.sname) b.btype
       | _ -> ()
     in
     StringMap.iter do_entry env
@@ -102,7 +102,7 @@ let collect_types env q =
   let rec collect_input_process_types : inputprocess -> unit = fun q ->
     let rec collect_pattern : pattern -> unit = function
       | PatVar b ->
-        add_var_type b.sname b.btype
+        add_var_type (Var.of_string b.sname) b.btype
       | PatTuple (_, pats) ->
         List.iter ~f:collect_pattern pats
       | PatEqual _ -> ()
@@ -122,7 +122,7 @@ let collect_types env q =
     match p.p_desc with
     | Yield -> ()
     | Restr (b, p) ->
-      add_var_type b.sname b.btype;
+      add_var_type (Var.of_string b.sname) b.btype;
       collect_output_process_types p
     | Test (_, p, p') ->
       collect_output_process_types p;
@@ -138,7 +138,7 @@ let collect_types env q =
 
   and collect_pattern_types: pattern -> unit = function
     | PatVar b ->
-      add_var_type b.sname b.btype
+      add_var_type (Var.of_string b.sname) b.btype
     | PatTuple (_, pats) ->
       List.iter ~f:collect_pattern_types pats
     | PatEqual _ -> ()
@@ -215,7 +215,7 @@ let is_defined t sym =
   if Fun_type_ctx.mem sym t.fun_types then true
   else match sym with
   | Sym.Fun (f, _) ->
-    Type_ctx.mem f t.var_types
+    Type_ctx.mem (Var.of_string f) t.var_types
   | _ -> false
 
 let check_assertions t defs =

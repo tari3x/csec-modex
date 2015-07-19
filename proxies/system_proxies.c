@@ -32,7 +32,7 @@ EXTERN int ( __attribute__((__cdecl__)) memcmp_proxy)(void const * a, void const
   SymN("cmp", 2);
   assume_intype("bitstring");
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   StoreBuf(&ret);
 
   return ret;
@@ -74,7 +74,7 @@ extern void *malloc_proxy(size_t size)
   void * ret = malloc(size);
   unmute();
 
-  NewHeapPtr(size);
+  Malloc(size);
   store_buf(&ret);
 
   return ret;
@@ -102,7 +102,7 @@ extern  void *realloc_proxy(void *ptr , size_t size )
   ret = realloc(ptr, size);
   unmute();
 
-  NewHeapPtr(size);
+  Malloc(size);
 
   store_buf((unsigned char *) &ret);
   load_all(ptr, "");
@@ -126,7 +126,7 @@ extern void *memset_proxy(void *s , int c , size_t n )
   load_buf(&c, sizeof(c), "");
   load_buf(&n, sizeof(n), "");
   SymN("replicate", 2);
-  assume_len(&n, FALSE, sizeof(n));
+  assume_len(&n, false, sizeof(n));
 
   store_buf(s);
 
@@ -197,7 +197,7 @@ int strcmp_proxy(char const   *a , char const  *b )
   // No hint, we expect cmp to be rewritten
   SymN("cmp", 2);
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   return ret;
@@ -215,7 +215,7 @@ int strncmp_proxy(char const *a, char const *b, size_t n)
   SymN("ztp", 1);
   SymN("cmp", 2);
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(&ret);
 
   return ret;
@@ -237,7 +237,7 @@ char *strcpy_proxy(char * dest , char const * src )
   SymN("ztp", 1);
   Done();
   test_intype("bitstring");
-  load_int(0, FALSE, sizeof(char), "");
+  load_int(0, false, sizeof(char), "");
   Append();
   store_all((const unsigned char*) dest);
 
@@ -255,7 +255,7 @@ size_t strlen_proxy(const char *s)
   // Expect to be simplified to ztpSafe when possible.
   Done();
   test_intype("bitstring");
-  len(FALSE, sizeof(ret));
+  len(false, sizeof(ret));
   store_buf((const unsigned char*) &ret);
 
   return ret;

@@ -44,7 +44,7 @@ CILLY_FLAGS = --dofunreplace --csec-config=$(CSEC_CONF_OUT) --funreplaceoutput=$
 # We want to keep these separate for cmake because it checks for existence of CC.
 # At the same time openssl compilation breaks if you overwrite CFLAGS, so there I pass CC="$(CC) $(CFLAGS)".
 CC = $(CILLY)
-CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -I$(OPENSSL)/include -I$(CSEC_ROOT) $(CILLY_FLAGS) -DCSEC_VERIFY
+CFLAGS += -g2 -Wall -Wno-attributes -Wno-unknown-pragmas -Wno-unused-label -Wno-unused-function -I$(OPENSSL)/include -I$(CSEC_ROOT) $(CILLY_FLAGS) -DCSEC_VERIFY
 
 # need to use filename instead of -lcrypto because the linker tends to pick up the system version
 # LDLIBS += $(BASE_LIB) $(PROXY_LIB) $(BASE_LIB) $(EXTRA_DEPS)

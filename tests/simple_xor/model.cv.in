@@ -42,6 +42,23 @@ let server = 0 .
   <Environment>
 *************************)
 
+let server' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  server .
+
+let client' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  client .
 
 process
 ! N (
@@ -51,5 +68,5 @@ process
   new pad: fixed_21;
 
   out(c_out, ());
-  (client | server)
+  (client' | server')
 )

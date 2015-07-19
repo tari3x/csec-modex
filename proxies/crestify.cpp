@@ -17,6 +17,7 @@
 
 // for strlen()
 #include <string.h>
+#include <stdbool.h>
 
 ////////////////////////////////////////////////////////
 // Shared State
@@ -493,7 +494,7 @@ EXTERN void Test()
 {
   if(muted) return;
 
-  *out << "Branch " << TRUE << endl;
+  *out << "Branch " << true << endl;
 }
 
 EXTERN void Assume()
@@ -600,14 +601,22 @@ int LoadRuntimeInt(const void * ctx, const char * attr)
   return n;
 }
 
-void NewHeapPtr(size_t buflen)
+void Malloc(size_t buflen)
 {
   if(muted) return;
 
   // Keep buflen on stack
-  __CrestVal(FALSE, sizeof(buflen));
-  *out << "FreshHeapPtr" << endl;
+  __CrestVal(false, sizeof(buflen));
+  *out << "Malloc" << endl;
 }
+
+void MallocE()
+{
+  if(muted) return;
+
+  *out << "Malloc" << endl;
+}
+
 
 void LoadStackPtr(const char * name)
 {

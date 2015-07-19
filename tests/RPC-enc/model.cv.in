@@ -21,7 +21,7 @@ type fixed_16_keyseed [fixed, large].
 type fixed_16_key [bounded].
 type fixed_16_seed [fixed, large].
 
-(* 1049 = 1024 for payload + 16 for key + 4 for payload length + 1 for tag *)
+(* 1045 = 1024 for payload + 16 for key + 4 for payload length + 1 for tag *)
 type bounded_1045_plaintext [bounded].
 (*
   Encryption adds 32 bytes to the message.
@@ -112,6 +112,13 @@ let server = 0 .
 *********************************)
 
 let client' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+
   in(c_in, xClient: bounded_1024_id);
   
   (*
@@ -121,6 +128,7 @@ let client' =
   new request: fixed_1024_payload;
   
   out(c_out, ());
+  
   client .
 
 (* The sentinel used in formulating weak secrecy of the response *)
@@ -131,6 +139,13 @@ let sentinel =
   yield .
 
 let server' = 
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+
   in(c_in, xClient: bounded_1024_id);
 
   new response: fixed_1024_payload;

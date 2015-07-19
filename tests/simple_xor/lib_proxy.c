@@ -33,6 +33,6 @@ extern void xor_proxy(unsigned char * buf, unsigned char * pad, size_t len)
   load_buf(pad, len, NULL);
   SymN("XOR", 2);
   Hint("xor");
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
   store_buf(buf);
 }

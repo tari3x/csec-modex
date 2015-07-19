@@ -20,10 +20,15 @@ module Pat = struct
     | Underscore -> []
 
   let rec dump = function
-    | VPat v -> v
+    | VPat v -> Var.to_string v
     | FPat (f, ps) ->
-      Sym.to_string f ^ "(" ^ String.concat ~sep:", " (List.map ~f:dump ps) ^ ")"
+      sprintf "%s(%s)"
+        (Sym.to_string f)
+        (String.concat ~sep:", " (List.map ~f:dump ps))
     | Underscore -> "_"
+
+  let vpat v =
+    VPat (Var.of_string v)
 end
 
 module Stmt = struct
@@ -80,13 +85,15 @@ module Stmt = struct
   let to_string t =
     match t with
     | In [v] ->
-      "in(c, " ^ v ^ ");";
+      "in(c, " ^ Var.to_string v ^ ");";
 
     | In vs ->
-      "in(c, (" ^ String.concat ~sep:", " vs ^ "));";
+      List.map vs ~f:Var.to_string
+      |> String.concat ~sep:", "
+      |> sprintf "in(c, (%s));";
 
     | New (v, t) ->
-      "new " ^ v ^ ": " ^ Type.to_string t ^ ";"
+      "new " ^ Var.to_string v ^ ": " ^ Type.to_string t ^ ";"
 
     | Out [e] ->
       "out(c, " ^ Exp.to_string e ^ ");";
@@ -196,7 +203,10 @@ let rec subst vs es =
         if v' = v then false
         else if List.mem v ~set:(Exp.vars e) && refcount v' p > 0
         then
-          fail "subst: variable %s captures a variable in substitution %s ~> %s" v v' (Exp.to_string e)
+          fail "subst: variable %s captures a variable in substitution %s ~> %s"
+            (Var.to_string v)
+            (Var.to_string v')
+            (Exp.to_string e)
         else true)
       |> List.split
     in

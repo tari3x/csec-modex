@@ -117,11 +117,23 @@ let server = 0 .
 ***************************)
 
 let client' = 
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
   in(c_in, (pkX: fixed_100_key, hostX: bounded_40_host, sigX: signature));
   out(c_out, ());
   client .
 
 let server' = 
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
   in(c_in, (pkX: fixed_100_key, sigX: signature));
   out(c_out, ());
   server .

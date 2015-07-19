@@ -35,11 +35,13 @@ extern size_t encrypt_proxy(unsigned char * key, size_t keylen, unsigned char * 
   newTL(256, "seed_T", "nonce");
   SymN("E", 3);
   Hint("cipher");
-  store_len(&ret, sizeof(ret), FALSE);
-  store_buf(out);
+
+  store_len(&ret, sizeof(ret), false);
 
   assume(ret <= encrypt_len(key, keylen, in, inlen));
   assume(ret >= inlen);
+
+  store_buf(out);
 
   return ret;
 }
@@ -55,12 +57,14 @@ extern size_t decrypt_proxy(unsigned char * key, size_t keylen, unsigned char * 
   SymN("D", 2);
   SymN("inverse_injbot", 1);
   Hint("msg");
-  store_len(&ret, sizeof(ret), FALSE);
-  store_buf(out);
+
+  store_len(&ret, sizeof(ret), false);
 
   // There is actually no point assuming this since this is checked in
   // decrypt_len
   assume(ret <= decrypt_len(key, keylen, in, inlen));
+
+  store_buf(out);
 
   return ret;
 }
@@ -215,7 +219,7 @@ bool check_key_proxy(const unsigned char * host, size_t host_len,
   SymT("(check_key : bitstring * bitstring * bitstring * bitstring -> bool)");
   SymN("bs_of_truth[1]", 1);
   size_t len = sizeof(ret);
-  assume_len(&len, FALSE, sizeof(len));
+  assume_len(&len, false, sizeof(len));
 
   store_buf(&ret);
 

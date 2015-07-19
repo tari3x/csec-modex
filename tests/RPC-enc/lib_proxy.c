@@ -18,7 +18,7 @@ extern uint32_t encrypt_len_proxy(unsigned char * key, uint32_t keylen, unsigned
   uint32_t ret = encrypt_len(key, keylen, in, inlen);
 
   // Don't use "len"
-  symL("encrypt_len", "len", sizeof(ret), FALSE);
+  symL("encrypt_len", "len", sizeof(ret), false);
   store_buf(&ret);
 
   if(ret < 0) exit(1);
@@ -40,12 +40,12 @@ extern uint32_t encrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
 
   SymN("E", 3);
   Hint("cipher");
-  store_len(&ret, sizeof(ret), FALSE);
-
-  store_buf(out);
+  store_len(&ret, sizeof(ret), false);
 
   if(ret > encrypt_len(key, keylen, in, inlen))
     fail("encrypt_proxy: bad length");
+
+  store_buf(out);
 
   return ret;
 }
@@ -55,7 +55,7 @@ extern uint32_t decrypt_len_proxy(unsigned char * key, uint32_t keylen, unsigned
 {
   uint32_t ret = decrypt_len(key, keylen, in, inlen);
 
-  symL("decrypt_len", "len", sizeof(ret), FALSE);
+  symL("decrypt_len", "len", sizeof(ret), false);
   store_buf(&ret);
 
   if(ret < 0) exit(1);
@@ -76,12 +76,12 @@ extern uint32_t decrypt_proxy(unsigned char * key, uint32_t keylen, unsigned cha
   SymN("D", 2);
   SymN("inverse_injbot", 1);
   Hint("msg");
-  store_len(&ret, sizeof(ret), FALSE);
-
-  store_buf(out);
+  store_len(&ret, sizeof(ret), false);
 
   if(ret > decrypt_len(key, keylen, in, inlen))
     fail("decrypt_proxy: bad length");
+
+  store_buf(out);
 
   return ret;
 }
@@ -95,13 +95,21 @@ unsigned char * get_shared_key_proxy(unsigned char* client, uint32_t client_len,
   stack_ptr("shared_key_ptr");
   StoreBuf(&ret);
 
-  // We only provide the service for one identity of attacker's choice (xClient).
-  // This can be improved with multipath, because then we can just inline the case split
-  // bad client / good client.
-  uint32_t xclient_len = client_len;
-  unsigned char * xclient = malloc_proxy(xclient_len);
-  memcpy_proxy(xclient, client, xclient_len);
-  readenvE(xclient, &xclient_len, sizeof(xclient_len), "xClient");
+  // We only provide the service for one identity of attacker's choice
+  // (xClient).  This can be improved with multipath, because then we can just
+  // inline the case split bad client / good client.
+  uint32_t xclient_len;
+  unsigned char * xclient;
+
+  // This could go into a separate function get_xclient, but it is used only here.
+  mute();
+  xclient_len = client_len;
+  xclient = malloc(xclient_len);
+  memcpy(xclient, client, xclient_len);
+  unmute();
+
+  size_t lenlen = sizeof(xclient_len);
+  get_envE(&xclient, &xclient_len, lenlen, "xClient");
 
   if((client_len != xclient_len) || memcmp_proxy(client, xclient, xclient_len))
     fail("trying to look up key for unknown host");
@@ -113,7 +121,7 @@ unsigned char * get_shared_key_proxy(unsigned char* client, uint32_t client_len,
   SymN("lookup", 3);
   assume_intype("bitstring");
   Hint("kAB");
-  store_len(len, sizeof(*len), FALSE);
+  store_len(len, sizeof(*len), false);
 
   store_buf(ret);
   //readenv(ret, len, "kAB");
@@ -134,7 +142,7 @@ unsigned char * mk_session_key_proxy(uint32_t * len)
 
   SymN("kgen", 1);
   Hint("kS");
-  store_len(len, sizeof(*len), FALSE);
+  store_len(len, sizeof(*len), false);
 
   store_buf(ret);
 
@@ -149,7 +157,7 @@ unsigned char * get_request_proxy(uint32_t * len)
 {
   unsigned char * ret = get_request(len);
 
-  symNE("nonce", "request", len, sizeof(*len), FALSE);
+  symNE("nonce", "request", len, sizeof(*len), false);
   store_buf(ret);
 
   return ret;

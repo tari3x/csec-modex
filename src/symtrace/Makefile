@@ -7,10 +7,10 @@ OCAMLOPT = ocamlopt
 OCAML_INC = -I $(OCAMLYICES_ROOT) -I /usr/local/lib -I cryptoverif -I $(CIL_OBJDIR)
 CAMLP4_FLAGS = -pp "camlp4o pa_extend.cmo q_MLast.cmo pa_log.cmo -loc _loc" -I +camlp4
 PA_LOG_FLAGS = -pp "camlp4o pa_extend.cmo q_MLast.cmo -loc _loc" -I +camlp4
-OCAMLC_FLAGS = -g $(OCAML_INC) -w +a-4-40-41-42-44-45 $(CAMLP4_FLAGS)
+OCAMLC_FLAGS = -g $(OCAML_INC) -w +a-4-40-41-42-44-45-48 $(CAMLP4_FLAGS)
 # include -p for gprof or perf here if necessary
 # valgrind doesn't need special compilation (just -g)
-OCAMLOPT_FLAGS = $(OCAMLC_FLAGS) 
+OCAMLOPT_FLAGS = $(OCAMLC_FLAGS)
 OCAML_LIBS = nums.cma ocamlyices.cma str.cma unix.cma cil.cma
 OCAMLOPT_LIBS = $(OCAML_LIBS:.cma=.cmxa)
 ## OCAML_FLAGS = -g -I $(OCAMLYICES_ROOT) -package num ocamlyices.cmxa -package str -linkpkg 
@@ -19,7 +19,7 @@ CV_LIB = cryptoverif/cryptoverif.cmx
 
 SRC = ${wildcard *.ml *.mli}
 
-COMMON_CMO = common.cmo type.cmo fun_type.cmo sym.cmo exp.cmo iml.cmo solver.cmo simplify.cmo symex.cmo
+COMMON_CMO = common.cmo stats_local.cmo type.cmo fun_type.cmo sym.cmo var.cmo exp.cmo iml.cmo solver.cmo simplify.cmo symex.cmo
 COMMON_CMX = $(COMMON_CMO:.cmo=.cmx)
 
 CVTRACE_CMO = typing.cmo cv_fact.cmo syms.cmo transform.cmo template.cmo cv_transform.cmo cv_model.cmo
@@ -46,7 +46,7 @@ cvtrace: $(CV_LIB) $(COMMON_CMX) $(CVTRACE_CMX) cvtrace.cmx
 run_tests: $(CV_LIB) $(COMMON_CMX) $(CVTRACE_CMX) run_tests.cmx 
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
-derivation: common.cmx type.cmx fun_type.cmx sym.cmx exp.cmx iml.cmx solver.cmx derivation.cmx
+derivation: common.cmx stats_local.cmx type.cmx fun_type.cmx sym.cmx var.cmx exp.cmx iml.cmx solver.cmx derivation.cmx
 	$(OCAMLOPT) $(OCAMLOPT_FLAGS) $(OCAMLOPT_LIBS) -o $@ $^
 
 top: $(COMMON_CMO)

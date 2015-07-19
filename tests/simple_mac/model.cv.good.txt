@@ -83,28 +83,46 @@ fun arithmetic2(bounded_1000_payload): bitstring.
   Auxiliary Tests 
 ***************************)
 
-(* cond10 := ¬((8 + 1 + (arg0{0, 8})_[u,8] + 20) <> (arg1)_[u,8]) *)
-fun cond10(bitstring, bitstring): bool.
+(* cond1 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1) <> 0 *)
+fun cond1(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
 
-(* cond11 := ¬((arg0{8, 1})_[u,1] <> 1) *)
+(* cond10 := ¬((arg0)_[s,8] <= 0) *)
+fun cond10(bitstring): bool.
+
+(* cond11 := ¬((arg0)_[u,8] < 8) *)
 fun cond11(bitstring): bool.
 
-(* cond3 := ¬((arg0)_[s,8] <= 0) *)
-fun cond3(bitstring): bool.
+(* cond12 := ¬((arg0)_[u,8] > (8 + 1 + 1000 + 20)) *)
+fun cond12(bitstring): bool.
 
-(* cond5 := ¬((arg0)_[s,8] <= 0) *)
-fun cond5(bitstring): bool.
+(* cond13 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, (arg5)_[u,8]) <> 0 *)
+fun cond13(bitstring, bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
+(* cond14 := ¬((arg0{0, 8})_[u,8] > 1000) *)
+fun cond14(bitstring): bool.
+
+(* cond15 := ¬((8 + 1 + (arg0{0, 8})_[u,8] + 20) <> (arg1)_[u,8]) *)
+fun cond15(bitstring, bitstring): bool.
+
+(* cond16 := ¬((arg0{8, 1})_[u,1] <> 1) *)
+fun cond16(bitstring): bool.
+
+(* cond17 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, (arg5)_[u,8], 8 + 1 + (arg6{0, 8})_[u,8]) <> 0 *)
+fun cond17(bitstring, bitstring, bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
+(* cond4 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1, 8 + 1 + len(arg5) + 20) <> 0 *)
+fun cond4(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1000_payload): bool.
+
+(* cond5 := (<<heap 16; ((8)^[u,8])_[u,8] + ((1)^[u,8])_[u,8] + ((len(payload))^[u,8])_[u,8](1)>>)_[u,8] <> 0 *)
+const cond5: bool.
 
 (* cond6 := ¬((arg0)_[s,8] <= 0) *)
 fun cond6(bitstring): bool.
 
-(* cond7 := ¬((arg0)_[u,8] < 8) *)
-fun cond7(bitstring): bool.
+(* cond8 := Malloc(len(arg0) + 1, len(arg1) + 1, len(arg2) + 1, len(arg3) + 1, len(arg4) + 1) <> 0 *)
+fun cond8(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
 
-(* cond8 := ¬((arg0)_[u,8] > (8 + 1 + 1000 + 20)) *)
-fun cond8(bitstring): bool.
-
-(* cond9 := ¬((arg0{0, 8})_[u,8] > 1000) *)
+(* cond9 := ¬((arg0)_[s,8] <= 0) *)
 fun cond9(bitstring): bool.
 
 
@@ -131,9 +149,19 @@ const zero_fixed_20_hash: fixed_20_hash.
   Primed Functions 
 ***************************)
 
+fun cond8_prime(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
+fun cond4_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bounded_1000_payload): bool.
+
+fun cond17_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
 fun conc2_prime(bounded_1000_payload, fixed_20_hash): bitstring.
 
 fun conc1_prime(bounded_1000_payload): bitstring.
+
+fun cond13_prime(bitstring, bitstring, bitstring, bitstring, bitstring, bitstring): bool.
+
+fun cond1_prime(bitstring, bitstring, bitstring, bitstring, bitstring): bool.
 
 
 (*************************** 
@@ -145,18 +173,32 @@ fun conc1_prime(bounded_1000_payload): bitstring.
   Auxiliary Facts 
 ***************************)
 
-forall x49: fixed_20_hash, x48: bounded_1000_payload;
-	cond9(conc2(x48, x49)) = cond9(conc2_prime(Zbounded_1000_payload(x48), Zfixed_20_hash(x49))).
-forall x50: bounded_1000_payload;
-	cond9(conc1(x50)) = cond9(conc1_prime(Zbounded_1000_payload(x50))).
-forall x79: fixed_20_hash, x78: bounded_1000_payload;
-	cond11(conc2(x78, x79)) = cond11(conc2_prime(Zbounded_1000_payload(x78), Zfixed_20_hash(x79))).
-forall x80: bounded_1000_payload;
-	cond11(conc1(x80)) = cond11(conc1_prime(Zbounded_1000_payload(x80))).
-forall x85: fixed_20_hash, x84: bounded_1000_payload, arg1: bitstring;
-	cond10(conc2(x84, x85), arg1) = cond10(conc2_prime(Zbounded_1000_payload(x84), Zfixed_20_hash(x85)), arg1).
-forall x86: bounded_1000_payload, arg1: bitstring;
-	cond10(conc1(x86), arg1) = cond10(conc1_prime(Zbounded_1000_payload(x86)), arg1).
+forall arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond8(arg0, arg1, arg2, arg3, arg4) = cond8_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4)).
+forall arg5: bounded_1000_payload, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond4(arg0, arg1, arg2, arg3, arg4, arg5) = cond4_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), Zbounded_1000_payload(arg5)).
+forall arg6: bitstring, arg5: bitstring, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond17(arg0, arg1, arg2, arg3, arg4, arg5, arg6) = cond17_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), arg5, arg6).
+forall x163: fixed_20_hash, x162: bounded_1000_payload, arg5: bitstring, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond17_prime(arg0, arg1, arg2, arg3, arg4, arg5, conc2(x162, x163)) = cond17_prime(arg0, arg1, arg2, arg3, arg4, arg5, conc2_prime(Zbounded_1000_payload(x162), Zfixed_20_hash(x163))).
+forall x164: bounded_1000_payload, arg5: bitstring, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond17_prime(arg0, arg1, arg2, arg3, arg4, arg5, conc1(x164)) = cond17_prime(arg0, arg1, arg2, arg3, arg4, arg5, conc1_prime(Zbounded_1000_payload(x164))).
+forall x168: fixed_20_hash, x167: bounded_1000_payload;
+	cond16(conc2(x167, x168)) = cond16(conc2_prime(Zbounded_1000_payload(x167), Zfixed_20_hash(x168))).
+forall x169: bounded_1000_payload;
+	cond16(conc1(x169)) = cond16(conc1_prime(Zbounded_1000_payload(x169))).
+forall x174: fixed_20_hash, x173: bounded_1000_payload, arg1: bitstring;
+	cond15(conc2(x173, x174), arg1) = cond15(conc2_prime(Zbounded_1000_payload(x173), Zfixed_20_hash(x174)), arg1).
+forall x175: bounded_1000_payload, arg1: bitstring;
+	cond15(conc1(x175), arg1) = cond15(conc1_prime(Zbounded_1000_payload(x175)), arg1).
+forall x183: fixed_20_hash, x182: bounded_1000_payload;
+	cond14(conc2(x182, x183)) = cond14(conc2_prime(Zbounded_1000_payload(x182), Zfixed_20_hash(x183))).
+forall x184: bounded_1000_payload;
+	cond14(conc1(x184)) = cond14(conc1_prime(Zbounded_1000_payload(x184))).
+forall arg5: bitstring, arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond13(arg0, arg1, arg2, arg3, arg4, arg5) = cond13_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4), arg5).
+forall arg4: bitstring, arg3: bitstring, arg2: bitstring, arg1: bitstring, arg0: bitstring;
+	cond1(arg0, arg1, arg2, arg3, arg4) = cond1_prime(Zbitstring(arg0), Zbitstring(arg1), Zbitstring(arg2), Zbitstring(arg3), Zbitstring(arg4)).
 
 (*************************** 
   Zero Facts 
@@ -186,24 +228,30 @@ query x: bounded_1000_payload, y:bounded_1000_payload;
 
 let client = 
 in(c_in, (var1: bitstring, BIO_ctrl_result1: bitstring));
+if cond1(argv0, argv1, argv2, argv3, argv4) then 
 event client_send(payload);
+if cond4(argv0, argv1, argv2, argv3, argv4, payload) then 
+if cond5 then 
 let msg1 = conc1(payload) in
 let var20 = arithmetic1 in
 let hash1 = HMAC(var20, msg1, key) in
-if cond3(BIO_ctrl_result1) then 
+if cond6(BIO_ctrl_result1) then 
 let msg2 = arithmetic2(payload) in
 let msg3 = conc2(payload, hash1) in
 out(c_out, (msg3, msg2)); 0 .
 
 let server = 
 in(c_in, (var3: bitstring, BIO_ctrl_result2: bitstring, BIO_ctrl_result3: bitstring, var6: bitstring, var7: bitstring, msg4: bitstring, msg5: bitstring));
-if cond5(BIO_ctrl_result2) then 
-if cond6(BIO_ctrl_result3) then 
-if cond7(msg4) then 
-if cond8(msg4) then 
-if cond9(msg5) then 
-if cond10(msg5, msg4) then 
-if cond11(msg5) then 
+if cond8(argv0, argv1, argv2, argv3, argv4) then 
+if cond9(BIO_ctrl_result2) then 
+if cond10(BIO_ctrl_result3) then 
+if cond11(msg4) then 
+if cond12(msg4) then 
+if cond13(argv0, argv1, argv2, argv3, argv4, msg4) then 
+if cond14(msg5) then 
+if cond15(msg5, msg4) then 
+if cond16(msg5) then 
+if cond17(argv0, argv1, argv2, argv3, argv4, msg4, msg5) then 
 let var12 = parse1(msg5) in
 let msg6 = conc1(var12) in
 let var14 = arithmetic1 in
@@ -218,6 +266,23 @@ yield .
   <Environment>
 *************************)
 
+let server' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  server .
+
+let client' =
+  in(c_in, (argv0: bitstring, 
+            argv1: bitstring,
+            argv2: bitstring,
+            argv3: bitstring,
+            argv4: bitstring));
+  out(c_out, ());
+  client .
 
 process
 ! N (
@@ -227,5 +292,5 @@ process
   let key = mkgen(keyseed) in
 
   out(c_out, ());
-  (!N client | !N server)
+  (!N client'| !N server')
 )

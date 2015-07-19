@@ -232,16 +232,17 @@ let setSrcPath (f : file) =
 
 (* TODO: think of eventually making some of these functions exclusive to marking code *)
 
-(** Generates a descriptive global (across the whole compilation) unique identifier for a
-    variable. One identifer corresponds to one physical variable in the linked
-    executable.
+(** Generates a descriptive global (across the whole compilation) unique
+    identifier for a variable. One identifer corresponds to one physical
+    variable in the linked executable.
 
-    We use a single global name for static functions. This makes it easier to designate
-    them in configuration files. At the same time this makes it problematic to have two
-    static functions of the same name in different files.
+    We use a single global name for static functions. This makes it easier to
+    designate them in configuration files. At the same time this makes it
+    problematic to have two static functions of the same name in different
+    files.
 
-    This is addressed in {!readGlobs} by checking that no two globs have same names but
-    different locdefs.
+    This is addressed in {!readGlobs} by checking that no two globs have same
+    names but different locdefs.
 *)
 (*
   This is also called from crestInstrument to give names to stack locations.
